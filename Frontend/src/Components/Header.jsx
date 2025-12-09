@@ -11,7 +11,7 @@ const Header = () => {
   return (
     <header className="absolute top-0 left-0 right-0 z-50 py-3">
       {/* Container */}
-      <div className="max-padd-container flexBetween">
+      <div className="mx-auto max-w-[1440px] px-4 lg:px-12 flex items-center justify-between">
         {/* Logo*/}
         <div className="flex flex-1">
           <Link to="/" className="flex items-end">
@@ -19,7 +19,7 @@ const Header = () => {
           </Link>
         </div>
         {/*Navbar*/}
-        <div className="flexCenter flex-1">
+        <div className="flex items-center justify-center flex-1">
           <Navbar
             setMenuOpened={setMenuOpened}
             menuOpened={menuOpened}
@@ -50,7 +50,7 @@ const Header = () => {
           </div>
           {/*Get started button*/}
           <div className="hidden lg:block">
-            <button className="btn-solid flexCenter gap-2 ">Get Started</button>
+            <button className="px-6 py-3 transition-all bg-[var(--color-solid)] border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2">Get Started</button>
           </div>
         </div>
       </div>
