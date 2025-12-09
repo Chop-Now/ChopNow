@@ -1,8 +1,48 @@
-import React from "react";
-import { Video } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Video, X } from "lucide-react";
 import { assets } from "../assets/assets.js";
 
 const Hero = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [count1, setCount1] = useState(0);
+  const [count2, setCount2] = useState(0);
+  const [count3, setCount3] = useState(0);
+  const [count4, setCount4] = useState(0);
+
+  // Animated counter effect
+  useEffect(() => {
+    const duration = 2000; // 2 seconds
+    const steps = 60;
+    const interval = duration / steps;
+
+    const animateCount = (target, setter) => {
+      let current = 0;
+      const increment = target / steps;
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          setter(target);
+          clearInterval(timer);
+        } else {
+          setter(Math.floor(current));
+        }
+      }, interval);
+      return timer;
+    };
+
+    const timer1 = animateCount(25, setCount1);
+    const timer2 = animateCount(50, setCount2);
+    const timer3 = animateCount(120, setCount3);
+    const timer4 = animateCount(3, setCount4);
+
+    return () => {
+      clearInterval(timer1);
+      clearInterval(timer2);
+      clearInterval(timer3);
+      clearInterval(timer4);
+    };
+  }, []);
+
   return (
     <div className="mx-auto max-w-[1440px] px-4 lg:px-12" id="home">
       <div className="h-screen w-full rounded-2xl relative overflow-hidden">
@@ -61,7 +101,9 @@ const Hero = () => {
                 <button className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto">
                     Get started
                 </button>
-                <button className="flex items-center justify-center gap-2 border border-slate-600 active:scale-95 hover:bg-white/10 transition text-slate-600 rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,0.25)] cursor-pointer w-80 sm:w-auto">
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center justify-center gap-2 border border-slate-600 active:scale-95 hover:bg-white/10 transition text-slate-600 rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,0.25)] cursor-pointer w-80 sm:w-auto">
                   <Video size={18} />
                     <span>Watch demo</span>
                 </button>
@@ -70,19 +112,19 @@ const Hero = () => {
             {/* Stats */}
             <div className="grid grid-cols-4 gap-3 md:gap-5 mt-5 max-w-xl mx-auto lg:mx-0">
               <div>
-                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>25+</h4>
+                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count1}+</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Launch Partners</p>
               </div>
               <div>
-                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>50K</h4>
+                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count2}K</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Households</p>
               </div>
               <div>
-                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>120K</h4>
+                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count3}K</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Meals Rescued</p>
               </div>
               <div>
-                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>3</h4>
+                <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count4}</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Countries</p>
               </div>
             </div>
@@ -98,6 +140,39 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div className="relative w-full max-w-4xl">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute -top-14 right-0 z-10 bg-white hover:bg-gray-100 rounded-full p-2.5 transition-all active:scale-95 shadow-lg"
+            >
+              <X size={28} className="text-gray-800 cursor-pointer" />
+            </button>
+            <div 
+              className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+              onClick={(e) => e.stopPropagation()}
+              style={{ boxShadow: '0 0 60px rgba(255, 255, 255, 0.2), 0 20px 50px rgba(0, 0, 0, 0.8)' }}
+            >
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/d9mWh03Z0SA?autoplay=1"
+                title="ChopNow Demo"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
