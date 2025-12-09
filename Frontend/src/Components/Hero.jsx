@@ -14,22 +14,22 @@ const Hero = () => {
               <img 
                 src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D" 
                 alt="User 1" 
-                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover flex-shrink-0'
+                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0'
               />
               <img 
                 src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D" 
                 alt="User 2" 
-                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover flex-shrink-0'
+                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0'
               />
               <img 
                 src="https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D" 
                 alt="User 3" 
-                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover flex-shrink-0'
+                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0'
               />
               <img 
                 src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D" 
                 alt="User 4" 
-                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover flex-shrink-0'
+                className='w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0'
               />
             </div>
             <p className='text-[11px] md:text-xs font-medium'>Trusted by 1000+ consumers across Africa</p>
@@ -58,7 +58,7 @@ const Hero = () => {
               reducing food waste while fueling communities.
             </p>
             <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center md:justify-center lg:justify-start gap-2 sm:gap-2.5 mb-5">
-                <button className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 hover:bg-tertiary bg-[var(--color-solid)] rounded-md px-5 h-11 sm:text-base font-semibold shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto">
+                <button className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto">
                     Get started
                 </button>
                 <button className="flex items-center justify-center gap-2 border border-slate-600 active:scale-95 hover:bg-white/10 transition text-slate-600 rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,0.25)] cursor-pointer w-80 sm:w-auto">

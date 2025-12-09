@@ -50,7 +50,7 @@ const Header = () => {
           </div>
           {/*Get started button*/}
           <div className="hidden lg:block">
-            <button className="px-6 py-3 transition-all bg-[var(--color-solid)] border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2">Get Started</button>
+            <button className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2">Get Started</button>
           </div>
         </div>
       </div>
