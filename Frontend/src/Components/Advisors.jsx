@@ -31,10 +31,10 @@ const Advisors = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center text-center px-4 py-12 md:py-16" id="advisors">
+    <div className="flex flex-col items-center text-center px-6 md:px-4 py-12 md:py-16" id="advisors">
       <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>Meet Our Advisors</h1>
       <p className="max-w-2xl mb-12 text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>Industry leaders guiding ChopNow's mission to transform food access and sustainability.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-sm sm:max-w-6xl w-full">
         {advisors.map((advisor, index) => {
           const cardData = {
             image: advisor.image,

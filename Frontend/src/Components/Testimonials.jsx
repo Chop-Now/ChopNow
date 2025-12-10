@@ -53,7 +53,7 @@ const Testimonials = () => {
       <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
       
       {/* CTA Section */}
-      <div className="flex flex-col md:flex-row items-center justify-around rounded-2xl m-2 mx-auto max-w-5xl w-full shadow-lg mt-12" style={{ backgroundColor: '#E8F5E9' }}>
+      <div className="flex flex-col md:flex-row items-center justify-around rounded-2xl mx-6 md:mx-auto max-w-5xl shadow-lg mt-12" style={{ backgroundColor: '#E8F5E9' }}>
         <div className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 px-6">
           <h2 className="md:text-4xl text-2xl font-bold mb-3" style={{ color: 'var(--color-textColor)' }}>
             Ready to start buying your meals while saving the environment?

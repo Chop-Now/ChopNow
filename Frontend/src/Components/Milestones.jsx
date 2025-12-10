@@ -65,14 +65,14 @@ const Milestones = () => {
     ];
 
     return (
-        <div id="Milestones" className="flex flex-col items-center text-center px-4 py-12 md:py-16">
+        <div id="Milestones" className="flex flex-col items-center text-center px-6 md:px-4 py-12 md:py-16">
             <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
                 Milestones we're rallying toward
             </h1>
             <p className="max-w-3xl mb-12 text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
                 As an early-stage team, these are the impact goals guiding our sprints over the next 12 months.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-sm md:max-w-5xl w-full">
                 {milestones.map((milestone, index) => (
                     <MilestoneCard key={index} {...milestone} />
                 ))}
