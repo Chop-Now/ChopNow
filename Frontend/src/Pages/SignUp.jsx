@@ -1,23 +1,15 @@
 import { assets } from '@/assets/assets'
-import { Eye, EyeOff, Lock, Mail, User, Phone } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
+
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState('+234');
-
-  const countries = [
-    { code: '+234', name: 'Nigeria', flag: '🇳🇬' },
-    { code: '+254', name: 'Kenya', flag: '🇰🇪' },
-    { code: '+233', name: 'Ghana', flag: '🇬🇭' },
-    { code: '+27', name: 'South Africa', flag: '🇿🇦' },
-    { code: '+251', name: 'Ethiopia', flag: '🇪🇹' },
-    { code: '+256', name: 'Uganda', flag: '🇺🇬' },
-    { code: '+255', name: 'Tanzania', flag: '🇹🇿' },
-    { code: '+250', name: 'Rwanda', flag: '🇷🇼' },
-  ];
+  const [phone, setPhone] = useState('');
 
   return (
     <div className="min-h-screen w-full flex">
@@ -91,32 +83,22 @@ const SignUp = () => {
                 />                 
               </div>
 
-              {/* Country & Phone Number */}
-              <div className="flex gap-3 mt-4">
-                <div className="flex items-center bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4">
-                  <select 
-                    value={selectedCountry}
-                    onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="bg-transparent outline-none text-sm cursor-pointer" 
-                    style={{ color: 'var(--color-textColor)' }}
-                  >
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} {country.code}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                  <Phone className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
-                    type="tel" 
-                    placeholder="Phone number" 
-                    className="bg-transparent outline-none text-sm w-full h-full" 
-                    style={{ color: 'var(--color-textColor)' }}
-                    required 
-                  />                 
-                </div>
+              {/* Phone Number */}
+              <div className="mt-4">
+                <PhoneInput
+                  country={'rw'}
+                  value={phone}
+                  onChange={setPhone}
+                  enableSearch={true}
+                  searchPlaceholder="Search country"
+                  placeholder="Choose your country"
+                  containerClass="w-full"
+                  inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent"
+                  buttonClass="!border-gray-300 !rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100"
+                  dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
+                  searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"
+                  inputStyle={{ color: 'var(--color-textColor)' }}
+                />
               </div>
 
               {/* Password Input */}
