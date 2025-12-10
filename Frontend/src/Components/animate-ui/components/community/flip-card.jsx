@@ -1,9 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
-'use client';;
-import { Button } from '@/components/ui/button';
 import { easeOut, motion } from 'motion/react';
 import * as React from 'react';
-import { Github, Linkedin, Twitter } from 'lucide-react';
+import { Linkedin } from 'lucide-react';
 
 export function FlipCard({
   data
@@ -47,7 +44,7 @@ export function FlipCard({
           src={data.image}
           alt={data.name}
           className="w-full h-full object-cover absolute inset-0" />
-        <div className="absolute bottom-0 z-10 h-60 w-full bg-gradient-to-t pointer-events-none from-black to-transparent"></div>
+        <div className="absolute bottom-0 z-10 h-60 w-full bg-linear-to-t pointer-events-none from-black to-transparent"></div>
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
           <h2 className="text-lg font-bold text-white">{data.name}</h2>
           <p className="text-sm text-white/90">{data.role}</p>
@@ -55,7 +52,7 @@ export function FlipCard({
       </motion.div>
       {/* BACK: Bio + Socials */}
       <motion.div
-        className="absolute inset-0 backface-hidden rounded-md px-6 py-6 flex flex-col justify-center items-center gap-y-6 bg-gradient-to-tr from-muted via-background to-muted shadow-2xl"
+        className="absolute inset-0 backface-hidden rounded-md px-6 py-6 flex flex-col justify-center items-center gap-y-6 bg-linear-to-tr from-muted via-background to-muted shadow-2xl"
         initial={{ rotateY: 180 }}
         animate={isFlipped ? 'front' : 'back'}
         variants={cardVariants}
