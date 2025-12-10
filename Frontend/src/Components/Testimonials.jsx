@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom';
 import { AnimatedTestimonials } from "./ui/animated-testimonials";
 
 const Testimonials = () => {
@@ -61,14 +62,14 @@ const Testimonials = () => {
           <p className="text-sm md:text-base mb-6" style={{ color: 'var(--color-gray-50)' }}>
             Join thousands of users who trust ChopNow for their meal needs.
           </p>
-          <button 
-            type="button" 
+          <Link 
+            to="/login"
             aria-label="getStarted" 
             className="px-7 py-3 text-white rounded-md active:scale-95 transition-all hover:opacity-90 font-medium cursor-pointer flex items-center justify-center"
             style={{ backgroundColor: 'var(--color-solid)' }}
           >
             Get started
-          </button>
+          </Link>
         </div>
         <img 
           className="max-w-[375px] w-full pt-10 md:p-0" 

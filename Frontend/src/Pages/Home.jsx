@@ -6,10 +6,13 @@ import Testimonials from '../Components/Testimonials'
 import Milestones from '@/Components/Milestones'
 import AboutUs from '@/Components/AboutUs'
 import HowItWorks from '@/Components/HowItWorks'
+import Header from '@/Components/Header'
+import Footer from '@/Components/Footer'
 
 const Home = () => {
   return (
     <>
+      <Header />
       <Hero />
       <HowItWorks />
       <Testimonials />
@@ -17,6 +20,7 @@ const Home = () => {
       <Milestones />
       <AboutUs />
       <Apps />
+       <Footer />
     </>
   )
 }

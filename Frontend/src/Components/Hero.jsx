@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Video, X } from "lucide-react";
 import { assets } from "../assets/assets.js";
 
@@ -98,9 +99,9 @@ const Hero = () => {
               reducing food waste while fueling communities.
             </p>
             <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center md:justify-center lg:justify-start gap-2 sm:gap-2.5 mb-5">
-                <button className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto">
+                <Link to="/login" className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto flex items-center justify-center">
                     Get started
-                </button>
+                </Link>
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="flex items-center justify-center gap-2 border border-slate-600 active:scale-95 hover:bg-white/10 transition text-slate-600 rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,0.25)] cursor-pointer w-80 sm:w-auto">
