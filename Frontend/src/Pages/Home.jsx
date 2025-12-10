@@ -2,12 +2,18 @@ import React from 'react'
 import Hero from '../Components/Hero'
 import Apps from '../Components/Apps'
 import Advisors from '../Components/Advisors'
+import Testimonials from '../Components/Testimonials'
+import Milestones from '@/Components/Milestones'
+import AboutUs from '@/Components/AboutUs'
 
 const Home = () => {
   return (
     <>
       <Hero />
+      <Testimonials />
       <Advisors />
+      <Milestones />
+      <AboutUs />
       <Apps />
     </>
   )

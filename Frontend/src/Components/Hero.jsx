@@ -44,7 +44,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 lg:px-12" id="home">
+    <div className="mx-auto max-w-[1440px] px-4 lg:px-12 lg:pl-24" id="home">
       <div className="h-screen w-full rounded-2xl relative overflow-hidden">
         
         {/* Badge centered at top */}

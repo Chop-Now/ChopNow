@@ -6,10 +6,19 @@ import { Menu, X } from "lucide-react";
 
 const Header = () => {
   const [menuOpened, setMenuOpened] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const toggleMenu = () => setMenuOpened((prev) => !prev);
 
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 py-3">
+    <header className={`${isScrolled ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 py-3 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-md' : ''}`}>
       {/* Container */}
       <div className="mx-auto max-w-[1440px] px-4 lg:px-12 flex items-center justify-between">
         {/* Logo*/}

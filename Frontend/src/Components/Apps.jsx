@@ -17,7 +17,7 @@ const Apps = () => {
             Coming Soon
           </div>
           <h2 className="md:text-4xl text-2xl font-semibold" style={{ color: 'var(--color-textColor)' }}>Download Mobile App</h2>
-          <p className="mt-2 w-3/4" style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}>Mobile banking app for iOS & Android to manage your online money.</p>
+          <p className="mt-2 w-3/4" style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}>Mobile app for iOS & Android to get a personalized feed of nearby surplus meals, exclusive drops, and smart pick-up reminders, all inside an intuitive experience built for busy urban explorers.</p>
 
           <div className="flex items-center gap-4 mt-6">
             <button 

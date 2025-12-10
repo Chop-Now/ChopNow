@@ -7,15 +7,16 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
   const navLinks = [
     { path: "#howItWorks", title: "How It Works" },
     { path: "#testimonials", title: "Testimonials" },
-    { path: "#experience", title: "Experience" },
     { path: "#advisors", title: "Advisors" },
     { path: "#Milestones", title: "Milestones" },
+    { path: "#AboutUs", title: "About Us" },
   ];
 
   useEffect(() => {
     const handleScroll = () => {
       const sections = navLinks.map(link => link.path.substring(1));
       const scrollPosition = window.scrollY + 100;
+      let sectionFound = false;
 
       for (const section of sections) {
         const element = document.getElementById(section);
@@ -23,9 +24,15 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           const { offsetTop, offsetHeight } = element;
           if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
             setActiveSection(`#${section}`);
+            sectionFound = true;
             return;
           }
         }
+      }
+      
+      // Clear active section if not in any tracked section
+      if (!sectionFound) {
+        setActiveSection("");
       }
     };
 
@@ -52,14 +59,14 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
             handleClick(link.path);
           }}
           key={link.title}
-          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-[var(--color-solid)] after:absolute after:bottom-[-2px] after:right-3" : ""} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
+          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-solid after:absolute after:-bottom-0.5 after:right-3" : ""} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
           style={{ color: 'var(--color-textColor)' }}
         >
             {link.title}
         </a>
       ))}
       {menuOpened && (
-        <button className="px-6 py-3 transition-all bg-[var(--color-solid)] border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2">Get Started</button>
+        <button className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2">Get Started</button>
       )}
     </nav>
   );
