@@ -1,6 +1,8 @@
 import React from 'react'
 import { assets } from '../assets/assets';
 import { Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { motion } from "motion/react";
+
 
 const Footer = () => {
   const linkSections = [
@@ -16,13 +18,24 @@ const Footer = () => {
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-32">
             <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-500">
-                <div>
+                <motion.div
+                    initial={{ x: -50, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                >
                     <img className="h-10 md:h-12" src={assets.ChopNowLogo} alt="ChopNow Logo" />
-                    <p className="max-w-[410px] mt-6">Fueling Africa’s food security by rescuing meals, fighting waste, and empowering communities.</p>
-                </div>
+                    <p className="max-w-[410px] mt-6">Fueling Africa's food security by rescuing meals, fighting waste, and empowering communities.</p>
+                </motion.div>
                 <div className="flex flex-wrap justify-between w-full md:w-[60%] gap-8">
                     {linkSections.map((section, index) => (
-                        <div key={index}>
+                        <motion.div 
+                            key={index}
+                            initial={{ y: 30, opacity: 0 }}
+                            whileInView={{ y: 0, opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.2 + (index * 0.1) }}
+                        >
                             <h3 className="font-semibold text-base text-gray-900 md:mb-5 mb-2">{section.title}</h3>
                             <ul className="text-sm space-y-1">
                                 {section.links.map((link, i) => (
@@ -31,9 +44,15 @@ const Footer = () => {
                                     </li>
                                 ))}
                             </ul>
-                        </div>
+                        </motion.div>
                     ))}
-                    <div className="max-w-xs">
+                    <motion.div 
+                        className="max-w-xs"
+                        initial={{ x: 50, opacity: 0 }}
+                        whileInView={{ x: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                    >
                         <h3 className="font-semibold text-base text-gray-900 md:mb-5 mb-2">Stay updated with ChopNow</h3>
                         <p className="text-sm mb-4">Join our newsletter and be the first to discover new updates, exclusive offers, and inspiration.</p>
                         <div className="flex items-center border border-gray-400 focus-within:border-(--color-solid) focus-within:ring-2 focus-within:ring-solid/20 text-sm rounded-full h-12 w-full transition-all">
@@ -46,14 +65,26 @@ const Footer = () => {
                                 Subscribe
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
             <div className="py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm md:text-base text-gray-500/80">
+                <motion.p 
+                    className="text-sm md:text-base text-gray-500/80"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                >
                     Copyright 2025 © <a href="#" className="hover:underline">ChopNow</a> All Right Reserved.
-                </p>
-                <div className="flex items-center gap-4">
+                </motion.p>
+                <motion.div 
+                    className="flex items-center gap-4"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                >
                     <a href="#" className="text-gray-500 hover:text-gray-700 transition">
                         <Instagram size={20} />
                     </a>
@@ -66,7 +97,7 @@ const Footer = () => {
                     <a href="#" className="text-gray-500 hover:text-gray-700 transition">
                         <Youtube size={20} />
                     </a>
-                </div>
+                </motion.div>
             </div>
         </div>
   )

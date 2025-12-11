@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 
 const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
   const [activeSection, setActiveSection] = useState("");
@@ -51,22 +52,32 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
 
   return (
     <nav className={containerStyles}>
-      {navLinks.map((link) => (
-        <a
+      {navLinks.map((link, index) => (
+        <motion.a
           href={link.path}
           onClick={(e) => {
             e.preventDefault();
             handleClick(link.path);
           }}
           key={link.title}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.1 }}
+          whileHover={{ scale: 1.05 }}
           className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-solid after:absolute after:-bottom-0.5 after:right-3" : ""} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
           style={{ color: 'var(--color-textColor)' }}
         >
             {link.title}
-        </a>
+        </motion.a>
       ))}
       {menuOpened && (
-        <Link to="/login" className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2">Get Started</Link>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Link to="/login" className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2">Get Started</Link>
+        </motion.div>
       )}
     </nav>
   );

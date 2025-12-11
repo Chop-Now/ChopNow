@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
 import { AnimatedTestimonials } from "./ui/animated-testimonials";
+import { motion } from "motion/react";
 
 const Testimonials = () => {
   const testimonials = [
@@ -43,19 +44,45 @@ const Testimonials = () => {
 
   return (
     <div id='testimonials' className="py-12 md:py-16">
-      <div className="text-center mb-8 px-4">
+      <motion.div 
+        className="text-center mb-8 px-4"
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
           What People Say About Us
         </h1>
         <p className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
           Real stories from vendors, consumers, and partners making a difference with ChopNow.
         </p>
-      </div>
-      <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
+      </motion.div>
       
       {/* CTA Section */}
-      <div className="flex flex-col md:flex-row items-center justify-around rounded-2xl mx-6 md:mx-auto max-w-5xl shadow-lg mt-12" style={{ backgroundColor: '#E8F5E9' }}>
-        <div className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 px-6">
+      <motion.div 
+        className="flex flex-col md:flex-row items-center justify-around rounded-2xl mx-6 md:mx-auto max-w-5xl shadow-lg mt-12" 
+        style={{ backgroundColor: '#E8F5E9' }}
+        initial={{ y: 50, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
+        <motion.div 
+          className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 px-6"
+          initial={{ x: -30, opacity: 0 }}
+          whileInView={{ x: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
           <h2 className="md:text-4xl text-2xl font-bold mb-3" style={{ color: 'var(--color-textColor)' }}>
             Ready to start buying your meals while saving the environment?
           </h2>
@@ -70,13 +97,17 @@ const Testimonials = () => {
           >
             Get started
           </Link>
-        </div>
-        <img 
+        </motion.div>
+        <motion.img 
           className="max-w-[375px] w-full pt-10 md:p-0" 
           src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/appDownload/excitedWomenImage.png" 
           alt="Excited person using ChopNow"
+          initial={{ x: 30, opacity: 0 }}
+          whileInView={{ x: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.6 }}
         />
-      </div>
+      </motion.div>
     </div>
   )
 }

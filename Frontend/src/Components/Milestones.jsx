@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion } from "motion/react";
 
 const MilestoneCard = ({ image, badge, title, description }) => {
     const [tilt, setTilt] = React.useState({ x: 0, y: 0 });
@@ -66,15 +67,37 @@ const Milestones = () => {
 
     return (
         <div id="Milestones" className="flex flex-col items-center text-center px-6 md:px-4 py-12 md:py-16">
-            <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
+            <motion.h1 
+                className="text-3xl md:text-4xl font-semibold mb-4" 
+                style={{ color: 'var(--color-textColor)' }}
+                initial={{ y: -30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+            >
                 Milestones we're rallying toward
-            </h1>
-            <p className="max-w-3xl mb-12 text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
+            </motion.h1>
+            <motion.p 
+                className="max-w-3xl mb-12 text-sm md:text-base" 
+                style={{ color: 'var(--color-gray-50)' }}
+                initial={{ y: -20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            >
                 As an early-stage team, these are the impact goals guiding our sprints over the next 12 months.
-            </p>
+            </motion.p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-sm md:max-w-5xl w-full">
                 {milestones.map((milestone, index) => (
-                    <MilestoneCard key={index} {...milestone} />
+                    <motion.div
+                        key={index}
+                        initial={{ y: 50, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }}
+                    >
+                        <MilestoneCard {...milestone} />
+                    </motion.div>
                 ))}
             </div>
         </div>

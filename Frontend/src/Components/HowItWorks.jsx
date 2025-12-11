@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Plane, Users, Truck, Check, Sprout, Coins, MessageCircleHeart } from "lucide-react";
 import { assets } from '@/assets/assets';
+import { motion } from "motion/react";
 
 const stepsForVendors = [
   {
@@ -103,17 +104,29 @@ const HowItWorks = () => {
   return (
     <div id='howItWorks' className="py-14 w-full relative overflow-hidden" style={{ backgroundColor: '#E8F5E9' }}>
       {/* Section Title */}
-      <div className="text-center mb-8 px-4">
+      <motion.div 
+        className="text-center mb-8 px-4"
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
           How ChopNow Works
         </h1>
         <p className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
           Inspired by the simplicity of rescue platforms you love. Three steps to fresher eats.
         </p>
-      </div>
+      </motion.div>
 
       {/* Toggle Switch */}
-      <div className="flex justify-center mb-16">
+      <motion.div 
+        className="flex justify-center mb-16"
+        initial={{ scale: 0.9, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <div className="bg-white shadow-lg rounded-xl p-1.5 flex gap-1">
           <button
             onClick={() => setActive("consumer")}
@@ -139,18 +152,23 @@ const HowItWorks = () => {
             For Vendors
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Steps */}
       <div className="relative max-w-7xl mx-auto px-6 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {steps.map((step, index) => (
-            <div
+            <motion.div
               key={step.id}
               className={`bg-white rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
                 index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
               }`}
               style={{ height: '350px' }}
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ scale: 1.03 }}
             >
               {/* Step number */}
               <p className="text-5xl font-extrabold text-gray-200 mb-6">
@@ -166,31 +184,56 @@ const HowItWorks = () => {
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-gray-50)' }}>
                 {step.description}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
       {/* Why We Are The Best Banner */}
-      <div className='mt-24 max-w-6xl mx-auto px-4 md:px-6'>
+      <motion.div 
+        className='mt-24 max-w-6xl mx-auto px-4 md:px-6'
+        initial={{ y: 50, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
         <div className='bg-white rounded-3xl shadow-md overflow-hidden'>
           <div className='flex flex-col md:flex-row items-center gap-6 p-6 md:p-8'>
             {/* Left Side - Image */}
-            <div className='w-full md:w-1/2 shrink-0 overflow-hidden'>
+            <motion.div 
+              className='w-full md:w-1/2 shrink-0 overflow-hidden'
+              initial={{ x: -50, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <img 
                 src={assets.fresh_produce} 
                 alt="Man holding basket" 
                 className='w-full h-56 md:h-72 object-cover cursor-pointer transition-transform duration-300 hover:scale-110'
               />
-            </div>
+            </motion.div>
 
             {/* Right Side - Content */}
-            <div className='flex-1 pl-8 md:pl-12'>
+            <motion.div 
+              className='flex-1 pl-8 md:pl-12'
+              initial={{ x: 50, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
               <h1 className='text-2xl md:text-3xl font-bold mb-6' style={{ color: 'var(--color-solid)' }}>
                 Why We Are the Best?
               </h1>
               <div className='space-y-5'>
                 {features.map((feature, index) => (
-                  <div key={index} className='flex items-center gap-4'>
+                  <motion.div 
+                    key={index} 
+                    className='flex items-center gap-4'
+                    initial={{ x: 30, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.4 + (index * 0.1) }}
+                  >
                     <div className='shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-lg flex items-center justify-center' style={{ backgroundColor: 'var(--color-solid)' }}>
                       {React.cloneElement(feature.icon, { className: 'w-5 h-5 md:w-6 md:h-6 text-white' })}
                     </div>
@@ -202,13 +245,13 @@ const HowItWorks = () => {
                         {feature.description}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

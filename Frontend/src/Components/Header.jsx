@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { motion } from "motion/react";
 import { assets } from "../assets/assets.js";
 import Navbar from "./Navbar.jsx";
 import { Menu, X } from "lucide-react";
@@ -18,15 +19,25 @@ const Header = () => {
   }, []);
 
   return (
-    <header className={`${isScrolled ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 py-3 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-md' : ''}`}>
+    <motion.header 
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className={`${isScrolled ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 py-3 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-md' : ''}`}
+    >
       {/* Container */}
       <div className="mx-auto max-w-[1440px] px-4 lg:px-12 flex items-center justify-between">
         {/* Logo*/}
-        <div className="flex flex-1">
+        <motion.div 
+          className="flex flex-1"
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <Link to="/" className="flex items-end">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
           </Link>
-        </div>
+        </motion.div>
         {/*Navbar*/}
         <div className="flex items-center justify-center flex-1">
           <Navbar
@@ -58,12 +69,17 @@ const Header = () => {
             />
           </div>
           {/*Get started button*/}
-          <div className="hidden lg:block">
+          <motion.div 
+            className="hidden lg:block"
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
             <Link to="/login" className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2">Get Started</Link>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

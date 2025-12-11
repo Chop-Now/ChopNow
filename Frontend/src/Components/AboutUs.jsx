@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { motion } from "motion/react";
 
 const AboutUs = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -38,15 +39,35 @@ const AboutUs = () => {
 
   return (
     <div id='AboutUs' className="px-4 py-12 md:py-16">
-      <h1 className="text-3xl md:text-4xl font-semibold text-center mx-auto" style={{ color: 'var(--color-textColor)' }}>About Us</h1>
-      <p className="text-sm md:text-base text-center mt-2 max-w-lg mx-auto" style={{ color: 'var(--color-gray-50)' }}>
+      <motion.h1 
+        className="text-3xl md:text-4xl font-semibold text-center mx-auto" 
+        style={{ color: 'var(--color-textColor)' }}
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        About Us
+      </motion.h1>
+      <motion.p 
+        className="text-sm md:text-base text-center mt-2 max-w-lg mx-auto" 
+        style={{ color: 'var(--color-gray-50)' }}
+        initial={{ y: -20, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+      >
         Our origin, our purpose, our vision. This is our story.
-      </p>
+      </motion.p>
       
       {/* Desktop View */}
       <div className="hidden md:flex items-center gap-2 h-[400px] w-full max-w-4xl mt-10 mx-auto">
         {sections.map((section, index) => (
-          <div 
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }} 
             key={index}
             className="relative group grow transition-all w-56 rounded-lg overflow-hidden h-[400px] duration-500 hover:w-full cursor-pointer"
             onMouseEnter={() => setActiveIndex(index)}
@@ -65,13 +86,19 @@ const AboutUs = () => {
                 {section.description}
               </p>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Mobile View */}
       <div className="md:hidden mt-10 max-w-md mx-auto">
-        <div className="relative rounded-lg overflow-hidden h-[400px]">
+        <motion.div 
+          className="relative rounded-lg overflow-hidden h-[400px]"
+          initial={{ scale: 0.9, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
           <img 
             className="h-full w-full object-cover object-center"
             src={sections[activeIndex].image}
@@ -86,10 +113,16 @@ const AboutUs = () => {
               {sections[activeIndex].description}
             </p>
           </div>
-        </div>
+        </motion.div>
         
-        {/* Navigation Dots */}
-        <div className="flex justify-center gap-2 mt-6">
+        {/* Navigation Dots */ }
+        <motion.div 
+          className="flex justify-center gap-2 mt-6"
+          initial={{ y: 20, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
           {sections.map((_, index) => (
             <button
               key={index}
@@ -102,7 +135,7 @@ const AboutUs = () => {
               aria-label={`View section ${index + 1}`}
             />
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   )

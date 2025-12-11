@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { Video, X } from "lucide-react";
 import { assets } from "../assets/assets.js";
 
@@ -49,7 +50,12 @@ const Hero = () => {
       <div className="h-screen w-full rounded-2xl relative overflow-hidden">
         
         {/* Badge centered at top */}
-        <div className="absolute top-20 md:top-24 left-1/2 transform -translate-x-1/2 z-10">
+        <motion.div 
+          className="absolute top-20 md:top-24 left-1/2 transform -translate-x-1/2 z-10"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        >
           <div className='flex items-center gap-2 md:gap-2 border border-gray-300 p-1.5 md:p-2 pr-3 md:pr-4 rounded-full bg-white/80 backdrop-blur-sm whitespace-nowrap'>
             <div className='flex -space-x-2'>
               <img 
@@ -75,30 +81,41 @@ const Hero = () => {
             </div>
             <p className='text-[11px] md:text-xs font-medium'>Trusted by 1000+ consumers across Africa</p>
           </div>
-        </div>
+        </motion.div>
         
         {/*Container with Flex Layout*/}
         <div className="mx-auto max-w-[1440px] px-4 h-full flex flex-col lg:flex-row items-center md:items-center lg:items-start justify-between pt-44 md:pt-40 lg:pt-32 gap-2 md:gap-4 lg:gap-8">
           
           {/* Left Side - Content */}
           <div className="flex-1 max-w-[650px] relative z-10 w-full lg:mt-24 text-center lg:text-left">
-            <h2 
+            <motion.h2 
               className="mb-3 font-bold leading-tight"
               style={{ fontSize: 'clamp(24px, 5vw, 42px)' }}
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
             >
               Rescue <span className="text-solidOne">Surplus Meals</span> <br />{" "}
               Elevate Taste <br />{" "}
               <span className="text-solidTwo">Sustain Tomorrow</span>
-            </h2>
-            <p 
+            </motion.h2>
+            <motion.p 
               className="leading-relaxed max-w-lg mb-5 mx-auto lg:mx-0"
               style={{ fontSize: 'clamp(14px, 2.5vw, 16px)', lineHeight: '1.5' }}
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.6, ease: "easeOut" }}
             >
               ChopNow connects you with African grocers, restaurants, and
               farmers to discover fresh surplus meals at up to 70% off —
               reducing food waste while fueling communities.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center md:justify-center lg:justify-start gap-2 sm:gap-2.5 mb-5">
+            </motion.p>
+            <motion.div 
+              className="flex flex-col sm:flex-row items-center sm:items-center justify-center md:justify-center lg:justify-start gap-2 sm:gap-2.5 mb-5"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+            >
                 <Link to="/login" className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto flex items-center justify-center">
                     Get started
                 </Link>
@@ -108,10 +125,15 @@ const Hero = () => {
                   <Video size={18} />
                     <span>Watch demo</span>
                 </button>
-            </div>
+            </motion.div>
             
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-3 md:gap-5 mt-5 max-w-xl mx-auto lg:mx-0">
+            <motion.div 
+              className="grid grid-cols-4 gap-3 md:gap-5 mt-5 max-w-xl mx-auto lg:mx-0"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1, ease: "easeOut" }}
+            >
               <div>
                 <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count1}+</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Launch Partners</p>
@@ -128,37 +150,53 @@ const Hero = () => {
                 <h4 className="font-bold mb-0.5 text-base md:text-xl" style={{ color: 'var(--color-solid)' }}>{count4}</h4>
                 <p className="text-[8px] md:text-xs leading-tight" style={{ color: 'var(--color-textColor)' }}>Countries</p>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Right Side - Background Image */}
-          <div className="flex-1 w-full h-[420px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-110 md:-mt-60 lg:-mt-72">
+          <motion.div 
+            className="flex-1 w-full h-[420px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-110 md:-mt-60 lg:-mt-72"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+          >
             <img 
               src={assets.bg} 
               alt="ChopNow" 
               className="w-[120%] h-[120%] object-cover"
             />
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Video Modal */}
       {isModalOpen && (
-        <div 
+        <motion.div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={() => setIsModalOpen(false)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
           <div className="relative w-full max-w-4xl">
-            <button
+            <motion.button
               onClick={() => setIsModalOpen(false)}
               className="absolute -top-14 right-0 z-10 bg-white hover:bg-gray-100 rounded-full p-2.5 transition-all active:scale-95 shadow-lg"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              whileHover={{ scale: 1.1, rotate: 90 }}
             >
               <X size={28} className="text-gray-800 cursor-pointer" />
-            </button>
-            <div 
+            </motion.button>
+            <motion.div 
               className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)]"
               onClick={(e) => e.stopPropagation()}
               style={{ boxShadow: '0 0 60px rgba(255, 255, 255, 0.2), 0 20px 50px rgba(0, 0, 0, 0.8)' }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
             >
               <iframe
                 width="100%"
@@ -170,9 +208,9 @@ const Hero = () => {
                 allowFullScreen
                 className="w-full h-full"
               ></iframe>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

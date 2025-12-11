@@ -1,6 +1,7 @@
 import { Linkedin } from 'lucide-react'
 import React from 'react'
 import { FlipCard } from "./animate-ui/components/community/flip-card";
+import { motion } from "motion/react";
 
 const Advisors = () => {
   const advisors = [
@@ -32,8 +33,26 @@ const Advisors = () => {
 
   return (
     <div className="flex flex-col items-center text-center px-6 md:px-4 py-12 md:py-16" id="advisors">
-      <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>Meet Our Advisors</h1>
-      <p className="max-w-2xl mb-12 text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>Industry leaders guiding ChopNow's mission to transform food access and sustainability.</p>
+      <motion.h1 
+        className="text-3xl md:text-4xl font-semibold mb-4" 
+        style={{ color: 'var(--color-textColor)' }}
+        initial={{ y: -30, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        Meet Our Advisors
+      </motion.h1>
+      <motion.p 
+        className="max-w-2xl mb-12 text-sm md:text-base" 
+        style={{ color: 'var(--color-gray-50)' }}
+        initial={{ y: -20, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+      >
+        Industry leaders guiding ChopNow's mission to transform food access and sustainability.
+      </motion.p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-sm sm:max-w-6xl w-full">
         {advisors.map((advisor, index) => {
           const cardData = {
@@ -45,7 +64,17 @@ const Advisors = () => {
               linkedin: '#'
             }
           };
-          return <FlipCard key={index} data={cardData} />;
+          return (
+            <motion.div
+              key={index}
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }}
+            >
+              <FlipCard data={cardData} />
+            </motion.div>
+          );
         })}
       </div>
 </div>

@@ -1,10 +1,15 @@
 import React from 'react'
 import { assets } from '../assets/assets'
+import { motion } from "motion/react";
 
 const Apps = () => {
   return (
     <div className="flex justify-center items-center px-4 py-12 md:py-16">
-      <div 
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }} 
         className="flex flex-col md:flex-row items-center justify-around text-sm rounded-2xl max-w-5xl w-full relative overflow-hidden"
         style={{ 
           backgroundColor: 'var(--color-primary)',
@@ -13,13 +18,44 @@ const Apps = () => {
         }}
       >
         <div className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3" style={{ backgroundColor: 'var(--color-solidOne)', color: 'white' }}>
+          <motion.div 
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3" 
+            style={{ backgroundColor: 'var(--color-solidOne)', color: 'white' }}
+            initial={{ y: -20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Coming Soon
-          </div>
-          <h2 className="md:text-4xl text-2xl font-semibold" style={{ color: 'var(--color-textColor)' }}>Download Mobile App</h2>
-          <p className="mt-2 w-3/4" style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}>Mobile app for iOS & Android to get a personalized feed of nearby surplus meals, exclusive drops, and smart pick-up reminders, all inside an intuitive experience built for busy urban explorers.</p>
+          </motion.div>
+          <motion.h2 
+            className="md:text-4xl text-2xl font-semibold" 
+            style={{ color: 'var(--color-textColor)' }}
+            initial={{ x: -30, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            Download Mobile App
+          </motion.h2>
+          <motion.p 
+            className="mt-2 w-3/4" 
+            style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}
+            initial={{ x: -30, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            Mobile app for iOS & Android to get a personalized feed of nearby surplus meals, exclusive drops, and smart pick-up reminders, all inside an intuitive experience built for busy urban explorers.
+          </motion.p>
 
-          <div className="flex items-center gap-4 mt-6">
+          <motion.div 
+            className="flex items-center gap-4 mt-6"
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             <button 
               aria-label="googlePlayBtn" 
               className="transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl" 
@@ -42,15 +78,19 @@ const Apps = () => {
                 alt="appleStoreBtn"
               />
             </button>
-          </div>
+          </motion.div>
         </div>
 
-        <img 
+        <motion.img
+          initial={{ x: 100, opacity: 0 }}
+          whileInView={{ x: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.4 }} 
           className="max-w-[375px] pt-10 md:p-0"
           src={assets.pointing}
           alt="Man pointing left" 
         />
-      </div>
+      </motion.div>
     </div>
   )
 }
