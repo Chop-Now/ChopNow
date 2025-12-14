@@ -95,7 +95,7 @@ const PageNavbar = () => {
             </div>
 
             {/* Mobile Icons */}
-            <div className="md:hidden flex items-center gap-3">
+            <div className="md:hidden flex items-center gap-4">
                 <div onClick={() => navigate('/cart')} className="relative cursor-pointer">
                     <ShoppingCart className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
                     <span 
@@ -113,7 +113,7 @@ const PageNavbar = () => {
                     <User className='w-4 h-4 text-white'/>
                 </button>
 
-                <button onClick={() => setOpen(!open)} aria-label="Menu" className="p-2">
+                <button onClick={() => setOpen(!open)} aria-label="Menu" className="p-0">
                     {open ? (
                         <X className='w-6 h-6' style={{ color: 'var(--color-textColor)' }}/>
                     ) : (
