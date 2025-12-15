@@ -4,6 +4,7 @@ import Home from './Pages/Home'
 import Login from './Pages/Login'
 import SignUp from './Pages/SignUp'
 import Shop from './Pages/Shop'
+import CategoryPage from './Pages/CategoryPage'
 import { Toaster } from 'react-hot-toast'
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<SignUp />} />
         <Route path='/shop' element={<Shop />} />
+        <Route path='/shop/:category' element={<CategoryPage />} />
       </Routes>
     </main>
   )

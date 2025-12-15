@@ -2,13 +2,20 @@ import React, { useEffect, useState } from 'react'
 import { useAppContext } from '@/context/AppContext';
 import ProductCard from './ProductCard';
 
-const Products = ({ sortBy, priceRange }) => {
+const Products = ({ sortBy, priceRange, category }) => {
 
     const {products, searchQuery} = useAppContext();
     const [filteredProducts, setFilteredProducts] = useState([])
 
     useEffect(() => {
        let filtered = products.filter(product => product.inStock)
+       
+       // Filter by category if provided
+       if(category){
+        filtered = filtered.filter(
+            product => product.category.toLowerCase() === category.toLowerCase()
+        )
+       }
        
        // Filter by search query
        if(searchQuery.length > 0){
@@ -33,7 +40,7 @@ const Products = ({ sortBy, priceRange }) => {
        }
        
        setFilteredProducts(filtered)
-    }, [products, searchQuery, sortBy, priceRange])
+    }, [products, searchQuery, sortBy, priceRange, category])
 
   const getSortTitle = () => {
     switch(sortBy) {
