@@ -56,8 +56,8 @@ const Categories = () => {
               {categories.map((category, index) => (
                 <div 
                   key={`${setIndex}-${index}`} 
-                  className="group cursor-pointer py-3 px-2 gap-2 rounded-lg flex flex-col justify-center items-center shrink-0"
-                  style={{backgroundColor: category.bgColor, minWidth: '120px', maxWidth: '120px'}}
+                  className="group cursor-pointer py-2.5 px-2 gap-1.5 rounded-lg flex flex-col justify-center items-center shrink-0"
+                  style={{backgroundColor: category.bgColor, minWidth: '105px', maxWidth: '105px'}}
                   onClick={() => {
                     navigate(`/shop/${category.path.toLowerCase()}`);
                     scrollTo(0, 0)
@@ -66,7 +66,7 @@ const Categories = () => {
                   <img
                     src={category.image}
                     alt={category.text}
-                    className="group-hover:scale-110 transition max-w-20"
+                    className="group-hover:scale-110 transition max-w-16"
                   />
                   <p className="text-xs font-medium">{category.text}</p>
                 </div>

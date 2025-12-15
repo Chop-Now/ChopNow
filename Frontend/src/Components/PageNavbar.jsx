@@ -1,12 +1,20 @@
 import { assets } from '@/assets/assets'
 import { Bell, Search, ShoppingCart, User, Menu, X } from 'lucide-react'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useAppContext } from '@/context/AppContext'
 
 const PageNavbar = () => {
     const [open, setOpen] = React.useState(false)
     const [showProfileMenu, setShowProfileMenu] = React.useState(false)
     const navigate = useNavigate()
+    const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
+
+    useEffect(() =>{
+        if(searchQuery.length > 0){
+            navigate('/shop')
+        }
+    }, [searchQuery])
 
   return (
     <>
@@ -42,6 +50,7 @@ const PageNavbar = () => {
 
                 <div className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full" style={{ border: '1px solid var(--color-gray-50)', backgroundColor: 'white' }}>
                     <input 
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-transparent outline-none text-sm"
                         style={{ color: 'var(--color-textColor)' }}
                         type="text" 
@@ -52,12 +61,14 @@ const PageNavbar = () => {
 
                 <div onClick={() => navigate('/cart')} className="relative cursor-pointer hover:opacity-70 transition-opacity">
                     <ShoppingCart className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
-                    <span 
-                        className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
-                        style={{ backgroundColor: 'var(--color-solid)' }}
-                    >
-                        3
-                    </span>
+                    {getTotalCartItems() > 0 && (
+                        <span 
+                            className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                            style={{ backgroundColor: 'var(--color-solid)' }}
+                        >
+                            {getTotalCartItems()}
+                        </span>
+                    )}
                 </div>
                 
                 <div className='relative cursor-pointer hover:opacity-70 transition-opacity'>
@@ -98,12 +109,14 @@ const PageNavbar = () => {
             <div className="md:hidden flex items-center gap-4">
                 <div onClick={() => navigate('/cart')} className="relative cursor-pointer">
                     <ShoppingCart className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
-                    <span 
-                        className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
-                        style={{ backgroundColor: 'var(--color-solid)' }}
-                    >
-                        3
-                    </span>
+                    {getTotalCartItems() > 0 && (
+                        <span 
+                            className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                            style={{ backgroundColor: 'var(--color-solid)' }}
+                        >
+                            {getTotalCartItems()}
+                        </span>
+                    )}
                 </div>
 
                 <button 
@@ -133,6 +146,8 @@ const PageNavbar = () => {
             <div className="flex items-center text-sm gap-2 px-3 py-2 rounded-full w-full" style={{ border: '1px solid var(--color-gray-50)' }}>
                 <Search className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
                 <input 
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchQuery}
                     className="w-full bg-transparent outline-none text-sm"
                     style={{ color: 'var(--color-textColor)' }}
                     type="text" 

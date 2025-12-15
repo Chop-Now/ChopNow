@@ -11,6 +11,11 @@ import fresh_fruits_image from './fresh_fruits_image.png';
 import grain_image from './grain_image.png';
 import maggi_image from './maggi_image.png';
 import organic_vegitable_image from './organic_vegitable_image.png'; 
+import potato_image_1 from "./potato_image_1.png";
+import potato_image_2 from "./potato_image_2.png";
+import potato_image_3 from "./potato_image_3.png";
+import potato_image_4 from "./potato_image_4.png";
+
 
 export const assets = {
     ChopNowLogo,
@@ -63,5 +68,28 @@ export const categories = [
     path: "Grains",
     image: grain_image,
     bgColor: "#F1E3F9",
+  },
+];
+
+export const dummyProducts = [
+  // Vegetables
+  {
+    _id: "1",
+    name: "Potato 500g",
+    category: "Vegetables",
+    vendor: "Fresh Farm",
+    location: {"Near" : "True"},
+    pickupTime: "4PM - 6PM Today",
+    price: 2500,
+    offerPrice: 1500,
+    image: [potato_image_1, potato_image_2, potato_image_3, potato_image_4],
+    description: [
+      "Fresh and organic",
+      "Rich in carbohydrates",
+      "Ideal for curries and fries",
+    ],
+    createdAt: "2025-03-25T07:17:46.018Z",
+    updatedAt: "2025-03-25T07:18:13.103Z",
+    inStock: true,
   },
 ];
