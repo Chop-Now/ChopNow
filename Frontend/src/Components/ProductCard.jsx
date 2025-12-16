@@ -10,21 +10,21 @@ const ProductCard = ({product}) => {
   const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
 
   return product && (
-    <div className="relative border rounded-xl md:px-4 px-3 py-1.5 bg-white w-full shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: '#E5E5E5' }}>
+    <div className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-shadow overflow-hidden" style={{ borderColor: '#E5E5E5' }}>
             {/* Discount Badge */}
             {discountPercent > 0 && (
                 <div 
-                    className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold text-white"
+                    className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold text-white z-10"
                     style={{ backgroundColor: 'var(--color-solidOne)' }}
                 >
                     {discountPercent}% OFF
                 </div>
             )}
             
-            <div className="group cursor-pointer flex items-center justify-center px-2 py-1">
-                <img className="group-hover:scale-105 transition max-w-24 md:max-w-32" src={product.image[0]} alt={product.name} />
+            <div className="relative cursor-pointer h-32 md:h-40 overflow-hidden">
+                <img className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" src={product.image[0]} alt={product.name} />
             </div>
-            <div className="text-sm">
+            <div className="text-sm px-3 md:px-4 pb-3 pt-2">
                 <p className="font-medium text-base truncate w-full mb-0.5" style={{ color: 'var(--color-textColor)' }}>{product.name}</p>
                 <div className="flex items-center gap-1 text-xs mb-0.5" style={{ color: 'var(--color-gray-50)' }}>
                   <span>{product.vendor}</span>
