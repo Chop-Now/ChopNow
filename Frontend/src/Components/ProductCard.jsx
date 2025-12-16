@@ -10,7 +10,7 @@ const ProductCard = ({product}) => {
   const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
 
   return product && (
-    <div className="relative border rounded-xl md:px-4 px-3 py-2 bg-white min-w-60 max-w-60 w-full shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: '#E5E5E5' }}>
+    <div className="relative border rounded-xl md:px-4 px-3 py-1.5 bg-white w-full shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: '#E5E5E5' }}>
             {/* Discount Badge */}
             {discountPercent > 0 && (
                 <div 
@@ -25,18 +25,18 @@ const ProductCard = ({product}) => {
                 <img className="group-hover:scale-105 transition max-w-24 md:max-w-32" src={product.image[0]} alt={product.name} />
             </div>
             <div className="text-sm">
-                <p className="font-medium text-base truncate w-full mb-1" style={{ color: 'var(--color-textColor)' }}>{product.name}</p>
-                <div className="flex items-center gap-1 text-xs mb-1" style={{ color: 'var(--color-gray-50)' }}>
+                <p className="font-medium text-base truncate w-full mb-0.5" style={{ color: 'var(--color-textColor)' }}>{product.name}</p>
+                <div className="flex items-center gap-1 text-xs mb-0.5" style={{ color: 'var(--color-gray-50)' }}>
                   <span>{product.vendor}</span>
                    <span>•</span>
                     <span className="font-medium" style={{ color: 'var(--color-solid)' }}>
                         {product.location?.Near === 'True' ? '1km' : '5km'}
                     </span>
                 </div>
-                <p className="text-xs mb-2" style={{ color: 'var(--color-gray-50)' }}>
+                <p className="text-xs mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
                     Pickup at {product.pickupTime}
                 </p>
-                <div className="flex items-end justify-between mt-3">
+                <div className="flex items-end justify-between mt-2">
                     <div>
                         <p className="md:text-lg text-base font-semibold" style={{ color: 'var(--color-solid)' }}>
                             RWF {product.offerPrice.toLocaleString()}

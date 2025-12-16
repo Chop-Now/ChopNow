@@ -13,11 +13,10 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
 
   return (
     <div 
-      className="w-full flex flex-col rounded-2xl p-5 sticky top-4"
+      className="w-full flex flex-col rounded-2xl p-5 h-full"
       style={{ 
         backgroundColor: 'white',
-        border: '1px solid #E5E5E5',
-        minHeight: 'calc(100vh - 250px)'
+        border: '1px solid #E5E5E5'
       }}
     >
       {/* Sort By Section */}

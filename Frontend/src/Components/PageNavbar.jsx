@@ -1,10 +1,10 @@
 import { assets } from '@/assets/assets'
-import { Bell, Search, ShoppingCart, User, Menu, X } from 'lucide-react'
+import { Bell, Search, ShoppingCart, User, X, Funnel } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAppContext } from '@/context/AppContext'
 
-const PageNavbar = () => {
+const PageNavbar = ({ onMobileFilterClick }) => {
     const [open, setOpen] = React.useState(false)
     const [showProfileMenu, setShowProfileMenu] = React.useState(false)
     const navigate = useNavigate()
@@ -18,7 +18,7 @@ const PageNavbar = () => {
 
   return (
     <>
-    <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b relative transition-all bg-white" style={{ borderColor: '#E5E5E5' }}>
+    <nav className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b transition-all bg-white shadow-sm" style={{ borderColor: '#E5E5E5' }}>
 
             <NavLink to='/' onClick={() => setOpen(false)}>
                 <img src={assets.ChopNowLogo} alt="ChopNow Logo" className='h-9'/>
@@ -153,6 +153,15 @@ const PageNavbar = () => {
                     type="text" 
                     placeholder="Search products" 
                 />
+                {onMobileFilterClick && (
+                    <button 
+                        onClick={onMobileFilterClick}
+                        className="p-1 hover:opacity-70 transition-opacity"
+                        aria-label="Filter"
+                    >
+                        <Funnel className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
+                    </button>
+                )}
             </div>
         </div>
 
