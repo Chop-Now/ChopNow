@@ -1,21 +1,30 @@
 import { assets } from '@/assets/assets'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, MapPin, LocateFixed } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import LocationPicker from '@/Components/maps/LocationPicker'
+import { useGeolocation } from '@/Components/maps/useGeolocation'
+import { reverseGeocode, searchAddress } from '@/services/geocoding'
+import toast from 'react-hot-toast'
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [address, setAddress] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const { getCurrentLocation } = useGeolocation();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-0">
-      <div className="flex w-full h-screen">
+    <div className="min-h-screen w-full flex">
+      <div className="flex w-full">
         {/* Left Side - Image (Hidden on mobile) */}
-        <div className="w-1/2 hidden md:block">
+        <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
           <img className="h-full w-full object-cover" src={assets.login_bg} alt="Login background" />
         </div>
 
         {/* Right Side - Form Container */}
-        <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-4">
+        <div className="w-full md:w-1/2 md:ml-[50%] flex flex-col items-center justify-center px-4 py-8">
           {/* Logo */}
           <div className="mb-8">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
@@ -84,6 +93,127 @@ const Login = () => {
                   <label className="text-sm cursor-pointer" htmlFor="checkbox" style={{ color: 'var(--color-gray-50)' }}>Remember me</label>
                 </div>
                 <a className="text-sm hover:underline" href="#" style={{ color: 'var(--color-solid)' }}>Forgot password?</a>
+              </div>
+
+              {/* Location Section */}
+              <div className="mt-6">
+                <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
+                
+                {/* Use Current Location Button */}
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    setIsLoadingLocation(true);
+                    getCurrentLocation(
+                      async (coords) => {
+                        setLocation(coords);
+                        try {
+                          const result = await reverseGeocode(coords.lat, coords.lng);
+                          setAddress(result.display_name || 'Location detected');
+                          toast.success('Location detected successfully!');
+                        } catch (error) {
+                          toast.error('Could not fetch address');
+                        }
+                        setIsLoadingLocation(false);
+                      },
+                      (error) => {
+                        toast.error(error);
+                        setIsLoadingLocation(false);
+                      }
+                    );
+                  }}
+                  disabled={isLoadingLocation}
+                  className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                    {isLoadingLocation ? 'Detecting location...' : 'Use my current location'}
+                  </span>
+                </button>
+
+                {/* Manual Address Input */}
+                <div className="mt-3 relative">
+                  <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                    <input 
+                      type="text" 
+                      placeholder="Or enter address manually" 
+                      value={manualAddress}
+                      onChange={(e) => setManualAddress(e.target.value)}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (manualAddress.trim()) {
+                            try {
+                              const results = await searchAddress(manualAddress);
+                              if (results && results.length > 0) {
+                                const result = results[0];
+                                setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                                setAddress(result.display_name);
+                                toast.success('Address found!');
+                              } else {
+                                toast.error('Address not found');
+                              }
+                            } catch (error) {
+                              toast.error('Could not search address');
+                            }
+                          }
+                        }
+                      }}
+                      className="bg-transparent outline-none text-sm w-full h-full" 
+                      style={{ color: 'var(--color-textColor)' }}
+                    />                 
+                  </div>
+                  {manualAddress && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (manualAddress.trim()) {
+                          try {
+                            const results = await searchAddress(manualAddress);
+                            if (results && results.length > 0) {
+                              const result = results[0];
+                              setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                              setAddress(result.display_name);
+                              toast.success('Address found!');
+                            } else {
+                              toast.error('Address not found');
+                            }
+                          } catch (error) {
+                            toast.error('Could not search address');
+                          }
+                        }
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white"
+                      style={{ backgroundColor: 'var(--color-solid)' }}
+                    >
+                      Search
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected Address Display */}
+                {address && (
+                  <p className="mt-2 text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                    Selected: {address}
+                  </p>
+                )}
+
+                {/* Map */}
+                <div className="mt-4">
+                  <LocationPicker 
+                    selectedLocation={location}
+                    onLocationSelect={async (latlng) => {
+                      setLocation({ lat: latlng.lat, lng: latlng.lng });
+                      try {
+                        const result = await reverseGeocode(latlng.lat, latlng.lng);
+                        setAddress(result.display_name || 'Location selected');
+                      } catch (error) {
+                        setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+                      }
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Login Button */}
