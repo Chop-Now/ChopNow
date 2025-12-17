@@ -1,16 +1,24 @@
 import { ShoppingCart } from 'lucide-react';
 import React, { useEffect } from 'react'
 import { useAppContext } from '@/context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({product}) => {
 
-  const { addToCart, removeFromCart, cartItems } = useAppContext();
+  const { addToCart, removeFromCart, cartItems, setSearchQuery } = useAppContext();
+  const navigate = useNavigate();
   
   // Calculate discount percentage
   const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
 
+  const handleProductClick = () => {
+    setSearchQuery(''); // Clear search query before navigating
+    navigate(`/shop/${product.category.toLowerCase()}/${product._id}`);
+    window.scrollTo(0, 0);
+  };
+
   return product && (
-    <div className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-shadow overflow-hidden" style={{ borderColor: '#E5E5E5' }}>
+    <div onClick={handleProductClick} className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-shadow overflow-hidden cursor-pointer" style={{ borderColor: '#E5E5E5' }}>
             {/* Discount Badge */}
             {discountPercent > 0 && (
                 <div 

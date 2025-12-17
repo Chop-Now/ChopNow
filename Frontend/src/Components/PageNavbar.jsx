@@ -11,7 +11,8 @@ const PageNavbar = ({ onMobileFilterClick }) => {
     const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
 
     useEffect(() =>{
-        if(searchQuery.length > 0){
+        // Only navigate to shop if we're not already on a shop-related page
+        if(searchQuery.length > 0 && !window.location.pathname.startsWith('/shop')){
             navigate('/shop')
         }
     }, [searchQuery])

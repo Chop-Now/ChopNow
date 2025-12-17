@@ -87,6 +87,8 @@ export const dummyProducts = [
     name: "Potato 500g",
     category: "Vegetables",
     vendor: "Fresh Farm",
+    rating: 4.5,
+    quantity: 5,
     location: {"Near" : "True"},
     pickupTime: "4PM - 6PM Today",
     price: 2500,
@@ -106,6 +108,17 @@ export const dummyProducts = [
     name: "Sandwich Bread",
     category: "Bakery",
     vendor: "The Corner Cafe",
+    rating: 4.7,
+    dietary_information: ["Vegetarian", "Dairy Free"],
+    ingredients_allergens: [
+          {
+            ingredient: "Wheat Flour, water sea salt"
+          },
+          {
+            contains: "Wheat. May Contain traces of nuts and soy"
+          }
+    ],
+    quantity: 3,
     location: {"Near" : "True"},
     pickupTime: "2PM - 4PM Today",
     price: 1200,
@@ -113,7 +126,7 @@ export const dummyProducts = [
     image: [sandwich],
     description: [
       "Soft and fresh",
-      "Perfect for sandwiches",
+      "The perfect sandwich bread for you, it is prepared with the utmost care to suit your taste buds.",
       "Baked daily",
     ],
     createdAt: "2025-03-26T10:12:30.000Z",
@@ -220,6 +233,7 @@ export const dummyProducts = [
     name: "Cheese Block 200g",
     category: "Dairy",
     vendor: "Cheese World",
+    quantity: 5,
     location: {"Near" : "False"},
     pickupTime: "2PM - 4PM Today",
     price: 2500,
