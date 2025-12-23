@@ -8,6 +8,7 @@ import CategoryPage from './Pages/CategoryPage'
 import { Toaster } from 'react-hot-toast'
 import ProductDetails from './Pages/ProductDetails'
 import Cart from './Pages/Cart'
+import MyOrders from './Pages/MyOrders'
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
         <Route path='/shop/:category' element={<CategoryPage />} />
         <Route path='/shop/:category/:id' element={<ProductDetails />} />
         <Route path='/cart' element={<Cart />} />
+        <Route path='/my-orders' element={<MyOrders />} />
       </Routes>
     </main>
   )

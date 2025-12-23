@@ -25,6 +25,7 @@ import noodle from "./noodle.jpg";
 import pastry_box from "./pastry_box.jpg";
 import plain_yoghurt from "./plain_yoghurt.png";
 import sandwich from "./sandwich.jpg";
+import oops from "./oops.png";
 
 export const assets = {
     ChopNowLogo,
@@ -33,6 +34,7 @@ export const assets = {
     fresh_produce,
     login_bg,
     google,
+    oops,
 }
 
 export const categories = [
@@ -304,4 +306,52 @@ export const dummyProducts = [
     updatedAt: "2025-04-02T11:30:00.000Z",
     inStock: true,
   }
+];
+
+export const dummyOrders = [
+  {
+    _id: "CN78901",
+    userId: "67b5880e4d09769c5ca61644",
+    items: [
+      {
+        product: dummyProducts[3],
+        quantity: 2,
+        _id: "2",
+      },
+    ],
+    vendor: "Cool Drinks Co.",
+    order_type: "Single Order",
+    type: "Pickup",
+    amount: 8900,
+    status: "Processing",
+    paymentMethod: "Momo by MTN",
+    isPaid: true,
+    createdAt: "2025-12-23T07:17:46.018Z",
+    updatedAt: "2025-12-23T07:18:13.103Z",
+  },
+  {
+    _id: "CN78852",
+    userId: "67b5880e4d09769c5ca61644",
+    items: [
+      {
+        product: dummyProducts[0],
+        quantity: 1,
+        _id: "1",
+      },
+      {
+        product: dummyProducts[1],
+        quantity: 1,
+        _id: "2",
+      },
+    ],
+    vendor: "Fresh Farm",
+    order_type: "Multiple Order",
+    type: "Delivery",
+    amount: 17000,
+    status: "Completed",
+    paymentMethod: "Credit Card",
+    isPaid: false,
+    createdAt: "2025-12-19T07:17:13.068Z",
+    updatedAt: "2025-12-19T07:17:13.068Z",
+  },
 ];

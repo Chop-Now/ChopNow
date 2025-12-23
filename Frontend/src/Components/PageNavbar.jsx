@@ -1,14 +1,18 @@
 import { assets } from '@/assets/assets'
 import { Bell, Search, ShoppingCart, User, X, Funnel } from 'lucide-react'
 import React, { useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAppContext } from '@/context/AppContext'
 
 const PageNavbar = ({ onMobileFilterClick }) => {
     const [open, setOpen] = React.useState(false)
     const [showProfileMenu, setShowProfileMenu] = React.useState(false)
     const navigate = useNavigate()
+    const location = useLocation()
     const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
+    
+    // Check if we're on cart or my-orders page
+    const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders'
 
     useEffect(() =>{
         // Only navigate to shop if we're not already on a shop-related page
@@ -35,7 +39,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                     Home
                 </NavLink>
                 <NavLink 
-                    to='#' 
+                    to='/my-orders' 
                     className="text-sm font-medium hover:opacity-70 transition-opacity"
                     style={{ color: 'var(--color-textColor)' }}
                 >
@@ -49,16 +53,18 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                     Impact
                 </NavLink> 
 
-                <div className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full" style={{ border: '1px solid var(--color-gray-50)', backgroundColor: 'white' }}>
-                    <input 
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-transparent outline-none text-sm"
-                        style={{ color: 'var(--color-textColor)' }}
-                        type="text" 
-                        placeholder="Search products" 
-                    />
-                    <Search className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
-                </div>
+                {!hideSearch && (
+                    <div className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full" style={{ border: '1px solid var(--color-gray-50)', backgroundColor: 'white' }}>
+                        <input 
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-transparent outline-none text-sm"
+                            style={{ color: 'var(--color-textColor)' }}
+                            type="text" 
+                            placeholder="Search products" 
+                        />
+                        <Search className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
+                    </div>
+                )}
 
                 <div onClick={() => navigate('/cart')} className="relative cursor-pointer hover:opacity-70 transition-opacity">
                     <ShoppingCart className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
@@ -143,28 +149,30 @@ const PageNavbar = ({ onMobileFilterClick }) => {
         </nav>
 
         {/* Mobile Search Bar - Below Navbar */}
-        <div className="md:hidden px-6 py-3 bg-white border-b" style={{ borderColor: '#E5E5E5' }}>
-            <div className="flex items-center text-sm gap-2 px-3 py-2 rounded-full w-full" style={{ border: '1px solid var(--color-gray-50)' }}>
-                <Search className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
-                <input 
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    value={searchQuery}
-                    className="w-full bg-transparent outline-none text-sm"
-                    style={{ color: 'var(--color-textColor)' }}
-                    type="text" 
-                    placeholder="Search products" 
-                />
-                {onMobileFilterClick && (
-                    <button 
-                        onClick={onMobileFilterClick}
-                        className="p-1 hover:opacity-70 transition-opacity"
-                        aria-label="Filter"
-                    >
-                        <Funnel className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
-                    </button>
-                )}
+        {!hideSearch && (
+            <div className="md:hidden px-6 py-3 bg-white border-b" style={{ borderColor: '#E5E5E5' }}>
+                <div className="flex items-center text-sm gap-2 px-3 py-2 rounded-full w-full" style={{ border: '1px solid var(--color-gray-50)' }}>
+                    <Search className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
+                    <input 
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={searchQuery}
+                        className="w-full bg-transparent outline-none text-sm"
+                        style={{ color: 'var(--color-textColor)' }}
+                        type="text" 
+                        placeholder="Search products" 
+                    />
+                    {onMobileFilterClick && (
+                        <button 
+                            onClick={onMobileFilterClick}
+                            className="p-1 hover:opacity-70 transition-opacity"
+                            aria-label="Filter"
+                        >
+                            <Funnel className='w-4 h-4' style={{ color: 'var(--color-gray-50)' }}/>
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
+        )}
 
         {/* Dark Overlay - More Transparent */}
         {open && (
@@ -198,7 +206,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         Home
                     </NavLink>
                     <NavLink 
-                        to='#' 
+                        to='/my-orders' 
                         onClick={() => setOpen(false)}
                         className="text-sm font-medium py-2"
                         style={{ color: 'var(--color-textColor)' }}
