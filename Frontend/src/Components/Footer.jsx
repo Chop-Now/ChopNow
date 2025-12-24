@@ -8,7 +8,7 @@ const Footer = () => {
   const linkSections = [
         {
             title: "Quick Links",
-            links: ["Home", "Contact Us", "FAQs"]
+            links: ["Contact Us", "FAQs"]
         },
         {
             title: "Need Help?",

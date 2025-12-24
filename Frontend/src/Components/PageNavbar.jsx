@@ -11,8 +11,8 @@ const PageNavbar = ({ onMobileFilterClick }) => {
     const location = useLocation()
     const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
     
-    // Check if we're on cart or my-orders page
-    const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders'
+    // Check if we're on cart or my-orders or my-impact page
+    const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders' || location.pathname === '/my-impact'
 
     useEffect(() =>{
         // Only navigate to shop if we're not already on a shop-related page
@@ -36,7 +36,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                     className="text-sm font-medium hover:opacity-70 transition-opacity"
                     style={{ color: 'var(--color-textColor)' }}
                 >
-                    Home
+                    Shop
                 </NavLink>
                 <NavLink 
                     to='/my-orders' 
@@ -46,7 +46,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                     My orders
                 </NavLink>
                 <NavLink 
-                    to='#' 
+                    to='/my-impact' 
                     className="text-sm font-medium hover:opacity-70 transition-opacity"
                     style={{ color: 'var(--color-textColor)' }}
                 >
@@ -214,7 +214,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         My Orders
                     </NavLink>
                     <NavLink 
-                        to='#' 
+                        to='/my-impact' 
                         onClick={() => setOpen(false)}
                         className="text-sm font-medium py-2"
                         style={{ color: 'var(--color-textColor)' }}
