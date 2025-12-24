@@ -30,47 +30,47 @@ const MyImpact = () => {
         
         <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
           {/* Header */}
-          <div className='mb-6'>
+          <div className='mb-6 text-center'>
             <h2 className='text-xl font-bold text-gray-900 mb-1'>Your Impact Summary</h2>
             <p className='text-sm text-gray-600'>Thank you for making a difference! Here's a summary of your positive environmental impact.</p>
           </div>
 
           {/* Stats Cards */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+          <div className='grid grid-cols-3 gap-2 md:gap-4 mb-8'>
             {/* Meals Rescued Card */}
-            <div className='bg-white rounded-lg shadow-md p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer'>
-              <div className='flex items-center justify-between mb-1'>
-                <Leaf className='w-6 h-6' style={{ color: 'var(--color-solid)' }} />
+            <div className='bg-white rounded-lg shadow-md p-3 md:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center'>
+              <div className='flex items-center justify-center mb-1'>
+                <Leaf className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className='text-gray-600 text-xs font-medium mb-1'>Meals Rescued</h3>
-              <p className='text-2xl font-bold text-gray-900'>123</p>
+              <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Meals Rescued</h3>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>123</p>
             </div>
 
             {/* CO2e Saved Card */}
-            <div className='bg-white rounded-lg shadow-md p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer'>
-              <div className='flex items-center justify-between mb-1'>
-                <Wind className='w-6 h-6' style={{ color: 'var(--color-solid)' }} />
+            <div className='bg-white rounded-lg shadow-md p-3 md:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center'>
+              <div className='flex items-center justify-center mb-1'>
+                <Wind className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className='text-gray-600 text-xs font-medium mb-1'>CO2e Saved</h3>
-              <p className='text-2xl font-bold text-gray-900'>310<span className='text-base'>kg</span></p>
+              <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>CO2e Saved</h3>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>310<span className='text-sm md:text-base'>kg</span></p>
             </div>
 
             {/* Water Saved Card */}
-            <div className='bg-white rounded-lg shadow-md p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer'>
-              <div className='flex items-center justify-between mb-1'>
-                <Droplets className='w-6 h-6' style={{ color: 'var(--color-solid)' }} />
+            <div className='bg-white rounded-lg shadow-md p-3 md:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center'>
+              <div className='flex items-center justify-center mb-1'>
+                <Droplets className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className='text-gray-600 text-xs font-medium mb-1'>Water Saved</h3>
-              <p className='text-2xl font-bold text-gray-900'>155,000<span className='text-base'>L</span></p>
+              <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Water Saved</h3>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>155,000<span className='text-sm md:text-base'>L</span></p>
             </div>
           </div>
 
           {/* Milestones Section */}
           <div className='mb-8'>
-            <h2 className='text-lg font-bold text-gray-900 mb-1'>Your Contribution Milestones</h2>
-            <p className='text-sm text-gray-600 mb-4'>See how you're progressing towards the next level of impact.</p>
+            <h2 className='text-lg font-bold text-gray-900 mb-1 text-center'>Your Contribution Milestones</h2>
+            <p className='text-sm text-gray-600 mb-4 text-center'>See how you're progressing towards the next level of impact.</p>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto'>
               {/* Meals Milestone Card */}
               <div className='bg-white rounded-lg shadow-md p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300'>
                 <div className='flex items-start justify-between mb-3'>
