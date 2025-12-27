@@ -21,7 +21,7 @@ import cucumber from "./cucumber.jpg";
 import fresh_tomatoes from "./fresh_tomatoes.jpg";
 import lemonade from "./lemonade.jpg";
 import mango from "./mango.jpg";
-import noodle from "./noodle.jpg";
+import noodle from "./noodle.JPG";
 import pastry_box from "./pastry_box.jpg";
 import plain_yoghurt from "./plain_yoghurt.png";
 import sandwich from "./sandwich.jpg";
