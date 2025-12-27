@@ -155,7 +155,7 @@ const Hero = () => {
 
           {/* Right Side - Background Image */}
           <motion.div 
-            className="flex-1 w-full h-[420px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-110 md:-mt-60 lg:-mt-72"
+            className="flex-1 w-full h-[420px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-60 md:-mt-60 lg:-mt-72"
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
@@ -163,7 +163,7 @@ const Hero = () => {
             <img 
               src={assets.bg} 
               alt="ChopNow" 
-              className="w-[120%] h-[120%] object-cover"
+              className="w-full md:w-[120%] h-[120%] object-cover"
             />
           </motion.div>
         </div>
