@@ -14,7 +14,7 @@ const MilestoneCard = ({ image, badge, title, description }) => {
 
     return (
         <div 
-            className="rounded-xl shadow-xl overflow-hidden transition-transform duration-200 ease-out cursor-pointer bg-white w-full"
+            className="rounded-xl shadow-xl overflow-hidden transition-transform duration-200 ease-out cursor-pointer bg-white w-full h-full flex flex-col"
             onMouseMove={handleMove}
             onMouseLeave={() => setTilt({ x: 0, y: 0 })}
             style={{ transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
@@ -31,7 +31,7 @@ const MilestoneCard = ({ image, badge, title, description }) => {
                     {badge}
                 </div>
             </div>
-            <div className="p-5">
+            <div className="p-5 flex-grow">
                 <h3 className="mb-3 text-lg font-semibold" style={{ color: 'var(--color-textColor)' }}>
                     {title}
                 </h3>

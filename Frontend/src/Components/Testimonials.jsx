@@ -58,14 +58,14 @@ const Testimonials = () => {
           Real stories from vendors, consumers, and partners making a difference with ChopNow.
         </p>
       </motion.div>
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
         <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
-      </motion.div>
+      </motion.div> */}
       
       {/* CTA Section */}
       <motion.div 

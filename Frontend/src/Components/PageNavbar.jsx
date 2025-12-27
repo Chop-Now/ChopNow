@@ -78,7 +78,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                     )}
                 </div>
                 
-                <div className='relative cursor-pointer hover:opacity-70 transition-opacity'>
+                <div onClick={() => navigate('/notifications')} className='relative cursor-pointer hover:opacity-70 transition-opacity'>
                     <Bell className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
                     <span 
                         className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
@@ -203,7 +203,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         className="text-sm font-medium py-2"
                         style={{ color: 'var(--color-textColor)' }}
                     >
-                        Home
+                        Shop
                     </NavLink>
                     <NavLink 
                         to='/my-orders' 
@@ -222,7 +222,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         Impact
                     </NavLink>
                     
-                    <div className="flex items-center gap-6 pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
+                    <div onClick={() => navigate('/notifications') } className="flex items-center gap-6 pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
                         <div className='relative cursor-pointer'>
                             <Bell className='w-5 h-5' style={{ color: 'var(--color-textColor)' }}/>
                             <span 
