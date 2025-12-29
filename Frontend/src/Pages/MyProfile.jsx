@@ -58,6 +58,18 @@ const MyProfile = () => {
         {/* Main Content */}
         <div className="w-full lg:w-[calc(100%-18rem)] lg:ml-72 flex flex-col items-center py-12 px-4 lg:px-12">
           <div className="flex w-full max-w-3xl flex-col items-start gap-12">
+            {/* Mobile Back Button */}
+            <button 
+              onClick={() => navigate(-1)}
+              className="lg:hidden flex items-center gap-2 text-textColor transition cursor-pointer"
+              style={{ color: 'var(--color-textColor)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1B5E20'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-textColor)'}
+            >
+              <MoveLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+
             {/* Header */}
             <div className="flex w-full flex-col items-start gap-1">
               <h1 className="text-3xl font-bold text-textColor">Account</h1>
