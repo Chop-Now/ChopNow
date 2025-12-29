@@ -104,8 +104,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                                 <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
                                 <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>john@example.com</p>
                             </div>
-                            <NavLink to='#' className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
-                            <NavLink to='#' className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>Settings</NavLink>
+                            <NavLink to='/my-profile' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
                             <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-solidOne)' }}>Logout</button>
                         </div>
                     )}

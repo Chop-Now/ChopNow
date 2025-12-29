@@ -11,6 +11,7 @@ import Cart from './Pages/Cart'
 import MyOrders from './Pages/MyOrders'
 import MyImpact from './Pages/MyImpact'
 import Notification from './Pages/Notification'
+import MyProfile from './Pages/MyProfile'
 
 const App = () => {
   return (
@@ -28,6 +29,7 @@ const App = () => {
         <Route path='/cart' element={<Cart />} />
         <Route path='/my-orders' element={<MyOrders />} />
         <Route path='/my-impact' element={<MyImpact />} />
+        <Route path='/my-profile' element={<MyProfile />} />
         <Route path='/notifications' element={<Notification />} />
         {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
