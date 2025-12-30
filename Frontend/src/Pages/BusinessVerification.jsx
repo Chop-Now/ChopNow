@@ -17,6 +17,11 @@ const BusinessVerification = () => {
   const [manualAddress, setManualAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [errors, setErrors] = useState({
+    phone: false,
+    location: false,
+    files: false
+  });
   const { getCurrentLocation } = useGeolocation();
 
   const handleFileUpload = (e) => {
@@ -36,6 +41,7 @@ const BusinessVerification = () => {
       }
 
       setUploadedFiles([...uploadedFiles, file]);
+      setErrors(prev => ({ ...prev, files: false }));
       toast.success('File uploaded successfully!');
       // Reset file input
       e.target.value = '';
@@ -48,9 +54,28 @@ const BusinessVerification = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate all fields
+    const newErrors = {
+      phone: !phone || phone.length < 10,
+      location: !location || !address,
+      files: uploadedFiles.length === 0
+    };
+
+    setErrors(newErrors);
+
+    // Check if there are any errors
+    if (Object.values(newErrors).some(error => error)) {
+      if (newErrors.phone) toast.error('Please enter a valid business phone number');
+      if (newErrors.location) toast.error('Please select your business location');
+      if (newErrors.files) toast.error('Please upload at least one certificate document');
+      return;
+    }
+
     // Handle form submission
     toast.success('Verification submitted! Our team will review your submission.');
-    // Navigate to dashboard or appropriate page
+    // Navigate to pending review page
+    navigate('/pending-review');
   };
 
   return (
@@ -98,18 +123,23 @@ const BusinessVerification = () => {
               </h3>
               <div>
                 <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-textColor)' }}>
-                  Business Phone Number
+                  Business Phone Number {errors.phone && <span className="text-red-500 text-[10px]">*Required</span>}
                 </label>
                 <PhoneInput
                   country={'rw'}
                   value={phone}
-                  onChange={setPhone}
+                  onChange={(value) => {
+                    setPhone(value);
+                    if (value && value.length >= 10) {
+                      setErrors(prev => ({ ...prev, phone: false }));
+                    }
+                  }}
                   enableSearch={true}
                   searchPlaceholder="Search country"
                   placeholder="Enter phone number"
                   containerClass="w-full"
-                  inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent"
-                  buttonClass="!border-gray-300 !rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100"
+                  inputClass={`!w-full !h-12 !rounded-lg !text-sm !bg-transparent ${errors.phone ? '!border-red-500' : '!border-gray-300'}`}
+                  buttonClass={`!rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100 ${errors.phone ? '!border-red-500' : '!border-gray-300'}`}
                   dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
                   searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"
                   inputStyle={{ color: 'var(--color-textColor)' }}
@@ -120,7 +150,7 @@ const BusinessVerification = () => {
             {/* Business Location */}
             <div>
               <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
-                Business Location
+                Business Location {errors.location && <span className="text-red-500 text-[10px]">*Required</span>}
               </h3>
               
               {/* Use Current Location Button */}
@@ -134,6 +164,7 @@ const BusinessVerification = () => {
                       try {
                         const result = await reverseGeocode(coords.lat, coords.lng);
                         setAddress(result.display_name || 'Location detected');
+                        setErrors(prev => ({ ...prev, location: false }));
                         toast.success('Location detected successfully!');
                       } catch (error) {
                         toast.error('Could not fetch address');
@@ -147,7 +178,7 @@ const BusinessVerification = () => {
                   );
                 }}
                 disabled={isLoadingLocation}
-                className="w-full flex items-center justify-center gap-2 h-12 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 mb-3"
+                className={`w-full flex items-center justify-center gap-2 h-12 rounded-lg border hover:bg-gray-50 transition-colors disabled:opacity-50 mb-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
               >
                 <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                 <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
@@ -157,7 +188,7 @@ const BusinessVerification = () => {
 
               {/* Manual Address Input */}
               <div className="relative mb-3">
-                <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                <div className={`flex items-center w-full bg-transparent border h-12 rounded-lg overflow-hidden px-4 gap-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}>
                   <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                   <input 
                     type="text" 
@@ -174,6 +205,7 @@ const BusinessVerification = () => {
                               const result = results[0];
                               setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
                               setAddress(result.display_name);
+                              setErrors(prev => ({ ...prev, location: false }));
                               toast.success('Address found!');
                             } else {
                               toast.error('Address not found');
@@ -199,6 +231,7 @@ const BusinessVerification = () => {
                             const result = results[0];
                             setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
                             setAddress(result.display_name);
+                            setErrors(prev => ({ ...prev, location: false }));
                             toast.success('Address found!');
                           } else {
                             toast.error('Address not found');
@@ -229,6 +262,7 @@ const BusinessVerification = () => {
                   selectedLocation={location}
                   onLocationSelect={async (latlng) => {
                     setLocation({ lat: latlng.lat, lng: latlng.lng });
+                    setErrors(prev => ({ ...prev, location: false }));
                     try {
                       const result = await reverseGeocode(latlng.lat, latlng.lng);
                       setAddress(result.display_name || 'Location selected');
@@ -243,7 +277,7 @@ const BusinessVerification = () => {
             {/* Certification */}
             <div>
               <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
-                Certification
+                Certification {errors.files && <span className="text-red-500 text-[10px]">*Required - Upload at least one certificate</span>}
               </h3>
               <h4 className="text-xs font-medium mb-2" style={{ color: 'var(--color-textColor)' }}>
                 Upload Operation Certificate
@@ -255,7 +289,7 @@ const BusinessVerification = () => {
               {/* File Upload Area */}
               <label 
                 htmlFor="fileInput" 
-                className="border-2 border-dashed bg-white rounded-lg text-xs border-indigo-600/60 p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-indigo-500 transition-colors"
+                className={`border-2 border-dashed bg-white rounded-lg text-xs p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-indigo-500 transition-colors ${errors.files ? 'border-red-500' : 'border-indigo-600/60'}`}
               >
                 <CloudUpload className="w-10 h-10" style={{ color: 'var(--color-solid)' }} />
                 <p style={{ color: 'var(--color-gray-50)' }}>Drag & drop your files here</p>
