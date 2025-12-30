@@ -12,6 +12,7 @@ import MyOrders from './Pages/MyOrders'
 import MyImpact from './Pages/MyImpact'
 import Notification from './Pages/Notification'
 import MyProfile from './Pages/MyProfile'
+import BusinessVerification from './Pages/BusinessVerification'
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<SignUp />} />
+        <Route path='/business-verification' element={<BusinessVerification />} />
         <Route path='/shop' element={<Shop />} />
         <Route path='/shop/:category' element={<CategoryPage />} />
         <Route path='/shop/:category/:id' element={<ProductDetails />} />
