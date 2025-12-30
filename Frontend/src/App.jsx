@@ -14,6 +14,8 @@ import Notification from './Pages/Notification'
 import MyProfile from './Pages/MyProfile'
 import BusinessVerification from './Pages/BusinessVerification'
 import PendingReview from './Pages/PendingReview'
+import FAQ from './Pages/FAQ'
+import ContactUs from './Pages/ContactUs'
 
 const App = () => {
   return (
@@ -35,6 +37,8 @@ const App = () => {
         <Route path='/my-impact' element={<MyImpact />} />
         <Route path='/my-profile' element={<MyProfile />} />
         <Route path='/notifications' element={<Notification />} />
+        <Route path='/faq' element={<FAQ />} />
+        <Route path='/contact-us' element={<ContactUs />} />
         {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     </main>
