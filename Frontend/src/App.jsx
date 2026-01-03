@@ -16,6 +16,7 @@ import BusinessVerification from './Pages/BusinessVerification'
 import PendingReview from './Pages/PendingReview'
 import FAQ from './Pages/FAQ'
 import ContactUs from './Pages/ContactUs'
+import Dashboard from './admin/Dashboard'
 
 const App = () => {
   return (
@@ -39,6 +40,7 @@ const App = () => {
         <Route path='/notifications' element={<Notification />} />
         <Route path='/faq' element={<FAQ />} />
         <Route path='/contact-us' element={<ContactUs />} />
+        <Route path='/dashboard' element={<Dashboard />} />
         {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     </main>

@@ -121,7 +121,7 @@ const Footer = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.2 }}
                 >
-                    Copyright 2025 © <a href="#" className="hover:underline">ChopNow</a> All Right Reserved.
+                    Copyright 2026 © <a href="#" className="hover:underline">ChopNow</a> All Right Reserved.
                 </motion.p>
                 <motion.div 
                     className="flex items-center gap-4"
