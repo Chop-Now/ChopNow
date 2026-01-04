@@ -17,6 +17,7 @@ import PendingReview from './Pages/PendingReview'
 import FAQ from './Pages/FAQ'
 import ContactUs from './Pages/ContactUs'
 import Dashboard from './admin/Dashboard'
+import NotFound from './Components/NotFound'
 
 const App = () => {
   return (
@@ -41,7 +42,7 @@ const App = () => {
         <Route path='/faq' element={<FAQ />} />
         <Route path='/contact-us' element={<ContactUs />} />
         <Route path='/dashboard' element={<Dashboard />} />
-        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
   )
