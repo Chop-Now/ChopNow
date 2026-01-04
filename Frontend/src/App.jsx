@@ -11,6 +11,12 @@ import Cart from './Pages/Cart'
 import MyOrders from './Pages/MyOrders'
 import MyImpact from './Pages/MyImpact'
 import Notification from './Pages/Notification'
+import MyProfile from './Pages/MyProfile'
+import BusinessVerification from './Pages/BusinessVerification'
+import PendingReview from './Pages/PendingReview'
+import FAQ from './Pages/FAQ'
+import ContactUs from './Pages/ContactUs'
+import Dashboard from './admin/Dashboard'
 
 const App = () => {
   return (
@@ -20,16 +26,22 @@ const App = () => {
      
       <Routes>
         <Route path='/' element={<Home />} />
-        {/* <Route path='/login' element={<Login />} />
+        <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<SignUp />} />
+        <Route path='/business-verification' element={<BusinessVerification />} />
+        <Route path='/pending-review' element={<PendingReview />} />
         <Route path='/shop' element={<Shop />} />
         <Route path='/shop/:category' element={<CategoryPage />} />
         <Route path='/shop/:category/:id' element={<ProductDetails />} />
         <Route path='/cart' element={<Cart />} />
         <Route path='/my-orders' element={<MyOrders />} />
         <Route path='/my-impact' element={<MyImpact />} />
-        <Route path='/notifications' element={<Notification />} /> */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path='/my-profile' element={<MyProfile />} />
+        <Route path='/notifications' element={<Notification />} />
+        <Route path='/faq' element={<FAQ />} />
+        <Route path='/contact-us' element={<ContactUs />} />
+        <Route path='/dashboard' element={<Dashboard />} />
+        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     </main>
   )

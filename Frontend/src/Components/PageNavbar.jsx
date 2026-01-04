@@ -11,8 +11,8 @@ const PageNavbar = ({ onMobileFilterClick }) => {
     const location = useLocation()
     const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
     
-    // Check if we're on cart or my-orders or my-impact page
-    const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders' || location.pathname === '/my-impact'
+    // Check if we're on cart or my-orders or my-impact or notifications page
+    const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders' || location.pathname === '/my-impact' || location.pathname === '/notifications'
 
     useEffect(() =>{
         // Only navigate to shop if we're not already on a shop-related page
@@ -104,8 +104,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                                 <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
                                 <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>john@example.com</p>
                             </div>
-                            <NavLink to='#' className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
-                            <NavLink to='#' className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>Settings</NavLink>
+                            <NavLink to='/my-profile' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
                             <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-solidOne)' }}>Logout</button>
                         </div>
                     )}

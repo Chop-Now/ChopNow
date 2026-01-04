@@ -183,7 +183,7 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
          </>
        )}
 
-       <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mt-6'>
+       <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6'>
           {currentProducts.map((product, index) =>(
              <ProductCard key={index} product={product} />
           ))}
