@@ -1,5 +1,5 @@
 import { assets } from '@/assets/assets'
-import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, ShoppingBasket, Store, User } from 'lucide-react'
+import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, Settings, ShoppingBasket, Store, User } from 'lucide-react'
 import React, { useState } from 'react'
 
 const menuItems = [
@@ -8,9 +8,6 @@ const menuItems = [
         icon: <LayoutDashboard className='w-5 h-5 text-slate-400' />,
         label: "Dashboard",
         active: true,
-        submenu: [
-            {id: "ecommerce", label: "E-commerce"},
-        ],
     },
     {
         id: "analytics",
@@ -20,6 +17,7 @@ const menuItems = [
             {id: "overview", label: "Overview"},
             {id: "reports", label: "Reports"},
             {id: "insights", label: "Insights"},
+            {id: "impact", label: "Impact"},
         ],
     },
     {
@@ -41,6 +39,7 @@ const menuItems = [
             {id: "all-orders", label: "All Orders"},
             {id: "pending-orders", label: "Pending Orders"},
             {id: "completed-orders", label: "Completed Orders"},
+            {id: "deliveries", label: "Deliveries"},
          ],
     },
     {
@@ -67,20 +66,21 @@ const menuItems = [
         label: "Disputes",
         submenu: [
             {id: "refunds", label: "Refund Requests"},
+            {id: "complaints", label: "Customer Complaints"},
 
         ],
-    },
-    {
-        id: "impact",
-        icon: <CircleStar className='w-5 h-5 text-slate-400' />,
-        label: "Impact",
     },
     {
         id: "Payout",
         icon: <Coins className='w-5 h-5 text-slate-400'/>,
         label: "Payouts",
+    },
+    {
+      id: "Settings",
+      icon: <Settings className='w-5 h-5 text-slate-400' />,
+      label: "Settings",
     }
-]
+];
 
 const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
   const [openMenus, setOpenMenus] = useState({})
@@ -123,11 +123,7 @@ const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
             <div key={item.id}>
               <button
                 onClick={() => item.submenu && toggleMenu(item.id)}
-                className={`w-full flex items-center ${isExpanded ? 'justify-between pl-5' : 'justify-center'} p-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                  currentPage === item.id || item.active 
-                    ? "bg-linear-to-r from-solid to-tertiary text-white shadow-lg" 
-                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-                }`}
+                className={`w-full flex items-center ${isExpanded ? 'justify-between pl-5' : 'justify-center'} p-2.5 rounded-lg transition-all duration-200 cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50`}
               >
                  <div className={`flex items-center ${isExpanded ? 'space-x-3' : ''}`}>
                    {item.icon}
