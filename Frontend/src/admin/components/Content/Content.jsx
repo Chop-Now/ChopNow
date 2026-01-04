@@ -2,9 +2,13 @@ import React from 'react'
 import StatsGrid from './StatsGrid'
 import ChartSection from './ChartSection'
 import TableSection from './TableSection'
+import DisputesTable from './DisputesTable'
 import ActivityFeed from './ActivityFeed'
+import { useAdminMode } from '../../context/AdminModeContext'
 
 const Content = () => {
+  const { adminMode } = useAdminMode();
+
   return (
     <div className='space-y-6'>
        {/* Stats Grid*/}
@@ -15,7 +19,7 @@ const Content = () => {
 
        <div className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
           <div className='xl:col-span-2'>
-            <TableSection />
+            {adminMode === 'shop' ? <TableSection /> : <DisputesTable />}
           </div>
           <div>
             <ActivityFeed />

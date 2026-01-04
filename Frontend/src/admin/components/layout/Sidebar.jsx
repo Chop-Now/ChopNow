@@ -1,13 +1,72 @@
 import { assets } from '@/assets/assets'
 import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, Settings, ShoppingBasket, Store, User } from 'lucide-react'
 import React, { useState } from 'react'
+import { useAdminMode } from '../../context/AdminModeContext'
 
-const menuItems = [
+const shopAdminMenuItems = [
     {
         id: "dashboard",
         icon: <LayoutDashboard className='w-5 h-5 text-slate-400' />,
         label: "Dashboard",
-        active: true,
+    },
+    {
+        id: "analytics",
+        icon: <ChartNoAxesCombined className='w-5 h-5 text-slate-400' />,
+        label: "Analytics",
+        submenu: [
+            {id: "overview", label: "Overview"},
+            {id: "reports", label: "Reports"},
+            {id: "insights", label: "Insights"},
+            {id: "impact", label: "Impact"},
+        ],
+    },
+    {
+        id: "users",
+        icon: <User className='w-5 h-5 text-slate-400' />,
+        label: "Users",
+        submenu: [
+            {id: "all-users", label: "All Users"},
+            {id: "roles", label: "Roles & Permissions"},
+        ],
+    },
+    {
+       id: "orders",
+       icon: <ShoppingBasket className='w-5 h-5 text-slate-400' />,
+       label: "Orders",
+       count: 5,
+       submenu: [
+            {id: "all-orders", label: "All Orders"},
+            {id: "pending-orders", label: "Pending Orders"},
+            {id: "completed-orders", label: "Completed Orders"},
+            {id: "deliveries", label: "Deliveries"},
+         ],
+    },
+    {
+        id: "listings",
+        icon: <List className='w-5 h-5 text-slate-400' />,
+        label: "Listings",
+        submenu: [
+            {id: "all-listings", label: "All Listings"},
+            {id: "new-listing", label: "New Listing"}
+        ],
+    },
+    {
+        id: "payouts",
+        icon: <Coins className='w-5 h-5 text-slate-400'/>,
+        label: "Payouts",
+    },
+    {
+      id: "settings",
+      icon: <Settings className='w-5 h-5 text-slate-400' />,
+      label: "Settings",
+    }
+];
+
+const websiteAdminMenuItems = [
+    {
+        id: "dashboard",
+        icon: <LayoutDashboard className='w-5 h-5 text-slate-400' />,
+        label: "Dashboard",
     },
     {
         id: "analytics",
@@ -43,12 +102,11 @@ const menuItems = [
          ],
     },
     {
-        id: "Listings",
+        id: "listings",
         icon: <List className='w-5 h-5 text-slate-400' />,
         label: "Listings",
         submenu: [
             {id: "all-listings", label: "All Listings"},
-            {id: "new-listing", label: "New Listing"}
         ],
     },
     {
@@ -71,20 +129,18 @@ const menuItems = [
         ],
     },
     {
-        id: "Payout",
-        icon: <Coins className='w-5 h-5 text-slate-400'/>,
-        label: "Payouts",
-    },
-    {
-      id: "Settings",
+      id: "settings",
       icon: <Settings className='w-5 h-5 text-slate-400' />,
       label: "Settings",
     }
 ];
 
 const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
+  const { adminMode } = useAdminMode();
   const [openMenus, setOpenMenus] = useState({})
   const [isHovered, setIsHovered] = useState(false)
+
+  const menuItems = adminMode === 'shop' ? shopAdminMenuItems : websiteAdminMenuItems;
 
   const toggleMenu = (menuId) => {
     setOpenMenus(prev => {
@@ -122,8 +178,18 @@ const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
         {menuItems.map((item)=> (
             <div key={item.id}>
               <button
-                onClick={() => item.submenu && toggleMenu(item.id)}
-                className={`w-full flex items-center ${isExpanded ? 'justify-between pl-5' : 'justify-center'} p-2.5 rounded-lg transition-all duration-200 cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50`}
+                onClick={() => {
+                  if (item.submenu) {
+                    toggleMenu(item.id);
+                  } else {
+                    onPageChange(item.id);
+                  }
+                }}
+                className={`w-full flex items-center ${isExpanded ? 'justify-between pl-5' : 'justify-center'} p-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  currentPage === item.id
+                    ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white" 
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                }`}
               >
                  <div className={`flex items-center ${isExpanded ? 'space-x-3' : ''}`}>
                    {item.icon}
@@ -152,7 +218,12 @@ const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
                   {item.submenu.map((subitem) => (
                     <button 
                       key={subitem.id}
-                      className='w-full text-left px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer'
+                      onClick={() => onPageChange(subitem.id)}
+                      className={`w-full text-left px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                        currentPage === subitem.id
+                          ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
                     >
                       {subitem.label}
                     </button>

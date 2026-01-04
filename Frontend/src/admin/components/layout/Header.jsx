@@ -1,7 +1,9 @@
-import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
+import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store } from 'lucide-react'
 import React, { useState, useEffect, useRef } from 'react'
+import { useAdminMode } from '../../context/AdminModeContext'
 
 const Header = ({ onMenuClick }) => {
+  const { adminMode, toggleAdminMode } = useAdminMode();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -193,6 +195,24 @@ const Header = ({ onMenuClick }) => {
          {/*Right side*/}
          <div className='flex items-center space-x-3'>
             <div className='flex items-center space-x-3'>
+              {/*Admin Mode Toggle*/}
+              <button
+                onClick={toggleAdminMode}
+                className='flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-solid to-tertiary text-white rounded-md hover:shadow-lg transition-all duration-200'
+              >
+                {adminMode === 'shop' ? (
+                  <>
+                    <Store className='w-4 h-4' />
+                    <span className='text-sm font-medium'>Shop Admin</span>
+                  </>
+                ) : (
+                  <>
+                    <Building2 className='w-4 h-4' />
+                    <span className='text-sm font-medium'>Website Admin</span>
+                  </>
+                )}
+              </button>
+
               {/*Toggle switch*/}
               <button 
                 onClick={toggleDarkMode}
