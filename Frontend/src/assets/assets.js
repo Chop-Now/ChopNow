@@ -31,6 +31,7 @@ import bank from './bank.png';
 import mastercard from './mastercard.png';
 import momo from './momo.png';
 import visa from './visa.png';
+import lost from './lost.svg';
 
 export const assets = {
     ChopNowLogo,
@@ -44,7 +45,8 @@ export const assets = {
     bank,
     mastercard,
     momo,
-    visa
+    visa,
+    lost
 }
 
 export const categories = [
