@@ -5,7 +5,7 @@ import { Home, Mail } from 'lucide-react'
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-solid/10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 md:py-20 bg-linear-to-br from-slate-900 via-slate-800 to-solid/10">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-solid/20 rounded-full blur-3xl animate-pulse"></div>
@@ -38,7 +38,7 @@ const NotFound = () => {
         </p>
 
         {/* Divider */}
-        <div className="h-px w-64 md:w-80 bg-gradient-to-r from-transparent via-slate-600 to-transparent my-6"></div>
+        <div className="h-px w-64 md:w-80 bg-linear-to-r from-transparent via-slate-600 to-transparent my-6"></div>
 
         {/* Description */}
         <p className="text-sm md:text-base text-slate-300 max-w-lg text-center mb-10 leading-relaxed">
