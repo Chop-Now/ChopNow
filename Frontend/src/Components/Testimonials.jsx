@@ -44,28 +44,33 @@ const Testimonials = () => {
 
   return (
     <div id='testimonials' className="py-12 md:py-16">
-      <motion.div 
-        className="text-center mb-8 px-4"
+      <div className="text-center mb-8 px-4">
+        <motion.h1
         initial={{ y: -30, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
+        className="text-3xl md:text-4xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
           What People Say About Us
-        </h1>
-        <p className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
+        </motion.h1>
+        <motion.p
+         className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}
+         initial={{ y: -20, opacity: 0 }}
+         whileInView={{ y: 0, opacity: 1 }}
+         viewport={{ once: true }}
+         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+         >
           Real stories from vendors, consumers, and partners making a difference with ChopNow.
-        </p>
-      </motion.div>
-      {/* <motion.div
+        </motion.p>
+      </div>
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
         <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
-      </motion.div> */}
+      </motion.div>
       
       {/* CTA Section */}
       <motion.div 

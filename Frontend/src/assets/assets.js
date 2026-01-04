@@ -26,6 +26,11 @@ import pastry_box from "./pastry_box.jpg";
 import plain_yoghurt from "./plain_yoghurt.png";
 import sandwich from "./sandwich.jpg";
 import oops from "./oops.png";
+import airtel_money from './airtel_money.png';
+import bank from './bank.png';
+import mastercard from './mastercard.png';
+import momo from './momo.png';
+import visa from './visa.png';
 
 export const assets = {
     ChopNowLogo,
@@ -35,6 +40,11 @@ export const assets = {
     login_bg,
     google,
     oops,
+    airtel_money,
+    bank,
+    mastercard,
+    momo,
+    visa
 }
 
 export const categories = [

@@ -31,7 +31,7 @@ const MilestoneCard = ({ image, badge, title, description }) => {
                     {badge}
                 </div>
             </div>
-            <div className="p-5 flex-grow">
+            <div className="p-5 grow">
                 <h3 className="mb-3 text-lg font-semibold" style={{ color: 'var(--color-textColor)' }}>
                     {title}
                 </h3>

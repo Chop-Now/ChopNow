@@ -94,6 +94,19 @@ const AboutUs = () => {
       <div className="md:hidden mt-10 max-w-md mx-auto">
         <motion.div 
           className="relative rounded-lg overflow-hidden h-[400px]"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(e, { offset, velocity }) => {
+            const swipe = Math.abs(offset.x) * velocity.x;
+            if (swipe < -10000) {
+              // Swiped left - go to next
+              setActiveIndex((prev) => (prev + 1) % sections.length);
+            } else if (swipe > 10000) {
+              // Swiped right - go to previous
+              setActiveIndex((prev) => (prev - 1 + sections.length) % sections.length);
+            }
+          }}
           initial={{ scale: 0.9, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
           viewport={{ once: true }}
