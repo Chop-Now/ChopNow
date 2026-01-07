@@ -1,0 +1,148 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const reviewSchema = new Schema({
+  // Order Reference
+  order: {
+    type: Schema.Types.ObjectId,
+    ref: 'Order',
+    required: [true, 'Order reference is required'],
+    unique: true
+  },
+  
+  // Customer Reference
+  customer: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Customer reference is required']
+  },
+  
+  // Business Reference
+  business: {
+    type: Schema.Types.ObjectId,
+    ref: 'Business',
+    required: [true, 'Business reference is required']
+  },
+  
+  // Rating
+  rating: {
+    type: Number,
+    required: [true, 'Rating is required'],
+    min: [1, 'Rating must be at least 1'],
+    max: [5, 'Rating cannot exceed 5']
+  },
+  
+  // Comment
+  comment: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Comment cannot exceed 500 characters']
+  },
+  
+  // Business Response
+  businessResponse: {
+    comment: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Response cannot exceed 500 characters']
+    },
+    respondedAt: {
+      type: Date
+    }
+  },
+  
+  // Status
+  status: {
+    type: String,
+    enum: ['active', 'hidden'],
+    default: 'active'
+  }
+}, {
+  timestamps: true
+});
+
+// Indexes
+reviewSchema.index({ business: 1, status: 1, createdAt: -1 });
+reviewSchema.index({ customer: 1, createdAt: -1 });
+
+// Ensure rating is an integer
+reviewSchema.pre('save', function(next) {
+  if (this.rating) {
+    this.rating = Math.round(this.rating);
+  }
+  next();
+});
+
+// Static method to calculate average rating for a business
+reviewSchema.statics.calculateAverageRating = async function(businessId) {
+  const result = await this.aggregate([
+    {
+      $match: {
+        business: businessId,
+        status: 'active'
+      }
+    },
+    {
+      $group: {
+        _id: '$business',
+        averageRating: { $avg: '$rating' },
+        reviewCount: { $sum: 1 }
+      }
+    }
+  ]);
+  
+  if (result.length > 0) {
+    return {
+      averageRating: Math.round(result[0].averageRating * 10) / 10, // Round to 1 decimal
+      reviewCount: result[0].reviewCount
+    };
+  }
+  
+  return {
+    averageRating: 0,
+    reviewCount: 0
+  };
+};
+
+// Method to add business response
+reviewSchema.methods.addBusinessResponse = function(responseComment) {
+  this.businessResponse = {
+    comment: responseComment,
+    respondedAt: new Date()
+  };
+  return this.save();
+};
+
+// Post-save hook to update business stats
+reviewSchema.post('save', async function(doc) {
+  try {
+    const Business = mongoose.model('Business');
+    const stats = await doc.constructor.calculateAverageRating(doc.business);
+    
+    await Business.findByIdAndUpdate(doc.business, {
+      'stats.averageRating': stats.averageRating,
+      'stats.reviewCount': stats.reviewCount
+    });
+  } catch (error) {
+    console.error('Error updating business stats:', error);
+  }
+});
+
+// Post-remove hook to update business stats
+reviewSchema.post('deleteOne', { document: true, query: false }, async function(doc) {
+  try {
+    const Business = mongoose.model('Business');
+    const stats = await doc.constructor.calculateAverageRating(doc.business);
+    
+    await Business.findByIdAndUpdate(doc.business, {
+      'stats.averageRating': stats.averageRating,
+      'stats.reviewCount': stats.reviewCount
+    });
+  } catch (error) {
+    console.error('Error updating business stats:', error);
+  }
+});
+
+const Review = mongoose.model('Review', reviewSchema);
+
+module.exports = Review;
