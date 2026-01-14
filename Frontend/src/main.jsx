@@ -1,15 +1,27 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import AppContextProvider from './context/AppContext'
-import 'leaflet/dist/leaflet.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+import App from './App.jsx'
+import './index.css'
+import './config/i18n'; // Import i18n config
+import { AuthProvider } from './context/AuthContext.jsx'
+import AppContextProvider from './context/AppContext.jsx' // Keep existing context for now if needed, or migrate
 
-createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
-    <AppContextProvider>
-      <App />
-    </AppContextProvider>
-  </BrowserRouter>,
+const queryClient = new QueryClient()
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppContextProvider>
+            <App />
+            <Toaster position="top-right" />
+          </AppContextProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
 )
