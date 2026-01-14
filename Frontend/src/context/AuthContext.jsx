@@ -46,19 +46,20 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // const response = await api.post('/auth/login', { email, password });
-            // const { token, user } = response.data;
-
-            // Mock login for frontend dev
-            const token = "mock_token_" + Date.now();
-            const mockUser = { id: 1, name: "Demo User", email, role: "consumer" }; // Default role
+            const response = await api.post('/users/login', { email, password });
+            const { token, ...userData } = response.data;
 
             localStorage.setItem('token', token);
-            localStorage.setItem('userData', JSON.stringify(mockUser));
-            setUser(mockUser);
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Set token header for future requests
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            setUser({ ...userData, token });
             toast.success('Login successful!');
             return true;
         } catch (error) {
+            console.error(error);
             toast.error(error.response?.data?.message || 'Login failed');
             return false;
         }
@@ -66,10 +67,11 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            // await api.post('/auth/register', userData);
+            await api.post('/users/register', userData);
             toast.success('Registration successful! Please login.');
             return true;
         } catch (error) {
+            console.error(error);
             toast.error(error.response?.data?.message || 'Registration failed');
             return false;
         }
