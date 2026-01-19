@@ -21,15 +21,6 @@ const shopAdminMenuItems = [
         ],
     },
     {
-        id: "users",
-        icon: <User className='w-5 h-5 text-slate-400' />,
-        label: "Users",
-        submenu: [
-            {id: "all-users", label: "All Users"},
-            {id: "roles", label: "Roles & Permissions"},
-        ],
-    },
-    {
        id: "orders",
        icon: <ShoppingBasket className='w-5 h-5 text-slate-400' />,
        label: "Orders",
