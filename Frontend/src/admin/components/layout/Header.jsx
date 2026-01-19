@@ -198,7 +198,7 @@ const Header = ({ onMenuClick }) => {
               {/*Admin Mode Toggle*/}
               <button
                 onClick={toggleAdminMode}
-                className='flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-solid to-tertiary text-white rounded-md hover:shadow-lg transition-all duration-200'
+                className='flex items-center space-x-2 px-4 py-2 bg-linear-to-r from-solid to-tertiary text-white rounded-md hover:shadow-lg transition-all duration-200'
               >
                 {adminMode === 'shop' ? (
                   <>

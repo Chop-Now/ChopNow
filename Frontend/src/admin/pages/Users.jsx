@@ -578,48 +578,31 @@ export const AllUsers = () => {
                 </div>
               </div>
 
-              {/* Environmental Impact */}
-              <div className="mb-3">
-                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
-                  <Leaf className="w-3 h-3 text-green-600 dark:text-green-400" />
-                  Environmental Impact
-                </h4>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {selectedUser.role === 'rider' ? (
-                    <>
-                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Deliveries</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.deliveries}</p>
-                      </div>
-                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Distance (km)</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.distance}</p>
-                      </div>
+              {/* Environmental Impact - Only for customers and vendors */}
+              {selectedUser.role !== 'rider' && (
+                <div className="mb-3">
+                  <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
+                    <Leaf className="w-3 h-3 text-green-600 dark:text-green-400" />
+                    Environmental Impact
+                  </h4>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
+                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Meals Saved</p>
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.meals}</p>
+                    </div>
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
+                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">CO₂ Saved (kg)</p>
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.co2Saved}</p>
+                    </div>
+                    {selectedUser.impact.waterSaved !== undefined && (
                       <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">CO₂ Saved (kg)</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.co2Saved}</p>
+                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Water Saved (L)</p>
+                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.waterSaved}</p>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Meals Saved</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.meals}</p>
-                      </div>
-                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">CO₂ Saved (kg)</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.co2Saved}</p>
-                      </div>
-                      {selectedUser.impact.waterSaved !== undefined && (
-                        <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
-                          <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Water Saved (L)</p>
-                          <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.waterSaved}</p>
-                        </div>
-                      )}
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Recent Activity */}
               <div className="mb-3">
