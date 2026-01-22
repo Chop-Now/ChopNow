@@ -1,13 +1,16 @@
-import { dummyOrders, assets } from '@/assets/assets'
 import React, { useEffect, useState } from 'react'
 import PageNavbar from '@/Components/PageNavbar'
 import Footer from '@/Components/Footer'
-import { Truck, Calendar, ChevronLeft, ChevronRight, X, Utensils, Trash2 } from 'lucide-react'
+import { Truck, Calendar, ChevronLeft, ChevronRight, X, Utensils, Trash2, Package } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { orderService } from '@/services'
+import { useAppContext } from '@/context/AppContext'
+import toast from 'react-hot-toast'
 
 const MyOrders = () => {
 
     const navigate = useNavigate()
+    const { isAuthenticated } = useAppContext()
     const [myOrders, setMyOrders] = useState([])
     const [filteredOrders, setFilteredOrders] = useState([])
     const [selectedVendor, setSelectedVendor] = useState('all')
@@ -18,12 +21,29 @@ const MyOrders = () => {
     const [endDate, setEndDate] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedOrder, setSelectedOrder] = useState(null)
+    const [loading, setLoading] = useState(true)
     const itemsPerPage = 5
 
-    const fetchMyOrders = async () =>{
-        setMyOrders(dummyOrders)
-        // Show all orders initially (desktop default is "all statuses")
-        setFilteredOrders(dummyOrders)
+    const fetchMyOrders = async () => {
+        if (!isAuthenticated) {
+            navigate('/login')
+            return
+        }
+
+        setLoading(true)
+        try {
+            const data = await orderService.getOrders()
+            setMyOrders(data.orders || data) // Handle different response formats
+            // Show all orders initially (desktop default is "all statuses")
+            setFilteredOrders(data.orders || data)
+        } catch (error) {
+            console.error('Failed to fetch orders:', error)
+            toast.error('Failed to load orders')
+            setMyOrders([])
+            setFilteredOrders([])
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() =>{
@@ -103,6 +123,39 @@ const MyOrders = () => {
         return `${month} ${day}, ${year}`
     }
 
+    // Handle order cancellation
+    const handleCancelOrder = async (orderId) => {
+        try {
+            await orderService.cancelOrder(orderId)
+            toast.success('Order cancelled successfully')
+            // Refresh orders
+            fetchMyOrders()
+            setSelectedOrder(null)
+        } catch (error) {
+            console.error('Failed to cancel order:', error)
+            toast.error(error.response?.data?.message || 'Failed to cancel order')
+        }
+    }
+
+    // Get status color
+    const getStatusColor = (status) => {
+        const statusLower = status.toLowerCase()
+        switch (statusLower) {
+            case 'pending':
+                return 'text-yellow-600 bg-yellow-50'
+            case 'confirmed':
+                return 'text-blue-600 bg-blue-50'
+            case 'ready':
+                return 'text-purple-600 bg-purple-50'
+            case 'completed':
+                return 'text-green-600 bg-green-50'
+            case 'cancelled':
+                return 'text-red-600 bg-red-50'
+            default:
+                return 'text-gray-600 bg-gray-50'
+        }
+    }
+
     // Pagination
     const indexOfLastItem = currentPage * itemsPerPage
     const indexOfFirstItem = indexOfLastItem - itemsPerPage
@@ -137,6 +190,12 @@ const MyOrders = () => {
                 <p className='text-gray-600'>Review your past and current orders. Thank you for helping reduce food waste!</p>
             </div>
 
+            {loading ? (
+                <div className='flex items-center justify-center py-20'>
+                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-green-600'></div>
+                </div>
+            ) : (
+            <>
             {/* Mobile Delivery Type Filter */}
             <div className='md:hidden mb-4'>
                 <div className='flex gap-2 relative'>
@@ -419,6 +478,8 @@ const MyOrders = () => {
                     </div>
                 </>
             )}
+            </>
+            )}
         </div>
 
         {/* Order Details Modal */}
@@ -457,32 +518,32 @@ const MyOrders = () => {
                                 </div>
                                 <div>
                                     <p className='text-gray-600'>Status</p>
-                                    <p className={`font-medium ${
-                                        selectedOrder.status === 'Completed' ? 'text-green-700' :
-                                        selectedOrder.status === 'Processing' ? 'text-blue-700' :
-                                        selectedOrder.status === 'Cancelled' ? 'text-gray-700' :
-                                        'text-red-700'
-                                    }`}>{selectedOrder.status}</p>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                                        {selectedOrder.status}
+                                    </span>
                                 </div>
                                 <div>
-                                    <p className='text-gray-600'>Order Type</p>
-                                    <p className='font-medium'>{selectedOrder.order_type}</p>
+                                    <p className='text-gray-600'>Fulfillment Type</p>
+                                    <p className='font-medium capitalize'>{selectedOrder.fulfillmentType}</p>
                                 </div>
+                                {selectedOrder.pickupCode && (
+                                    <div className='col-span-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200'>
+                                        <p className='text-gray-600 text-xs mb-1'>Pickup Code</p>
+                                        <p className='font-bold text-2xl text-yellow-800 tracking-wider'>{selectedOrder.pickupCode}</p>
+                                        <p className='text-xs text-gray-600 mt-1'>Show this code at pickup</p>
+                                    </div>
+                                )}
                                 <div>
-                                    <p className='text-gray-600'>Delivery Type</p>
-                                    <p className='font-medium'>{selectedOrder.type}</p>
-                                </div>
-                                <div>
-                                    <p className='text-gray-600'>Vendor</p>
-                                    <p className='font-medium'>{selectedOrder.vendor}</p>
+                                    <p className='text-gray-600'>Business</p>
+                                    <p className='font-medium'>{selectedOrder.business?.businessName || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className='text-gray-600'>Payment Method</p>
-                                    <p className='font-medium'>{selectedOrder.paymentMethod}</p>
+                                    <p className='font-medium capitalize'>{selectedOrder.paymentMethod?.replace('_', ' ')}</p>
                                 </div>
                                 <div>
                                     <p className='text-gray-600'>Payment Status</p>
-                                    <p className='font-medium'>{selectedOrder.isPaid ? 'Paid' : 'Unpaid'}</p>
+                                    <p className='font-medium'>{selectedOrder.paymentStatus === 'completed' ? 'Paid' : 'Pending'}</p>
                                 </div>
                             </div>
                         </div>
@@ -514,29 +575,31 @@ const MyOrders = () => {
                             <div className='space-y-2 text-sm'>
                                 <div className='flex justify-between'>
                                     <p className='text-gray-600'>Subtotal</p>
-                                    <p className='font-medium'>RWF {selectedOrder.items.reduce((sum, item) => sum + (item.product.offerPrice * item.quantity), 0).toLocaleString()}</p>
-                                </div>
-                                {selectedOrder.type === 'Delivery' && (
-                                    <div className='flex justify-between'>
-                                        <p className='text-gray-600'>Delivery Charges</p>
-                                        <p className='font-medium'>RWF 1,000</p>
-                                    </div>
-                                )}
-                                <div className='flex justify-between'>
-                                    <p className='text-gray-600'>Container Charge</p>
-                                    <p className='font-medium'>RWF 500</p>
+                                    <p className='font-medium'>RWF {selectedOrder.totalAmount?.toLocaleString() || '0'}</p>
                                 </div>
                                 <div className='flex justify-between pt-2 border-t'>
                                     <p className='font-semibold text-base'>Total</p>
-                                    <p className='font-semibold text-base'>RWF {selectedOrder.amount.toLocaleString()}</p>
+                                    <p className='font-semibold text-base'>RWF {selectedOrder.totalAmount?.toLocaleString() || '0'}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {selectedOrder.type === 'Delivery' && (
+                        {/* Action Buttons */}
+                        {selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed' && (
+                            <div className='mt-6 flex gap-3'>
+                                <button 
+                                    onClick={() => handleCancelOrder(selectedOrder._id)}
+                                    className='flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition'
+                                >
+                                    Cancel Order
+                                </button>
+                            </div>
+                        )}
+
+                        {selectedOrder.fulfillmentType === 'delivery' && selectedOrder.deliveryAddress && (
                             <div className='mt-6 p-4 bg-gray-50 rounded-lg'>
                                 <h4 className='font-semibold mb-2'>Delivery Information</h4>
-                                <p className='text-sm text-gray-600'>Address details would be displayed here</p>
+                                <p className='text-sm text-gray-600'>{selectedOrder.deliveryAddress.address || 'Delivery address'}</p>
                             </div>
                         )}
                     </div>

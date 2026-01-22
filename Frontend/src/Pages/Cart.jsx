@@ -2,21 +2,26 @@ import { useAppContext } from '@/context/AppContext'
 import PageNavbar from '@/Components/PageNavbar'
 import Footer from '@/Components/Footer'
 import LocationPicker from '@/Components/maps/LocationPicker'
-import { MoveLeft, X, MapPin, ExternalLink, Leaf, Calendar, Trash2 } from 'lucide-react'
+import { MoveLeft, X, MapPin, ExternalLink, Leaf, Calendar, Trash2, CreditCard, Smartphone, Banknote } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { orderService } from '@/services'
+import toast from 'react-hot-toast'
 
 const Cart = () => {
 
     const navigate = useNavigate()
     const {products, cartItems, removeFromCart, addToCart, getTotalCartItems,
-    getCartAmount, updateCartItem} = useAppContext()
+    getCartAmount, updateCartItem, user, isAuthenticated} = useAppContext()
 
     const [cartArray, setCartArray] = useState([])
     const [fulfillmentMethod, setFulfillmentMethod] = useState('Pickup') // 'Pickup' or 'Delivery'
     const [deliveryLocation, setDeliveryLocation] = useState(null)
     const [deliveryAddress, setDeliveryAddress] = useState('')
     const [showMapEdit, setShowMapEdit] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState('card') // 'card', 'mobile_money', 'cash'
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [pickupCode, setPickupCode] = useState(null)
     
     // Vendor address (mock data - will come from backend)
     const vendorAddress = {
@@ -61,6 +66,76 @@ const Cart = () => {
     const openInGoogleMaps = () => {
         const coords = vendorAddress.coordinates
         window.open(`https://www.google.com/maps?q=${coords.lat},${coords.lng}`, '_blank')
+    }
+
+    const handleCheckout = async () => {
+        // Check if user is authenticated
+        if (!user || !isAuthenticated) {
+            toast.error('Please login to place an order')
+            navigate('/login')
+            return
+        }
+
+        // Validate fulfillment requirements
+        if (fulfillmentMethod === 'Delivery' && !deliveryLocation) {
+            toast.error('Please select a delivery location')
+            return
+        }
+
+        setIsProcessing(true)
+        try {
+            // Group items by business
+            const itemsByBusiness = {}
+            cartArray.forEach(product => {
+                const businessId = product.businessId || product.vendor // Need businessId from product
+                if (!itemsByBusiness[businessId]) {
+                    itemsByBusiness[businessId] = []
+                }
+                itemsByBusiness[businessId].push({
+                    listing: product._id,
+                    quantity: product.cartQuantity,
+                    price: product.offerPrice
+                })
+            })
+
+            // Create orders for each business
+            const orders = []
+            for (const businessId in itemsByBusiness) {
+                const orderData = {
+                    business: businessId,
+                    items: itemsByBusiness[businessId],
+                    fulfillmentType: fulfillmentMethod.toLowerCase(),
+                    paymentMethod: paymentMethod,
+                    totalAmount: total,
+                    ...(fulfillmentMethod === 'Delivery' && {
+                        deliveryAddress: {
+                            type: 'Point',
+                            coordinates: [deliveryLocation.lng, deliveryLocation.lat],
+                            address: deliveryAddress
+                        }
+                    })
+                }
+
+                const order = await orderService.createOrder(orderData)
+                orders.push(order)
+            }
+
+            // Show pickup code if pickup method
+            if (fulfillmentMethod === 'Pickup' && orders[0].pickupCode) {
+                setPickupCode(orders[0].pickupCode)
+                toast.success('Order placed successfully!')
+            } else {
+                toast.success('Order placed successfully!')
+                // Clear cart and navigate
+                navigate('/my-orders')
+            }
+
+        } catch (error) {
+            console.error('Checkout error:', error)
+            toast.error(error.response?.data?.message || 'Failed to place order')
+        } finally {
+            setIsProcessing(false)
+        }
     }
 
   return (
@@ -247,6 +322,63 @@ const Cart = () => {
                     )}
                 </div>
 
+                {/* 3. Payment Method */}
+                <div className="p-5 rounded-xl border mb-6" style={{ borderColor: '#E5E5E5' }}>
+                    <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
+                        3. Payment Method
+                    </h3>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setPaymentMethod('card')}
+                            className={`w-full p-3 rounded-lg border-2 flex items-center gap-3 transition cursor-pointer ${
+                                paymentMethod === 'card' ? 'border-solid' : 'border-gray-200'
+                            }`}
+                            style={{ 
+                                borderColor: paymentMethod === 'card' ? 'var(--color-solid)' : '#E5E5E5',
+                                backgroundColor: paymentMethod === 'card' ? 'var(--color-primary)' : 'transparent'
+                            }}
+                        >
+                            <CreditCard className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Credit/Debit Card</p>
+                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>Pay securely with your card</p>
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod('mobile_money')}
+                            className={`w-full p-3 rounded-lg border-2 flex items-center gap-3 transition cursor-pointer ${
+                                paymentMethod === 'mobile_money' ? 'border-solid' : 'border-gray-200'
+                            }`}
+                            style={{ 
+                                borderColor: paymentMethod === 'mobile_money' ? 'var(--color-solid)' : '#E5E5E5',
+                                backgroundColor: paymentMethod === 'mobile_money' ? 'var(--color-primary)' : 'transparent'
+                            }}
+                        >
+                            <Smartphone className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Mobile Money</p>
+                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>MTN, Airtel</p>
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod('cash')}
+                            className={`w-full p-3 rounded-lg border-2 flex items-center gap-3 transition cursor-pointer ${
+                                paymentMethod === 'cash' ? 'border-solid' : 'border-gray-200'
+                            }`}
+                            style={{ 
+                                borderColor: paymentMethod === 'cash' ? 'var(--color-solid)' : '#E5E5E5',
+                                backgroundColor: paymentMethod === 'cash' ? 'var(--color-primary)' : 'transparent'
+                            }}
+                        >
+                            <Banknote className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Cash on {fulfillmentMethod === 'Delivery' ? 'Delivery' : 'Pickup'}</p>
+                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>Pay when you receive</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Order Summary */}
                 <div className="p-5 rounded-xl border" style={{ borderColor: '#E5E5E5', backgroundColor: 'var(--color-primary)' }}>
                     <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>Order Summary</h3>
@@ -292,14 +424,45 @@ const Cart = () => {
                     </div>
 
                     <button 
-                        className="w-full py-3 rounded-lg text-sm text-white font-medium hover:opacity-90 transition cursor-pointer"
+                        onClick={handleCheckout}
+                        disabled={isProcessing}
+                        className="w-full py-3 rounded-lg text-sm text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ backgroundColor: 'var(--color-solid)' }}
                     >
-                        Proceed to Checkout
+                        {isProcessing ? 'Processing...' : 'Proceed to Checkout'}
                     </button>
                 </div>
             </div>
           </div>
+        )}
+
+        {/* Pickup Code Modal */}
+        {pickupCode && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl p-6 max-w-md w-full">
+                    <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
+                        Order Confirmed!
+                    </h3>
+                    <p className="text-sm mb-4" style={{ color: 'var(--color-gray-50)' }}>
+                        Your order has been placed successfully. Please use this code to pick up your order:
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-6 text-center mb-6">
+                        <p className="text-3xl font-bold tracking-wider" style={{ color: 'var(--color-solid)' }}>
+                            {pickupCode}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setPickupCode(null)
+                            navigate('/my-orders')
+                        }}
+                        className="w-full py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
+                        style={{ backgroundColor: 'var(--color-solid)' }}
+                    >
+                        View My Orders
+                    </button>
+                </div>
+            </div>
         )}
       </div>
       <Footer />

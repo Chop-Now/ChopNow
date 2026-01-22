@@ -4,34 +4,149 @@ import ProductCard from '@/Components/ProductCard';
 import React, { useEffect, useState, useRef } from 'react'
 import { useAppContext } from '@/context/AppContext';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Home, Star, ShoppingCart, Send, Trash2, Share2 } from 'lucide-react';
+import { Home, Star, ShoppingCart, Send, Trash2, Share2, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
+import listingService from '@/services/listingService';
+import reviewService from '@/services/reviewService';
+import favoriteService from '@/services/favoriteService';
 
 const ProductDetails = () => {
 
-    const {products, addToCart, cartItems, removeAllFromCart} = useAppContext()
+    const {products, addToCart, cartItems, removeAllFromCart, isAuthenticated} = useAppContext()
     const navigate = useNavigate()
     const {id} = useParams()
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [thumbnail, setThumbnail] = useState(null);
     const [review, setReview] = useState({ rating: 0, comment: '' });
+    const [reviews, setReviews] = useState([]);
+    const [isFavorite, setIsFavorite] = useState(false);
     const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
     const [showMagnifier, setShowMagnifier] = useState(false);
     const imgRef = useRef(null);
 
-    const product = products.find((item)=> item._id === id);
-
+    // Fetch listing details from backend
     useEffect(() => {
-        if(products.length > 0 && product){
-            let productsCopy = products.slice();
-            productsCopy = productsCopy.filter((item) => product.category === item.category && item._id !== product._id)
-            setRelatedProducts(productsCopy.slice(0, 5))
+        const fetchListing = async () => {
+            try {
+                setLoading(true);
+                const data = await listingService.getListingById(id);
+                
+                // Transform backend data to match frontend format
+                const transformedProduct = {
+                    _id: data._id,
+                    name: data.title,
+                    category: data.category,
+                    vendor: data.business?.businessName || 'Unknown',
+                    rating: data.business?.averageRating || 0,
+                    quantity: data.inventory?.quantityAvailable || 0,
+                    location: data.business?.address?.location,
+                    pickupTime: `${formatTime(data.timeWindow?.startTime)} - ${formatTime(data.timeWindow?.endTime)}`,
+                    price: data.pricing?.originalPrice || 0,
+                    offerPrice: data.pricing?.offerPrice || 0,
+                    image: data.photos?.length > 0 ? data.photos : ['/placeholder.jpg'],
+                    description: data.description?.split('\n') || [],
+                    dietary_information: data.dietaryInfo || [],
+                    ingredients_allergens: data.allergens ? [
+                        { ingredient: data.allergens.ingredients || '' },
+                        { contains: data.allergens.contains || '' }
+                    ] : [],
+                    createdAt: data.createdAt,
+                    updatedAt: data.updatedAt,
+                    inStock: data.inventory?.quantityAvailable > 0,
+                    businessId: data.business?._id,
+                };
+                
+                setProduct(transformedProduct);
+                setThumbnail(transformedProduct.image[0]);
+                
+                // Fetch reviews if business ID exists
+                if (data.business?._id) {
+                    fetchReviews(data.business._id);
+                }
+                
+                // Check if favorited
+                if (isAuthenticated) {
+                    checkIfFavorite(id);
+                }
+            } catch (error) {
+                console.error('Error fetching listing:', error);
+                toast.error('Failed to load product details');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchListing();
+    }, [id, isAuthenticated]);
+
+    // Fetch related products
+    useEffect(() => {
+        if (product && products.length > 0) {
+            const related = products.filter(
+                (item) => item.category === product.category && item._id !== product._id
+            );
+            setRelatedProducts(related.slice(0, 5));
         }
-    }, [products, product])
+    }, [product, products]);
 
-    useEffect(() => {
-          setThumbnail(product?.image[0] ? product.image[0] : null)
-    }, [product])
+    // Helper function to format time
+    const formatTime = (time) => {
+        if (!time) return '';
+        const date = new Date(time);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    };
+
+    // Fetch reviews
+    const fetchReviews = async (businessId) => {
+        try {
+            const data = await reviewService.getBusinessReviews(businessId);
+            setReviews(data.data || []);
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+        }
+    };
+
+    // Check if listing is favorited
+    const checkIfFavorite = async (listingId) => {
+        try {
+            const data = await favoriteService.checkFavorite('listing', listingId);
+            setIsFavorite(data.isFavorited);
+        } catch (error) {
+            console.error('Error checking favorite:', error);
+        }
+    };
+
+    // Toggle favorite
+    const handleToggleFavorite = async () => {
+        if (!isAuthenticated) {
+            toast.error('Please login to add favorites');
+            navigate('/login');
+            return;
+        }
+
+        try {
+            await favoriteService.toggleFavorite('listing', id);
+            setIsFavorite(!isFavorite);
+            toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            toast.error('Failed to update favorite');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className='bg-white min-h-screen pt-20'>
+                <PageNavbar />
+                <div className="max-w-6xl mx-auto px-6 py-12 text-center">
+                    <p className="text-xl" style={{ color: 'var(--color-textColor)' }}>Loading...</p>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     if (!product) {
         return (
@@ -91,8 +206,15 @@ const ProductDetails = () => {
         });
     };
 
-    const handleSubmitReview = (e) => {
+    const handleSubmitReview = async (e) => {
         e.preventDefault();
+        
+        if (!isAuthenticated) {
+            toast.error('Please login to submit a review');
+            navigate('/login');
+            return;
+        }
+        
         if (review.rating === 0) {
             toast.error('Please select a rating');
             return;
@@ -101,8 +223,25 @@ const ProductDetails = () => {
             toast.error('Please write a review');
             return;
         }
-        toast.success('Review submitted successfully!');
-        setReview({ rating: 0, comment: '' });
+        
+        try {
+            await reviewService.createReview({
+                business: product.businessId,
+                rating: review.rating,
+                comment: review.comment.trim()
+            });
+            
+            toast.success('Review submitted successfully!');
+            setReview({ rating: 0, comment: '' });
+            
+            // Refresh reviews
+            if (product.businessId) {
+                fetchReviews(product.businessId);
+            }
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            toast.error(error.message || 'Failed to submit review');
+        }
     };
 
     const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
@@ -289,6 +428,21 @@ const ProductDetails = () => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-4">
+                        <button 
+                            onClick={handleToggleFavorite}
+                            className="p-3 rounded-lg border-2 transition-all cursor-pointer hover:scale-105"
+                            style={{ 
+                                borderColor: 'var(--color-solid)',
+                                backgroundColor: isFavorite ? 'var(--color-solid)' : 'transparent'
+                            }}
+                            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                            <Heart 
+                                className="w-5 h-5" 
+                                style={{ color: isFavorite ? 'white' : 'var(--color-solid)' }}
+                                fill={isFavorite ? 'white' : 'none'}
+                            />
+                        </button>
                         {currentCartQuantity > 0 ? (
                             <button 
                                 onClick={handleRemoveFromCart}
@@ -388,42 +542,51 @@ const ProductDetails = () => {
                     </form>
                 </div>
 
-                {/* Sample Reviews */}
+                {/* Reviews List */}
                 <div className="space-y-4">
-                    <div className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
-                        <div className="flex items-start justify-between mb-3">
-                            <div>
-                                <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
-                                <div className="flex gap-1 mt-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <Star key={star} className="w-4 h-4" fill="var(--color-solidOne)" stroke="var(--color-solidOne)" />
-                                    ))}
+                    {reviews.length > 0 ? (
+                        reviews.map((review) => (
+                            <div key={review._id} className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>
+                                            {review.user?.firstName || 'Anonymous'} {review.user?.lastName || ''}
+                                        </p>
+                                        <div className="flex gap-1 mt-1">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star 
+                                                    key={star} 
+                                                    className="w-4 h-4" 
+                                                    fill={review.rating >= star ? 'var(--color-solidOne)' : 'none'} 
+                                                    stroke={review.rating >= star ? 'var(--color-solidOne)' : 'var(--color-gray-50)'} 
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                                        {new Date(review.createdAt).toLocaleDateString()}
+                                    </p>
                                 </div>
+                                <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                    {review.comment}
+                                </p>
+                                {review.businessResponse && (
+                                    <div className="mt-3 pl-4 border-l-2" style={{ borderColor: 'var(--color-solid)' }}>
+                                        <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-solid)' }}>
+                                            Business Response:
+                                        </p>
+                                        <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                            {review.businessResponse}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                            <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>2 days ago</p>
+                        ))
+                    ) : (
+                        <div className="text-center py-8" style={{ color: 'var(--color-gray-50)' }}>
+                            <p>No reviews yet. Be the first to review this product!</p>
                         </div>
-                        <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-                            Great product! Fresh and exactly as described. Highly recommend!
-                        </p>
-                    </div>
-
-                    <div className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
-                        <div className="flex items-start justify-between mb-3">
-                            <div>
-                                <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>Jane Smith</p>
-                                <div className="flex gap-1 mt-1">
-                                    {[1, 2, 3, 4].map((star) => (
-                                        <Star key={star} className="w-4 h-4" fill="var(--color-solidOne)" stroke="var(--color-solidOne)" />
-                                    ))}
-                                    <Star className="w-4 h-4" fill="none" stroke="var(--color-gray-50)" />
-                                </div>
-                            </div>
-                            <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>1 week ago</p>
-                        </div>
-                        <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-                            Good quality and reasonable price. Will order again!
-                        </p>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
