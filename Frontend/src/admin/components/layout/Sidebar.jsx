@@ -114,8 +114,7 @@ const websiteAdminMenuItems = [
         icon: <ServerCrash className='w-5 h-5 text-slate-400' />,
         label: "Disputes",
         submenu: [
-            {id: "refunds", label: "Refund Requests"},
-            {id: "complaints", label: "Customer Complaints"},
+            {id: "complaints", label: "Complaints"},
 
         ],
     },
