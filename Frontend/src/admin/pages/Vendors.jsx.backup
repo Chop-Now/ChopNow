@@ -148,13 +148,7 @@ const dummyVendors = [
     approvedDate: "2024-01-20",
     documents: ["Business Registration", "Food Safety Certificate", "Health Certificate"],
     address: "34 Ring Road, Accra",
-    bankDetails: "Fidelity Bank - 4433221100",
-    contactPerson: {
-      fullName: "Nana Appiah",
-      role: "Operations Manager",
-      email: "nana@dailydairy.com",
-      mobile: "+233 24 111 2222"
-    }
+    bankDetails: "Fidelity Bank - 4433221100"
   },
   {
     id: 8,
@@ -169,13 +163,7 @@ const dummyVendors = [
     submissionDate: "2024-01-22",
     documents: ["Business Registration", "Fishing License"],
     address: "Port Area, Tema",
-    bankDetails: "CalBank - 2233445566",
-    contactPerson: {
-      fullName: "Kwabena Tetteh",
-      role: "Fleet Manager",
-      email: "kwabena@oceancatch.com",
-      mobile: "+233 20 999 8888"
-    }
+    bankDetails: "CalBank - 2233445566"
   },
   {
     id: 9,
@@ -191,13 +179,7 @@ const dummyVendors = [
     approvedDate: "2024-01-19",
     documents: ["Business Registration", "Environmental Permit"],
     address: "67 Airport Residential, Accra",
-    bankDetails: "GCB Bank - 8877665544",
-    contactPerson: {
-      fullName: "Efua Adjei",
-      role: "Founder & CEO",
-      email: "efua@urbangarden.com",
-      mobile: "+233 24 666 7777"
-    }
+    bankDetails: "GCB Bank - 8877665544"
   },
   {
     id: 10,
@@ -214,13 +196,7 @@ const dummyVendors = [
     rejectionReason: "Failed health inspection",
     documents: ["Business Registration"],
     address: "Central Market, Kumasi",
-    bankDetails: "Absa Bank - 5544332211",
-    contactPerson: {
-      fullName: "Samuel Agyeman",
-      role: "Market Supervisor",
-      email: "samuel@veggiedelight.com",
-      mobile: "+233 20 222 3333"
-    }
+    bankDetails: "Absa Bank - 5544332211"
   },
   {
     id: 11,
@@ -237,13 +213,7 @@ const dummyVendors = [
     infoRequestedMessage: "Please provide additional health certificates and proof of organic certification.",
     documents: ["Business Registration", "Health Certificate"],
     address: "Harbor Road, Takoradi",
-    bankDetails: "NIB - 6677889900",
-    contactPerson: {
-      fullName: "Adjoa Baah",
-      role: "Business Owner",
-      email: "adjoa@fruitparadise.com",
-      mobile: "+233 24 888 9999"
-    }
+    bankDetails: "NIB - 6677889900"
   },
   {
     id: 12,
@@ -259,13 +229,7 @@ const dummyVendors = [
     approvedDate: "2024-01-21",
     documents: ["Business Registration", "Food Safety Certificate", "Tax Certificate"],
     address: "Osu Oxford Street, Accra",
-    bankDetails: "Prudential Bank - 3344556677",
-    contactPerson: {
-      fullName: "Araba Quansah",
-      role: "Store Manager",
-      email: "araba@healthybites.com",
-      mobile: "+233 20 777 6666"
-    }
+    bankDetails: "Prudential Bank - 3344556677"
   },
   {
     id: 13,
@@ -282,13 +246,7 @@ const dummyVendors = [
     infoRequestedMessage: "Need updated business license and kitchen inspection report.",
     documents: ["Business Registration"],
     address: "Spintex Road, Accra",
-    bankDetails: "GCB Bank - 9988776655",
-    contactPerson: {
-      fullName: "Kojo Ansah",
-      role: "Branch Manager",
-      email: "kojo@tastybites.com",
-      mobile: "+233 24 555 9999"
-    }
+    bankDetails: "GCB Bank - 9988776655"
   }
 ];
 
@@ -320,7 +278,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
   };
 
   return (
-    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4'>
+    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4'>
       <div className='bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-slate-200/50 dark:border-slate-700/50'>
         {/* Header */}
         <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between'>
@@ -501,7 +459,6 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
                 </div>
               )}
             </div>
-}
 
             {vendor.rejectionReason && (
               <div className='p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800'>
