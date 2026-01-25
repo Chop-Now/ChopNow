@@ -1,12 +1,14 @@
 import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store } from 'lucide-react'
 import React, { useState, useEffect, useRef } from 'react'
 import { useAdminMode } from '../../context/AdminModeContext'
+import ConfirmationModal from '../ConfirmationModal'
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, onNavigateToSettings }) => {
   const { adminMode, toggleAdminMode } = useAdminMode();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -171,6 +173,28 @@ const Header = ({ onMenuClick }) => {
     };
   }, []);
 
+  const handleEditProfile = () => {
+    setIsProfileOpen(false);
+    onNavigateToSettings('profile');
+  };
+
+  const handleAccountSettings = () => {
+    setIsProfileOpen(false);
+    onNavigateToSettings('security');
+  };
+
+  const handleSignOut = () => {
+    setIsProfileOpen(false);
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    // Add your logout logic here
+    console.log('User logged out');
+    alert('Logged out successfully!');
+  };
+
   return (
     <div className='relative z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4'>
       <div className='flex items-center justify-between'>
@@ -305,12 +329,18 @@ const Header = ({ onMenuClick }) => {
 
                      {/* Menu Items */}
                      <div className='py-2'>
-                       <button className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left cursor-pointer'>
+                       <button 
+                         onClick={handleEditProfile}
+                         className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left cursor-pointer'
+                       >
                          <CircleUserRound className='w-5 h-5 text-slate-600 dark:text-slate-400' />
                          <span className='text-sm text-slate-700 dark:text-slate-300'>Edit Profile</span>
                        </button>
 
-                       <button className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left cursor-pointer'>
+                       <button 
+                         onClick={handleAccountSettings}
+                         className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left cursor-pointer'
+                       >
                          <Settings className='w-5 h-5 text-slate-600 dark:text-slate-400' />
                          <span className='text-sm text-slate-700 dark:text-slate-300'>Account Settings</span>
                        </button>
@@ -326,7 +356,10 @@ const Header = ({ onMenuClick }) => {
 
                      {/* Sign Out */}
                      <div className='py-2'>
-                       <button className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left cursor-pointer'>
+                       <button 
+                         onClick={handleSignOut}
+                         className='w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left cursor-pointer'
+                       >
                          <LogOut className='w-5 h-5 text-red-600 dark:text-red-400' />
                          <span className='text-sm text-red-600 dark:text-red-400 font-medium'>Sign Out</span>
                        </button>
@@ -337,6 +370,16 @@ const Header = ({ onMenuClick }) => {
             </div>
          </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        type="logout"
+        title="Sign Out?"
+        message="Do you really want to sign out from your account?"
+      />
     </div>
   )
 }

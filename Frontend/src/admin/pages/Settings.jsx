@@ -1,17 +1,25 @@
-import React, { useState } from 'react'
-import { CircleUserRound, ReceiptText, Shield, Power, Trash2, Upload, Camera, Eye, EyeOff, CheckCircle, XCircle, MapPin, Monitor, Smartphone, Plus, Clock, FileText, X } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { CircleUserRound, ReceiptText, Shield, Power, Trash2, Upload, Camera, Eye, EyeOff, CheckCircle, XCircle, MapPin, Monitor, Smartphone, Plus, Clock, FileText, X, LogOut } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
 import LocationPicker from '@/Components/maps/LocationPicker'
+import ConfirmationModal from '../components/ConfirmationModal'
 
-const Settings = () => {
+const Settings = ({ initialTab = 'profile' }) => {
   const { adminMode } = useAdminMode()
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [profileImage, setProfileImage] = useState(null)
   const [showPasswordFields, setShowPasswordFields] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  // Update active tab when initialTab prop changes
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -110,19 +118,25 @@ const Settings = () => {
   }
 
   const handleLogoutAllDevices = () => {
+    setShowLogoutModal(true)
+  }
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false)
     // TODO: Implement API call to logout from all devices
-    if (confirm('Are you sure you want to logout from all devices?')) {
-      console.log('Logging out from all devices...')
-      alert('Logged out from all devices successfully!')
-    }
+    console.log('Logging out from all devices...')
+    alert('Logged out from all devices successfully!')
   }
 
   const handleDeleteAccount = () => {
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = () => {
+    setShowDeleteModal(false)
     // TODO: Implement API call to delete account
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      console.log('Deleting account...')
-      alert('Account deletion initiated. You will receive a confirmation email.')
-    }
+    console.log('Deleting account...')
+    alert('Account deletion initiated. You will receive a confirmation email.')
   }
 
   const handlePasswordChange = (e) => {
@@ -1167,6 +1181,26 @@ const Settings = () => {
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        type="logout"
+        title="Logout All Devices?"
+        message="Do you really want to logout from all devices? You will need to sign in again on all devices."
+      />
+
+      {/* Delete Account Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        type="delete"
+        title="Delete Account?"
+        message="Do you really want to delete your account? This action cannot be undone and all your data will be permanently removed."
+      />
     </div>
   )
 }
