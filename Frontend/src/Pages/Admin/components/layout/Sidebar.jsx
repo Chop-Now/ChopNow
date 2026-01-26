@@ -21,15 +21,6 @@ const shopAdminMenuItems = [
         ],
     },
     {
-        id: "users",
-        icon: <User className='w-5 h-5 text-slate-400' />,
-        label: "Users",
-        submenu: [
-            {id: "all-users", label: "All Users"},
-            {id: "roles", label: "Roles & Permissions"},
-        ],
-    },
-    {
        id: "orders",
        icon: <ShoppingBasket className='w-5 h-5 text-slate-400' />,
        label: "Orders",
@@ -123,8 +114,7 @@ const websiteAdminMenuItems = [
         icon: <ServerCrash className='w-5 h-5 text-slate-400' />,
         label: "Disputes",
         submenu: [
-            {id: "refunds", label: "Refund Requests"},
-            {id: "complaints", label: "Customer Complaints"},
+            {id: "complaints", label: "Complaints"},
 
         ],
     },
