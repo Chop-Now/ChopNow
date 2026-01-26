@@ -8,10 +8,12 @@ import LocationPicker from '@/Components/maps/LocationPicker'
 import { useGeolocation } from '@/Components/maps/useGeolocation'
 import { reverseGeocode, searchAddress } from '@/services/geocoding'
 import toast from 'react-hot-toast'
+import { useAppContext } from '@/context/AppContext'
 
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { register, isAuthenticated, user } = useAppContext();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -20,18 +22,127 @@ const SignUp = () => {
   const [address, setAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { getCurrentLocation } = useGeolocation();
 
-  const handleSubmit = (e) => {
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    businessName: '',
+    businessPhone: '',
+  });
+
+  // Redirect if already authenticated (only on mount)
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'business_owner' || user.role === 'admin') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/shop', { replace: true });
+      }
+    }
+  }, []); // Empty dependency array - only run on mount
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (userType === 'business') {
-      // Redirect to business verification page
-      navigate('/business-verification');
+    // Validation
+    if (userType === 'buyer') {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      if (!phone) {
+        toast.error('Please enter your phone number');
+        return;
+      }
     } else {
-      // Handle buyer signup
-      toast.success('Account created successfully!');
-      // Add your buyer signup logic here
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.businessName) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      if (!phone) {
+        toast.error('Please enter your phone number');
+        return;
+      }
+      if (!location) {
+        toast.error('Please select your business location');
+        return;
+      }
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const registerData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: phone,
+        password: formData.password,
+        role: userType === 'business' ? 'business_owner' : 'consumer',
+      };
+
+      // Add address for buyers if location is selected
+      if (userType === 'buyer' && location) {
+        registerData.addresses = [{
+          street: address || 'Not specified',
+          city: address ? address.split(',')[1]?.trim() || 'Unknown' : 'Unknown',
+          state: address ? address.split(',')[2]?.trim() || 'Unknown' : 'Unknown',
+          postalCode: '',
+          country: address ? address.split(',').pop()?.trim() || 'Unknown' : 'Unknown',
+          location: {
+            type: 'Point',
+            coordinates: [location.lng, location.lat]
+          },
+          label: 'home',
+          isDefault: true
+        }];
+      }
+
+      const response = await register(registerData);
+      
+      // If business owner, redirect to business verification
+      if (userType === 'business') {
+        // Store business data in session storage for next step
+        sessionStorage.setItem('pendingBusiness', JSON.stringify({
+          businessName: formData.businessName,
+          phone: formData.businessPhone || phone,
+          location,
+          address
+        }));
+        navigate('/business-verification', { replace: true });
+      } else {
+        // For buyers, go to shop
+        navigate('/shop', { replace: true });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Error toast is handled in AppContext
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -129,7 +240,10 @@ const SignUp = () => {
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                         <input 
-                          type="text" 
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
                           placeholder="First name" 
                           className="bg-transparent outline-none text-sm w-full h-full" 
                           style={{ color: 'var(--color-textColor)' }}
@@ -139,7 +253,10 @@ const SignUp = () => {
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                         <input 
-                          type="text" 
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
                           placeholder="Last name" 
                           className="bg-transparent outline-none text-sm w-full h-full" 
                           style={{ color: 'var(--color-textColor)' }}
@@ -182,7 +299,10 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type={showPassword ? "text" : "password"} 
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
                         placeholder="Password" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -205,7 +325,10 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type={showConfirmPassword ? "text" : "password"} 
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
                         placeholder="Confirm password" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -353,7 +476,10 @@ const SignUp = () => {
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Handshake className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type="text" 
+                        type="text"
+                        name="businessName"
+                        value={formData.businessName}
+                        onChange={handleInputChange}
                         placeholder="Business name" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -365,8 +491,26 @@ const SignUp = () => {
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type="text" 
-                        placeholder="Contact person" 
+                        type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        placeholder="Contact person first name" 
+                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        style={{ color: 'var(--color-textColor)' }}
+                        required 
+                      />                 
+                    </div>
+
+                    {/* Last Name */}
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
+                      <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <input 
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        placeholder="Contact person last name" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
                         required 
@@ -377,7 +521,10 @@ const SignUp = () => {
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type="email" 
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
                         placeholder="Email address" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -389,7 +536,10 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type={showPassword ? "text" : "password"} 
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
                         placeholder="Password" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -412,7 +562,10 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input 
-                        type={showConfirmPassword ? "text" : "password"} 
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
                         placeholder="Confirm password" 
                         className="bg-transparent outline-none text-sm w-full h-full" 
                         style={{ color: 'var(--color-textColor)' }}
@@ -435,11 +588,12 @@ const SignUp = () => {
 
                 {/* Create Account Button */}
                 <button 
-                  type="submit" 
-                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
-                  Create Account
+                  {isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </button>
 
                 {/* Terms and Privacy */}
