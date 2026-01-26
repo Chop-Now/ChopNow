@@ -23,6 +23,12 @@ const Dashboard = () => {
 
    const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
    const [currentPage, setCurrentPage] = useState("dashboard");
+   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
+
+   const handleNavigateToSettings = (tab) => {
+     setSettingsTab(tab);
+     setCurrentPage('settings');
+   };
 
    const renderPage = () => {
      switch(currentPage) {
@@ -72,7 +78,7 @@ const Dashboard = () => {
        case 'payouts':
          return <Payouts />;
        case 'settings':
-         return <Settings />;
+         return <Settings initialTab={settingsTab} />;
        default:
          return <Content />;
      }
@@ -89,7 +95,10 @@ const Dashboard = () => {
              onPageChange={setCurrentPage}
               />
              <div className='flex-1 flex flex-col overflow-hidden'>
-                <Header onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)} />
+                <Header 
+                  onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)} 
+                  onNavigateToSettings={handleNavigateToSettings}
+                />
 
                   <div className='flex-1 overflow-y-auto bg-transparent'>
                     <div className='p-6 space-y-6'>
