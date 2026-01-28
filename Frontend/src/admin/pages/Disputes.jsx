@@ -748,8 +748,8 @@ export const CustomerComplaints = () => {
       {/* Complaint Details Sidebar */}
       {selectedIssue && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-9999" onClick={() => setSelectedIssue(null)}></div>
-          <div className="fixed top-0 right-0 h-full w-full md:w-[480px] bg-white dark:bg-slate-900 shadow-2xl z-10000 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/30 z-9999 w-screen h-screen" onClick={() => setSelectedIssue(null)}></div>
+          <div className="fixed top-0 right-0 h-screen w-full md:w-[480px] bg-white dark:bg-slate-900 shadow-2xl z-10000 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-5">
               {/* Header with Close Button */}
               <div className="flex justify-between items-center mb-4">

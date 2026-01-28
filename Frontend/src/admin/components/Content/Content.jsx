@@ -17,11 +17,11 @@ const Content = () => {
         {/* Chart Section */}
        <ChartSection />
 
-       <div className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
-          <div className='xl:col-span-2'>
+       <div className='grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch'>
+          <div className='xl:col-span-2 h-full'>
             {adminMode === 'shop' ? <TableSection /> : <DisputesTable />}
           </div>
-          <div>
+          <div className='h-full'>
             <ActivityFeed />
           </div>
        </div>
