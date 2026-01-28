@@ -25,9 +25,19 @@ const Dashboard = () => {
    const [currentPage, setCurrentPage] = useState("dashboard");
    const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
 
-   const handleNavigateToSettings = (tab) => {
-     setSettingsTab(tab);
-     setCurrentPage('settings');
+   const handleNavigateToSettings = (pageOrTab) => {
+     // Check if it's a settings tab
+     if (['profile', 'business', 'security', 'notifications', 'preferences'].includes(pageOrTab)) {
+       setSettingsTab(pageOrTab);
+       setCurrentPage('settings');
+     } else {
+       // Otherwise, navigate to the page directly
+       setCurrentPage(pageOrTab);
+     }
+   };
+
+   const handlePageChange = (pageId) => {
+     setCurrentPage(pageId);
    };
 
    const renderPage = () => {
@@ -98,6 +108,7 @@ const Dashboard = () => {
                 <Header 
                   onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)} 
                   onNavigateToSettings={handleNavigateToSettings}
+                  onPageChange={handlePageChange}
                 />
 
                   <div className='flex-1 overflow-y-auto bg-transparent'>

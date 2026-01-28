@@ -1,16 +1,98 @@
-import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store } from 'lucide-react'
+import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store, LayoutDashboard, ChartNoAxesCombined, FileText, Leaf, ShoppingBasket, Clock, Truck, List, Plus, Coins, User, Shield, Activity, Ban, MessageSquare } from 'lucide-react'
 import React, { useState, useEffect, useRef } from 'react'
 import { useAdminMode } from '../../context/AdminModeContext'
 import ConfirmationModal from '../ConfirmationModal'
 
-const Header = ({ onMenuClick, onNavigateToSettings }) => {
+const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
   const { adminMode, toggleAdminMode } = useAdminMode();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
+  const searchRef = useRef(null);
+
+  // Shop Admin searchable items
+  const shopAdminSearchItems = [
+    // Pages
+    { id: 'dashboard', label: 'Dashboard', path: 'Pages', icon: 'LayoutDashboard', keywords: ['home', 'main', 'overview', 'welcome', 'start', 'summary', 'quick stats'] },
+    // Analytics
+    { id: 'overview', label: 'Analytics Overview', path: 'Analytics > Overview', icon: 'ChartNoAxesCombined', keywords: ['sales', 'revenue', 'stats', 'metrics', 'performance', 'charts', 'graphs', 'data', 'analytics', 'today', 'weekly', 'monthly', 'total sales', 'order count'] },
+    { id: 'reports', label: 'Analytics Reports', path: 'Analytics > Reports', icon: 'FileText', keywords: ['revenue', 'cost', 'category', 'peak hours', 'fulfillment', 'export', 'download', 'csv', 'pdf', 'breakdown', 'analysis', 'income', 'expenses', 'profit', 'margin', 'best selling', 'top products'] },
+    { id: 'insights', label: 'Analytics Insights', path: 'Analytics > Insights', icon: 'TrendingUp', keywords: ['customer behavior', 'conversion', 'growth', 'opportunities', 'retention', 'trends', 'patterns', 'recommendations', 'suggestions', 'improve', 'optimize'] },
+    { id: 'impact', label: 'Analytics Impact', path: 'Analytics > Impact', icon: 'Leaf', keywords: ['meals rescued', 'co2', 'carbon', 'water saved', 'environmental', 'ranking', 'sustainability', 'food waste', 'green', 'eco', 'impact score', 'saved meals'] },
+    // Orders
+    { id: 'all-orders', label: 'All Orders', path: 'Orders > All Orders', icon: 'ShoppingBasket', keywords: ['view orders', 'order list', 'order management', 'purchases', 'transactions', 'order history', 'customer orders', 'search order', 'find order'] },
+    { id: 'pending-orders', label: 'Pending Orders', path: 'Orders > Pending', icon: 'Clock', keywords: ['awaiting', 'processing', 'new orders', 'incoming', 'waiting', 'unconfirmed', 'accept order', 'confirm order'] },
+    { id: 'completed-orders', label: 'Completed Orders', path: 'Orders > Completed', icon: 'CheckCircle', keywords: ['fulfilled', 'delivered', 'finished', 'done', 'successful', 'past orders', 'order history'] },
+    { id: 'deliveries', label: 'Deliveries', path: 'Orders > Deliveries', icon: 'Truck', keywords: ['shipping', 'delivery tracking', 'dispatch', 'rider', 'in transit', 'on the way', 'track', 'driver', 'courier'] },
+    // Listings
+    { id: 'all-listings', label: 'All Listings', path: 'Listings > All', icon: 'List', keywords: ['products', 'inventory', 'catalog', 'items', 'menu', 'food items', 'stock', 'available', 'active listings', 'manage products'] },
+    { id: 'new-listing', label: 'New Listing', path: 'Listings > New', icon: 'Plus', keywords: ['add product', 'create listing', 'new item', 'upload', 'add food', 'new product', 'add menu item', 'post', 'sell'] },
+    // Finance
+    { id: 'payouts', label: 'Payouts', path: 'Finance > Payouts', icon: 'Coins', keywords: ['payments', 'bank', 'mtn', 'earnings', 'payment settings', 'withdrawal', 'money', 'funds', 'balance', 'transfer', 'bank account', 'mobile money', 'airtel', 'cashout', 'get paid'] },
+    // Settings - Main
+    { id: 'settings', label: 'Settings', path: 'Settings', icon: 'Settings', keywords: ['preferences', 'configuration', 'account', 'options', 'customize', 'setup'] },
+    // Settings - Profile Tab
+    { id: 'settings', label: 'Profile Settings', path: 'Settings > Profile', icon: 'CircleUserRound', tab: 'profile', keywords: ['edit profile', 'profile picture', 'avatar', 'name', 'email', 'phone number', 'contact info', 'personal information', 'update profile', 'business name', 'business logo', 'tagline', 'contact person'] },
+    // Settings - Business Tab (Shop Admin)
+    { id: 'settings', label: 'Business Details', path: 'Settings > Business', icon: 'ReceiptText', tab: 'business', keywords: ['business hours', 'opening hours', 'closing time', 'working hours', 'schedule', 'location', 'address', 'map', 'physical address', 'certificates', 'license', 'health certificate', 'tax registration', 'documents', 'special hours', 'holidays'] },
+    // Settings - Security Tab
+    { id: 'settings', label: 'Security Settings', path: 'Settings > Security', icon: 'Shield', tab: 'security', keywords: ['two factor', 'two-factor', '2fa', 'authentication', 'password', 'change password', 'reset password', 'active sessions', 'login activity', 'logout all devices', 'security', 'protect account', 'verification', 'otp'] },
+    // Profile Menu Actions
+    { id: 'profile', label: 'Edit Profile', path: 'Profile Menu > Edit Profile', icon: 'CircleUserRound', keywords: ['profile', 'edit', 'personal info', 'update profile', 'my profile', 'account info'], type: 'action', action: 'profile' },
+    { id: 'security', label: 'Account Settings', path: 'Profile Menu > Settings', icon: 'Settings', keywords: ['security', 'password', 'account settings', 'privacy'], type: 'action', action: 'security' },
+    { id: 'support', label: 'Support', path: 'Profile Menu > Support', icon: 'BadgeInfo', keywords: ['help', 'assistance', 'contact support', 'customer service', 'faq', 'question', 'issue', 'problem'], type: 'action', action: 'support' },
+    { id: 'logout', label: 'Sign Out', path: 'Profile Menu > Sign Out', icon: 'LogOut', keywords: ['logout', 'sign out', 'exit', 'log out', 'leave', 'end session'], type: 'action', action: 'logout' },
+    { id: 'dark-mode', label: 'Toggle Dark Mode', path: 'Header > Theme', icon: 'Moon', keywords: ['dark mode', 'light mode', 'theme', 'appearance', 'night mode', 'display', 'brightness', 'color scheme'], type: 'action', action: 'dark-mode' },
+    { id: 'notifications', label: 'View Notifications', path: 'Header > Notifications', icon: 'Bell', keywords: ['notifications', 'alerts', 'updates', 'messages', 'inbox', 'new', 'unread'], type: 'action', action: 'notifications' },
+    { id: 'switch-admin', label: 'Switch to Website Admin', path: 'Header > Admin Mode', icon: 'Building2', keywords: ['switch mode', 'admin mode', 'website admin', 'change mode', 'toggle admin'], type: 'action', action: 'switch-admin' },
+    { id: 'storefront', label: 'View Storefront', path: 'Sidebar > Storefront', icon: 'Store', keywords: ['shop', 'storefront', 'view shop', 'my store', 'preview', 'customer view', 'public page'], type: 'action', action: 'storefront' },
+  ];
+
+  // Website Admin searchable items
+  const websiteAdminSearchItems = [
+    // Pages
+    { id: 'dashboard', label: 'Dashboard', path: 'Pages', icon: 'LayoutDashboard', keywords: ['home', 'main', 'overview', 'welcome', 'start', 'summary', 'quick stats', 'platform overview'] },
+    // Analytics
+    { id: 'overview', label: 'Analytics Overview', path: 'Analytics > Overview', icon: 'ChartNoAxesCombined', keywords: ['co2', 'meals', 'water', 'vendor leaderboard', 'environmental', 'platform stats', 'total users', 'total vendors', 'charts', 'graphs', 'data'] },
+    { id: 'reports', label: 'Analytics Reports', path: 'Analytics > Reports', icon: 'FileText', keywords: ['revenue', 'expenses', 'category', 'peak hours', 'fulfillment', 'export', 'download', 'csv', 'pdf', 'breakdown', 'income', 'profit', 'platform revenue', 'commission'] },
+    { id: 'insights', label: 'Analytics Insights', path: 'Analytics > Insights', icon: 'TrendingUp', keywords: ['user growth', 'vendor metrics', 'regional', 'demographics', 'trends', 'patterns', 'analysis', 'growth rate', 'retention'] },
+    { id: 'impact', label: 'Analytics Impact', path: 'Analytics > Impact', icon: 'Leaf', keywords: ['meals rescued', 'co2', 'carbon', 'water saved', 'environmental', 'monthly impact', 'sustainability', 'food waste', 'green', 'eco', 'platform impact'] },
+    // Users
+    { id: 'all-users', label: 'All Users', path: 'Users > All Users', icon: 'User', keywords: ['customers', 'user list', 'accounts', 'members', 'registered users', 'customer list', 'search user', 'find user', 'user management'] },
+    { id: 'roles', label: 'Roles & Permissions', path: 'Users > Roles', icon: 'Shield', keywords: ['permissions', 'access', 'roles', 'authorization', 'admin roles', 'user roles', 'access control', 'privileges', 'restrict access'] },
+    { id: 'activity', label: 'User Activity', path: 'Users > Activity', icon: 'Activity', keywords: ['logs', 'activity log', 'user behavior', 'tracking', 'audit log', 'history', 'actions', 'user actions', 'recent activity'] },
+    // Vendors
+    { id: 'all-vendors', label: 'All Vendors', path: 'Vendors > All Vendors', icon: 'Store', keywords: ['shops', 'merchants', 'sellers', 'vendor list', 'pending', 'active', 'suspended', 'all shops', 'vendor management', 'search vendor', 'find vendor'] },
+    { id: 'vendor-approval', label: 'Vendor Approval', path: 'Vendors > Approval', icon: 'CheckCircle', keywords: ['awaiting approval', 'pending', 'verification', 'approve vendors', 'new vendors', 'review vendors', 'accept vendor', 'reject vendor', 'onboarding'] },
+    // Disputes
+    { id: 'refunds', label: 'Refund Requests', path: 'Disputes > Refunds', icon: 'AlertCircle', keywords: ['disputes', 'refunds', 'money back', 'returns', 'refund request', 'customer refund', 'cancel order', 'chargeback', 'reimburse'] },
+    { id: 'complaints', label: 'Customer Complaints', path: 'Disputes > Complaints', icon: 'MessageSquare', keywords: ['complaints', 'issues', 'problems', 'customer service', 'report', 'feedback', 'negative review', 'bad experience', 'resolve issue'] },
+    // Finance
+    { id: 'payouts', label: 'Payouts', path: 'Finance > Payouts', icon: 'Coins', keywords: ['payments', 'bank', 'mtn', 'vendor payouts', 'release payout', 'pay vendors', 'withdrawal', 'transfer', 'mobile money', 'airtel', 'funds', 'balance', 'pending payouts'] },
+    // Settings - Main
+    { id: 'settings', label: 'Settings', path: 'Settings', icon: 'Settings', keywords: ['preferences', 'configuration', 'account', 'options', 'customize', 'setup'] },
+    // Settings - Profile Tab
+    { id: 'settings', label: 'Profile Settings', path: 'Settings > Profile', icon: 'CircleUserRound', tab: 'profile', keywords: ['edit profile', 'profile picture', 'avatar', 'name', 'email', 'phone number', 'contact info', 'personal information', 'update profile', 'admin profile'] },
+    // Settings - Security Tab
+    { id: 'settings', label: 'Security Settings', path: 'Settings > Security', icon: 'Shield', tab: 'security', keywords: ['two factor', 'two-factor', '2fa', 'authentication', 'password', 'change password', 'reset password', 'active sessions', 'login activity', 'logout all devices', 'security', 'protect account', 'verification', 'otp'] },
+    // Profile Menu Actions
+    { id: 'profile', label: 'Edit Profile', path: 'Profile Menu > Edit Profile', icon: 'CircleUserRound', keywords: ['profile', 'edit', 'personal info', 'update profile', 'my profile', 'account info'], type: 'action', action: 'profile' },
+    { id: 'security', label: 'Account Settings', path: 'Profile Menu > Settings', icon: 'Settings', keywords: ['security', 'password', 'account settings', 'privacy'], type: 'action', action: 'security' },
+    { id: 'support', label: 'Support', path: 'Profile Menu > Support', icon: 'BadgeInfo', keywords: ['help', 'assistance', 'contact support', 'customer service', 'faq', 'question', 'issue', 'problem'], type: 'action', action: 'support' },
+    { id: 'logout', label: 'Sign Out', path: 'Profile Menu > Sign Out', icon: 'LogOut', keywords: ['logout', 'sign out', 'exit', 'log out', 'leave', 'end session'], type: 'action', action: 'logout' },
+    { id: 'dark-mode', label: 'Toggle Dark Mode', path: 'Header > Theme', icon: 'Moon', keywords: ['dark mode', 'light mode', 'theme', 'appearance', 'night mode', 'display', 'brightness', 'color scheme'], type: 'action', action: 'dark-mode' },
+    { id: 'notifications', label: 'View Notifications', path: 'Header > Notifications', icon: 'Bell', keywords: ['notifications', 'alerts', 'updates', 'messages', 'inbox', 'new', 'unread'], type: 'action', action: 'notifications' },
+    { id: 'switch-admin', label: 'Switch to Shop Admin', path: 'Header > Admin Mode', icon: 'Store', keywords: ['switch mode', 'admin mode', 'shop admin', 'change mode', 'toggle admin', 'vendor mode'], type: 'action', action: 'switch-admin' },
+  ];
+
+  // Get current search items based on admin mode
+  const currentSearchItems = adminMode === 'shop' ? shopAdminSearchItems : websiteAdminSearchItems;
 
   // Dummy notification data
   const notifications = [
@@ -156,7 +238,7 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
     }
   };
 
-  // Close profile dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -165,6 +247,9 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -172,6 +257,97 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim().length > 0) {
+      setIsSearchOpen(true);
+      // Filter search items based on query - search in label, path, and keywords
+      const filtered = currentSearchItems.filter(item => {
+        const searchText = query.toLowerCase();
+        return (
+          item.label.toLowerCase().includes(searchText) ||
+          item.path.toLowerCase().includes(searchText) ||
+          (item.keywords && item.keywords.some(keyword => keyword.includes(searchText)))
+        );
+      });
+      setSearchResults(filtered);
+    } else {
+      setIsSearchOpen(false);
+      setSearchResults([]);
+    }
+  };
+
+  // Handle search result click
+  const handleSearchResultClick = (item) => {
+    // Handle different action types
+    if (item.type === 'action') {
+      // Close search modal first for actions
+      setSearchQuery('');
+      setIsSearchOpen(false);
+      setSearchResults([]);
+      
+      switch (item.action) {
+        case 'logout':
+          setShowLogoutModal(true);
+          break;
+        case 'dark-mode':
+          toggleDarkMode();
+          break;
+        case 'notifications':
+          setIsNotificationOpen(true);
+          break;
+        case 'switch-admin':
+          toggleAdminMode();
+          break;
+        case 'profile':
+          handleEditProfile();
+          break;
+        case 'security':
+          handleAccountSettings();
+          break;
+        case 'support':
+          break;
+        case 'storefront':
+          window.open('/shop', '_blank');
+          break;
+        default:
+          break;
+      }
+    } else {
+      // Navigate to page - call the function first
+      const pageId = item.id;
+      
+      // Close modal
+      setSearchQuery('');
+      setIsSearchOpen(false);
+      setSearchResults([]);
+      
+      // Navigate using the page change function
+      if (onPageChange) {
+        onPageChange(pageId);
+      }
+    }
+  };
+
+  // Close search when pressing Escape
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isSearchOpen]);
 
   const handleEditProfile = () => {
     setIsProfileOpen(false);
@@ -196,7 +372,8 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
   };
 
   return (
-    <div className='relative z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4'>
+    <>
+    <div className='z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4'>
       <div className='flex items-center justify-between'>
          {/*Left section*/}
          <div className='flex items-center space-x-4'>
@@ -207,12 +384,32 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
             <MenuIcon className='w-5 h-5'/>
            </button>
 
-           <div className='relative'>
+           <div className='relative' ref={searchRef}>
               <Search className='w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600 dark:text-slate-400'/>
-              <input type="text" placeholder='Search or type command...' className='w-[400px] pl-10 pr-12 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'/>
-              <button className='absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'>
-                <SlidersHorizontal className='w-4 h-4'/>
-              </button>
+              <input 
+                type="text" 
+                placeholder='Search or type command...' 
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => {
+                  if (searchQuery.trim().length > 0) {
+                    setIsSearchOpen(true);
+                  }
+                }}
+                className='w-[400px] pl-10 pr-12 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                    setSearchResults([]);
+                  }}
+                  className='absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                >
+                  <X className='w-4 h-4'/>
+                </button>
+              )}
            </div>
          </div>
 
@@ -381,6 +578,220 @@ const Header = ({ onMenuClick, onNavigateToSettings }) => {
         message="Do you really want to sign out from your account?"
       />
     </div>
+
+      {/* Search Results Overlay and Modal */}
+      {isSearchOpen && (
+        <>
+          {/* Dark Overlay */}
+          <div 
+            className='fixed inset-0 bg-black/50 backdrop-blur-sm z-9998'
+            onMouseDown={() => {
+              setIsSearchOpen(false);
+              setSearchQuery('');
+              setSearchResults([]);
+            }}
+          />
+          
+          {/* Search Results Modal */}
+          <div 
+            className='fixed top-24 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-9999'
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className='bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden mx-4'>
+              {/* Search Input in Modal */}
+              <div className='px-6 py-4 border-b border-slate-200 dark:border-slate-700'>
+                <div className='relative'>
+                  <Search className='w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600 dark:text-slate-400'/>
+                  <input 
+                    type="text" 
+                    placeholder='Search or type command...' 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    autoFocus
+                    className='w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors'
+                    >
+                      <X className='w-4 h-4'/>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Header */}
+              <div className='px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50'>
+                <div className='flex items-center justify-between'>
+                  <h3 className='text-sm font-semibold text-slate-600 dark:text-slate-400'>
+                    {searchResults.length > 0 ? (
+                      <>
+                        {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+                      </>
+                    ) : (
+                      'No results'
+                    )}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }}
+                    className='p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors'
+                  >
+                    <X className='w-4 h-4 text-slate-500 dark:text-slate-400' />
+                  </button>
+                </div>
+              </div>
+
+              {/* Results List */}
+              <div className='max-h-96 overflow-y-auto'>
+                {searchResults.length > 0 ? (
+                  <div className='py-2'>
+                    {searchResults.map((item) => {
+                      const IconComponent = {
+                        LayoutDashboard,
+                        ChartNoAxesCombined,
+                        FileText,
+                        TrendingUp,
+                        Leaf,
+                        ShoppingBasket,
+                        Clock,
+                        CheckCircle,
+                        Truck,
+                        List,
+                        Plus,
+                        Coins,
+                        Settings,
+                        User,
+                        Shield,
+                        Activity,
+                        Store,
+                        Ban,
+                        AlertCircle,
+                        MessageSquare,
+                        CircleUserRound,
+                        BadgeInfo,
+                        LogOut,
+                        Moon,
+                        Bell,
+                        Building2
+                      }[item.icon];
+
+                      return (
+                        <div
+                          key={item.id}
+                          role="button"
+                          tabIndex={0}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            // Handle different action types
+                            if (item.type === 'action') {
+                              setSearchQuery('');
+                              setIsSearchOpen(false);
+                              setSearchResults([]);
+                              
+                              switch (item.action) {
+                                case 'logout':
+                                  setShowLogoutModal(true);
+                                  break;
+                                case 'dark-mode':
+                                  toggleDarkMode();
+                                  break;
+                                case 'notifications':
+                                  setIsNotificationOpen(true);
+                                  break;
+                                case 'switch-admin':
+                                  toggleAdminMode();
+                                  break;
+                                case 'profile':
+                                  handleEditProfile();
+                                  break;
+                                case 'security':
+                                  handleAccountSettings();
+                                  break;
+                                case 'storefront':
+                                  window.open('/shop', '_blank');
+                                  break;
+                                default:
+                                  break;
+                              }
+                            } else {
+                              // Navigate to page
+                              const pageId = item.id;
+                              const tabId = item.tab;
+                              
+                              // Check if this is a settings tab navigation
+                              if (tabId && onNavigateToSettings) {
+                                // Navigate to specific settings tab
+                                onNavigateToSettings(tabId);
+                              } else if (onPageChange) {
+                                // Navigate to regular page
+                                onPageChange(pageId);
+                              }
+                              
+                              // Then close modal
+                              setSearchQuery('');
+                              setIsSearchOpen(false);
+                              setSearchResults([]);
+                            }
+                          }}
+                          className='w-full px-6 py-3 flex items-center space-x-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700 last:border-0 cursor-pointer'
+                        >
+                          <div className='p-2 bg-solid/10 dark:bg-solid/20 rounded-lg shrink-0'>
+                            {IconComponent && <IconComponent className='w-5 h-5 text-solid' />}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-medium text-slate-800 dark:text-white truncate'>
+                              {item.label}
+                            </p>
+                            <p className='text-xs text-slate-500 dark:text-slate-400 truncate'>
+                              {item.path}
+                            </p>
+                          </div>
+                          <ChevronDown className='w-4 h-4 text-slate-400 -rotate-90 shrink-0' />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className='py-12 px-6 text-center'>
+                    <Search className='w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3' />
+                    <p className='text-sm font-medium text-slate-600 dark:text-slate-400'>
+                      No results found for "{searchQuery}"
+                    </p>
+                    <p className='text-xs text-slate-500 dark:text-slate-500 mt-1'>
+                      Try searching with different keywords
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Hint */}
+              {searchResults.length > 0 && (
+                <div className='px-6 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700'>
+                  <div className='flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
+                    <span>Press ESC to close</span>
+                    <span className='flex items-center gap-1'>
+                      <kbd className='px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded text-xs'>↑</kbd>
+                      <kbd className='px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded text-xs'>↓</kbd>
+                      <span className='ml-1'>to navigate</span>
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }
 

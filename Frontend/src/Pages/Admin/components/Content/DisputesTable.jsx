@@ -69,10 +69,8 @@ const DisputesTable = () => {
   };
 
   return (
-    <div className='space-y-6'>
-      {/*Recent Disputes*/}
-      <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden'>
-         <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50'>
+      <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden h-full flex flex-col'>
+         <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50 shrink-0'>
            <div className='flex items-center justify-between'>
               <div className=''>
                 <h3 className='text-lg font-bold text-slate-800 dark:text-white'>Recent Disputes</h3>
@@ -90,7 +88,7 @@ const DisputesTable = () => {
            </div>
          </div>
         {/*Table*/}
-        <div className='overflow-x-auto'>
+        <div className='overflow-x-auto flex-1'>
            <table className='w-full'>
               <thead className='bg-slate-50 dark:bg-slate-800/50'>
                 <tr>
@@ -153,7 +151,6 @@ const DisputesTable = () => {
            </table>
         </div>
       </div>
-    </div>
   )
 }
 
