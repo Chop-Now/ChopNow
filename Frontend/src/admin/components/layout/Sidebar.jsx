@@ -1,5 +1,5 @@
 import { assets } from '@/assets/assets'
-import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, Settings, ShoppingBasket, Store, User } from 'lucide-react'
+import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, Settings, ShoppingBasket, Store, User, ExternalLink } from 'lucide-react'
 import React, { useState } from 'react'
 import { useAdminMode } from '../../context/AdminModeContext'
 
@@ -228,6 +228,22 @@ const Sidebar = ({collapsed, onToggle, currentPage, onPageChange}) => {
             </div>
         ))}
       </div>
+
+      {/* View Storefront Button - Only for Shop Admins */}
+      {adminMode === 'shop' && (
+        <div className='p-4 border-t border-slate-200 dark:border-slate-700'>
+          <button
+            onClick={() => {
+              // Navigate to storefront - you can customize the URL or navigation logic
+              window.open('/shop', '_blank');
+            }}
+            className={`w-full flex items-center ${isExpanded ? 'justify-center gap-3 px-4' : 'justify-center'} py-3 rounded-xl transition-all duration-300 bg-solid hover:bg-tertiary text-white font-medium shadow-lg hover:shadow-xl hover:shadow-solid/20 cursor-pointer`}
+          >
+            <ExternalLink className='w-5 h-5' />
+            {isExpanded && <span className='text-sm'>View Storefront</span>}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
