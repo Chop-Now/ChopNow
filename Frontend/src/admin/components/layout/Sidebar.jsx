@@ -119,6 +119,11 @@ const websiteAdminMenuItems = [
         ],
     },
     {
+        id: "payouts",
+        icon: <Coins className='w-5 h-5 text-slate-400'/>,
+        label: "Payouts",
+    },
+    {
       id: "settings",
       icon: <Settings className='w-5 h-5 text-slate-400' />,
       label: "Settings",
