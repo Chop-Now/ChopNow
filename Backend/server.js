@@ -27,6 +27,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Health checks (for load balancers and monitoring)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/ready', (req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  if (dbReady) {
+    res.json({ status: 'ready', database: 'connected' });
+  } else {
+    res.status(503).json({ status: 'not ready', database: mongoose.STATES[mongoose.connection.readyState] || 'disconnected' });
+  }
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
