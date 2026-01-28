@@ -8,14 +8,18 @@ const {
   uploadAvatar,
   addAddress,
   updateAddress,
-  deleteAddress
+  deleteAddress,
+  getUsersForAdmin
 } = require('../controllers/userController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 // Public routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+
+// Admin-only: list all users
+router.get('/', protect, authorize('admin'), getUsersForAdmin);
 
 // Protected routes
 router.get('/profile', protect, getUserProfile);

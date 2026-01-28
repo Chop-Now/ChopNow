@@ -7,16 +7,14 @@ import Register from '../Pages/Auth/Register';
 import Profile from '../Pages/Profile/Profile';
 import Settings from '../Pages/Profile/Settings';
 import BusinessRoutes from './BusinessRoutes';
+import AdminDashboard from '../Pages/Admin/Dashboard';
+import NotFound from '../Components/NotFound';
 
 import HomePage from '../Pages/Consumer/HomePage';
 import SearchPage from '../Pages/Consumer/SearchPage';
 import Cart from '../Pages/Consumer/Cart';
 import Checkout from '../Pages/Consumer/Checkout';
 import OrderSuccess from '../Pages/Consumer/OrderSuccess';
-
-// Placeholder Pages - We will create these next
-const AdminDashboard = () => <div className="p-4"><h1>Admin Dashboard</h1></div>;
-const NotFound = () => <div className="p-4"><h1>404 Not Found</h1></div>;
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const { user, loading, isAuthenticated } = useAuth();
@@ -25,7 +23,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-        // Redirect based on role or to home
         return <Navigate to="/" replace />;
     }
 
@@ -82,7 +79,7 @@ const AppRoutes = () => {
             <Route
                 path="/business/*"
                 element={
-                    <ProtectedRoute allowedRoles={['business', 'admin']}>
+                    <ProtectedRoute allowedRoles={['business_owner', 'business', 'admin']}>
                         <BusinessRoutes />
                     </ProtectedRoute>
                 }
