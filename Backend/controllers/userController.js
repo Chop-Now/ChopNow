@@ -284,6 +284,42 @@ const deleteAddress = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all users (admin only)
+ * @route   GET /api/users
+ * @access  Private (admin)
+ */
+const getUsersForAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const skip = (page - 1) * limit;
+    const role = req.query.role;
+    const status = req.query.status;
+
+    const query = {};
+    if (role) query.role = role;
+    if (status) query.status = status;
+
+    const users = await User.find(query)
+      .select('-passwordHash')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+      users,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -292,5 +328,6 @@ module.exports = {
   uploadAvatar,
   addAddress,
   updateAddress,
-  deleteAddress
+  deleteAddress,
+  getUsersForAdmin
 };

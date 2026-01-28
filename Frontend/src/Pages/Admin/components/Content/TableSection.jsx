@@ -1,6 +1,6 @@
 import { MoreHorizontal, SlidersHorizontal } from 'lucide-react'
 import React from 'react'
-import { dummyProducts } from '../../../assets/assets'
+import { dummyProducts } from '../../../../assets/assets'
 
 const TableSection = () => {
   // Take only first 5 products for the table
