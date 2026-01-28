@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { dummyProducts, categories } from '../../assets/assets'
+import { dummyProducts, categories } from '../../../assets/assets'
 import { Search, SlidersHorizontal, Pencil, Trash2, Package, CheckCircle, XCircle, Clock, Upload, X, Crop, Maximize2, ShoppingCart } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
 

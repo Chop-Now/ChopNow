@@ -1,5 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, Users, Store, Pen, Ban, CheckCircle, Clock, AlertCircle, X, Calendar, MapPin, Leaf, FileText, ChevronDown, Bike, Trash2, Archive, MoreVertical, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import api from '../../../services/api'
+
+// Map API role to display role
+const mapRole = (role) => {
+  if (role === 'consumer') return 'customer'
+  if (role === 'business_owner') return 'vendor'
+  return role
+}
 
 export const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -11,8 +19,39 @@ export const AllUsers = () => {
   const [selectedUsers, setSelectedUsers] = useState([])
   const itemsPerPage = 10
 
-  // Sample user data
-  const usersData = [
+  const [apiUsers, setApiUsers] = useState([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [usersError, setUsersError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const fetchUsers = async () => {
+      try {
+        setUsersLoading(true)
+        setUsersError(null)
+        const { data } = await api.get('/api/users', { params: { limit: 200 } })
+        if (!cancelled && data.users) {
+          setApiUsers(data.users.map((u) => ({
+            id: u._id,
+            name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+            email: u.email,
+            role: mapRole(u.role),
+            status: u.status || 'active',
+            joinedDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '',
+          })))
+        }
+      } catch (err) {
+        if (!cancelled) setUsersError(err.message || 'Failed to load users')
+      } finally {
+        if (!cancelled) setUsersLoading(false)
+      }
+    }
+    fetchUsers()
+    return () => { cancelled = true }
+  }, [])
+
+  // Sample fallback user data when API not available or empty
+  const usersDataFallback = [
     {
       id: 'USR001',
       name: 'Sarah Johnson',
@@ -122,6 +161,8 @@ export const AllUsers = () => {
     }
   ]
 
+  const usersData = apiUsers.length > 0 ? apiUsers : usersDataFallback
+
   // Calculate stats
   const totalUsers = usersData.length
   const activeVendors = usersData.filter(u => u.role === 'vendor' && u.status === 'active').length
@@ -226,6 +267,12 @@ export const AllUsers = () => {
 
   return (
     <div className="p-4 min-h-screen">
+      {usersLoading && (
+        <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-300 text-sm">Loading users…</div>
+      )}
+      {usersError && !usersLoading && (
+        <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-300 text-sm">{usersError}</div>
+      )}
       {/* Page Title */}
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
