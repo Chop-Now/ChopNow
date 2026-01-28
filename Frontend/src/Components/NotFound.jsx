@@ -73,19 +73,12 @@ const NotFound = () => {
         </p>
       </div>
 
-      {/* Floating Animation Keyframes */}
-      <style jsx>{`
+      <style>{`
         @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
         }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
       `}</style>
     </div>
   )
