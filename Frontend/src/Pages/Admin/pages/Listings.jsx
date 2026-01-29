@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
-import { dummyProducts, categories } from '../../../assets/assets'
+import React, { useState, useEffect } from 'react'
+import { categories } from '../../../assets/assets'
 import { Search, SlidersHorizontal, Pencil, Trash2, Package, CheckCircle, XCircle, Clock, Upload, X, Crop, Maximize2, ShoppingCart } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
+import listingService from '../../../services/listingService'
+import toast from 'react-hot-toast'
 
 export const AllListings = () => {
   const { adminMode } = useAdminMode();
@@ -10,30 +12,107 @@ export const AllListings = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const itemsPerPage = 10;
 
-  // Add status and stock to products
-  const [products, setProducts] = useState(
-    dummyProducts.map((product, index) => ({
-      ...product,
-      status: index % 3 === 0 ? 'inactive' : index % 5 === 0 ? 'expired' : 'active',
-      stock: product.quantity || Math.floor(Math.random() * 50) + 10,
-    }))
-  );
+  // Fetch listings from API
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const filters = {
+          limit: 1000, // Get all for admin
+          page: 1,
+          status: statusFilter, // 'all' supported by backend
+        };
+
+        const response = await listingService.getListings(filters);
+        const listings = response.listings || response.data || [];
+        
+        // Transform backend listings to match frontend format
+        const transformedListings = listings.map(listing => {
+          const now = new Date();
+          const availableFrom = new Date(listing.timeWindow?.availableFrom || listing.createdAt);
+          const availableUntil = new Date(listing.timeWindow?.availableUntil || listing.createdAt);
+          
+          // Determine status
+          let status = listing.status || 'active';
+          if (status === 'active' && availableUntil < now) {
+            status = 'expired';
+          }
+          
+          return {
+            _id: listing._id,
+            name: listing.title,
+            category: listing.category,
+            vendor: listing.business?.name || 'Unknown',
+            rating: listing.business?.averageRating || 0,
+            quantity: listing.inventory?.quantityAvailable || 0,
+            stock: listing.inventory?.quantityAvailable || 0,
+            location: listing.business?.address?.street || '',
+            pickupTime: listing.timeWindow?.availableFrom && listing.timeWindow?.availableUntil
+              ? `${new Date(listing.timeWindow.availableFrom).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${new Date(listing.timeWindow.availableUntil).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+              : 'N/A',
+            price: listing.pricing?.originalPrice || 0,
+            offerPrice: listing.pricing?.rescuePrice || listing.pricing?.originalPrice || 0,
+            image: listing.photos && listing.photos.length > 0 ? listing.photos : ['/placeholder.jpg'],
+            description: listing.description ? listing.description.split('\n') : [],
+            status: status,
+            createdAt: listing.createdAt,
+            updatedAt: listing.updatedAt,
+            inStock: (listing.inventory?.quantityAvailable || 0) > 0,
+          };
+        });
+        
+        setProducts(transformedListings);
+      } catch (err) {
+        console.error('Failed to fetch listings:', err);
+        setError('Failed to load listings');
+        toast.error('Failed to load listings');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, [statusFilter]);
 
   // Toggle product status
-  const handleToggleStatus = (productId) => {
-    setProducts(prev => prev.map(product => 
-      product._id === productId 
-        ? { ...product, status: product.status === 'active' ? 'inactive' : 'active' }
-        : product
-    ));
+  const handleToggleStatus = async (productId) => {
+    try {
+      const product = products.find(p => p._id === productId);
+      if (!product) return;
+      
+      const newStatus = product.status === 'active' ? 'inactive' : 'active';
+      await listingService.updateListing(productId, { status: newStatus });
+      
+      setProducts(prev => prev.map(p => 
+        p._id === productId ? { ...p, status: newStatus } : p
+      ));
+      toast.success('Listing status updated');
+    } catch (err) {
+      console.error('Failed to update listing status:', err);
+      toast.error('Failed to update listing status');
+    }
   };
 
   // Delete product
-  const handleDeleteProduct = (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) {
+      return;
+    }
+    
+    try {
+      await listingService.deleteListing(productId);
       setProducts(prev => prev.filter(product => product._id !== productId));
+      toast.success('Listing deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete listing:', err);
+      toast.error('Failed to delete listing');
     }
   };
 
@@ -50,11 +129,10 @@ export const AllListings = () => {
     expired: products.filter(p => p.status === 'expired').length,
   };
 
-  // Filter products
+  // Filter products (client-side filtering for search only, status is filtered server-side)
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSearch = searchTerm === '' || product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   // Pagination
@@ -360,9 +438,21 @@ export const AllListings = () => {
           </div>
         )}
 
-        {filteredProducts.length === 0 && (
+        {loading && (
           <div className='p-12 text-center'>
-            <p className='text-slate-500 dark:text-slate-400'>No products found</p>
+            <p className='text-slate-500 dark:text-slate-400'>Loading listings...</p>
+          </div>
+        )}
+        
+        {!loading && error && (
+          <div className='p-12 text-center'>
+            <p className='text-red-500 dark:text-red-400'>{error}</p>
+          </div>
+        )}
+        
+        {!loading && !error && filteredProducts.length === 0 && (
+          <div className='p-12 text-center'>
+            <p className='text-slate-500 dark:text-slate-400'>No listings found</p>
           </div>
         )}
       </div>

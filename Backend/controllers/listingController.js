@@ -73,8 +73,12 @@ const getListings = async (req, res) => {
     // Filter by category
     if (category) query.category = category;
 
-    // Filter by status (default to active only)
-    query.status = status || 'active';
+    // Filter by status (default to active only). Special-case 'all' to disable status filtering.
+    if (status && status !== 'all') {
+      query.status = status;
+    } else if (!status) {
+      query.status = 'active';
+    }
 
     // Filter by business
     if (business) query.business = business;
@@ -84,10 +88,14 @@ const getListings = async (req, res) => {
       query.$text = { $search: search };
     }
 
-    // Only show listings within time window
-    const now = new Date();
-    query['timeWindow.availableFrom'] = { $lte: now };
-    query['timeWindow.availableUntil'] = { $gt: now };
+    // Only apply the time window filter for the default/public "active now" view.
+    // If a caller explicitly requests a status (e.g. inactive/expired/all), don't filter by time window
+    // so admin/business dashboards can view historical/expired listings.
+    if (!status) {
+      const now = new Date();
+      query['timeWindow.availableFrom'] = { $lte: now };
+      query['timeWindow.availableUntil'] = { $gt: now };
+    }
 
     const listings = await Listing.find(query)
       .populate('business', 'name type address media')

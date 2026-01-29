@@ -12,6 +12,7 @@ const {
 } = require('../controllers/listingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { validateCreateListing } = require('../middleware/validation');
 
 // Public routes
 router.get('/', optionalAuth, getListings);
@@ -20,7 +21,7 @@ router.get('/business/:businessId', getListingsByBusiness);
 router.get('/:id', optionalAuth, getListingById);
 
 // Protected routes - business owner or admin
-router.post('/', protect, authorize('business_owner', 'admin'), createListing);
+router.post('/', protect, authorize('business_owner', 'admin'), validateCreateListing, createListing);
 router.put('/:id', protect, authorize('business_owner', 'admin'), updateListing);
 router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteListing);
 

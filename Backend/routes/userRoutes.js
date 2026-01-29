@@ -9,14 +9,38 @@ const {
   addAddress,
   updateAddress,
   deleteAddress,
-  getUsersForAdmin
+  getUsersForAdmin,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+  sendOTP,
+  verifyOTP,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const {
+  validateRegister,
+  validateLogin,
+  validateResetPassword,
+  validateForgotPassword
+} = require('../middleware/validation');
 
 // Public routes
-router.post('/register', registerUser);
-router.post('/login', loginUser);
+router.post('/register', validateRegister, registerUser);
+router.post('/login', validateLogin, loginUser);
+
+// Email verification
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerificationEmail);
+
+// Password reset
+router.post('/forgot-password', validateForgotPassword, forgotPassword);
+router.post('/reset-password', validateResetPassword, resetPassword);
+
+// OTP login
+router.post('/send-otp', sendOTP);
+router.post('/verify-otp', verifyOTP);
 
 // Admin-only: list all users
 router.get('/', protect, authorize('admin'), getUsersForAdmin);

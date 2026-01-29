@@ -8,6 +8,7 @@ const listingService = {
       
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
+      if (filters.status) params.append('status', filters.status);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.minDiscount) params.append('minDiscount', filters.minDiscount);
       if (filters.fulfillmentType) params.append('fulfillmentType', filters.fulfillmentType);
@@ -25,14 +26,20 @@ const listingService = {
   },
 
   // Get nearby listings
+  // Backend expects: lat, lng, radius (meters). Keep backwards compatibility with (latitude, longitude, maxDistance).
   getNearbyListings: async (latitude, longitude, maxDistance = 10000, filters = {}) => {
     try {
-      const params = new URLSearchParams({
-        latitude,
-        longitude,
-        maxDistance,
-        ...filters,
-      });
+      const lat = filters.lat ?? latitude;
+      const lng = filters.lng ?? longitude;
+      const radius = filters.radius ?? maxDistance;
+
+      const params = new URLSearchParams();
+      params.append('lat', lat);
+      params.append('lng', lng);
+      params.append('radius', radius);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.page) params.append('page', filters.page);
+      if (filters.limit) params.append('limit', filters.limit);
       
       const response = await api.get(`/api/listings/nearby?${params.toString()}`);
       return response.data;
