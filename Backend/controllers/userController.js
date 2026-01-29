@@ -1,7 +1,13 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendOTPEmail,
+} = require('../utils/emailService');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -34,6 +40,10 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create user
     const user = await User.create({
       email,
@@ -41,17 +51,28 @@ const registerUser = async (req, res) => {
       phone,
       role,
       firstName,
-      lastName
+      lastName,
+      verificationToken,
+      verificationTokenExpires,
     });
 
     if (user) {
+      // Send verification email (don't await - send in background)
+      sendVerificationEmail(
+        user.email,
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        verificationToken
+      ).catch((err) => console.error('Failed to send verification email:', err));
+
       res.status(201).json({
         _id: user._id,
         email: user.email,
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
-        token: generateToken(user._id)
+        emailVerified: user.emailVerified,
+        token: generateToken(user._id),
+        message: 'Registration successful. Please check your email to verify your account.',
       });
     }
   } catch (error) {
@@ -320,6 +341,241 @@ const getUsersForAdmin = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Verify email address
+ * @route   GET /api/users/verify-email
+ * @access  Public
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' });
+    }
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+
+    user.emailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Email verified successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/users/resend-verification
+ * @access  Public
+ */
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'Email already verified' });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    const sent = await sendVerificationEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      verificationToken
+    );
+
+    if (sent) {
+      res.json({ message: 'Verification email sent' });
+    } else {
+      res.status(500).json({ message: 'Failed to send verification email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Forgot password - send reset email
+ * @route   POST /api/users/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if user exists for security
+      return res.json({ message: 'If that email exists, a password reset link has been sent' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    const sent = await sendPasswordResetEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      resetToken
+    );
+
+    if (sent) {
+      res.json({ message: 'If that email exists, a password reset link has been sent' });
+    } else {
+      res.status(500).json({ message: 'Failed to send password reset email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Reset password
+ * @route   POST /api/users/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Send OTP for email login
+ * @route   POST /api/users/send-otp
+ * @access  Public
+ */
+const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otpCode;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    const sent = await sendOTPEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      otpCode
+    );
+
+    if (sent) {
+      res.json({ message: 'OTP sent to your email' });
+    } else {
+      res.status(500).json({ message: 'Failed to send OTP email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Verify OTP and login
+ * @route   POST /api/users/verify-otp
+ * @access  Public
+ */
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    const user = await User.findOne({
+      email,
+      otpCode: otp,
+      otpExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Check if suspended
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'Account suspended' });
+    }
+
+    // Clear OTP
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -329,5 +585,11 @@ module.exports = {
   addAddress,
   updateAddress,
   deleteAddress,
-  getUsersForAdmin
+  getUsersForAdmin,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+  sendOTP,
+  verifyOTP,
 };

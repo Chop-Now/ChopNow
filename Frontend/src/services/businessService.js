@@ -6,14 +6,22 @@ const businessService = {
     try {
       const params = new URLSearchParams();
       
+      // Backend expects: search, type, status, lat, lng, radius, page, limit
+      // Keep backwards compatibility with older param names (latitude/longitude/maxDistance).
       if (filters.search) params.append('search', filters.search);
-      if (filters.latitude && filters.longitude) {
-        params.append('latitude', filters.latitude);
-        params.append('longitude', filters.longitude);
-        if (filters.maxDistance) params.append('maxDistance', filters.maxDistance);
+      if (filters.type) params.append('type', filters.type);
+      if (filters.status) params.append('status', filters.status);
+
+      const lat = filters.lat ?? filters.latitude;
+      const lng = filters.lng ?? filters.longitude;
+      const radius = filters.radius ?? filters.maxDistance;
+      if (lat !== undefined && lng !== undefined) {
+        params.append('lat', lat);
+        params.append('lng', lng);
+        if (radius !== undefined) params.append('radius', radius);
       }
-      if (filters.verified !== undefined) params.append('verified', filters.verified);
-      if (filters.sort) params.append('sort', filters.sort);
+
+      // NOTE: backend does not currently support verified/sort query params.
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('limit', filters.limit);
       
@@ -37,7 +45,7 @@ const businessService = {
   // Get my businesses
   getMyBusinesses: async () => {
     try {
-      const response = await api.get('/api/businesses/my/businesses');
+      const response = await api.get('/api/businesses/my/list');
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -124,6 +132,16 @@ const businessService = {
         },
       });
       
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get business statistics
+  getBusinessStats: async (id) => {
+    try {
+      const response = await api.get(`/api/businesses/${id}/stats`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

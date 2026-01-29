@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 import Login from '../Pages/Auth/Login';
 import Register from '../Pages/Auth/Register';
+import SignUp from '../Pages/SignUp';
 import Profile from '../Pages/Profile/Profile';
 import Settings from '../Pages/Profile/Settings';
 import BusinessRoutes from './BusinessRoutes';
@@ -38,6 +39,7 @@ const AppRoutes = () => {
             <Route path="/cart" element={<Cart />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/signup" element={<SignUp />} />
 
             {/* Protected Routes */}
             <Route

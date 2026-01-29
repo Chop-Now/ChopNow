@@ -206,8 +206,8 @@ const AppContextProvider = ({ children }) => {
   const getCartAmount = () => {
     let totalAmount = 0;
     for (const items in cartItems){
-      let itemInfo = products.find((product) => product_.id === items);
-      if(cartItems[items] > 0){
+      const itemInfo = products.find((product) => String(product._id) === String(items));
+      if (cartItems[items] > 0 && itemInfo) {
         totalAmount += itemInfo.offerPrice * cartItems[items]
       }
     }

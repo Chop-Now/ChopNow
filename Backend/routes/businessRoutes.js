@@ -9,17 +9,19 @@ const {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
-  getMyBusinesses
+  getMyBusinesses,
+  getBusinessStats
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { validateCreateBusiness } = require('../middleware/validation');
 
 // Public routes
 router.get('/', getBusinesses);
 router.get('/:id', getBusinessById);
 
 // Protected routes - business owner or admin
-router.post('/', protect, authorize('business_owner', 'admin'), createBusiness);
+router.post('/', protect, authorize('business_owner', 'admin'), validateCreateBusiness, createBusiness);
 router.put('/:id', protect, authorize('business_owner', 'admin'), updateBusiness);
 router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteBusiness);
 
@@ -30,5 +32,8 @@ router.post('/:id/photos', protect, authorize('business_owner', 'admin'), upload
 
 // Get my businesses
 router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+
+// Get business stats
+router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
 
 module.exports = router;
