@@ -9,6 +9,9 @@ const rateLimit = require('express-rate-limit');
 const pinoHttp = require('pino-http');
 
 // Import routes
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
+
 const userRoutes = require('./routes/userRoutes');
 const businessRoutes = require('./routes/businessRoutes');
 const listingRoutes = require('./routes/listingRoutes');
@@ -158,6 +161,9 @@ app.get('/', (req, res) => {
 // Auth routes with stricter limiter
 app.use('/api/users/login', authLimiter);
 app.use('/api/users/register', authLimiter);
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 app.use('/api/users', userRoutes);
 app.use('/api/businesses', businessRoutes);
