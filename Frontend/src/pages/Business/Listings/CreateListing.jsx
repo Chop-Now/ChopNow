@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import LiveCapture from '../../../components/Camera/LiveCapture';
+import LiveCapture from '../../../Components/Camera/LiveCapture';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../../services/api';
