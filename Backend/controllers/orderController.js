@@ -4,6 +4,7 @@ const Business = require('../models/Business');
 const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Notification = require('../models/Notification');
+const logger = require('../utils/logger');
 const {
   sendOrderConfirmationEmail,
   sendOrderStatusUpdateEmail,
@@ -115,7 +116,7 @@ const createOrder = async (req, res) => {
         customer.email,
         `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email,
         order
-      ).catch((err) => console.error('Failed to send order confirmation email:', err));
+      ).catch((err) => logger.error({ err }, 'Failed to send order confirmation email'));
     }
 
     // Send notification email to vendor
@@ -127,7 +128,7 @@ const createOrder = async (req, res) => {
           owner.email,
           business.name || 'Your business',
           order
-        ).catch((err) => console.error('Failed to send vendor order notification:', err));
+        ).catch((err) => logger.error({ err }, 'Failed to send vendor order notification'));
       }
     }
 
@@ -268,7 +269,7 @@ const updateOrderStatus = async (req, res) => {
         notificationTitle = 'Order Completed';
         notificationMessage = `Your order ${order.orderNumber} has been completed`;
         notificationType = 'order_completed';
-        
+
         // Update user stats
         await User.findByIdAndUpdate(order.customer, {
           $inc: { 'stats.totalSpent': order.pricing.total }
@@ -293,7 +294,7 @@ const updateOrderStatus = async (req, res) => {
           `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email,
           order,
           status
-        ).catch((err) => console.error('Failed to send order status update email:', err));
+        ).catch((err) => logger.error({ err }, 'Failed to send order status update email'));
       }
     }
 

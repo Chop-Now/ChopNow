@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 /**
  * Protect routes - Verify JWT token
@@ -28,7 +29,7 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      logger.error({ err: error }, 'Token verification failed');
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
@@ -49,8 +50,8 @@ const authorize = (...roles) => {
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        message: `User role '${req.user.role}' is not authorized to access this route` 
+      return res.status(403).json({
+        message: `User role '${req.user.role}' is not authorized to access this route`
       });
     }
 
