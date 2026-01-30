@@ -2,20 +2,20 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-import Login from '../Pages/Auth/Login';
-import Register from '../Pages/Auth/Register';
-import SignUp from '../Pages/SignUp';
-import Profile from '../Pages/Profile/Profile';
-import Settings from '../Pages/Profile/Settings';
+import Login from '../pages/Auth/Login';
+import Register from '../pages/Auth/Register';
+import SignUp from '../pages/SignUp';
+import Profile from '../pages/Profile/Profile';
+import Settings from '../pages/Profile/Settings';
 import BusinessRoutes from './BusinessRoutes';
-import AdminDashboard from '../Pages/Admin/Dashboard';
+import AdminDashboard from '../pages/Admin/Dashboard';
 import NotFound from '../Components/NotFound';
 
-import HomePage from '../Pages/Consumer/HomePage';
-import SearchPage from '../Pages/Consumer/SearchPage';
-import Cart from '../Pages/Consumer/Cart';
-import Checkout from '../Pages/Consumer/Checkout';
-import OrderSuccess from '../Pages/Consumer/OrderSuccess';
+import HomePage from '../pages/Consumer/HomePage';
+import SearchPage from '../pages/Consumer/SearchPage';
+import Cart from '../pages/Consumer/Cart';
+import Checkout from '../pages/Consumer/Checkout';
+import OrderSuccess from '../pages/Consumer/OrderSuccess';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const { user, loading, isAuthenticated } = useAuth();
