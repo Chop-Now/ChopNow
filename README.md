@@ -33,7 +33,22 @@ npm run dev
 
 App: `http://localhost:5173`. Sign up: `/signup`, Login: `/login`.
 
+App: `http://localhost:5173`. Sign up: `/signup`, Login: `/login`.
+
 ---
+
+## 🐳 Docker (Production Ready)
+
+Run the entire stack (Frontend + Backend + Database) locally with one command:
+
+```bash
+docker-compose up --build
+```
+
+- **Frontend:** http://localhost
+- **Backend:** http://localhost:5000
+- **Database:** MongoDB (internal)
+
 
 ## Production Deployment
 

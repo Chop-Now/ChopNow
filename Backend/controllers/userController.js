@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const logger = require('../utils/logger');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 const {
   sendVerificationEmail,
@@ -62,7 +63,7 @@ const registerUser = async (req, res) => {
         user.email,
         `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
         verificationToken
-      ).catch((err) => console.error('Failed to send verification email:', err));
+      ).catch((err) => logger.error({ err }, 'Failed to send verification email'));
 
       res.status(201).json({
         _id: user._id,
@@ -152,7 +153,7 @@ const updateUserProfile = async (req, res) => {
       user.firstName = req.body.firstName || user.firstName;
       user.lastName = req.body.lastName || user.lastName;
       user.phone = req.body.phone || user.phone;
-      
+
       if (req.body.preferences) {
         user.preferences = { ...user.preferences, ...req.body.preferences };
       }

@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const logger = require('./logger');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,7 +11,7 @@ const APP_URL = process.env.FRONTEND_URL || 'https://www.chopnow.app';
  */
 const sendVerificationEmail = async (email, name, verificationToken) => {
   const verificationUrl = `${APP_URL}/verify-email?token=${verificationToken}`;
-  
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -44,7 +45,7 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    logger.error({ err: error }, 'Error sending verification email');
     return false;
   }
 };
@@ -54,7 +55,7 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
  */
 const sendPasswordResetEmail = async (email, name, resetToken) => {
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
-  
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -89,7 +90,7 @@ const sendPasswordResetEmail = async (email, name, resetToken) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    logger.error({ err: error }, 'Error sending password reset email');
     return false;
   }
 };
@@ -132,7 +133,7 @@ const sendOTPEmail = async (email, name, otpCode) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending OTP email:', error);
+    logger.error({ err: error }, 'Error sending OTP email');
     return false;
   }
 };
@@ -165,8 +166,8 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
               <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
               <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${order.pricing?.total || 0}</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
-              ${order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode ? 
-                `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #f97316;">${order.pickupDetails.pickupCode}</span></p>` : ''}
+              ${order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode ?
+          `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #f97316;">${order.pickupDetails.pickupCode}</span></p>` : ''}
             </div>
             <p style="color: #6b7280; font-size: 14px;">You can track your order in the app.</p>
           </div>
@@ -176,7 +177,7 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending order confirmation email:', error);
+    logger.error({ err: error }, 'Error sending order confirmation email');
     return false;
   }
 };
@@ -225,7 +226,7 @@ const sendOrderStatusUpdateEmail = async (email, name, order, status) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending order status update email:', error);
+    logger.error({ err: error }, 'Error sending order status update email');
     return false;
   }
 };
@@ -267,7 +268,7 @@ const sendVendorOrderNotification = async (email, businessName, order) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending vendor order notification:', error);
+    logger.error({ err: error }, 'Error sending vendor order notification');
     return false;
   }
 };
@@ -303,7 +304,7 @@ const sendAdminNotification = async (email, name, subject, message) => {
     });
     return true;
   } catch (error) {
-    console.error('Error sending admin notification:', error);
+    logger.error({ err: error }, 'Error sending admin notification');
     return false;
   }
 };

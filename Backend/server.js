@@ -28,31 +28,27 @@ const app = express();
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
 const missingEnv = requiredEnv.filter((key) => !process.env[key] || String(process.env[key]).trim() === '');
 if (missingEnv.length) {
-  // eslint-disable-next-line no-console
-  console.error(`Missing required environment variables: ${missingEnv.join(', ')}. See .env.example.`);
+  logger.error(`Missing required environment variables: ${missingEnv.join(', ')}. See .env.example.`);
   process.exit(1);
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction) {
   if (!process.env.ALLOWED_ORIGINS || String(process.env.ALLOWED_ORIGINS).trim() === '') {
-    // eslint-disable-next-line no-console
-    console.error('Production requires ALLOWED_ORIGINS to be set (e.g. https://app.chopnow.com).');
+    logger.error('Production requires ALLOWED_ORIGINS to be set (e.g. https://app.chopnow.com).');
     process.exit(1);
   }
   const unsafeSecrets = ['changeme', 'your_jwt_secret', 'your_secure_random', 'example', 'test'];
   const jwt = String(process.env.JWT_SECRET);
   if (jwt.length < 32 || unsafeSecrets.some((s) => jwt.toLowerCase().includes(s))) {
-    // eslint-disable-next-line no-console
-    console.error('Production requires a strong JWT_SECRET (at least 32 characters, no placeholders).');
+    logger.error('Production requires a strong JWT_SECRET (at least 32 characters, no placeholders).');
     process.exit(1);
   }
 }
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri.startsWith('mongodb')) {
-  // eslint-disable-next-line no-console
-  console.error('MONGO_URI must be a valid MongoDB connection string (e.g. mongodb://... or mongodb+srv://...).');
+  logger.error('MONGO_URI must be a valid MongoDB connection string (e.g. mongodb://... or mongodb+srv://...).');
   process.exit(1);
 }
 
@@ -60,8 +56,7 @@ if (!mongoUri.startsWith('mongodb')) {
 const cloudinaryKeys = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
 const cloudinaryProvided = cloudinaryKeys.filter((k) => process.env[k] && String(process.env[k]).trim() !== '');
 if (cloudinaryProvided.length > 0 && cloudinaryProvided.length < cloudinaryKeys.length) {
-  // eslint-disable-next-line no-console
-  console.warn(`Cloudinary is partially configured. Set all of: ${cloudinaryKeys.join(', ')} to enable uploads.`);
+  logger.warn(`Cloudinary is partially configured. Set all of: ${cloudinaryKeys.join(', ')} to enable uploads.`);
   if (isProduction) process.exit(1);
 }
 
@@ -69,17 +64,14 @@ const resendKey = process.env.RESEND_API_KEY && String(process.env.RESEND_API_KE
 const fromEmail = process.env.FROM_EMAIL && String(process.env.FROM_EMAIL).trim() !== '';
 const frontendUrl = process.env.FRONTEND_URL && String(process.env.FRONTEND_URL).trim() !== '';
 if (resendKey && (!fromEmail || !frontendUrl)) {
-  // eslint-disable-next-line no-console
-  console.warn('Resend is partially configured. Set RESEND_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.');
+  logger.warn('Resend is partially configured. Set RESEND_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.');
   if (isProduction) process.exit(1);
 }
 if (!resendKey) {
-  // eslint-disable-next-line no-console
-  console.warn('RESEND_API_KEY not set: email verification / password reset / OTP emails will be disabled.');
+  logger.warn('RESEND_API_KEY not set: email verification / password reset / OTP emails will be disabled.');
 }
 if (frontendUrl && !/^https?:\/\//i.test(String(process.env.FRONTEND_URL))) {
-  // eslint-disable-next-line no-console
-  console.warn('FRONTEND_URL should include scheme, e.g. https://www.chopnow.app');
+  logger.warn('FRONTEND_URL should include scheme, e.g. https://www.chopnow.app');
 }
 
 // --- Security & core middleware ---
@@ -188,16 +180,13 @@ app.use(errorHandler);
 // Database connection and server start
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    // eslint-disable-next-line no-console
-    console.log('Connected to MongoDB');
+    logger.info('Connected to MongoDB');
     const port = process.env.PORT || 5000;
     app.listen(port, () => {
-      // eslint-disable-next-line no-console
-      console.log(`Server running on port ${port}`);
+      logger.info(`Server running on port ${port}`);
     });
   })
   .catch((error) => {
-    // eslint-disable-next-line no-console
-    console.error('Database connection error:', error);
+    logger.error({ err: error }, 'Database connection error');
     process.exit(1);
   });
