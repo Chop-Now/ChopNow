@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-import Login from '../pages/Auth/Login';
+import Login from '../pages/Login';
 import Register from '../pages/Auth/Register';
 import SignUp from '../pages/SignUp';
 import Profile from '../pages/Profile/Profile';
