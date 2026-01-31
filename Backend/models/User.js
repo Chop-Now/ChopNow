@@ -46,6 +46,11 @@ const userSchema = new Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
   },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   phone: {
     type: String,
     unique: true,
@@ -56,14 +61,14 @@ const userSchema = new Schema({
     type: String,
     required: [true, 'Password is required']
   },
-  
+
   // Role
   role: {
     type: String,
     enum: ['consumer', 'business_owner', 'rider', 'admin'],
     required: [true, 'Role is required']
   },
-  
+
   // Profile
   firstName: {
     type: String,
@@ -77,10 +82,10 @@ const userSchema = new Schema({
     type: String,
     trim: true
   },
-  
+
   // Addresses
   addresses: [addressSchema],
-  
+
   // Preferences
   preferences: {
     language: {
@@ -106,7 +111,7 @@ const userSchema = new Schema({
       }
     }
   },
-  
+
   // Email verification
   emailVerified: {
     type: Boolean,
@@ -120,7 +125,7 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
-  
+
   // Password reset
   resetPasswordToken: {
     type: String,
@@ -130,7 +135,7 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
-  
+
   // OTP for email login
   otpCode: {
     type: String,
@@ -140,14 +145,14 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
-  
+
   // Status
   status: {
     type: String,
     enum: ['active', 'suspended'],
     default: 'active'
   },
-  
+
   // Stats
   stats: {
     ordersCount: {
@@ -169,7 +174,7 @@ const userSchema = new Schema({
 userSchema.index({ 'addresses.location': '2dsphere' });
 
 // Virtual for full name
-userSchema.virtual('fullName').get(function() {
+userSchema.virtual('fullName').get(function () {
   return `${this.firstName || ''} ${this.lastName || ''}`.trim();
 });
 

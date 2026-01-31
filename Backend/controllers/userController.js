@@ -9,6 +9,10 @@ const {
   sendPasswordResetEmail,
   sendOTPEmail,
 } = require('../utils/emailService');
+const { OAuth2Client } = require('google-auth-library');
+const axios = require('axios');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -577,9 +581,86 @@ const verifyOTP = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Google login/signup
+ * @route   POST /api/users/google-login
+ * @access  Public
+ */
+const googleLogin = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Access Token is required' });
+    }
+
+    // Verify Google Access Token and get user profile
+    const googleResponse = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+    const payload = googleResponse.data;
+    const { sub: googleId, email, given_name: firstName, family_name: lastName, picture: avatar, email_verified } = payload;
+
+    // Check if user exists by googleId or email
+    let user = await User.findOne({
+      $or: [
+        { googleId },
+        { email: email.toLowerCase() }
+      ]
+    });
+
+    if (!user) {
+      // Create new user if not exists
+      // For Google users, we set a dummy passwordHash since they authenticate via Google
+      const salt = await bcrypt.genSalt(10);
+      const dummyPassword = crypto.randomBytes(16).toString('hex');
+      const passwordHash = await bcrypt.hash(dummyPassword, salt);
+
+      user = await User.create({
+        email: email.toLowerCase(),
+        googleId,
+        firstName,
+        lastName,
+        avatar,
+        role: 'consumer', // Default role for Google login
+        emailVerified: email_verified,
+        passwordHash, // Required by model
+        status: 'active'
+      });
+
+      logger.info({ userId: user._id }, 'New user registered via Google');
+    } else {
+      // If user exists but doesn't have googleId linked, link it
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (!user.avatar) user.avatar = avatar;
+        if (email_verified && !user.emailVerified) user.emailVerified = true;
+        await user.save();
+      }
+
+      // Check if suspended
+      if (user.status === 'suspended') {
+        return res.status(403).json({ message: 'Account suspended' });
+      }
+    }
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      token: generateToken(user._id)
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Google login error');
+    res.status(500).json({ message: 'Google authentication failed' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  googleLogin,
   getUserProfile,
   updateUserProfile,
   uploadAvatar,
