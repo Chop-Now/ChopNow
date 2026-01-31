@@ -47,17 +47,50 @@ const SignUp = () => {
     }
   }, []); // Empty dependency array - only run on mount
 
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    label: '',
+    color: 'bg-gray-200'
+  });
+
+  const checkPasswordStrength = (password) => {
+    if (!password) {
+      setPasswordStrength({ score: 0, label: '', color: 'bg-gray-200' });
+      return;
+    }
+    let score = 0;
+    if (password.length >= 6) score += 1;
+    if (password.length >= 10) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    let label = '';
+    let color = 'bg-gray-200';
+
+    if (score <= 2) { label = 'Weak'; color = 'bg-red-500 text-white'; }
+    else if (score === 3) { label = 'Fair'; color = 'bg-yellow-500 text-black'; }
+    else if (score === 4) { label = 'Good'; color = 'bg-blue-500 text-white'; }
+    else if (score === 5) { label = 'Strong'; color = 'bg-green-500 text-white'; }
+
+    setPasswordStrength({ score, label, color });
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    if (name === 'password') {
+      checkPasswordStrength(value);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (userType === 'buyer') {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
@@ -123,7 +156,7 @@ const SignUp = () => {
       }
 
       const response = await register(registerData);
-      
+
       // If business owner, redirect to business verification
       if (userType === 'business') {
         // Store business data in session storage for next step
@@ -135,8 +168,8 @@ const SignUp = () => {
         }));
         navigate('/business-verification', { replace: true });
       } else {
-        // For buyers, go to shop
-        navigate('/shop', { replace: true });
+        // For buyers, go home for a better first impression
+        navigate('/', { replace: true });
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -151,7 +184,13 @@ const SignUp = () => {
       <div className="flex w-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
-          <img className="h-full w-full object-cover" src={assets.login_bg} alt="Signup background" />
+          <img
+            className="h-full w-full object-cover"
+            src={assets.login_bg}
+            alt="Signup background"
+            loading="lazy"
+            fetchPriority="low"
+          />
         </div>
 
         {/* Right Side - Form Container */}
@@ -160,7 +199,7 @@ const SignUp = () => {
           <div className="mb-8">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
           </div>
-          
+
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
             {/* User Type Selection */}
             {!userType ? (
@@ -169,7 +208,7 @@ const SignUp = () => {
                 <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign up</p>
 
                 {/* Sign up as Buyer Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('buyer')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -181,7 +220,7 @@ const SignUp = () => {
                 </button>
 
                 {/* Sign up as Business Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('business')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -220,9 +259,10 @@ const SignUp = () => {
                   // Buyer Form
                   <>
                     {/* Google Button */}
-                    <button 
-                      type="button" 
-                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => toast.success("Sign up with Google is currently in demo mode. Please use email for now.")}
+                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer shadow-sm"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
                       <span className="ml-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign up with Google</span>
@@ -237,44 +277,47 @@ const SignUp = () => {
 
                     {/* First Name & Last Name */}
                     <div className="flex gap-3">
-                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                        <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
+                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                        <User className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                        <input
                           type="text"
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          placeholder="First name" 
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                          placeholder="First name"
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                          required 
-                        />                 
+                          required
+                        />
                       </div>
-                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                        <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
+                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                        <User className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                        <input
                           type="text"
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          placeholder="Last name" 
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                          placeholder="Last name"
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                          required 
-                        />                 
+                          required
+                        />
                       </div>
                     </div>
 
                     {/* Email Input */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type="email" 
-                        placeholder="Email address" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:border-solid transition-colors group">
+                      <Mail className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="Email address"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Phone Number */}
@@ -296,20 +339,20 @@ const SignUp = () => {
                     </div>
 
                     {/* Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                      <Lock className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type={showPassword ? "text" : "password"}
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        placeholder="Password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="shrink-0"
                       >
@@ -321,21 +364,41 @@ const SignUp = () => {
                       </button>
                     </div>
 
+                    {/* Password Strength Indicator */}
+                    {formData.password && (
+                      <div className="mt-2 w-full">
+                        <div className="flex justify-between items-center mb-1 text-[10px] font-bold uppercase tracking-wider">
+                          <span style={{ color: 'var(--color-gray-50)' }}>Security Level</span>
+                          <span className={`px-1.5 py-0.5 rounded text-white ${passwordStrength.color.split(' ')[0]}`}>
+                            {passwordStrength.label}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden flex gap-1">
+                          {[1, 2, 3, 4, 5].map((step) => (
+                            <div
+                              key={step}
+                              className={`h-full flex-1 transition-all duration-500 ${step <= passwordStrength.score ? passwordStrength.color.split(' ')[0] : 'bg-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Confirm Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                      <Lock className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type={showConfirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        placeholder="Confirm password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Confirm password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="shrink-0"
                       >
@@ -350,9 +413,9 @@ const SignUp = () => {
                     {/* Location Section */}
                     <div className="mt-6">
                       <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
-                      
+
                       {/* Use Current Location Button */}
-                      <button 
+                      <button
                         type="button"
                         onClick={async () => {
                           setIsLoadingLocation(true);
@@ -388,9 +451,9 @@ const SignUp = () => {
                         <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                           <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                           <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                          <input 
-                            type="text" 
-                            placeholder="Or enter address manually" 
+                          <input
+                            type="text"
+                            placeholder="Or enter address manually"
                             value={manualAddress}
                             onChange={(e) => setManualAddress(e.target.value)}
                             onKeyDown={async (e) => {
@@ -413,9 +476,9 @@ const SignUp = () => {
                                 }
                               }
                             }}
-                            className="bg-transparent outline-none text-sm w-full h-full" 
+                            className="bg-transparent outline-none text-sm w-full h-full"
                             style={{ color: 'var(--color-textColor)' }}
-                          />                 
+                          />
                         </div>
                         {manualAddress && (
                           <button
@@ -454,7 +517,7 @@ const SignUp = () => {
 
                       {/* Map */}
                       <div className="mt-4">
-                        <LocationPicker 
+                        <LocationPicker
                           selectedLocation={location}
                           onLocationSelect={async (latlng) => {
                             setLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -473,80 +536,80 @@ const SignUp = () => {
                   // Business Form
                   <>
                     {/* Business Name */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Handshake className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                      <Handshake className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type="text"
                         name="businessName"
                         value={formData.businessName}
                         onChange={handleInputChange}
-                        placeholder="Business name" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Business name"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Contact Person */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:border-solid transition-colors group">
+                      <User className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type="text"
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        placeholder="Contact person first name" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Contact person first name"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Last Name */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:border-solid transition-colors group">
+                      <User className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type="text"
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        placeholder="Contact person last name" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Contact person last name"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Email Input */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:border-solid transition-colors group">
+                      <Mail className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="Email address" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Email address"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                      <Lock className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type={showPassword ? "text" : "password"}
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        placeholder="Password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="shrink-0"
                       >
@@ -558,21 +621,41 @@ const SignUp = () => {
                       </button>
                     </div>
 
+                    {/* Password Strength Indicator */}
+                    {formData.password && (
+                      <div className="mt-2 w-full">
+                        <div className="flex justify-between items-center mb-1 text-[10px] font-bold uppercase tracking-wider">
+                          <span style={{ color: 'var(--color-gray-50)' }}>Security Level</span>
+                          <span className={`px-1.5 py-0.5 rounded text-white ${passwordStrength.color.split(' ')[0]}`}>
+                            {passwordStrength.label}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden flex gap-1">
+                          {[1, 2, 3, 4, 5].map((step) => (
+                            <div
+                              key={step}
+                              className={`h-full flex-1 transition-all duration-500 ${step <= passwordStrength.score ? passwordStrength.color.split(' ')[0] : 'bg-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Confirm Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                      <Lock className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                      <input
                         type={showConfirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        placeholder="Confirm password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                        placeholder="Confirm password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="shrink-0"
                       >
@@ -587,7 +670,7 @@ const SignUp = () => {
                 )}
 
                 {/* Create Account Button */}
-                <button 
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

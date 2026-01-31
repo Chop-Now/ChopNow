@@ -147,4 +147,25 @@ html, body{
     background-color: #F6FFF9 !important;
     color: #2E2E2E !important;
   }
+  button:focus-visible, 
+  a:focus-visible, 
+  input:focus-visible {
+    @apply outline-none ring-2 ring-solid/50 ring-offset-1;
+  }
+  
+  /* Smooth scroll and selection color */
+  ::selection {
+    background-color: var(--color-solid);
+    color: white;
+  }
+}
+
+@layer utilities {
+  .animate-slow {
+    animation-duration: 3s;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/70 border border-white/20;
+  }
 }
