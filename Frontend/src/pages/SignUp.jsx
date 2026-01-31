@@ -9,11 +9,12 @@ import { useGeolocation } from '@/Components/maps/useGeolocation'
 import { reverseGeocode, searchAddress } from '@/services/geocoding'
 import toast from 'react-hot-toast'
 import { useAppContext } from '@/context/AppContext'
+import { useGoogleLogin } from '@react-oauth/google'
 
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { register, isAuthenticated, user } = useAppContext();
+  const { register, googleLogin, isAuthenticated, user } = useAppContext();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,13 +40,35 @@ const SignUp = () => {
   // Redirect if already authenticated (only on mount)
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'business_owner' || user.role === 'admin') {
-        navigate('/dashboard', { replace: true });
+      if (user.role === 'business_owner' || user.role === 'business' || user.role === 'admin') {
+        navigate('/business/dashboard', { replace: true });
       } else {
-        navigate('/shop', { replace: true });
+        navigate('/', { replace: true });
       }
     }
   }, []); // Empty dependency array - only run on mount
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // We need to pass the userType to googleLogin so the backend knows the role if creating account
+        // Assuming googleLogin context function might need to be updated or handled
+        const response = await googleLogin(tokenResponse.access_token);
+
+        // Redirect based on role after Google Signup/Login
+        if (response?.role === 'business_owner' || response?.role === 'business') {
+          navigate('/business/dashboard', { replace: true });
+        } else if (response?.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error('Google signup error:', error);
+      }
+    },
+    onError: () => toast.error('Google Sign up Failed'),
+  });
 
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -261,7 +284,7 @@ const SignUp = () => {
                     {/* Google Button */}
                     <button
                       type="button"
-                      onClick={() => toast.success("Sign up with Google is currently in demo mode. Please use email for now.")}
+                      onClick={() => handleGoogleLogin()}
                       className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer shadow-sm"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />

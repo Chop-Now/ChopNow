@@ -74,6 +74,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (accessToken) => {
+    try {
+      const response = await api.post('/api/users/google-login', { accessToken });
+      const { token, ...userData } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      setUser({ ...userData, token });
+      toast.success('Login successful with Google!');
+      return true;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Google Login failed');
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

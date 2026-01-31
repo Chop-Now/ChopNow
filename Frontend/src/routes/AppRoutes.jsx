@@ -9,6 +9,8 @@ import Profile from '../pages/Profile/Profile';
 import Settings from '../pages/Profile/Settings';
 import BusinessRoutes from './BusinessRoutes';
 import AdminDashboard from '../pages/Admin/Dashboard';
+import BusinessVerification from '../pages/BusinessVerification';
+import PendingReview from '../pages/PendingReview';
 import NotFound from '../Components/NotFound';
 
 import HomePage from '../pages/Consumer/HomePage';
@@ -40,6 +42,8 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/business-verification" element={<BusinessVerification />} />
+            <Route path="/pending-review" element={<PendingReview />} />
 
             {/* Protected Routes */}
             <Route

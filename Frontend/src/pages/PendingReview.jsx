@@ -39,7 +39,7 @@ const PendingReview = () => {
           {/* Dashboard Button */}
           <div className="flex justify-center mb-6">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/business/dashboard')}
               className="w-64 h-10 rounded-lg text-white text-xs font-medium hover:opacity-90 transition-opacity cursor-pointer"
               style={{ backgroundColor: 'var(--color-solid)' }}
             >

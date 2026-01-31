@@ -89,6 +89,7 @@ router.post('/register', validateRegister, registerUser);
  *         description: Invalid credentials
  */
 router.post('/login', validateLogin, loginUser);
+router.post('/google-login', googleLogin);
 
 // Email verification
 router.get('/verify-email', verifyEmail);
