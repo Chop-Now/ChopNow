@@ -29,6 +29,20 @@ const authService = {
     }
   },
 
+  // Google Login
+  googleLogin: async (accessToken) => {
+    try {
+      const response = await api.post('/api/users/google-login', { accessToken });
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Logout user
   logout: () => {
     localStorage.removeItem('token');
@@ -89,20 +103,20 @@ const authService = {
     try {
       const formData = new FormData();
       formData.append('avatar', file);
-      
+
       const response = await api.post('/api/users/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       // Update user in localStorage
       const user = authService.getCurrentUser();
       if (user) {
         user.avatar = response.data.avatar;
         localStorage.setItem('user', JSON.stringify(user));
       }
-      
+
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

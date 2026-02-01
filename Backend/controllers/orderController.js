@@ -4,6 +4,12 @@ const Business = require('../models/Business');
 const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Notification = require('../models/Notification');
+const logger = require('../utils/logger');
+const {
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+  sendVendorOrderNotification,
+} = require('../utils/emailService');
 
 /**
  * @desc    Create a new order
@@ -102,6 +108,29 @@ const createOrder = async (req, res) => {
       type: 'order_confirmed',
       relatedOrder: order._id
     });
+
+    // Send order confirmation email to customer
+    const customer = await User.findById(req.user._id);
+    if (customer && customer.preferences?.notifications?.email) {
+      sendOrderConfirmationEmail(
+        customer.email,
+        `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email,
+        order
+      ).catch((err) => logger.error({ err }, 'Failed to send order confirmation email'));
+    }
+
+    // Send notification email to vendor
+    const business = await Business.findById(listingDoc.business._id).populate('owner');
+    if (business && business.owner) {
+      const owner = await User.findById(business.owner._id);
+      if (owner && owner.preferences?.notifications?.email) {
+        sendVendorOrderNotification(
+          owner.email,
+          business.name || 'Your business',
+          order
+        ).catch((err) => logger.error({ err }, 'Failed to send vendor order notification'));
+      }
+    }
 
     res.status(201).json(order);
   } catch (error) {
@@ -240,7 +269,7 @@ const updateOrderStatus = async (req, res) => {
         notificationTitle = 'Order Completed';
         notificationMessage = `Your order ${order.orderNumber} has been completed`;
         notificationType = 'order_completed';
-        
+
         // Update user stats
         await User.findByIdAndUpdate(order.customer, {
           $inc: { 'stats.totalSpent': order.pricing.total }
@@ -256,6 +285,17 @@ const updateOrderStatus = async (req, res) => {
         type: notificationType,
         relatedOrder: order._id
       });
+
+      // Send email to customer on status update
+      const customer = await User.findById(order.customer);
+      if (customer && customer.preferences?.notifications?.email) {
+        sendOrderStatusUpdateEmail(
+          customer.email,
+          `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email,
+          order,
+          status
+        ).catch((err) => logger.error({ err }, 'Failed to send order status update email'));
+      }
     }
 
     res.json(order);

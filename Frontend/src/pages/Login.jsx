@@ -7,10 +7,11 @@ import { useGeolocation } from '@/Components/maps/useGeolocation'
 import { reverseGeocode, searchAddress } from '@/services/geocoding'
 import toast from 'react-hot-toast'
 import { useAppContext } from '@/context/AppContext'
+import { useGoogleLogin } from '@react-oauth/google'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { login, isAuthenticated, user } = useAppContext()
+  const { login, googleLogin, isAuthenticated, user } = useAppContext()
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
   const [location, setLocation] = useState(null);
@@ -30,13 +31,33 @@ const Login = () => {
   // Redirect if already authenticated (only on mount)
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'business_owner' || user.role === 'admin') {
-        navigate('/dashboard', { replace: true });
+      if (user.role === 'business_owner' || user.role === 'business' || user.role === 'admin') {
+        navigate('/business/dashboard', { replace: true });
       } else {
-        navigate('/shop', { replace: true });
+        navigate('/', { replace: true });
       }
     }
   }, []); // Empty dependency array - only run on mount
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const response = await googleLogin(tokenResponse.access_token);
+
+        // Redirect based on role after Google Login
+        if (response?.role === 'business_owner' || response?.role === 'business') {
+          navigate('/business/dashboard', { replace: true });
+        } else if (response?.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error('Google login error:', error);
+      }
+    },
+    onError: () => toast.error('Google Login Failed'),
+  });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -48,7 +69,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.email || !formData.password) {
       toast.error('Please fill in all required fields');
       return;
@@ -62,21 +83,15 @@ const Login = () => {
         password: formData.password,
       };
 
-      const response = await login(loginData);
-      
-      // If buyer and has location, update profile with address
-      if (userType === 'buyer' && location) {
-        // You can update user profile with location here if needed
-        // await updateUserProfile({ addresses: [{ ...location, label: address }] });
-      }
+      const authResponse = await login(loginData);
 
-      // Redirect based on role with replace option
-      if (response?.role === 'business_owner') {
-        navigate('/dashboard', { replace: true });
-      } else if (response?.role === 'admin') {
-        navigate('/dashboard', { replace: true });
+      // Redirect based on role
+      if (authResponse?.role === 'business_owner' || authResponse?.role === 'business') {
+        navigate('/business/dashboard', { replace: true });
+      } else if (authResponse?.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
       } else {
-        navigate('/shop', { replace: true });
+        navigate('/', { replace: true });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -100,7 +115,7 @@ const Login = () => {
           <div className="mb-8">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
           </div>
-          
+
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
             {/* User Type Selection */}
             {!userType ? (
@@ -109,7 +124,7 @@ const Login = () => {
                 <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign in</p>
 
                 {/* Sign in as Buyer Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('buyer')}
                   className="w-full mt-8 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -121,7 +136,7 @@ const Login = () => {
                 </button>
 
                 {/* Sign in as Business Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('business')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -159,9 +174,10 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <>
                     {/* Google Button */}
-                    <button 
-                      type="button" 
-                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => handleGoogleLogin()}
+                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer shadow-sm"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
                       <span className="ml-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Continue with Google</span>
@@ -177,35 +193,35 @@ const Login = () => {
                 )}
 
                 {/* Email Input */}
-                <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                  <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
+                <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                  <Mail className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                  <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Email address" 
-                    className="bg-transparent outline-none text-sm w-full h-full" 
+                    placeholder="Email address"
+                    className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
-                    required 
-                  />                 
+                    required
+                  />
                 </div>
 
                 {/* Password Input */}
-                <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                  <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
+                <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:border-solid transition-colors group">
+                  <Lock className="w-5 h-5 group-focus-within:text-solid transition-colors" style={{ color: 'var(--color-gray-50)' }} />
+                  <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    placeholder="Password" 
-                    className="bg-transparent outline-none text-sm w-full h-full" 
+                    placeholder="Password"
+                    className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
-                    required 
+                    required
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="shrink-0"
                   >
@@ -220,9 +236,9 @@ const Login = () => {
                 {/* Remember me & Forgot password */}
                 <div className="w-full flex items-center justify-between mt-6">
                   <div className="flex items-center gap-2">
-                    <input 
-                      className="w-4 h-4 cursor-pointer" 
-                      type="checkbox" 
+                    <input
+                      className="w-4 h-4 cursor-pointer"
+                      type="checkbox"
                       id="checkbox"
                       name="rememberMe"
                       checked={formData.rememberMe}
@@ -237,9 +253,9 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <div className="mt-6">
                     <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
-                    
+
                     {/* Use Current Location Button */}
-                    <button 
+                    <button
                       type="button"
                       onClick={async () => {
                         setIsLoadingLocation(true);
@@ -274,9 +290,9 @@ const Login = () => {
                     <div className="mt-3 relative">
                       <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
-                          type="text" 
-                          placeholder="Or enter address manually" 
+                        <input
+                          type="text"
+                          placeholder="Or enter address manually"
                           value={manualAddress}
                           onChange={(e) => setManualAddress(e.target.value)}
                           onKeyDown={async (e) => {
@@ -299,9 +315,9 @@ const Login = () => {
                               }
                             }
                           }}
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                        />                 
+                        />
                       </div>
                       {manualAddress && (
                         <button
@@ -340,7 +356,7 @@ const Login = () => {
 
                     {/* Map */}
                     <div className="mt-4">
-                      <LocationPicker 
+                      <LocationPicker
                         selectedLocation={location}
                         onLocationSelect={async (latlng) => {
                           setLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -357,7 +373,7 @@ const Login = () => {
                 )}
 
                 {/* Login Button */}
-                <button 
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -375,7 +391,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 

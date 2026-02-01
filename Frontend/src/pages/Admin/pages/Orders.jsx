@@ -1,5 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal, Calendar, Archive, Trash2, Package, Clock, CheckCircle, Truck, Filter } from 'lucide-react'
+import api from '../../../services/api'
+
+const mapApiStatus = (s) => {
+  if (!s) return 'Pending'
+  if (['pending_payment', 'paid', 'confirmed'].includes(s)) return 'Pending'
+  if (['ready_for_pickup', 'out_for_delivery'].includes(s)) return 'Accepted'
+  if (s === 'completed') return 'Delivered'
+  if (s === 'cancelled') return 'Cancelled'
+  return s
+}
 
 // Generate more comprehensive dummy orders
 const generateDummyOrders = () => {
@@ -28,15 +38,56 @@ const generateDummyOrders = () => {
 };
 
 const OrdersTable = ({ title, statusFilter }) => {
-  const allOrders = generateDummyOrders();
+  const dummyOrders = generateDummyOrders();
+  const [apiOrders, setApiOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [orders, setOrders] = useState(allOrders);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOrders = async () => {
+      try {
+        setOrdersLoading(true);
+        const { data } = await api.get('/api/orders', { params: { limit: 100 } });
+        if (!cancelled && data.orders) {
+          setApiOrders(data.orders.map((o) => {
+            const customer = o.customer || {};
+            const business = o.business || {};
+            const customerName = [customer.firstName, customer.lastName].filter(Boolean).join(' ') || customer.email || '—';
+            const vendor = (business && business.name) ? business.name : '—';
+            const total = (o.pricing && o.pricing.total) ? o.pricing.total : 0;
+            return {
+              _id: o._id || o.orderNumber,
+              customerName,
+              vendor,
+              status: mapApiStatus(o.status),
+              total,
+              pickupWindow: o.pickupDetails?.pickupCode || '—',
+              createdAt: o.createdAt,
+              type: o.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
+            };
+          }));
+        }
+      } catch {
+        if (!cancelled) setApiOrders([]);
+      } finally {
+        if (!cancelled) setOrdersLoading(false);
+      }
+    };
+    fetchOrders();
+    return () => { cancelled = true; };
+  }, []);
+
+  const [orders, setOrders] = useState(dummyOrders);
+  useEffect(() => {
+    if (apiOrders.length > 0) setOrders(apiOrders);
+  }, [apiOrders]);
 
   // Filter orders based on status
   let filteredOrders = orders;
@@ -49,10 +100,11 @@ const OrdersTable = ({ title, statusFilter }) => {
   }
 
   // Apply search filter
+  const term = searchTerm.toLowerCase();
   filteredOrders = filteredOrders.filter(order =>
-    order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.vendor.toLowerCase().includes(searchTerm.toLowerCase())
+    (order._id && String(order._id).toLowerCase().includes(term)) ||
+    (order.customerName && order.customerName.toLowerCase().includes(term)) ||
+    (order.vendor && order.vendor.toLowerCase().includes(term))
   );
 
   // Apply date range filter

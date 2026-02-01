@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utils/logger');
 const Schema = mongoose.Schema;
 
 const notificationSchema = new Schema({
@@ -8,7 +9,7 @@ const notificationSchema = new Schema({
     ref: 'User',
     required: [true, 'User reference is required']
   },
-  
+
   // Notification Content
   title: {
     type: String,
@@ -20,7 +21,7 @@ const notificationSchema = new Schema({
     required: [true, 'Message is required'],
     trim: true
   },
-  
+
   // Notification Type
   type: {
     type: String,
@@ -37,13 +38,13 @@ const notificationSchema = new Schema({
     ],
     required: [true, 'Notification type is required']
   },
-  
+
   // Deep Link
   link: {
     type: String,
     trim: true
   },
-  
+
   // Related References
   relatedOrder: {
     type: Schema.Types.ObjectId,
@@ -57,7 +58,7 @@ const notificationSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Business'
   },
-  
+
   // Read Status
   read: {
     type: Boolean,
@@ -66,7 +67,7 @@ const notificationSchema = new Schema({
   readAt: {
     type: Date
   },
-  
+
   // Sent Status
   sent: {
     type: Boolean,
@@ -84,21 +85,21 @@ notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 notificationSchema.index({ user: 1, type: 1, createdAt: -1 });
 
 // Method to mark notification as read
-notificationSchema.methods.markAsRead = function() {
+notificationSchema.methods.markAsRead = function () {
   this.read = true;
   this.readAt = new Date();
   return this.save();
 };
 
 // Method to mark notification as sent
-notificationSchema.methods.markAsSent = function() {
+notificationSchema.methods.markAsSent = function () {
   this.sent = true;
   this.sentAt = new Date();
   return this.save();
 };
 
 // Static method to mark all notifications as read for a user
-notificationSchema.statics.markAllAsRead = async function(userId) {
+notificationSchema.statics.markAllAsRead = async function (userId) {
   const now = new Date();
   const result = await this.updateMany(
     { user: userId, read: false },
@@ -108,48 +109,48 @@ notificationSchema.statics.markAllAsRead = async function(userId) {
 };
 
 // Static method to get unread count for a user
-notificationSchema.statics.getUnreadCount = async function(userId) {
+notificationSchema.statics.getUnreadCount = async function (userId) {
   return this.countDocuments({ user: userId, read: false });
 };
 
 // Static method to create and optionally send notification
-notificationSchema.statics.createNotification = async function(data) {
+notificationSchema.statics.createNotification = async function (data) {
   const notification = await this.create(data);
-  
+
   // Here you can add logic to send push notification or email
   // based on user preferences
   try {
     const User = mongoose.model('User');
     const user = await User.findById(notification.user);
-    
+
     if (user && user.preferences && user.preferences.notifications) {
       const { push, email } = user.preferences.notifications;
-      
+
       // Add your notification sending logic here
       // For example:
       // if (push) await sendPushNotification(notification);
       // if (email) await sendEmailNotification(notification);
-      
+
       // Mark as sent after successful delivery
       await notification.markAsSent();
     }
   } catch (error) {
-    console.error('Error sending notification:', error);
+    logger.error({ err: error }, 'Error sending notification');
   }
-  
+
   return notification;
 };
 
 // Static method to delete old read notifications
-notificationSchema.statics.cleanupOldNotifications = async function(daysOld = 30) {
+notificationSchema.statics.cleanupOldNotifications = async function (daysOld = 30) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-  
+
   const result = await this.deleteMany({
     read: true,
     readAt: { $lt: cutoffDate }
   });
-  
+
   return result.deletedCount;
 };
 

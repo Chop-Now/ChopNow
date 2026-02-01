@@ -9,17 +9,60 @@ const {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
-  getMyBusinesses
+  getMyBusinesses,
+  getBusinessStats
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { validateCreateBusiness } = require('../middleware/validation');
 
 // Public routes
+
+/**
+ * @swagger
+ * /businesses:
+ *   get:
+ *     summary: Get all businesses
+ *     tags: [Businesses]
+ *     responses:
+ *       200:
+ *         description: List of businesses
+ */
 router.get('/', getBusinesses);
 router.get('/:id', getBusinessById);
 
 // Protected routes - business owner or admin
-router.post('/', protect, authorize('business_owner', 'admin'), createBusiness);
+
+/**
+ * @swagger
+ * /businesses:
+ *   post:
+ *     summary: Create a new business
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - type
+ *               - description
+ *             properties:
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Business created
+ */
+router.post('/', protect, authorize('business_owner', 'admin'), validateCreateBusiness, createBusiness);
 router.put('/:id', protect, authorize('business_owner', 'admin'), updateBusiness);
 router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteBusiness);
 
@@ -30,5 +73,8 @@ router.post('/:id/photos', protect, authorize('business_owner', 'admin'), upload
 
 // Get my businesses
 router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+
+// Get business stats
+router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
 
 module.exports = router;
