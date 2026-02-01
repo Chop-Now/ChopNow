@@ -1,11 +1,50 @@
 import React from 'react'
-import AppRoutes from './routes/AppRoutes'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import Home from './Pages/Home'
+import Login from './Pages/Login'
+import SignUp from './Pages/SignUp'
+import Shop from './Pages/Shop'
+import CategoryPage from './Pages/CategoryPage'
+import { Toaster } from 'react-hot-toast'
+import ProductDetails from './Pages/ProductDetails'
+import Cart from './Pages/Cart'
+import MyOrders from './Pages/MyOrders'
+import MyImpact from './Pages/MyImpact'
+import Notification from './Pages/Notification'
+import MyProfile from './Pages/MyProfile'
+import BusinessVerification from './Pages/BusinessVerification'
+import PendingReview from './Pages/PendingReview'
+import FAQ from './Pages/FAQ'
+import ContactUs from './Pages/ContactUs'
+import Dashboard from './admin/Dashboard'
+import NotFound from './Components/NotFound'
 
 const App = () => {
   return (
-    <div className='app min-h-screen bg-gray-50 text-gray-900'>
-      <AppRoutes />
-    </div>
+    <main className='overflow-x-hidden text-textColor'>
+
+      <Toaster />
+     
+      <Routes>
+        <Route path='/' element={<Home />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/signup' element={<SignUp />} />
+        <Route path='/business-verification' element={<BusinessVerification />} />
+        <Route path='/pending-review' element={<PendingReview />} />
+        <Route path='/shop' element={<Shop />} />
+        <Route path='/shop/:category' element={<CategoryPage />} />
+        <Route path='/shop/:category/:id' element={<ProductDetails />} />
+        <Route path='/cart' element={<Cart />} />
+        <Route path='/my-orders' element={<MyOrders />} />
+        <Route path='/my-impact' element={<MyImpact />} />
+        <Route path='/my-profile' element={<MyProfile />} />
+        <Route path='/notifications' element={<Notification />} />
+        <Route path='/faq' element={<FAQ />} />
+        <Route path='/contact-us' element={<ContactUs />} />
+        <Route path='/dashboard' element={<Dashboard />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </main>
   )
 }
 
