@@ -1,6 +1,6 @@
 'use client';
 
-import { FlipCard } from '@/Components/animate-ui/components/community/flip-card';
+import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
 
 const data = {
   name: 'Animate UI',

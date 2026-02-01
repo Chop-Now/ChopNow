@@ -6,13 +6,6 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist']),
-  // Node-only config files
-  {
-    files: ['vite.config.js', 'eslint.config.js'],
-    languageOptions: {
-      globals: globals.node,
-    },
-  },
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -30,15 +23,7 @@ export default defineConfig([
       },
     },
     rules: {
-      // Keep lint useful but non-blocking for unused imports/vars during active development.
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
-      // This rule is too strict for Context files and shared exports in this codebase.
-      'react-refresh/only-export-components': 'off',
-      // React Compiler / hooks guidance rules: warn only to avoid blocking CI.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/incompatible-library': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
-      'react-hooks/purity': 'off',
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
 ])

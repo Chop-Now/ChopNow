@@ -9,7 +9,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
     const [showProfileMenu, setShowProfileMenu] = React.useState(false)
     const navigate = useNavigate()
     const location = useLocation()
-    const {setSearchQuery, searchQuery, getTotalCartItems, logout, user, isAuthenticated} = useAppContext()
+    const {setSearchQuery, searchQuery, getTotalCartItems} = useAppContext()
     
     // Check if we're on cart or my-orders or my-impact or notifications page
     const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders' || location.pathname === '/my-impact' || location.pathname === '/notifications'
@@ -101,23 +101,11 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                             style={{ backgroundColor: 'white', border: '1px solid #E5E5E5' }}
                         >
                             <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
-                                <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>
-                                    {user?.firstName || 'User'} {user?.lastName || ''}
-                                </p>
-                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>{user?.email || ''}</p>
+                                <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
+                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>john@example.com</p>
                             </div>
                             <NavLink to='/my-profile' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
-                            <button 
-                                onClick={() => {
-                                    logout();
-                                    setShowProfileMenu(false);
-                                    navigate('/');
-                                }} 
-                                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition" 
-                                style={{ color: 'var(--color-solidOne)' }}
-                            >
-                                Logout
-                            </button>
+                            <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-solidOne)' }}>Logout</button>
                         </div>
                     )}
                 </div>
@@ -243,21 +231,6 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         </div>
                         <span className="text-xs" style={{ color: 'var(--color-gray-50)' }}>Notifications</span>
                     </div>
-
-                    {/* Logout Button for Mobile */}
-                    {isAuthenticated && (
-                        <button
-                            onClick={() => {
-                                logout();
-                                setOpen(false);
-                                navigate('/');
-                            }}
-                            className="text-sm font-medium py-2 text-left mt-4"
-                            style={{ color: 'var(--color-solidOne)' }}
-                        >
-                            Logout
-                        </button>
-                    )}
                 </div>
             </div>
         </div>
