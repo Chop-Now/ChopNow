@@ -1,0 +1,55 @@
+services:
+  # Backend Service
+  backend:
+    build: ./Backend
+    container_name: chopnow-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/chopnow
+      # In a real scenario, you'd pass your JWT_SECRET here or via .env file
+      - JWT_SECRET=change_me_to_a_secure_random_string_in_production
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:5173
+    depends_on:
+      - mongo
+    networks:
+      - chopnow-network
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        # Bake in the API URL for the build. 
+        # For local Docker testing, browser accesses localhost:5000
+        - VITE_API_URL=http://localhost:5000
+    container_name: chopnow-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - chopnow-network
+    restart: unless-stopped
+
+  # Database Service
+  mongo:
+    image: mongo:6.0
+    container_name: chopnow-mongo
+    ports:
+      - "27017:27017" # Exposed for local debugging tools (Compass, etc.)
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - chopnow-network
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+
+networks:
+  chopnow-network:
+    driver: bridge

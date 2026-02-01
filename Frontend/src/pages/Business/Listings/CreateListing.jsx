@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import LiveCapture from '../../../components/Camera/LiveCapture';
+import LiveCapture from '../../../Components/Camera/LiveCapture';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../../../api/axios';
+import api from '../../../services/api';
 
 const CreateListing = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
@@ -57,7 +57,7 @@ const CreateListing = () => {
             delete listingPayload.pickupEndTime;
 
             // Sending JSON
-            const res = await api.post('/listings', listingPayload);
+            const res = await api.post('/api/listings', listingPayload);
             const listingId = res.data._id;
 
             // Step 2: Upload Photo (FormData)
@@ -65,7 +65,7 @@ const CreateListing = () => {
             const blob = base64ToBlob(photo);
             formData.append('photos', blob, 'capture.jpg');
 
-            await api.post(`/listings/${listingId}/photos`, formData, {
+            await api.post(`/api/listings/${listingId}/photos`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 

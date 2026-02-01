@@ -55,8 +55,12 @@ const getBusinesses = async (req, res) => {
     // Filter by type
     if (type) query.type = type;
 
-    // Filter by status (default to active only)
-    query.status = status || 'active';
+    // Filter by status (default to active only). Special-case 'all' to disable status filtering.
+    if (status && status !== 'all') {
+      query.status = status;
+    } else if (!status) {
+      query.status = 'active';
+    }
 
     // Text search
     if (search) {
@@ -140,6 +144,11 @@ const updateBusiness = async (req, res) => {
         business[field] = req.body[field];
       }
     });
+
+    // Admin-only: allow operational status change (active/suspended)
+    if (req.user.role === 'admin' && req.body.status !== undefined) {
+      business.status = req.body.status;
+    }
 
     await business.save();
 
@@ -302,6 +311,73 @@ const getMyBusinesses = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get business statistics
+ * @route   GET /api/businesses/:id/stats
+ * @access  Private (business owner, admin)
+ */
+const getBusinessStats = async (req, res) => {
+  try {
+    const business = await Business.findById(req.params.id);
+    const Listing = require('../models/Listing');
+    const Order = require('../models/Order');
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Check authorization
+    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Count active listings
+    const activeListings = await Listing.countDocuments({
+      business: business._id,
+      status: 'active'
+    });
+
+    // Count orders today
+    const ordersToday = await Order.countDocuments({
+      business: business._id,
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    // Calculate total revenue (from completed orders)
+    const completedOrders = await Order.find({
+      business: business._id,
+      status: 'completed'
+    }).select('pricing.total');
+
+    const totalRevenue = completedOrders.reduce((sum, order) => {
+      return sum + (order.pricing?.total || 0);
+    }, 0);
+
+    // Calculate impact (meals saved) - approximate as number of completed orders
+    const mealsSaved = await Order.countDocuments({
+      business: business._id,
+      status: 'completed'
+    });
+
+    res.json({
+      activeListings,
+      ordersToday,
+      totalRevenue,
+      mealsSaved,
+      totalOrders: business.stats.totalOrders || 0,
+      averageRating: business.stats.averageRating || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createBusiness,
   getBusinesses,
@@ -311,5 +387,6 @@ module.exports = {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
-  getMyBusinesses
+  getMyBusinesses,
+  getBusinessStats
 };

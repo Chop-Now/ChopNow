@@ -29,7 +29,7 @@ const AppContextProvider = ({ children }) => {
     const initAuth = () => {
       const storedToken = authService.getToken()
       const storedUser = authService.getCurrentUser()
-      
+
       if (storedToken && storedUser) {
         setToken(storedToken)
         setUser(storedUser)
@@ -37,7 +37,7 @@ const AppContextProvider = ({ children }) => {
       }
       setLoading(false)
     }
-    
+
     initAuth()
   }, [])
 
@@ -46,10 +46,10 @@ const AppContextProvider = ({ children }) => {
     try {
       // Try to fetch from backend
       const response = await listingService.getListings({ limit: 100 })
-      
+
       // Handle different response formats
       const listings = response.listings || response.data || response || []
-      
+
       // Transform backend listings to match frontend format
       const transformedListings = listings.map(listing => ({
         _id: listing._id,
@@ -73,7 +73,7 @@ const AppContextProvider = ({ children }) => {
         updatedAt: listing.updatedAt,
         inStock: listing.inventory?.quantityAvailable > 0,
       }))
-      
+
       setProducts(transformedListings)
     } catch (error) {
       console.error('Error fetching listings, using dummy data:', error)
@@ -129,6 +129,21 @@ const AppContextProvider = ({ children }) => {
     toast.success('Logged out successfully')
   }
 
+  // Google Login function
+  const googleLogin = async (accessToken) => {
+    try {
+      const response = await authService.googleLogin(accessToken)
+      setToken(response.token)
+      setUser(response)
+      setIsAuthenticated(true)
+      toast.success('Login successful with Google!')
+      return response
+    } catch (error) {
+      toast.error(error.message || 'Google Login failed')
+      throw error
+    }
+  }
+
   // Update user profile
   const updateUserProfile = async (userData) => {
     try {
@@ -146,18 +161,18 @@ const AppContextProvider = ({ children }) => {
   const addToCart = (itemId) => {
     let cartData = structuredClone(cartItems);
 
-    if(cartData[itemId]){
+    if (cartData[itemId]) {
 
-        cartData[itemId] += 1;
+      cartData[itemId] += 1;
     } else {
-        cartData[itemId] = 1;
+      cartData[itemId] = 1;
     }
     setCartItems(cartData);
     toast.success("Added to cart");
   }
 
   // update cart item quantity
-  const updateCartItem = (itemId, quantity) =>{
+  const updateCartItem = (itemId, quantity) => {
     let cartData = structuredClone(cartItems);
     cartData[itemId] = quantity;
     setCartItems(cartData);
@@ -167,11 +182,11 @@ const AppContextProvider = ({ children }) => {
   // Remove Product from cart
   const removeFromCart = (itemId) => {
     let cartData = structuredClone(cartItems);
-    if(cartData[itemId]){
-        cartData[itemId] -= 1;
-        if(cartData[itemId] <= 0){
-            delete cartData[itemId];
-        }
+    if (cartData[itemId]) {
+      cartData[itemId] -= 1;
+      if (cartData[itemId] <= 0) {
+        delete cartData[itemId];
+      }
     }
     toast.success("Removed from cart");
     setCartItems(cartData);
@@ -180,9 +195,9 @@ const AppContextProvider = ({ children }) => {
   // Remove all items of a product from cart
   const removeAllFromCart = (itemId) => {
     let cartData = structuredClone(cartItems);
-    if(cartData[itemId]){
-        delete cartData[itemId];
-        toast.success("Removed from cart");
+    if (cartData[itemId]) {
+      delete cartData[itemId];
+      toast.success("Removed from cart");
     }
     setCartItems(cartData);
   }
@@ -205,9 +220,9 @@ const AppContextProvider = ({ children }) => {
   // Get Cart Total Amount
   const getCartAmount = () => {
     let totalAmount = 0;
-    for (const items in cartItems){
-      let itemInfo = products.find((product) => product_.id === items);
-      if(cartItems[items] > 0){
+    for (const items in cartItems) {
+      const itemInfo = products.find((product) => String(product._id) === String(items));
+      if (cartItems[items] > 0 && itemInfo) {
         totalAmount += itemInfo.offerPrice * cartItems[items]
       }
     }
@@ -232,6 +247,7 @@ const AppContextProvider = ({ children }) => {
     loading,
     login,
     register,
+    googleLogin,
     logout,
     updateUserProfile,
     fetchProducts,

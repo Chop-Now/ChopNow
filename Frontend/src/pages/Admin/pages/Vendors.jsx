@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, ListFilter, ArrowDownUp, Store, XCircle, Clock, X, MapPin, Building2, Phone, Mail, FileText, Image as ImageIcon, Calendar, AlertCircle, CheckSquare, XSquare, BadgeCheck } from 'lucide-react'
+import businessService from '../../../services/businessService'
+import toast from 'react-hot-toast'
 
-// Dummy vendor data
+// Dummy vendor data (fallback)
 const dummyVendors = [
   {
     id: 1,
@@ -640,7 +642,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
 };
 
 export const AllVendors = () => {
-  const [vendors, setVendors] = useState(dummyVendors);
+  const [vendors, setVendors] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [businessTypeFilter, setBusinessTypeFilter] = useState('all');
@@ -651,7 +653,75 @@ export const AllVendors = () => {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const itemsPerPage = 10;
+
+  // Fetch businesses from API
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const filters = {
+          limit: 1000, // Get all for admin
+          page: 1,
+          status: statusFilter, // 'all' supported by backend
+        };
+
+        const response = await businessService.getBusinesses(filters);
+        const businesses = response.businesses || response.data || [];
+        
+        // Transform backend businesses to match frontend format
+        const transformedVendors = businesses.map(business => {
+          const owner = business.owner || {};
+          const address = business.address || {};
+
+          // Map backend business.status (active/suspended) to UI statuses used in this page
+          const uiStatus =
+            business.status === 'active'
+              ? 'approved'
+              : business.status === 'suspended'
+                ? 'rejected'
+                : 'pending';
+          
+          return {
+            id: business._id,
+            name: business.name,
+            location: address.street ? `${address.street}, ${address.city || ''}`.trim() : (address.city || 'Unknown'),
+            businessType: business.type || 'other',
+            status: uiStatus,
+            phone: business.contact?.phone || owner.phone || 'N/A',
+            email: business.contact?.email || owner.email || 'N/A',
+            description: business.description || '',
+            businessRegistration: business.registrationNumber || `BN-${business._id.toString().slice(-6)}`,
+            submissionDate: business.createdAt ? new Date(business.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            approvedDate: business.status === 'active' && business.updatedAt ? new Date(business.updatedAt).toISOString().split('T')[0] : null,
+            documents: business.documents || ['Business Registration'],
+            address: address.street ? `${address.street}, ${address.city || ''}`.trim() : 'N/A',
+            bankDetails: business.bankDetails || 'Not provided',
+            contactPerson: {
+              fullName: owner.firstName && owner.lastName ? `${owner.firstName} ${owner.lastName}` : owner.email || 'N/A',
+              role: 'Business Owner',
+              email: owner.email || business.contact?.email || 'N/A',
+              mobile: owner.phone || business.contact?.phone || 'N/A'
+            }
+          };
+        });
+        
+        setVendors(transformedVendors);
+      } catch (err) {
+        console.error('Failed to fetch businesses:', err);
+        setError('Failed to load vendors');
+        toast.error('Failed to load vendors');
+        setVendors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinesses();
+  }, [statusFilter]);
 
   // Get unique business types and locations for filter
   const businessTypes = ['all', ...new Set(vendors.map(v => v.businessType))];
@@ -1014,7 +1084,19 @@ export const AllVendors = () => {
           </div>
         )}
 
-        {filteredVendors.length === 0 && (
+        {loading && (
+          <div className='p-12 text-center'>
+            <p className='text-slate-500 dark:text-slate-400'>Loading vendors...</p>
+          </div>
+        )}
+        
+        {!loading && error && (
+          <div className='p-12 text-center'>
+            <p className='text-red-500 dark:text-red-400'>{error}</p>
+          </div>
+        )}
+        
+        {!loading && !error && filteredVendors.length === 0 && (
           <div className='p-12 text-center'>
             <p className='text-slate-500 dark:text-slate-400'>No vendors found</p>
           </div>
@@ -1026,33 +1108,60 @@ export const AllVendors = () => {
         <VendorDetailsModal
           vendor={selectedVendor}
           onClose={() => setSelectedVendor(null)}
-          onApprove={(vendorId, note) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Approved vendor:', vendorId, 'Note:', note);
+          onApprove={async (vendorId, note) => {
+            try {
+              await businessService.updateBusiness(vendorId, { status: 'active' });
+              setVendors(prev => prev.map(v => 
+                v.id === vendorId ? { ...v, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] } : v
+              ));
+              setSelectedVendor(null);
+              toast.success('Vendor approved successfully');
+            } catch (err) {
+              console.error('Failed to approve vendor:', err);
+              toast.error('Failed to approve vendor');
+            }
           }}
-          onReject={(vendorId, reason) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'rejected', rejectedDate: new Date().toISOString().split('T')[0], rejectionReason: reason } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Rejected vendor:', vendorId, 'Reason:', reason);
+          onReject={async (vendorId, reason) => {
+            try {
+              // Backend supports business.status: active | suspended
+              await businessService.updateBusiness(vendorId, { status: 'suspended' });
+              setVendors(prev => prev.map(v => 
+                v.id === vendorId ? { ...v, status: 'rejected', rejectedDate: new Date().toISOString().split('T')[0], rejectionReason: reason } : v
+              ));
+              setSelectedVendor(null);
+              toast.success('Vendor rejected');
+            } catch (err) {
+              console.error('Failed to reject vendor:', err);
+              toast.error('Failed to reject vendor');
+            }
           }}
-          onRequestInfo={(vendorId, message) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'moreInfoRequested', infoRequestedDate: new Date().toISOString().split('T')[0], infoRequestedMessage: message } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Requested more info from vendor:', vendorId, 'Message:', message);
+          onRequestInfo={async (vendorId, message) => {
+            try {
+              // Note: This would require a backend endpoint for requesting more info
+              // For now, we'll just update the status locally
+              setVendors(prev => prev.map(v => 
+                v.id === vendorId ? { ...v, status: 'moreInfoRequested', infoRequestedDate: new Date().toISOString().split('T')[0], infoRequestedMessage: message } : v
+              ));
+              setSelectedVendor(null);
+              toast.success('Information request sent');
+            } catch (err) {
+              console.error('Failed to request info:', err);
+              toast.error('Failed to request information');
+            }
           }}
-          onRescind={(vendorId, reason) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'pending' } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Rescinded approval for vendor:', vendorId, 'Reason:', reason);
+          onRescind={async (vendorId, reason) => {
+            try {
+              // Rescinding approval effectively suspends the business in the current backend model.
+              await businessService.updateBusiness(vendorId, { status: 'suspended' });
+              setVendors(prev => prev.map(v => 
+                v.id === vendorId ? { ...v, status: 'rejected' } : v
+              ));
+              setSelectedVendor(null);
+              toast.success('Approval rescinded');
+            } catch (err) {
+              console.error('Failed to rescind approval:', err);
+              toast.error('Failed to rescind approval');
+            }
           }}
           showActions={selectedVendor.status === 'pending' || selectedVendor.status === 'moreInfoRequested'}
         />
