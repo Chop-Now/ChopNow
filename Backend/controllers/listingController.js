@@ -17,7 +17,9 @@ const createListing = async (req, res) => {
       pricing,
       inventory,
       timeWindow,
-      fulfillment
+      fulfillment,
+      nutritionalInfo, // Added
+      images // Added
     } = req.body;
 
     // Validation
@@ -43,7 +45,9 @@ const createListing = async (req, res) => {
       pricing,
       inventory,
       timeWindow,
-      fulfillment
+      fulfillment,
+      nutritionalInfo,
+      images
     });
 
     // Update business stats
@@ -230,10 +234,14 @@ const updateListing = async (req, res) => {
       'pricing',
       'inventory',
       'timeWindow',
+      'timeWindow',
       'fulfillment',
-      'status'
+      'status',
+      'nutritionalInfo', // Added
+      'images', // Added
+      'business' // Sometimes passed?
     ];
-    
+
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
         listing[field] = req.body[field];

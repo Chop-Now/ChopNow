@@ -22,15 +22,24 @@ const createBusiness = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
+
     const business = await Business.create({
       name,
       type,
       description,
       owner: req.user._id,
-      contact,
+      email: contact?.email,
+      phone: contact?.phone,
+      website: contact?.website,
       address,
       deliverySettings
     });
+
+    // Upgrade user role if they are a consumer
+    if (req.user.role === 'consumer') {
+      req.user.role = 'business_owner';
+      await req.user.save();
+    }
 
     res.status(201).json(business);
   } catch (error) {
@@ -141,7 +150,13 @@ const updateBusiness = async (req, res) => {
     const allowedUpdates = ['name', 'type', 'description', 'contact', 'address', 'deliverySettings'];
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        business[field] = req.body[field];
+        if (field === 'contact') {
+          if (req.body.contact.email) business.email = req.body.contact.email;
+          if (req.body.contact.phone) business.phone = req.body.contact.phone;
+          if (req.body.contact.website) business.website = req.body.contact.website;
+        } else {
+          business[field] = req.body[field];
+        }
       }
     });
 
@@ -296,6 +311,103 @@ const uploadPhotos = async (req, res) => {
 };
 
 /**
+ * @desc    Upload business KYC documents
+ * @route   POST /api/businesses/:id/kyc
+ * @access  Private (owner or admin)
+ */
+const uploadKYC = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Please upload a document (Image or PDF)' });
+    }
+
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Check ownership
+    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Upload all files to Cloudinary
+    const uploadedDocuments = [];
+
+    for (const file of req.files) {
+      // Determine resource type
+      const isPDF = file.mimetype === 'application/pdf';
+      const resourceType = isPDF ? 'pdf' : 'image';
+
+      // Upload to Cloudinary
+      const result = await uploadToCloudinary(file.buffer, 'chopnow/businesses/kyc', resourceType);
+
+      uploadedDocuments.push({
+        url: result.secure_url,
+        uploadedAt: new Date()
+      });
+    }
+
+    // UPDATE BUSINESS DETAILS (Phone, Address, Location)
+    if (req.body.phone) business.phone = req.body.phone;
+
+    if (req.body.address) {
+      // If address is just a string, update the text part
+      if (typeof business.address === 'object') {
+        business.address.text = req.body.address;
+      } else {
+        business.address = req.body.address;
+      }
+    }
+
+    if (req.body.location) {
+      try {
+        const locationData = JSON.parse(req.body.location);
+        if (locationData.lat && locationData.lng) {
+          business.location = {
+            type: 'Point',
+            coordinates: [locationData.lng, locationData.lat]
+          };
+
+          // Also update address object if it exists
+          if (business.address && typeof business.address === 'object') {
+            business.address.lat = locationData.lat;
+            business.address.lng = locationData.lng;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing location:', e);
+      }
+    }
+
+    // Initialize verification object if it doesn't exist
+    if (!business.verification) {
+      business.verification = {
+        status: 'pending',
+        documents: [],
+        submittedAt: new Date()
+      };
+    }
+
+    // Add new documents to existing documents array
+    business.verification.documents.push(...uploadedDocuments);
+    business.verification.status = 'pending';
+    business.verification.submittedAt = new Date();
+
+    await business.save();
+
+    res.json({
+      message: 'KYC documents uploaded successfully. Verification is pending.',
+      verification: business.verification,
+      documentsUploaded: uploadedDocuments.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * @desc    Get my businesses
  * @route   GET /api/businesses/my/list
  * @access  Private (business_owner)
@@ -387,6 +499,7 @@ module.exports = {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
+  uploadKYC,
   getMyBusinesses,
   getBusinessStats
 };

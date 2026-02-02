@@ -50,7 +50,7 @@ const createOrder = async (req, res) => {
 
     let deliveryFee = 0;
     if (fulfillmentType === 'delivery') {
-      if (!listingDoc.fulfillment.deliveryEnabled) {
+      if (listingDoc.fulfillment.type !== 'delivery') {
         return res.status(400).json({ message: 'Delivery not available for this listing' });
       }
       if (!deliveryDetails || !deliveryDetails.address) {
@@ -330,9 +330,9 @@ const cancelOrder = async (req, res) => {
     const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const listing = await Listing.findById(order.listing._id);
     if (listing) {
-      listing.inventory.quantityAvailable += totalQuantity;
-      listing.inventory.quantityReserved -= totalQuantity;
-      if (listing.status === 'sold_out' && listing.inventory.quantityAvailable > 0) {
+      listing.inventory.quantity += totalQuantity;
+      listing.inventory.reserved -= totalQuantity;
+      if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
         listing.status = 'active';
       }
       await listing.save();

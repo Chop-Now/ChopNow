@@ -1,4 +1,4 @@
-import PageNavbar from '@/Components/PageNavbar'
+import PageNavbar from '../Components/PageNavbar'
 import React, { useState } from 'react'
 import { Truck, Megaphone, PartyPopper, Store, CheckCheck, ArchiveRestore, EllipsisVertical } from 'lucide-react'
 
@@ -137,36 +137,34 @@ const Notification = () => {
   return (
     <div className='bg-white min-h-screen pt-20'>
       <PageNavbar />
-      
+
       <div className='container mx-auto px-4 py-8'>
         <div className='flex gap-6'>
           {/* Sidebar - Desktop Only */}
           <aside className='hidden lg:block w-64 shrink-0 -ml-8'>
             <div className='bg-primary rounded-lg p-6 sticky top-24'>
               <h3 className='text-lg font-semibold text-textColor mb-4'>Filter by</h3>
-              
+
               {/* Status Title */}
               <h4 className='text-sm font-semibold text-textColor mb-3'>Status</h4>
-              
+
               {/* All/Unread Buttons */}
               <div className='flex gap-2 mb-6'>
                 <button
                   onClick={() => setSelectedFilter('all')}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center cursor-pointer ${
-                    selectedFilter === 'all'
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center cursor-pointer ${selectedFilter === 'all'
                       ? 'bg-solid text-white'
                       : 'bg-white text-textColor hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setSelectedFilter('unread')}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center cursor-pointer ${
-                    selectedFilter === 'unread'
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center cursor-pointer ${selectedFilter === 'unread'
                       ? 'bg-solid text-white'
                       : 'bg-white text-textColor hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   Unread
                 </button>
@@ -217,21 +215,19 @@ const Notification = () => {
               <div className='flex gap-2 mb-3'>
                 <button
                   onClick={() => setSelectedFilter('all')}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center text-sm ${
-                    selectedFilter === 'all'
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center text-sm ${selectedFilter === 'all'
                       ? 'bg-solid text-white'
                       : 'bg-white text-textColor hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setSelectedFilter('unread')}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center text-sm ${
-                    selectedFilter === 'unread'
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors text-center text-sm ${selectedFilter === 'unread'
                       ? 'bg-solid text-white'
                       : 'bg-white text-textColor hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   Unread
                 </button>
@@ -243,11 +239,10 @@ const Notification = () => {
                   <button
                     key={category.id}
                     onClick={() => toggleCategory(category.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
-                      selectedCategories.includes(category.id)
+                    className={`px-3 py-1.5 rounded-full text-xs transition-colors ${selectedCategories.includes(category.id)
                         ? 'bg-solid text-white'
                         : 'bg-white text-textColor hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {category.label}
                   </button>
@@ -295,9 +290,8 @@ const Notification = () => {
                   return (
                     <div
                       key={notification.id}
-                      className={`relative bg-primary rounded-lg p-3 hover:shadow-md transition-shadow ${
-                        !notification.isRead ? 'ring-2 ring-solid ring-opacity-20' : ''
-                      }`}
+                      className={`relative bg-primary rounded-lg p-3 hover:shadow-md transition-shadow ${!notification.isRead ? 'ring-2 ring-solid ring-opacity-20' : ''
+                        }`}
                     >
                       <div className='flex gap-3'>
                         {/* Icon with unread indicator */}

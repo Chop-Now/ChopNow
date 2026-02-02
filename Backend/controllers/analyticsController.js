@@ -127,8 +127,55 @@ const getImpactLeaderboard = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get my impact (Consumer/Business)
+ * @route   GET /api/analytics/impact/my
+ * @access  Private
+ */
+const getMyImpact = async (req, res) => {
+    try {
+        if (req.user.role === 'consumer') {
+            // Calculate consumer impact based on orders
+            const orders = await Order.find({ customer: req.user._id, status: 'delivered' })
+                .populate('business');
+
+            let mealsRescued = 0;
+            let co2Saved = 0;
+            let waterSaved = 0;
+
+            // Simplified calculation - in real app, fetch from Listing details snapshot in Order
+            // Assuming 1 item = 1 meal, and some constants
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    mealsRescued += item.quantity;
+                    co2Saved += (item.quantity * 2.5); // 2.5kg CO2 per meal
+                    waterSaved += (item.quantity * 1000); // 1000L water per meal (beef example)
+                });
+            });
+
+            res.json({
+                mealsRescued,
+                co2Saved,
+                waterSaved,
+                history: [] // Add history if needed
+            });
+        } else if (req.user.role === 'business_owner' || req.user.role === 'manager') {
+            const business = await Business.findOne({ owner: req.user._id });
+            if (!business) {
+                return res.status(404).json({ message: 'Business not found' });
+            }
+            res.json(business.stats.impact);
+        } else {
+            res.status(400).json({ message: 'Invalid role for impact stats' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getPlatformOverview,
     getBusinessOverview,
-    getImpactLeaderboard
+    getImpactLeaderboard,
+    getMyImpact
 };

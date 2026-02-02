@@ -9,11 +9,13 @@ const {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
+  uploadKYC,
   getMyBusinesses,
   getBusinessStats
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const uploadDocs = require('../middleware/uploadDocs');
 const { validateCreateBusiness } = require('../middleware/validation');
 
 // Public routes
@@ -29,7 +31,16 @@ const { validateCreateBusiness } = require('../middleware/validation');
  *         description: List of businesses
  */
 router.get('/', getBusinesses);
+
+// IMPORTANT: Specific routes must come BEFORE parameterized routes
+// Get my businesses - must be before /:id
+router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+
+// Get by ID - comes after specific routes
 router.get('/:id', getBusinessById);
+
+// Get business stats - must be before other /:id routes
+router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
 
 // Protected routes - business owner or admin
 
@@ -62,19 +73,15 @@ router.get('/:id', getBusinessById);
  *       201:
  *         description: Business created
  */
-router.post('/', protect, authorize('business_owner', 'admin'), validateCreateBusiness, createBusiness);
+router.post('/', protect, authorize('business_owner', 'admin', 'consumer'), validateCreateBusiness, createBusiness);
 router.put('/:id', protect, authorize('business_owner', 'admin'), updateBusiness);
 router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteBusiness);
 
 // Image upload routes
-router.post('/:id/logo', protect, authorize('business_owner', 'admin'), upload.single('logo'), uploadLogo);
-router.post('/:id/cover', protect, authorize('business_owner', 'admin'), upload.single('cover'), uploadCoverImage);
-router.post('/:id/photos', protect, authorize('business_owner', 'admin'), upload.array('photos', 10), uploadPhotos);
-
-// Get my businesses
-router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
-
-// Get business stats
-router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
+router.post('/:id/logo', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('logo'), uploadLogo);
+router.post('/:id/cover', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('cover'), uploadCoverImage);
+router.post('/:id/photos', protect, authorize('business_owner', 'admin', 'consumer'), upload.array('photos', 10), uploadPhotos);
+router.post('/:id/kyc', protect, authorize('business_owner', 'admin', 'consumer'), uploadDocs.array('documents'), uploadKYC);
 
 module.exports = router;
+

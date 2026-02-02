@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { CircleUserRound, ReceiptText, Shield, Power, Trash2, Upload, Camera, Eye, EyeOff, CheckCircle, XCircle, MapPin, Monitor, Smartphone, Plus, Clock, FileText, X, LogOut } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
-import LocationPicker from '@/Components/maps/LocationPicker'
+import LocationPicker from '../../Components/maps/LocationPicker'
 import ConfirmationModal from '../components/ConfirmationModal'
 
 const Settings = ({ initialTab = 'profile' }) => {
@@ -39,7 +39,7 @@ const Settings = ({ initialTab = 'profile' }) => {
   ])
 
   const [specialHours, setSpecialHours] = useState([])
-  
+
   // Business Information State
   const [businessInfo, setBusinessInfo] = useState({
     contactPhone: '+250 788 123 456',
@@ -140,7 +140,7 @@ const Settings = ({ initialTab = 'profile' }) => {
   }
 
   const handlePasswordChange = (e) => {
-    const { name, value} = e.target
+    const { name, value } = e.target
     setPasswordData(prev => ({
       ...prev,
       [name]: value
@@ -193,14 +193,14 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   const handleSearchAddress = async () => {
     if (!addressSearch.trim()) return
-    
+
     try {
       // Using Nominatim API for geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressSearch)}&limit=1`
       )
       const data = await response.json()
-      
+
       if (data && data.length > 0) {
         const result = data[0]
         const location = {
@@ -224,14 +224,14 @@ const Settings = ({ initialTab = 'profile' }) => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords
-          
+
           try {
             // Reverse geocoding to get address
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
             )
             const data = await response.json()
-            
+
             const location = {
               lat: latitude,
               lng: longitude,
@@ -392,11 +392,10 @@ const Settings = ({ initialTab = 'profile' }) => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer ${
-                      activeTab === item.id
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer ${activeTab === item.id
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
+                      }`}
                   >
                     <Icon className='w-4 h-4' />
                     <span className='font-medium'>{item.label}</span>
@@ -827,7 +826,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                     <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
                       Physical Address
                     </label>
-                    
+
                     {/* Search and Current Location */}
                     <div className='flex gap-2 mb-3'>
                       <div className='flex-1 flex gap-2'>

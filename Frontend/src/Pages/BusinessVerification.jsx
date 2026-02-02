@@ -1,21 +1,25 @@
-import { assets } from '@/assets/assets'
-import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck } from 'lucide-react'
-import React, { useState } from 'react'
+import { assets } from '../assets/assets'
+import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck, Loader2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
-import LocationPicker from '@/Components/maps/LocationPicker'
-import { useGeolocation } from '@/Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '@/services/geocoding'
+import LocationPicker from '../Components/maps/LocationPicker'
+import { useGeolocation } from '../Components/maps/useGeolocation'
+import { reverseGeocode, searchAddress } from '../services/geocoding'
+import { businessService } from '../services'
+import { useAppContext } from '../context/AppContext'
 import toast from 'react-hot-toast'
 
 const BusinessVerification = () => {
   const navigate = useNavigate();
+  const { user } = useAppContext();
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [errors, setErrors] = useState({
     phone: false,
@@ -24,37 +28,54 @@ const BusinessVerification = () => {
   });
   const { getCurrentLocation } = useGeolocation();
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (10MB = 10 * 1024 * 1024 bytes)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+  const [businessId, setBusinessId] = useState(null);
+
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      // Check if user is authenticated
+      if (!user) {
+        toast.error('Please log in to access business verification.');
+        navigate('/login');
         return;
       }
 
-      // Check file type
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Only PDF, JPG, and PNG files are allowed');
-        return;
+      try {
+        if (user?.business?._id) {
+          setBusinessId(user.business._id);
+          return;
+        }
+
+        const response = await businessService.getMyBusinesses();
+        const businesses = response?.businesses || response;
+
+        if (businesses && businesses.length > 0) {
+          setBusinessId(businesses[0]._id);
+        } else {
+          // User has no business - show helpful message
+          toast.error('Please create a business profile first before verification.');
+          setTimeout(() => {
+            navigate('/dashboard'); // or wherever they create businesses
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Failed to fetch business", error);
+
+        // Check if it's an authentication error
+        if (error?.message?.includes('401') || error?.message?.includes('authorized') || error?.message?.includes('token')) {
+          toast.error('Session expired. Please log in again.');
+          navigate('/login');
+        } else {
+          toast.error('Unable to load business information. Please try again.');
+        }
       }
+    };
 
-      setUploadedFiles([...uploadedFiles, file]);
-      setErrors(prev => ({ ...prev, files: false }));
-      toast.success('File uploaded successfully!');
-      // Reset file input
-      e.target.value = '';
-    }
-  };
+    fetchBusiness();
+  }, [user, navigate]);
 
-  const handleRemoveFile = (index) => {
-    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate all fields
     const newErrors = {
       phone: !phone || phone.length < 10,
@@ -72,10 +93,45 @@ const BusinessVerification = () => {
       return;
     }
 
+    if (!businessId) {
+      toast.error("Business profile not found. Please ensure you have created a business.");
+      return;
+    }
+
     // Handle form submission
-    toast.success('Verification submitted! Our team will review your submission.');
-    // Navigate to pending review page
-    navigate('/pending-review');
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('phone', phone);
+      formData.append('address', address);
+      formData.append('location', JSON.stringify(location));
+
+      uploadedFiles.forEach(file => {
+        formData.append('documents', file);
+      });
+
+      await businessService.submitVerification(businessId, formData);
+
+      toast.success('Verification submitted! Our team will review your submission.');
+      navigate('/pending-review');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Failed to submit verification');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setUploadedFiles(prev => [...prev, ...files]);
+      setErrors(prev => ({ ...prev, files: false }));
+    }
+  };
+
+  const removeFile = (indexToRemove) => {
+    setUploadedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
   return (
@@ -152,9 +208,9 @@ const BusinessVerification = () => {
               <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
                 Business Location {errors.location && <span className="text-red-500 text-[10px]">*Required</span>}
               </h3>
-              
+
               {/* Use Current Location Button */}
-              <button 
+              <button
                 type="button"
                 onClick={async () => {
                   setIsLoadingLocation(true);
@@ -190,9 +246,9 @@ const BusinessVerification = () => {
               <div className="relative mb-3">
                 <div className={`flex items-center w-full bg-transparent border h-12 rounded-lg overflow-hidden px-4 gap-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}>
                   <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
-                    type="text" 
-                    placeholder="Or enter address manually" 
+                  <input
+                    type="text"
+                    placeholder="Or enter address manually"
                     value={manualAddress}
                     onChange={(e) => setManualAddress(e.target.value)}
                     onKeyDown={async (e) => {
@@ -216,9 +272,9 @@ const BusinessVerification = () => {
                         }
                       }
                     }}
-                    className="bg-transparent outline-none text-sm w-full h-full" 
+                    className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
-                  />                 
+                  />
                 </div>
                 {manualAddress && (
                   <button
@@ -258,7 +314,7 @@ const BusinessVerification = () => {
 
               {/* Map */}
               <div>
-                <LocationPicker 
+                <LocationPicker
                   selectedLocation={location}
                   onLocationSelect={async (latlng) => {
                     setLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -287,8 +343,8 @@ const BusinessVerification = () => {
               </p>
 
               {/* File Upload Area */}
-              <label 
-                htmlFor="fileInput" 
+              <label
+                htmlFor="fileInput"
                 className={`border-2 border-dashed bg-white rounded-lg text-xs p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-indigo-500 transition-colors ${errors.files ? 'border-red-500' : 'border-indigo-600/60'}`}
               >
                 <CloudUpload className="w-10 h-10" style={{ color: 'var(--color-solid)' }} />
@@ -296,10 +352,10 @@ const BusinessVerification = () => {
                 <p className="text-gray-400 text-xs">
                   Or <span className="underline" style={{ color: 'var(--color-solid)' }}>click</span> to upload
                 </p>
-                <input 
-                  id="fileInput" 
-                  type="file" 
-                  className="hidden" 
+                <input
+                  id="fileInput"
+                  type="file"
+                  className="hidden"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileUpload}
                 />
@@ -325,7 +381,7 @@ const BusinessVerification = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleRemoveFile(index)}
+                        onClick={() => removeFile(index)}
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                       >
                         <X className="w-4 h-4 text-red-500" />
@@ -350,12 +406,20 @@ const BusinessVerification = () => {
 
             {/* Submit Button */}
             <div className="pt-4">
-              <button 
-                type="submit" 
-                className="w-full h-11 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-11 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-70 flex items-center justify-center gap-2"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
-                Submit for Verification
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit for Verification'
+                )}
               </button>
               <p className="text-[10px] text-center mt-3" style={{ color: 'var(--color-gray-50)' }}>
                 Our team will review your submission within 1-3 business days.

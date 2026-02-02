@@ -1,20 +1,37 @@
-import { assets } from '@/assets/assets'
+import { assets } from '../assets/assets'
 import { Eye, EyeOff, Lock, Mail, User, MapPin, LocateFixed, PersonStanding, Handshake } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
-import LocationPicker from '@/Components/maps/LocationPicker'
-import { useGeolocation } from '@/Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '@/services/geocoding'
+import LocationPicker from '../Components/maps/LocationPicker'
+import { useGeolocation } from '../Components/maps/useGeolocation'
+import { reverseGeocode, searchAddress } from '../services/geocoding'
 import toast from 'react-hot-toast'
 
 
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAppContext } from '../context/AppContext';
+
 const SignUp = () => {
+  const { googleAuth, register } = useAppContext();
   const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const signupWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await googleAuth(tokenResponse.access_token);
+        navigate('/shop');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    onError: () => console.log('Google Signup Failed'),
+  });
+
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
@@ -22,16 +39,108 @@ const SignUp = () => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const { getCurrentLocation } = useGeolocation();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    const form = e.target;
+    const email = form.querySelector('input[type="email"]').value;
+    const password = form.querySelector('input[placeholder="Password"]').value;
+    const confirmPassword = form.querySelector('input[placeholder="Confirm password"]').value;
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     if (userType === 'business') {
-      // Redirect to business verification page
-      navigate('/business-verification');
+      // Handle business signup - create account AND business profile
+      try {
+        const businessName = form.querySelector('input[placeholder="Business name"]').value;
+        const contactPerson = form.querySelector('input[placeholder="Contact person"]').value;
+
+        // Step 1: Register user as business_owner
+        const userData = {
+          firstName: contactPerson.split(' ')[0] || contactPerson,
+          lastName: contactPerson.split(' ').slice(1).join(' ') || '',
+          email,
+          password,
+          role: 'business_owner',
+        };
+
+        const registeredUser = await register(userData);
+
+        // Step 2: Create basic business profile
+        const businessData = {
+          name: businessName,
+          type: 'restaurant', // Default type, can be changed in verification
+          description: `${businessName} - Pending verification`,
+          contact: {
+            email: email
+            // Phone will be added during business verification
+          },
+          address: {
+            street: 'Pending verification',
+            city: 'Pending verification',
+            state: 'Pending verification',
+            country: 'Rwanda',
+            zipCode: '00000',
+            location: {
+              type: 'Point',
+              coordinates: [30.0619, -1.9403] // Default Kigali coordinates
+            }
+          }
+        };
+
+        // Import businessService
+        const { default: businessService } = await import('../services/businessService');
+        await businessService.createBusiness(businessData);
+
+        toast.success('Account created! Please complete your business verification.');
+
+        // Step 3: Redirect to verification page
+        navigate('/business-verification');
+      } catch (error) {
+        console.error('Business signup error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error message:', error.response?.data?.message || error.message);
+
+        const errorMessage = error.response?.data?.message || error.message || "Business signup failed";
+        toast.error(errorMessage);
+      }
     } else {
       // Handle buyer signup
-      toast.success('Account created successfully!');
-      // Add your buyer signup logic here
+      try {
+        const firstName = form.querySelector('input[placeholder="First name"]').value;
+        const lastName = form.querySelector('input[placeholder="Last name"]').value;
+
+        const userData = {
+          firstName,
+          lastName,
+          email,
+          password,
+          role: 'consumer',
+          phone: phone || undefined,
+          address: address || undefined
+        };
+
+        await register(userData);
+        toast.success('Account created successfully!');
+
+        // Redirect buyers directly to shop
+        navigate('/shop');
+      } catch (error) {
+        console.error('Buyer signup error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error message:', error.response?.data?.message || error.message);
+
+        const errorMessage = error.response?.data?.message || error.message || "Signup failed";
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -49,7 +158,7 @@ const SignUp = () => {
           <div className="mb-8">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
           </div>
-          
+
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
             {/* User Type Selection */}
             {!userType ? (
@@ -58,7 +167,7 @@ const SignUp = () => {
                 <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign up</p>
 
                 {/* Sign up as Buyer Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('buyer')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -70,7 +179,7 @@ const SignUp = () => {
                 </button>
 
                 {/* Sign up as Business Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('business')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -109,8 +218,9 @@ const SignUp = () => {
                   // Buyer Form
                   <>
                     {/* Google Button */}
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
+                      onClick={() => signupWithGoogle()}
                       className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
@@ -128,36 +238,36 @@ const SignUp = () => {
                     <div className="flex gap-3">
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
-                          type="text" 
-                          placeholder="First name" 
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                        <input
+                          type="text"
+                          placeholder="First name"
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                          required 
-                        />                 
+                          required
+                        />
                       </div>
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
-                          type="text" 
-                          placeholder="Last name" 
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                        <input
+                          type="text"
+                          placeholder="Last name"
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                          required 
-                        />                 
+                          required
+                        />
                       </div>
                     </div>
 
                     {/* Email Input */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type="email" 
-                        placeholder="Email address" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Phone Number */}
@@ -181,15 +291,15 @@ const SignUp = () => {
                     {/* Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="Password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="shrink-0"
                       >
@@ -204,15 +314,15 @@ const SignUp = () => {
                     {/* Confirm Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type={showConfirmPassword ? "text" : "password"} 
-                        placeholder="Confirm password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="shrink-0"
                       >
@@ -227,9 +337,9 @@ const SignUp = () => {
                     {/* Location Section */}
                     <div className="mt-6">
                       <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
-                      
+
                       {/* Use Current Location Button */}
-                      <button 
+                      <button
                         type="button"
                         onClick={async () => {
                           setIsLoadingLocation(true);
@@ -265,9 +375,9 @@ const SignUp = () => {
                         <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                           <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                           <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                          <input 
-                            type="text" 
-                            placeholder="Or enter address manually" 
+                          <input
+                            type="text"
+                            placeholder="Or enter address manually"
                             value={manualAddress}
                             onChange={(e) => setManualAddress(e.target.value)}
                             onKeyDown={async (e) => {
@@ -290,9 +400,9 @@ const SignUp = () => {
                                 }
                               }
                             }}
-                            className="bg-transparent outline-none text-sm w-full h-full" 
+                            className="bg-transparent outline-none text-sm w-full h-full"
                             style={{ color: 'var(--color-textColor)' }}
-                          />                 
+                          />
                         </div>
                         {manualAddress && (
                           <button
@@ -331,7 +441,7 @@ const SignUp = () => {
 
                       {/* Map */}
                       <div className="mt-4">
-                        <LocationPicker 
+                        <LocationPicker
                           selectedLocation={location}
                           onLocationSelect={async (latlng) => {
                             setLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -352,51 +462,51 @@ const SignUp = () => {
                     {/* Business Name */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Handshake className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type="text" 
-                        placeholder="Business name" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type="text"
+                        placeholder="Business name"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Contact Person */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type="text" 
-                        placeholder="Contact person" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type="text"
+                        placeholder="Contact person"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Email Input */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type="email" 
-                        placeholder="Email address" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
-                      />                 
+                        required
+                      />
                     </div>
 
                     {/* Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="Password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="shrink-0"
                       >
@@ -411,15 +521,15 @@ const SignUp = () => {
                     {/* Confirm Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                      <input 
-                        type={showConfirmPassword ? "text" : "password"} 
-                        placeholder="Confirm password" 
-                        className="bg-transparent outline-none text-sm w-full h-full" 
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm password"
+                        className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
-                        required 
+                        required
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="shrink-0"
                       >
@@ -434,8 +544,8 @@ const SignUp = () => {
                 )}
 
                 {/* Create Account Button */}
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
