@@ -1,5 +1,5 @@
-import Footer from '@/Components/Footer'
-import PageNavbar from '@/Components/PageNavbar'
+import Footer from '../Components/Footer'
+import PageNavbar from '../Components/PageNavbar'
 import React from 'react'
 import { Award, Leaf, Droplets, Wind } from 'lucide-react'
 
@@ -27,7 +27,7 @@ const MyImpact = () => {
     <div>
       <div className='bg-white min-h-screen pt-20'>
         <PageNavbar />
-        
+
         <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
           {/* Header */}
           <div className='mb-6 text-center'>
@@ -83,14 +83,14 @@ const MyImpact = () => {
                     <span>Next: Eco-Hero</span>
                   </div>
                 </div>
-                
+
                 <div className='mb-2'>
                   <div className='flex justify-between text-xs mb-1'>
                     <span className='font-medium text-gray-700'>124 / 150 meals</span>
                     <span className='font-bold' style={{ color: 'var(--color-solid)' }}>82%</span>
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-2'>
-                    <div 
+                    <div
                       className='h-2 rounded-full transition-all duration-500'
                       style={{ width: '82%', background: 'linear-gradient(to right, #00A86B, #007A4B)' }}
                     ></div>
@@ -110,14 +110,14 @@ const MyImpact = () => {
                     <span>Next: Climate Champion</span>
                   </div>
                 </div>
-                
+
                 <div className='mb-2'>
                   <div className='flex justify-between text-xs mb-1'>
                     <span className='font-medium text-gray-700'>310 / 400 kg</span>
                     <span className='font-bold' style={{ color: 'var(--color-solidOne)' }}>77%</span>
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-2'>
-                    <div 
+                    <div
                       className='h-2 rounded-full transition-all duration-500'
                       style={{ width: '77%', background: 'linear-gradient(to right, #FFB366, #FF7A00)' }}
                     ></div>

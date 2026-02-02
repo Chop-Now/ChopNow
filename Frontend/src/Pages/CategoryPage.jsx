@@ -1,8 +1,8 @@
-import Breadcrumb from '@/Components/Breadcrumb'
-import Footer from '@/Components/Footer'
-import PageNavbar from '@/Components/PageNavbar'
-import Products from '@/Components/Products'
-import ShopSidebar from '@/Components/ShopSidebar'
+import Breadcrumb from '../Components/Breadcrumb'
+import Footer from '../Components/Footer'
+import PageNavbar from '../Components/PageNavbar'
+import Products from '../Components/Products'
+import ShopSidebar from '../Components/ShopSidebar'
 import React, { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -18,14 +18,14 @@ const CategoryPage = () => {
   return (
     <div className='bg-white min-h-screen pt-20'>
       <PageNavbar onMobileFilterClick={() => productsRef.current?.openMobileSort()} />
-      
+
       <div className="px-6 md:px-8 lg:px-12 xl:px-16 py-6">
         <Breadcrumb category={displayCategory} />
-        
+
         <div className="flex gap-6 mt-6 items-start pb-20">
           {/* Left Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0 self-stretch">
-            <ShopSidebar 
+            <ShopSidebar
               sortBy={sortBy}
               setSortBy={setSortBy}
               priceRange={priceRange}
@@ -34,9 +34,9 @@ const CategoryPage = () => {
           </aside>
           {/* Main Content Area */}
           <main className="flex-1">
-            <Products 
+            <Products
               ref={productsRef}
-              sortBy={sortBy} 
+              sortBy={sortBy}
               priceRange={priceRange}
               category={category}
               setSortBy={setSortBy}

@@ -10,16 +10,22 @@ const streamifier = require('streamifier');
  */
 const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') => {
   return new Promise((resolve, reject) => {
+    const uploadOptions = {
+      folder: folder,
+      resource_type: resourceType === 'pdf' ? 'auto' : resourceType
+    };
+
+    // Only apply image transformations if it's an image
+    if (resourceType === 'image') {
+      uploadOptions.transformation = [
+        { width: 1000, height: 1000, crop: 'limit' },
+        { quality: 'auto' },
+        { fetch_format: 'auto' }
+      ];
+    }
+
     const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: resourceType,
-        transformation: [
-          { width: 1000, height: 1000, crop: 'limit' },
-          { quality: 'auto' },
-          { fetch_format: 'auto' }
-        ]
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           reject(error);

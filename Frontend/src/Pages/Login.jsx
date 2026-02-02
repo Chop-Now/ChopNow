@@ -1,15 +1,34 @@
-import { assets } from '@/assets/assets'
+import { assets } from '../assets/assets'
 import { Eye, EyeOff, Lock, Mail, PersonStanding, Handshake, MapPin, LocateFixed } from 'lucide-react'
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import LocationPicker from '@/Components/maps/LocationPicker'
-import { useGeolocation } from '@/Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '@/services/geocoding'
+
+import LocationPicker from '../Components/maps/LocationPicker'
+import { useGeolocation } from '../Components/maps/useGeolocation'
+import { reverseGeocode, searchAddress } from '../services/geocoding'
 import toast from 'react-hot-toast'
+import { useAppContext } from '../context/AppContext'
+import { useNavigate, Link } from 'react-router-dom'
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
+  const { login, googleAuth } = useAppContext();
+  const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await googleAuth(tokenResponse.access_token);
+        // Redirect consumers to shop
+        navigate('/shop');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    onError: () => console.log('Google Login Failed'),
+  });
+
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
@@ -30,7 +49,7 @@ const Login = () => {
           <div className="mb-8">
             <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
           </div>
-          
+
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
             {/* User Type Selection */}
             {!userType ? (
@@ -39,7 +58,7 @@ const Login = () => {
                 <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign in</p>
 
                 {/* Sign in as Buyer Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('buyer')}
                   className="w-full mt-8 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -51,7 +70,7 @@ const Login = () => {
                 </button>
 
                 {/* Sign in as Business Button */}
-                <button 
+                <button
                   type="button"
                   onClick={() => setUserType('business')}
                   className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -89,8 +108,9 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <>
                     {/* Google Button */}
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
+                      onClick={() => loginWithGoogle()}
                       className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
@@ -109,27 +129,27 @@ const Login = () => {
                 {/* Email Input */}
                 <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                   <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
-                    type="email" 
-                    placeholder="Email address" 
-                    className="bg-transparent outline-none text-sm w-full h-full" 
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
-                    required 
-                  />                 
+                    required
+                  />
                 </div>
 
                 {/* Password Input */}
                 <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                   <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Password" 
-                    className="bg-transparent outline-none text-sm w-full h-full" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
-                    required 
+                    required
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="shrink-0"
                   >
@@ -154,9 +174,9 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <div className="mt-6">
                     <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
-                    
+
                     {/* Use Current Location Button */}
-                    <button 
+                    <button
                       type="button"
                       onClick={async () => {
                         setIsLoadingLocation(true);
@@ -191,9 +211,9 @@ const Login = () => {
                     <div className="mt-3 relative">
                       <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                         <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                        <input 
-                          type="text" 
-                          placeholder="Or enter address manually" 
+                        <input
+                          type="text"
+                          placeholder="Or enter address manually"
                           value={manualAddress}
                           onChange={(e) => setManualAddress(e.target.value)}
                           onKeyDown={async (e) => {
@@ -216,9 +236,9 @@ const Login = () => {
                               }
                             }
                           }}
-                          className="bg-transparent outline-none text-sm w-full h-full" 
+                          className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
-                        />                 
+                        />
                       </div>
                       {manualAddress && (
                         <button
@@ -257,7 +277,7 @@ const Login = () => {
 
                     {/* Map */}
                     <div className="mt-4">
-                      <LocationPicker 
+                      <LocationPicker
                         selectedLocation={location}
                         onLocationSelect={async (latlng) => {
                           setLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -274,8 +294,37 @@ const Login = () => {
                 )}
 
                 {/* Login Button */}
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    // Get email and password from inputs
+                    // This is a quick fix to avoid rewriting the whole form state
+                    const form = e.target.closest('form');
+                    const email = form.querySelector('input[type="email"]').value;
+                    const password = form.querySelector('input[type="password"]').value;
+
+                    if (!email || !password) {
+                      toast.error("Please enter email and password");
+                      return;
+                    }
+
+                    try {
+                      await login(email, password, userType);
+                      toast.success("Login successful!");
+
+                      // Redirect based on role
+                      if (userType === 'business') {
+                        window.location.href = '/dashboard';
+                      } else {
+                        // Redirect consumers to shop as requested
+                        window.location.href = '/shop';
+                      }
+
+                    } catch (error) {
+                      toast.error(error.message || "Login failed");
+                    }
+                  }}
                   className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >

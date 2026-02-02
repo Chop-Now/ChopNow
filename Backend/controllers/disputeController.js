@@ -89,6 +89,36 @@ const getAdminDisputes = async (req, res) => {
 };
 
 /**
+ * @desc    Get dispute by ID
+ * @route   GET /api/disputes/:id
+ * @access  Private
+ */
+const getDisputeById = async (req, res) => {
+    try {
+        const dispute = await Dispute.findById(req.params.id)
+            .populate('customer', 'firstName lastName email phone')
+            .populate('business', 'name contact')
+            .populate('order');
+
+        if (!dispute) {
+            return res.status(404).json({ message: 'Dispute not found' });
+        }
+
+        // Check authorization - user must be customer, business owner, or admin
+        const isCustomer = dispute.customer._id.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'support';
+
+        if (!isCustomer && !isAdmin) {
+            return res.status(403).json({ message: 'Not authorized to view this dispute' });
+        }
+
+        res.json(dispute);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
  * @desc    Resolve a dispute
  * @route   PATCH /api/disputes/:id/resolve
  * @access  Private (Admin/Support)
@@ -124,5 +154,6 @@ module.exports = {
     getMyDisputes,
     getBusinessDisputes,
     getAdminDisputes,
+    getDisputeById,
     resolveDispute
 };
