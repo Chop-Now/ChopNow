@@ -178,7 +178,7 @@ deliverySchema.index({ rider: 1, status: 1 });
 deliverySchema.index({ status: 1, createdAt: -1 });
 
 // Validate coordinates
-deliverySchema.pre('save', function(next) {
+deliverySchema.pre('save', function() {
   const validateCoordinates = (coords, fieldName) => {
     if (coords && coords.length === 2) {
       const [lng, lat] = coords;
@@ -188,26 +188,24 @@ deliverySchema.pre('save', function(next) {
     }
     return null;
   };
-  
+
   let error = null;
-  
+
   if (this.pickupLocation && this.pickupLocation.location) {
     error = validateCoordinates(this.pickupLocation.location.coordinates, 'pickup location');
   }
-  
+
   if (!error && this.dropoffLocation && this.dropoffLocation.location) {
     error = validateCoordinates(this.dropoffLocation.location.coordinates, 'dropoff location');
   }
-  
+
   if (!error && this.currentLocation && this.currentLocation.coordinates) {
     error = validateCoordinates(this.currentLocation.coordinates, 'current location');
   }
-  
+
   if (error) {
-    return next(new Error(error));
+    throw new Error(error);
   }
-  
-  next();
 });
 
 // Method to update delivery status with timestamp

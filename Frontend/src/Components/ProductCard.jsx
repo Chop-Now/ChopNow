@@ -1,62 +1,68 @@
 import { ShoppingCart } from 'lucide-react';
 import React, { useEffect } from 'react'
-import { useAppContext } from '@/context/AppContext';
+import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
-const ProductCard = ({product}) => {
+const ProductCard = ({ product }) => {
 
-  const { addToCart, removeFromCart, cartItems, setSearchQuery } = useAppContext();
-  const navigate = useNavigate();
-  
-  // Calculate discount percentage
-  const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
+    const { addToCart, removeFromCart, cartItems, setSearchQuery } = useAppContext();
+    const navigate = useNavigate();
 
-  const handleProductClick = () => {
-    setSearchQuery(''); // Clear search query before navigating
-    navigate(`/shop/${product.category.toLowerCase()}/${product._id}`);
-    window.scrollTo(0, 0);
-  };
+    // Guard against undefined product
+    if (!product) return null;
 
-  return product && (
-    <div onClick={handleProductClick} className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-shadow overflow-hidden cursor-pointer" style={{ borderColor: '#E5E5E5' }}>
+    // Calculate discount percentage safely
+    const price = product.price || 0;
+    const offerPrice = product.offerPrice || price;
+    const discountPercent = price > 0 ? Math.round(((price - offerPrice) / price) * 100) : 0;
+
+    const handleProductClick = () => {
+        setSearchQuery(''); // Clear search query before navigating
+        const category = product.category?.toLowerCase() || 'all';
+        navigate(`/shop/${category}/${product._id}`);
+        window.scrollTo(0, 0);
+    };
+
+    return (
+        <div onClick={handleProductClick} className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-shadow overflow-hidden cursor-pointer" style={{ borderColor: '#E5E5E5' }}>
             {/* Discount Badge */}
             {discountPercent > 0 && (
-                <div 
+                <div
                     className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold text-white z-10"
                     style={{ backgroundColor: 'var(--color-solidOne)' }}
                 >
                     {discountPercent}% OFF
                 </div>
             )}
-            
+
             <div className="relative cursor-pointer h-32 md:h-40 overflow-hidden">
-                <img className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" src={product.image[0]} alt={product.name} />
+                <img className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" src={product.image?.[0] || '/placeholder-food.jpg'} alt={product.name || 'Product'} />
             </div>
             <div className="text-sm px-3 md:px-4 pb-3 pt-2">
-                <p className="font-medium text-base truncate w-full mb-0.5" style={{ color: 'var(--color-textColor)' }}>{product.name}</p>
+                <p className="font-medium text-base truncate w-full mb-0.5" style={{ color: 'var(--color-textColor)' }}>{product.name || 'Product'}</p>
                 <div className="flex items-center gap-1 text-xs mb-0.5" style={{ color: 'var(--color-gray-50)' }}>
-                  <span>{product.vendor}</span>
-                   <span>•</span>
+                    <span>{product.vendor || 'Unknown Vendor'}</span>
+                    <span>•</span>
                     <span className="font-medium" style={{ color: 'var(--color-solid)' }}>
                         {product.location?.Near === 'True' ? '1km' : '5km'}
                     </span>
                 </div>
                 <p className="text-xs mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
-                    Pickup at {product.pickupTime}
+                    Pickup at {product.pickupTime || 'Flexible'}
                 </p>
                 <div className="flex items-end justify-between mt-2">
                     <div>
                         <p className="md:text-lg text-base font-semibold" style={{ color: 'var(--color-solid)' }}>
-                            RWF {product.offerPrice.toLocaleString()}
+                            RWF {(offerPrice || 0).toLocaleString()}
                         </p>
                         <p className="md:text-xs text-xs line-through" style={{ color: 'var(--color-gray-50)' }}>
-                            RWF {product.price.toLocaleString()}
+                            RWF {(price || 0).toLocaleString()}
                         </p>
                     </div>
-                    <div onClick={(e) => {e.stopPropagation(); }}>
+                    <div onClick={(e) => { e.stopPropagation(); }}>
                         {!cartItems[product._id] || cartItems[product._id] === 0 ? (
-                            <button 
-                                className="flex items-center justify-center gap-1 border md:w-20 w-16 h-[34px] rounded font-medium cursor-pointer hover:opacity-80 transition-opacity text-white text-xs" 
+                            <button
+                                className="flex items-center justify-center gap-1 border md:w-20 w-16 h-[34px] rounded font-medium cursor-pointer hover:opacity-80 transition-opacity text-white text-xs"
                                 style={{ backgroundColor: 'var(--color-solid)', borderColor: 'var(--color-solid)' }}
                                 onClick={() => addToCart(product._id)}
                             >
@@ -65,8 +71,8 @@ const ProductCard = ({product}) => {
                             </button>
                         ) : (
                             <div className="flex items-center justify-center gap-2 md:w-20 w-16 h-[34px] rounded select-none" style={{ backgroundColor: 'rgba(0, 168, 107, 0.2)' }}>
-                                <button 
-                                    onClick={() => {removeFromCart(product._id)}} 
+                                <button
+                                    onClick={() => { removeFromCart(product._id) }}
                                     className="cursor-pointer text-md px-2 h-full font-semibold"
                                     style={{ color: 'var(--color-solid)' }}
                                 >
@@ -75,8 +81,8 @@ const ProductCard = ({product}) => {
                                 <span className="w-5 text-center font-medium" style={{ color: 'var(--color-textColor)' }}>
                                     {cartItems[product._id]}
                                 </span>
-                                <button 
-                                    onClick={() => {addToCart(product._id)}} 
+                                <button
+                                    onClick={() => { addToCart(product._id) }}
                                     className="cursor-pointer text-md px-2 h-full font-semibold"
                                     style={{ color: 'var(--color-solid)' }}
                                 >
@@ -88,7 +94,7 @@ const ProductCard = ({product}) => {
                 </div>
             </div>
         </div>
-  )
+    )
 }
 
 export default ProductCard

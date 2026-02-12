@@ -9,26 +9,89 @@ const {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
-  getMyBusinesses
+  uploadKYC,
+  getMyBusinesses,
+  getBusinessStats,
+  getPendingBusinesses,
+  approveBusiness,
+  rejectBusiness,
+  requestMoreInfo
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const uploadDocs = require('../middleware/uploadDocs');
+const { validateCreateBusiness } = require('../middleware/validation');
 
 // Public routes
+
+/**
+ * @swagger
+ * /businesses:
+ *   get:
+ *     summary: Get all businesses
+ *     tags: [Businesses]
+ *     responses:
+ *       200:
+ *         description: List of businesses
+ */
 router.get('/', getBusinesses);
+
+// IMPORTANT: Specific routes must come BEFORE parameterized routes
+// Get my businesses - must be before /:id
+router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+
+// Admin-only: Business approval workflow
+router.get('/pending', protect, authorize('admin'), getPendingBusinesses);
+router.patch('/:id/approve', protect, authorize('admin'), approveBusiness);
+router.patch('/:id/reject', protect, authorize('admin'), rejectBusiness);
+router.patch('/:id/request-info', protect, authorize('admin'), requestMoreInfo);
+
+// Get by ID - comes after specific routes
 router.get('/:id', getBusinessById);
 
+// Get business stats - must be before other /:id routes
+router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
+
 // Protected routes - business owner or admin
-router.post('/', protect, authorize('business_owner', 'admin'), createBusiness);
+
+/**
+ * @swagger
+ * /businesses:
+ *   post:
+ *     summary: Create a new business
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - type
+ *               - description
+ *             properties:
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Business created
+ */
+router.post('/', protect, authorize('business_owner', 'admin', 'consumer'), validateCreateBusiness, createBusiness);
 router.put('/:id', protect, authorize('business_owner', 'admin'), updateBusiness);
 router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteBusiness);
 
 // Image upload routes
-router.post('/:id/logo', protect, authorize('business_owner', 'admin'), upload.single('logo'), uploadLogo);
-router.post('/:id/cover', protect, authorize('business_owner', 'admin'), upload.single('cover'), uploadCoverImage);
-router.post('/:id/photos', protect, authorize('business_owner', 'admin'), upload.array('photos', 10), uploadPhotos);
-
-// Get my businesses
-router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+router.post('/:id/logo', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('logo'), uploadLogo);
+router.post('/:id/cover', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('cover'), uploadCoverImage);
+router.post('/:id/photos', protect, authorize('business_owner', 'admin', 'consumer'), upload.array('photos', 10), uploadPhotos);
+router.post('/:id/kyc', protect, authorize('business_owner', 'admin', 'consumer'), uploadDocs.array('documents'), uploadKYC);
 
 module.exports = router;
+

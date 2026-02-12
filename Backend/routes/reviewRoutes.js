@@ -10,14 +10,16 @@ const {
   getMyReviews
 } = require('../controllers/reviewController');
 const { protect, authorize } = require('../middleware/auth');
+const { validateCreateReview } = require('../middleware/validation');
+const { checkReviewsEnabled } = require('../middleware/platformSettings');
+
+// Protected routes (specific routes first)
+router.get('/my/list', protect, getMyReviews);
+router.post('/', protect, authorize('consumer'), checkReviewsEnabled, validateCreateReview, createReview);
 
 // Public routes
 router.get('/business/:businessId', getBusinessReviews);
 router.get('/:id', getReviewById);
-
-// Protected routes
-router.post('/', protect, authorize('consumer'), createReview);
-router.get('/my/list', protect, getMyReviews);
 router.put('/:id', protect, updateReview);
 router.delete('/:id', protect, deleteReview);
 

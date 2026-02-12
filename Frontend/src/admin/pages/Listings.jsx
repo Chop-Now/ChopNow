@@ -1,39 +1,135 @@
-import React, { useState } from 'react'
-import { dummyProducts, categories } from '../../assets/assets'
+import React, { useState, useEffect } from 'react'
+import { categories } from '../../assets/assets'
 import { Search, SlidersHorizontal, Pencil, Trash2, Package, CheckCircle, XCircle, Clock, Upload, X, Crop, Maximize2, ShoppingCart } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
+import { useAppContext } from '../../context/AppContext'
+import { listingService, businessService } from '../../services'
+import toast from 'react-hot-toast'
+
+// Map frontend category paths to backend enum values
+// Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
+const categoryMap = {
+  // Frontend category paths from assets.js
+  'Vegetables': 'fruit-veg',
+  'Fruits': 'fruit-veg',
+  'Drinks': 'beverages',
+  'Instant': 'meals',
+  'Dairy': 'dairy',
+  'Bakery': 'baked-goods',
+  'Grains': 'pantry',
+  'Meat': 'meat',
+  'Meals': 'meals',
+  'Pantry': 'pantry',
+  'Other': 'other',
+  // Direct mapping for already correct values (case-insensitive support)
+  'fruit-veg': 'fruit-veg',
+  'baked-goods': 'baked-goods',
+  'meals': 'meals',
+  'dairy': 'dairy',
+  'meat': 'meat',
+  'beverages': 'beverages',
+  'pantry': 'pantry',
+  'other': 'other'
+};
 
 export const AllListings = () => {
-  const { adminMode } = useAdminMode();
+  const { adminMode, isAdmin } = useAdminMode();
+  const { user } = useAppContext();
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [businessId, setBusinessId] = useState(null);
+  const [businessName, setBusinessName] = useState('');
   const itemsPerPage = 10;
 
-  // Add status and stock to products
-  const [products, setProducts] = useState(
-    dummyProducts.map((product, index) => ({
-      ...product,
-      status: index % 3 === 0 ? 'inactive' : index % 5 === 0 ? 'expired' : 'active',
-      stock: product.quantity || Math.floor(Math.random() * 50) + 10,
-    }))
-  );
+  // Fetch the user's business first
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      // In website admin mode, we don't need to fetch a specific business
+      if (adminMode === 'website' && isAdmin) {
+        setBusinessId('admin'); // Flag for admin mode
+        return;
+      }
+
+      try {
+        const response = await businessService.getMyBusinesses();
+        const businesses = response.businesses || response || [];
+        if (businesses.length > 0) {
+          setBusinessId(businesses[0]._id);
+          setBusinessName(businesses[0].name || '');
+        }
+      } catch (error) {
+        console.error('Error fetching business:', error);
+      }
+    };
+    fetchBusiness();
+  }, [adminMode, isAdmin]);
+
+  // Fetch products when businessId is available
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+
+      // Admin website mode - fetch all listings (including inactive/expired)
+      if (adminMode === 'website' && isAdmin) {
+        const response = await listingService.getListings({ status: 'all' });
+        const listings = response.listings || response || [];
+        setProducts(Array.isArray(listings) ? listings : []);
+        return;
+      }
+
+      // Vendor shop mode - fetch only their listings
+      if (businessId && businessId !== 'admin') {
+        const data = await listingService.getListingsByBusiness(businessId);
+        const listings = data.listings || data || [];
+        setProducts(Array.isArray(listings) ? listings : []);
+      }
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      toast.error('Failed to load listings');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (businessId) {
+      fetchProducts();
+    }
+  }, [businessId, adminMode]);
 
   // Toggle product status
-  const handleToggleStatus = (productId) => {
-    setProducts(prev => prev.map(product => 
-      product._id === productId 
-        ? { ...product, status: product.status === 'active' ? 'inactive' : 'active' }
-        : product
-    ));
+  const handleToggleStatus = async (productId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      await listingService.updateListing(productId, { status: newStatus });
+
+      setProducts(prev => prev.map(product =>
+        product._id === productId
+          ? { ...product, status: newStatus }
+          : product
+      ));
+      toast.success(`Listing ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
   };
 
   // Delete product
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(prev => prev.filter(product => product._id !== productId));
+      try {
+        await listingService.deleteListing(productId);
+        setProducts(prev => prev.filter(product => product._id !== productId));
+        toast.success('Listing deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete listing');
+      }
     }
   };
 
@@ -51,9 +147,9 @@ export const AllListings = () => {
   };
 
   // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+  const filteredProducts = (Array.isArray(products) ? products : []).filter(product => {
+    const matchesSearch = (product?.name || product?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || product?.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -116,7 +212,40 @@ export const AllListings = () => {
 
   // If editing a product, show the edit form
   if (editingProduct) {
-    return <EditListing product={editingProduct} onBack={() => setEditingProduct(null)} />;
+    return <EditListing product={editingProduct} onBack={() => setEditingProduct(null)} onRefresh={fetchProducts} />;
+  }
+
+  // Loading state
+  if (isLoading && !products.length) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading listings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No business found state (for vendors only, not admins)
+  if (!businessId && adminMode === 'shop' && !isAdmin) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 max-w-md">
+          <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Business Found</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            You need to complete your business setup to manage listings.
+          </p>
+          <button
+            onClick={() => window.location.href = '/business-verification'}
+            className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
+          >
+            Complete Business Setup
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -251,23 +380,23 @@ export const AllListings = () => {
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <div className='flex items-center gap-3'>
                       <img
-                        src={product.image[0]}
-                        alt={product.name}
+                        src={product.image?.[0] || product.images?.[0] || '/placeholder-food.jpg'}
+                        alt={product.name || product.title || 'Product'}
                         className='w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700'
                       />
                       <span className='text-xs font-medium text-slate-900 dark:text-white truncate max-w-xs'>
-                        {product.name}
+                        {product.name || product.title || 'Unnamed Product'}
                       </span>
                     </div>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.category}</span>
+                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.category || 'N/A'}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs font-semibold text-slate-900 dark:text-white'>{product.stock}</span>
+                    <span className='text-xs font-semibold text-slate-900 dark:text-white'>{product.stock || product.inventory?.quantity || 0}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.pickupTime}</span>
+                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.pickupTime || 'Flexible'}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <span className='text-xs text-slate-600 dark:text-slate-400'>
@@ -275,14 +404,13 @@ export const AllListings = () => {
                     </span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                      product.status === 'active'
-                        ? 'bg-solid/10 text-solid'
-                        : product.status === 'inactive'
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${product.status === 'active'
+                      ? 'bg-solid/10 text-solid'
+                      : product.status === 'inactive'
                         ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                      }`}>
+                      {product.status ? product.status.charAt(0).toUpperCase() + product.status.slice(1) : 'Unknown'}
                     </span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
@@ -292,20 +420,20 @@ export const AllListings = () => {
                           type="checkbox"
                           className='sr-only peer'
                           checked={product.status === 'active'}
-                          onChange={() => handleToggleStatus(product._id)}
+                          onChange={() => handleToggleStatus(product._id, product.status)}
                         />
                         <div className='w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-solid transition-colors duration-200'></div>
                         <span className='absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5'></span>
                       </label>
                       {adminMode === 'shop' && (
-                        <button 
+                        <button
                           onClick={() => handleEditProduct(product)}
                           className='p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors'
                         >
                           <Pencil className='w-4 h-4 text-slate-600 dark:text-slate-400' />
                         </button>
                       )}
-                      <button 
+                      <button
                         onClick={() => handleDeleteProduct(product._id)}
                         className='p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
                       >
@@ -325,7 +453,7 @@ export const AllListings = () => {
             <p className='text-xs text-slate-600 dark:text-slate-400'>
               Showing {showingFrom} to {showingTo} of {filteredProducts.length} listings
             </p>
-            
+
             <div className='flex items-center gap-2'>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -334,21 +462,20 @@ export const AllListings = () => {
               >
                 Previous
               </button>
-              
+
               {[...Array(totalPages)].map((_, index) => (
                 <button
                   key={index + 1}
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                    currentPage === index + 1
-                      ? 'bg-solid text-white'
-                      : 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${currentPage === index + 1
+                    ? 'bg-solid text-white'
+                    : 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
+                    }`}
                 >
                   {index + 1}
                 </button>
               ))}
-              
+
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
@@ -371,11 +498,16 @@ export const AllListings = () => {
 }
 
 export const NewListing = () => {
+  const { user } = useAppContext();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [businessId, setBusinessId] = useState(null);
+  const [businessName, setBusinessName] = useState('');
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
-    vendor: '',
+    vendor: '', // Will be set from business name
     price: '',
     offerPrice: '',
     pickupFrom: '',
@@ -394,6 +526,30 @@ export const NewListing = () => {
 
   const [images, setImages] = useState([]);
   const [mainImage, setMainImage] = useState(null);
+
+  // Fetch the user's business on mount
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      try {
+        setIsLoadingBusiness(true);
+        const response = await businessService.getMyBusinesses();
+        const businesses = response.businesses || response || [];
+        if (businesses.length > 0) {
+          setBusinessId(businesses[0]._id);
+          setBusinessName(businesses[0].name || '');
+          setFormData(prev => ({ ...prev, vendor: businesses[0].name || '' }));
+        } else {
+          toast.error('No business found. Please create a business first.');
+        }
+      } catch (error) {
+        console.error('Error fetching business:', error);
+        toast.error('Failed to load business information');
+      } finally {
+        setIsLoadingBusiness(false);
+      }
+    };
+    fetchBusiness();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -433,7 +589,152 @@ export const NewListing = () => {
     }
   };
 
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!formData.name) {
+      toast.error('Please enter a product name');
+      return;
+    }
+    if (!formData.description) {
+      toast.error('Please enter a description');
+      return;
+    }
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
+    if (!formData.price || Number(formData.price) <= 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    if (!formData.stock || Number(formData.stock) < 0) {
+      toast.error('Please enter stock quantity');
+      return;
+    }
+    if (!businessId) {
+      toast.error('No business found. Please create a business first.');
+      return;
+    }
+    if (!formData.pickupFrom || !formData.pickupTo) {
+      toast.error('Please set pickup window times');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Create full Date objects for timeWindow
+      const availableFrom = new Date(formData.pickupFrom);
+      const availableUntil = new Date(formData.pickupTo);
+
+      // Validate dates
+      if (isNaN(availableFrom.getTime()) || isNaN(availableUntil.getTime())) {
+        toast.error('Invalid pickup window dates');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Map category to backend enum
+      const mappedCategory = categoryMap[formData.category] || 'other';
+
+      const payload = {
+        title: formData.name,
+        description: formData.description,
+        category: mappedCategory,
+        business: businessId,
+        pricing: {
+          price: Number(formData.offerPrice || formData.price),
+          originalPrice: Number(formData.price),
+          currency: 'RWF'
+        },
+        inventory: {
+          quantity: Number(formData.stock),
+          unit: 'item'
+        },
+        timeWindow: {
+          availableFrom: availableFrom.toISOString(),
+          availableUntil: availableUntil.toISOString()
+        },
+        nutritionalInfo: {
+          calories: Number(formData.calories || 0),
+          protein: Number(formData.protein || 0),
+          carbs: Number(formData.carbs || 0),
+          fats: Number(formData.fats || 0),
+          allergens: formData.allergens ? formData.allergens.split(',').map(s => s.trim()).filter(Boolean) : []
+        },
+        images: [] // Start with empty, will upload separately
+      };
+
+      // Create listing
+      const newListing = await listingService.createListing(payload);
+
+      // Upload images if any
+      if (images.length > 0) {
+        const imageFormData = new FormData();
+        images.forEach(img => {
+          if (img.file) imageFormData.append('photos', img.file);
+        });
+        await listingService.uploadPhotos(newListing._id, imageFormData);
+      }
+
+      toast.success('Listing published successfully!');
+
+      // Reset form but keep vendor name
+      setFormData({
+        name: '', description: '', category: '', vendor: businessName,
+        price: '', offerPrice: '', pickupFrom: '', pickupTo: '', stock: '',
+        calories: '', protein: '', carbs: '', fats: '', allergens: '',
+        isRecurring: false, frequency: 'daily', repeatDays: [], endDate: ''
+      });
+      setImages([]);
+      setMainImage(null);
+
+    } catch (error) {
+      console.error("Creation failed", error);
+      // Show more detailed error message
+      const errorMessage = error.errors
+        ? error.errors.map(e => e.msg || e.message).join(', ')
+        : (error.message || 'Failed to create listing');
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Show loading while fetching business
+  if (isLoadingBusiness) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading business information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no business found
+  if (!businessId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 max-w-md">
+          <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Business Found</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            You need to have a verified business to create listings.
+          </p>
+          <button
+            onClick={() => window.location.href = '/business-verification'}
+            className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
+          >
+            Complete Business Setup
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen'>
@@ -442,7 +743,7 @@ export const NewListing = () => {
         <div className='lg:col-span-2'>
           <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6'>
             <h2 className='text-2xl font-bold text-slate-800 dark:text-white mb-6'>Create New Listing</h2>
-            
+
             <form className='space-y-6'>
               {/* Basic Information */}
               <div className='space-y-4'>
@@ -766,11 +1067,10 @@ export const NewListing = () => {
                               key={day}
                               type='button'
                               onClick={() => handleDayToggle(day)}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                formData.repeatDays.includes(day)
-                                  ? 'bg-solid text-white'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              }`}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${formData.repeatDays.includes(day)
+                                ? 'bg-solid text-white'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
                             >
                               {day}
                             </button>
@@ -800,9 +1100,11 @@ export const NewListing = () => {
               <div className='flex gap-4 pt-6 border-t border-slate-200 dark:border-slate-700'>
                 <button
                   type='button'
-                  className='flex-1 px-6 py-3 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors'
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className='flex-1 px-6 py-3 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                  Publish Listing
+                  {isSubmitting ? 'Publishing...' : 'Publish Listing'}
                 </button>
                 <button
                   type='button'
@@ -823,20 +1125,20 @@ export const NewListing = () => {
             <div className='relative border rounded-xl bg-white w-full shadow-md overflow-hidden' style={{ borderColor: '#E5E5E5' }}>
               {/* Discount Badge */}
               {formData.price && formData.offerPrice && formData.offerPrice < formData.price && (
-                <div 
+                <div
                   className='absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold text-white z-10'
                   style={{ backgroundColor: 'var(--color-solidOne)' }}
                 >
                   {Math.round(((formData.price - formData.offerPrice) / formData.price) * 100)}% OFF
                 </div>
               )}
-              
+
               <div className='relative h-40 overflow-hidden'>
                 {mainImage ? (
-                  <img 
-                    className='w-full h-full object-cover' 
-                    src={mainImage.preview} 
-                    alt='Product preview' 
+                  <img
+                    className='w-full h-full object-cover'
+                    src={mainImage.preview}
+                    alt='Product preview'
                   />
                 ) : (
                   <div className='w-full h-full bg-slate-200 flex items-center justify-center'>
@@ -844,7 +1146,7 @@ export const NewListing = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className='text-sm px-4 pb-3 pt-2'>
                 <p className='font-medium text-base truncate w-full mb-0.5' style={{ color: 'var(--color-textColor)' }}>
                   {formData.name || 'Product Name'}
@@ -857,7 +1159,7 @@ export const NewListing = () => {
                   </span>
                 </div>
                 <p className='text-xs mb-1.5' style={{ color: 'var(--color-gray-50)' }}>
-                  Pickup at {formData.pickupFrom && formData.pickupTo 
+                  Pickup at {formData.pickupFrom && formData.pickupTo
                     ? `${new Date(formData.pickupFrom).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${new Date(formData.pickupTo).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
                     : '4PM - 6PM Today'
                   }
@@ -874,8 +1176,8 @@ export const NewListing = () => {
                     )}
                   </div>
                   <div>
-                    <button 
-                      className='flex items-center justify-center gap-1 border w-20 h-[34px] rounded font-medium text-white text-xs' 
+                    <button
+                      className='flex items-center justify-center gap-1 border w-20 h-[34px] rounded font-medium text-white text-xs'
                       style={{ backgroundColor: 'var(--color-solid)', borderColor: 'var(--color-solid)' }}
                     >
                       <ShoppingCart className='w-3.5 h-3.5' />
@@ -931,33 +1233,43 @@ export const NewListing = () => {
 }
 
 const EditListing = ({ product, onBack }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Parse time from ISO string or Date
+  const getLocalDatetime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+  };
+
   const [formData, setFormData] = useState({
-    name: product.name || '',
-    description: product.description?.join(', ') || '',
+    name: product.title || product.name || '',
+    description: product.description || '',
     category: product.category || '',
-    vendor: product.vendor || '',
-    price: product.price || '',
-    offerPrice: product.offerPrice || '',
-    pickupFrom: '',
-    pickupTo: '',
-    stock: product.stock || product.quantity || '',
-    calories: '',
-    protein: '',
-    carbs: '',
-    fats: '',
-    allergens: product.ingredients_allergens?.[1]?.contains || '',
-    isRecurring: false,
+    vendor: product.business?.name || '',
+    price: product.pricing?.originalPrice || product.price || '',
+    offerPrice: product.pricing?.price || product.offerPrice || '',
+    pickupFrom: getLocalDatetime(product.timeWindow?.availableFrom || product.pickupWindow?.start),
+    pickupTo: getLocalDatetime(product.timeWindow?.availableUntil || product.pickupWindow?.end),
+    stock: product.inventory?.quantity || product.quantity || '',
+    calories: product.nutritionalInfo?.calories || '',
+    protein: product.nutritionalInfo?.protein || '',
+    carbs: product.nutritionalInfo?.carbs || '',
+    fats: product.nutritionalInfo?.fats || '',
+    allergens: product.nutritionalInfo?.allergens?.join(', ') || '',
+    isRecurring: false, // Legacy support if needed
     frequency: 'daily',
     repeatDays: [],
     endDate: ''
   });
 
   const [images, setImages] = useState(
-    product.image?.map((img, index) => ({
+    (product.images || product.image || []).map((img, index) => ({
       file: null,
-      preview: img,
-      id: `existing-${index}`
-    })) || []
+      preview: img, // URL
+      id: `existing-${index}`,
+      isExisting: true
+    }))
   );
   const [mainImage, setMainImage] = useState(images[0] || null);
 
@@ -969,6 +1281,7 @@ const EditListing = ({ product, onBack }) => {
     }));
   };
 
+  // ... (reuse handleDayToggle, handleImageUpload, removeImage from NewListing or define here)
   const handleDayToggle = (day) => {
     setFormData(prev => ({
       ...prev,
@@ -982,8 +1295,9 @@ const EditListing = ({ product, onBack }) => {
     const files = Array.from(e.target.files);
     const newImages = files.map(file => ({
       file,
-      preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substr(2, 9)
+      preview: URL.createObjectURL(file), // Helper for preview
+      id: Math.random().toString(36).substr(2, 9),
+      isExisting: false
     }));
     setImages(prev => [...prev, ...newImages]);
     if (!mainImage && newImages.length > 0) {
@@ -999,12 +1313,64 @@ const EditListing = ({ product, onBack }) => {
     }
   };
 
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const handleUpdate = async () => {
+    try {
+      setIsSubmitting(true);
 
-  const handleUpdate = () => {
-    // Here you would typically update the product
-    alert('Product updated successfully!');
-    onBack();
+      const startTime = formData.pickupFrom ? new Date(formData.pickupFrom) : new Date(); // Full Date needed for DB
+      const endTime = formData.pickupTo ? new Date(formData.pickupTo) : new Date();
+
+      const payload = {
+        title: formData.name,
+        description: formData.description,
+        category: formData.category,
+        pricing: {
+          price: Number(formData.offerPrice || formData.price),
+          originalPrice: Number(formData.price),
+          currency: 'RWF'
+        },
+        inventory: {
+          quantity: Number(formData.stock),
+          unit: 'item'
+        },
+        timeWindow: {
+          availableFrom: startTime,
+          availableUntil: endTime
+        },
+        nutritionalInfo: {
+          calories: Number(formData.calories || 0),
+          protein: Number(formData.protein || 0),
+          carbs: Number(formData.carbs || 0),
+          fats: Number(formData.fats || 0),
+          allergens: formData.allergens ? formData.allergens.split(',').map(s => s.trim()) : []
+        },
+        images: images.filter(img => img.isExisting).map(img => img.preview) // Remove deleted existing images
+      };
+
+      await listingService.updateListing(product._id, payload);
+
+      // Upload new images
+      const newFiles = images.filter(img => !img.isExisting);
+      if (newFiles.length > 0) {
+        const imageFormData = new FormData();
+        newFiles.forEach(img => {
+          if (img.file) imageFormData.append('photos', img.file);
+        });
+        await listingService.uploadPhotos(product._id, imageFormData);
+      }
+
+      toast.success('Listing updated successfully!');
+      onBack(); // Refresh list happens in parent? No, need to trigger refresh.
+      // Ideally pass onUpdate callback or use context.
+      // For now, onBack triggers re-render of list? List state might be stale.
+      // We should probably reload page or refetch in parent.
+      window.location.reload(); // Simple fix for now to ensure state sync
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update listing');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -1026,7 +1392,7 @@ const EditListing = ({ product, onBack }) => {
         <div className='lg:col-span-2'>
           <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6'>
             <h2 className='text-2xl font-bold text-slate-800 dark:text-white mb-6'>Edit Listing</h2>
-            
+
             <form className='space-y-6'>
               {/* Basic Information */}
               <div className='space-y-4'>
@@ -1350,11 +1716,10 @@ const EditListing = ({ product, onBack }) => {
                               key={day}
                               type='button'
                               onClick={() => handleDayToggle(day)}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                formData.repeatDays.includes(day)
-                                  ? 'bg-solid text-white'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              }`}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${formData.repeatDays.includes(day)
+                                ? 'bg-solid text-white'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
                             >
                               {day}
                             </button>
@@ -1385,9 +1750,10 @@ const EditListing = ({ product, onBack }) => {
                 <button
                   type='button'
                   onClick={handleUpdate}
-                  className='flex-1 px-6 py-3 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors'
+                  disabled={isSubmitting}
+                  className='flex-1 px-6 py-3 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors disabled:opacity-50'
                 >
-                  Update Listing
+                  {isSubmitting ? 'Updating...' : 'Update Listing'}
                 </button>
                 <button
                   type='button'
@@ -1409,20 +1775,20 @@ const EditListing = ({ product, onBack }) => {
             <div className='relative border rounded-xl bg-white w-full shadow-md overflow-hidden' style={{ borderColor: '#E5E5E5' }}>
               {/* Discount Badge */}
               {formData.price && formData.offerPrice && formData.offerPrice < formData.price && (
-                <div 
+                <div
                   className='absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold text-white z-10'
                   style={{ backgroundColor: 'var(--color-solidOne)' }}
                 >
                   {Math.round(((formData.price - formData.offerPrice) / formData.price) * 100)}% OFF
                 </div>
               )}
-              
+
               <div className='relative h-40 overflow-hidden'>
                 {mainImage ? (
-                  <img 
-                    className='w-full h-full object-cover' 
-                    src={mainImage.preview} 
-                    alt='Product preview' 
+                  <img
+                    className='w-full h-full object-cover'
+                    src={mainImage.preview}
+                    alt='Product preview'
                   />
                 ) : (
                   <div className='w-full h-full bg-slate-200 flex items-center justify-center'>
@@ -1430,7 +1796,7 @@ const EditListing = ({ product, onBack }) => {
                   </div>
                 )}
               </div>
-              
+
               <div className='text-sm px-4 pb-3 pt-2'>
                 <p className='font-medium text-base truncate w-full mb-0.5' style={{ color: 'var(--color-textColor)' }}>
                   {formData.name || 'Product Name'}
@@ -1443,7 +1809,7 @@ const EditListing = ({ product, onBack }) => {
                   </span>
                 </div>
                 <p className='text-xs mb-1.5' style={{ color: 'var(--color-gray-50)' }}>
-                  Pickup at {formData.pickupFrom && formData.pickupTo 
+                  Pickup at {formData.pickupFrom && formData.pickupTo
                     ? `${new Date(formData.pickupFrom).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${new Date(formData.pickupTo).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
                     : product.pickupTime || '4PM - 6PM Today'
                   }
@@ -1460,8 +1826,8 @@ const EditListing = ({ product, onBack }) => {
                     )}
                   </div>
                   <div>
-                    <button 
-                      className='flex items-center justify-center gap-1 border w-20 h-[34px] rounded font-medium text-white text-xs' 
+                    <button
+                      className='flex items-center justify-center gap-1 border w-20 h-[34px] rounded font-medium text-white text-xs'
                       style={{ backgroundColor: 'var(--color-solid)', borderColor: 'var(--color-solid)' }}
                     >
                       <ShoppingCart className='w-3.5 h-3.5' />

@@ -1,7 +1,21 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const logger = require('../utils/logger');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendOTPEmail,
+  sendPasswordChangeOTP,
+  sendPasswordChangedConfirmation,
+  sendSensitiveChangeOTP,
+} = require('../utils/emailService');
+const { OAuth2Client } = require('google-auth-library');
+const axios = require('axios');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -17,11 +31,23 @@ const generateToken = (id) => {
  */
 const registerUser = async (req, res) => {
   try {
-    const { email, password, phone, role, firstName, lastName } = req.body;
+    const { email, password, phone, role, roles, firstName, lastName } = req.body;
 
-    // Validation
-    if (!email || !password || !role) {
-      return res.status(400).json({ message: 'Please provide email, password, and role' });
+    // Validation - support both 'role' (legacy) and 'roles' (new)
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    // Determine roles array
+    let userRoles;
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      userRoles = roles;
+    } else if (role) {
+      // Legacy support: convert single role to array
+      // For business_owner, also grant consumer role
+      userRoles = role === 'business_owner' ? ['consumer', 'business_owner'] : [role];
+    } else {
+      userRoles = ['consumer']; // Default to consumer
     }
 
     // Check if user exists
@@ -34,24 +60,46 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Determine initial active role
+    // If registering as business, default to business_owner, otherwise consumer
+    const initialActiveRole = userRoles.includes('business_owner') ? 'business_owner' : userRoles[0];
+
     // Create user
     const user = await User.create({
       email,
       passwordHash,
       phone,
-      role,
+      roles: userRoles,
+      activeRole: initialActiveRole,
       firstName,
-      lastName
+      lastName,
+      verificationToken,
+      verificationTokenExpires,
     });
 
     if (user) {
+      // Send verification email (don't await - send in background)
+      sendVerificationEmail(
+        user.email,
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        verificationToken
+      ).catch((err) => logger.error({ err }, 'Failed to send verification email'));
+
       res.status(201).json({
         _id: user._id,
         email: user.email,
-        role: user.role,
+        roles: user.roles,
+        activeRole: user.activeRole,
+        role: user.activeRole, // Backward compatibility
         firstName: user.firstName,
         lastName: user.lastName,
-        token: generateToken(user._id)
+        emailVerified: user.emailVerified,
+        token: generateToken(user._id),
+        message: 'Registration successful. Please check your email to verify your account.',
       });
     }
   } catch (error) {
@@ -70,36 +118,51 @@ const loginUser = async (req, res) => {
 
     // Validation
     if (!email || !password) {
+      logger.warn({ email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing' }, 'Login attempt with missing credentials');
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
     // Check user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
+      logger.warn({ email }, 'Login attempt - user not found');
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if password hash exists
+    if (!user.passwordHash) {
+      logger.warn({ email }, 'Login attempt - user has no password (possibly Google-only account)');
+      return res.status(401).json({ message: 'Please use Google Sign-In for this account' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
+      logger.warn({ email }, 'Login attempt - invalid password');
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check if suspended
     if (user.status === 'suspended') {
+      logger.warn({ email }, 'Login attempt - account suspended');
       return res.status(403).json({ message: 'Account suspended' });
     }
+
+    logger.info({ email, userId: user._id }, 'User logged in successfully');
 
     res.json({
       _id: user._id,
       email: user.email,
-      role: user.role,
+      roles: user.roles,
+      activeRole: user.activeRole,
+      role: user.activeRole, // Backward compatibility
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
       token: generateToken(user._id)
     });
   } catch (error) {
+    logger.error({ err: error }, 'Login error');
     res.status(500).json({ message: error.message });
   }
 };
@@ -131,7 +194,7 @@ const updateUserProfile = async (req, res) => {
       user.firstName = req.body.firstName || user.firstName;
       user.lastName = req.body.lastName || user.lastName;
       user.phone = req.body.phone || user.phone;
-      
+
       if (req.body.preferences) {
         user.preferences = { ...user.preferences, ...req.body.preferences };
       }
@@ -284,13 +347,962 @@ const deleteAddress = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all users (admin only)
+ * @route   GET /api/users
+ * @access  Private (admin)
+ */
+const getUsersForAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const skip = (page - 1) * limit;
+    const role = req.query.role;
+    const status = req.query.status;
+
+    const query = {};
+    // Filter by role - check if role exists in the roles array
+    if (role) {
+      query.roles = { $in: [role] };
+    }
+    if (status) query.status = status;
+
+    const users = await User.find(query)
+      .select('-passwordHash')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+      users,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Verify email address
+ * @route   GET /api/users/verify-email
+ * @access  Public
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' });
+    }
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+
+    user.emailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Email verified successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/users/resend-verification
+ * @access  Public
+ */
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'Email already verified' });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    const sent = await sendVerificationEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      verificationToken
+    );
+
+    if (sent) {
+      res.json({ message: 'Verification email sent' });
+    } else {
+      res.status(500).json({ message: 'Failed to send verification email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Forgot password - send reset email
+ * @route   POST /api/users/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if user exists for security
+      return res.json({ message: 'If that email exists, a password reset link has been sent' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    const sent = await sendPasswordResetEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      resetToken
+    );
+
+    if (sent) {
+      res.json({ message: 'If that email exists, a password reset link has been sent' });
+    } else {
+      res.status(500).json({ message: 'Failed to send password reset email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Reset password
+ * @route   POST /api/users/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Send OTP for email login
+ * @route   POST /api/users/send-otp
+ * @access  Public
+ */
+const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otpCode;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    const sent = await sendOTPEmail(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      otpCode
+    );
+
+    if (sent) {
+      res.json({ message: 'OTP sent to your email' });
+    } else {
+      res.status(500).json({ message: 'Failed to send OTP email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Verify OTP and login
+ * @route   POST /api/users/verify-otp
+ * @access  Public
+ */
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    const user = await User.findOne({
+      email,
+      otpCode: otp,
+      otpExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Check if suspended
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'Account suspended' });
+    }
+
+    // Clear OTP
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      roles: user.roles,
+      activeRole: user.activeRole,
+      role: user.activeRole, // Backward compatibility
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Google login/signup
+ * @route   POST /api/users/google-login
+ * @access  Public
+ */
+const googleLogin = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Access Token is required' });
+    }
+
+    // Verify Google Access Token and get user profile (using Authorization header for security)
+    const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const payload = googleResponse.data;
+    const { sub: googleId, email, given_name: firstName, family_name: lastName, picture: avatar, email_verified } = payload;
+
+    // Check if user exists by googleId or email
+    let user = await User.findOne({
+      $or: [
+        { googleId },
+        { email: email.toLowerCase() }
+      ]
+    });
+
+    if (!user) {
+      // Create new user if not exists
+      // For Google users, we set a dummy passwordHash since they authenticate via Google
+      const salt = await bcrypt.genSalt(10);
+      const dummyPassword = crypto.randomBytes(16).toString('hex');
+      const passwordHash = await bcrypt.hash(dummyPassword, salt);
+
+      user = await User.create({
+        email: email.toLowerCase(),
+        googleId,
+        firstName,
+        lastName,
+        avatar,
+        roles: ['consumer'], // Default roles for Google login
+        activeRole: 'consumer',
+        emailVerified: email_verified,
+        passwordHash, // Required by model
+        status: 'active'
+      });
+
+      logger.info({ userId: user._id }, 'New user registered via Google');
+    } else {
+      // If user exists but doesn't have googleId linked, link it
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (!user.avatar) user.avatar = avatar;
+        if (email_verified && !user.emailVerified) user.emailVerified = true;
+        await user.save();
+      }
+
+      // Check if suspended
+      if (user.status === 'suspended') {
+        return res.status(403).json({ message: 'Account suspended' });
+      }
+    }
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      roles: user.roles,
+      activeRole: user.activeRole,
+      role: user.activeRole, // Backward compatibility
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      token: generateToken(user._id)
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Google login error');
+    // Log detailed error for debugging
+    if (error.response) {
+      console.error('Google API Error:', error.response.status, error.response.data);
+    } else {
+      console.error('Google Login Error:', error.message);
+    }
+
+    // Return more specific error message if possible
+    const errorMessage = error.response?.data?.error_description || error.message || 'Google authentication failed';
+    res.status(500).json({ message: 'Google authentication failed', error: errorMessage });
+  }
+};
+
+/**
+ * @desc    Update user by admin
+ * @route   PUT /api/users/:id
+ * @access  Private (admin)
+ */
+const updateUserByAdmin = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update allowed fields
+    const allowedFields = ['firstName', 'lastName', 'phone', 'status'];
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    // Handle roles update (array of roles)
+    if (req.body.roles !== undefined && Array.isArray(req.body.roles)) {
+      // Validate roles
+      const validRoles = ['consumer', 'business_owner', 'rider', 'admin'];
+      const newRoles = req.body.roles.filter(role => validRoles.includes(role));
+
+      if (newRoles.length === 0) {
+        return res.status(400).json({ message: 'User must have at least one valid role' });
+      }
+
+      user.roles = newRoles;
+
+      // If activeRole is no longer in roles, reset it to first role
+      if (!newRoles.includes(user.activeRole)) {
+        user.activeRole = newRoles[0];
+      }
+    }
+
+    // Handle activeRole update
+    if (req.body.activeRole !== undefined) {
+      if (user.roles.includes(req.body.activeRole)) {
+        user.activeRole = req.body.activeRole;
+      }
+    }
+
+    // Legacy support: handle single 'role' field
+    if (req.body.role !== undefined && !req.body.roles) {
+      const validRoles = ['consumer', 'business_owner', 'rider', 'admin'];
+      if (validRoles.includes(req.body.role)) {
+        // Add the role if not already present
+        if (!user.roles.includes(req.body.role)) {
+          user.roles.push(req.body.role);
+        }
+        user.activeRole = req.body.role;
+      }
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'User updated successfully',
+      user: {
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles: user.roles,
+        activeRole: user.activeRole,
+        role: user.activeRole, // Backward compatibility
+        status: user.status
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Suspend user
+ * @route   PATCH /api/users/:id/suspend
+ * @access  Private (admin)
+ */
+const suspendUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has admin role (check roles array, not activeRole)
+    if (user.roles && user.roles.includes('admin')) {
+      return res.status(403).json({ message: 'Cannot suspend admin users' });
+    }
+
+    user.status = 'suspended';
+    await user.save();
+
+    res.json({ message: 'User suspended successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Activate user
+ * @route   PATCH /api/users/:id/activate
+ * @access  Private (admin)
+ */
+const activateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.status = 'active';
+    await user.save();
+
+    res.json({ message: 'User activated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Delete user by admin
+ * @route   DELETE /api/users/:id
+ * @access  Private (admin)
+ */
+const deleteUserByAdmin = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has admin role (check roles array, not activeRole)
+    if (user.roles && user.roles.includes('admin')) {
+      return res.status(403).json({ message: 'Cannot delete admin users' });
+    }
+
+    await user.deleteOne();
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Request password change OTP
+ * @route   POST /api/users/profile/password/request-otp
+ * @access  Private
+ */
+const requestPasswordChangeOTP = async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+
+    if (!currentPassword) {
+      return res.status(400).json({ message: 'Please provide current password' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otpCode;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    // Send OTP email
+    const sent = await sendPasswordChangeOTP(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      otpCode
+    );
+
+    if (sent) {
+      res.json({ message: 'OTP sent to your email. Please verify to complete password change.' });
+    } else {
+      res.status(500).json({ message: 'Failed to send OTP email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Change user password with OTP verification
+ * @route   PUT /api/users/profile/password
+ * @access  Private
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { otp, newPassword } = req.body;
+
+    if (!otp || !newPassword) {
+      return res.status(400).json({ message: 'Please provide OTP and new password' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Verify OTP
+    if (!user.otpCode || user.otpCode !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    if (user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+
+    // Clear OTP
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Send confirmation email
+    sendPasswordChangedConfirmation(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    ).catch(err => logger.error({ err }, 'Failed to send password changed confirmation'));
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Request OTP for sensitive information change (vendor)
+ * @route   POST /api/users/request-sensitive-change-otp
+ * @access  Private
+ */
+const requestSensitiveChangeOTP = async (req, res) => {
+  try {
+    const { changeType } = req.body;
+
+    if (!changeType) {
+      return res.status(400).json({ message: 'Please specify change type' });
+    }
+
+    const validChangeTypes = ['payout settings', 'bank account', 'business information', 'email address'];
+    if (!validChangeTypes.includes(changeType.toLowerCase())) {
+      return res.status(400).json({ message: 'Invalid change type' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otpCode;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    // Send OTP email
+    const sent = await sendSensitiveChangeOTP(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      otpCode,
+      changeType
+    );
+
+    if (sent) {
+      res.json({ message: 'OTP sent to your email. Please verify to continue.' });
+    } else {
+      res.status(500).json({ message: 'Failed to send OTP email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Verify OTP for sensitive changes
+ * @route   POST /api/users/verify-sensitive-change-otp
+ * @access  Private
+ */
+const verifySensitiveChangeOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ message: 'Please provide OTP' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Verify OTP
+    if (!user.otpCode || user.otpCode !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    if (user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Clear OTP after successful verification
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+      message: 'OTP verified successfully',
+      verified: true
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get user's active sessions
+ * @route   GET /api/users/sessions
+ * @access  Private
+ */
+const getActiveSessions = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    // Get sessions from user or return current session info
+    // In production, you'd store sessions in a separate collection or Redis
+    const sessions = user.sessions || [];
+
+    // If no sessions stored, return current session info from request
+    if (sessions.length === 0) {
+      const currentSession = {
+        id: req.user._id.toString(),
+        device: req.headers['user-agent'] || 'Unknown Device',
+        location: 'Current Location',
+        lastActive: new Date().toISOString(),
+        isCurrent: true
+      };
+      return res.json({ sessions: [currentSession] });
+    }
+
+    res.json({ sessions });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get user's login activity/history
+ * @route   GET /api/users/login-activity
+ * @access  Private
+ */
+const getLoginActivity = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const user = await User.findById(req.user._id);
+
+    // Get login history from user
+    const loginHistory = user.loginHistory || [];
+
+    // Sort by date descending and limit
+    const sortedHistory = loginHistory
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, limit)
+      .map(entry => ({
+        id: entry._id || entry.timestamp,
+        dateTime: new Date(entry.timestamp).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        device: entry.device || 'Unknown Device',
+        location: entry.location || 'Unknown Location',
+        status: entry.success ? 'Successful' : 'Failed',
+        ipAddress: entry.ipAddress
+      }));
+
+    res.json({ loginActivity: sortedHistory });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Logout from specific session
+ * @route   DELETE /api/users/sessions/:sessionId
+ * @access  Private
+ */
+const logoutSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const user = await User.findById(req.user._id);
+
+    if (user.sessions) {
+      user.sessions = user.sessions.filter(s => s.id !== sessionId);
+      await user.save();
+    }
+
+    res.json({ message: 'Session logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Logout from all devices
+ * @route   POST /api/users/logout-all
+ * @access  Private
+ */
+const logoutAllDevices = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    // Clear all sessions
+    user.sessions = [];
+    // Optionally invalidate all tokens by changing a token version
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    res.json({ message: 'Logged out from all devices successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Switch active role
+ * @route   POST /api/users/switch-role
+ * @access  Private
+ */
+const switchRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({ message: 'Role is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has the requested role
+    if (!user.roles.includes(role)) {
+      return res.status(403).json({
+        message: `You do not have the '${role}' role`,
+        availableRoles: user.roles
+      });
+    }
+
+    // Update active role
+    user.activeRole = role;
+    await user.save();
+
+    res.json({
+      success: true,
+      activeRole: user.activeRole,
+      roles: user.roles,
+      user: {
+        _id: user._id,
+        email: user.email,
+        roles: user.roles,
+        activeRole: user.activeRole,
+        role: user.activeRole,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Add a role to existing user (e.g., consumer adds business_owner)
+ * @route   POST /api/users/add-role
+ * @access  Private
+ */
+const addRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({ message: 'Role is required' });
+    }
+
+    // Validate the role
+    const validRoles = ['consumer', 'business_owner', 'rider'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    // Only admin can add admin role
+    if (role === 'admin') {
+      return res.status(403).json({ message: 'Cannot self-assign admin role' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user already has this role
+    if (user.roles.includes(role)) {
+      return res.status(400).json({
+        message: `You already have the '${role}' role`,
+        roles: user.roles
+      });
+    }
+
+    // Add the new role
+    user.roles.push(role);
+
+    // Optionally switch to the new role
+    if (req.body.switchToNew) {
+      user.activeRole = role;
+    }
+
+    await user.save();
+
+    logger.info({ userId: user._id, newRole: role }, 'User added new role');
+
+    res.json({
+      success: true,
+      message: `Successfully added '${role}' role`,
+      roles: user.roles,
+      activeRole: user.activeRole,
+      user: {
+        _id: user._id,
+        email: user.email,
+        roles: user.roles,
+        activeRole: user.activeRole,
+        role: user.activeRole,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  googleLogin,
   getUserProfile,
   updateUserProfile,
   uploadAvatar,
   addAddress,
   updateAddress,
-  deleteAddress
+  deleteAddress,
+  getUsersForAdmin,
+  updateUserByAdmin,
+  suspendUser,
+  activateUser,
+  deleteUserByAdmin,
+  requestPasswordChangeOTP,
+  changePassword,
+  requestSensitiveChangeOTP,
+  verifySensitiveChangeOTP,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+  sendOTP,
+  verifyOTP,
+  switchRole,
+  addRole,
+  getActiveSessions,
+  getLoginActivity,
+  logoutSession,
+  logoutAllDevices,
 };

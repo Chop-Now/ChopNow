@@ -1,296 +1,7 @@
-import React, { useState } from 'react'
-import { Search, ListFilter, ArrowDownUp, Store, XCircle, Clock, X, MapPin, Building2, Phone, Mail, FileText, Image as ImageIcon, Calendar, AlertCircle, CheckSquare, XSquare, BadgeCheck } from 'lucide-react'
-
-// Dummy vendor data
-const dummyVendors = [
-  {
-    id: 1,
-    name: "Fresh Farm Market",
-    location: "Accra, Ghana",
-    businessType: "Organic Farm",
-    status: "approved",
-    phone: "+233 24 123 4567",
-    email: "contact@freshfarm.com",
-    description: "We provide fresh organic produce directly from our farm to your table.",
-    businessRegistration: "BN-2024-001234",
-    submissionDate: "2024-01-10",
-    approvedDate: "2024-01-15",
-    documents: ["Business Registration", "Tax Certificate", "Health Certificate"],
-    address: "123 Farm Road, Accra",
-    bankDetails: "GCB Bank - 1234567890",
-    contactPerson: {
-      fullName: "Kwame Mensah",
-      role: "Business Owner",
-      email: "kwame.mensah@freshfarm.com",
-      mobile: "+233 24 123 4567"
-    }
-  },
-  {
-    id: 2,
-    name: "Golden Bakery",
-    location: "Kumasi, Ghana",
-    businessType: "Bakery",
-    status: "approved",
-    phone: "+233 20 987 6543",
-    email: "info@goldenbakery.com",
-    description: "Artisan bakery specializing in fresh breads and pastries.",
-    businessRegistration: "BN-2024-001235",
-    submissionDate: "2024-01-12",
-    approvedDate: "2024-01-18",
-    documents: ["Business Registration", "Food Safety Certificate"],
-    address: "45 Market Street, Kumasi",
-    bankDetails: "Ecobank - 9876543210",
-    contactPerson: {
-      fullName: "Akua Asante",
-      role: "General Manager",
-      email: "akua@goldenbakery.com",
-      mobile: "+233 20 987 6543"
-    }
-  },
-  {
-    id: 3,
-    name: "Mama's Kitchen",
-    location: "Takoradi, Ghana",
-    businessType: "Restaurant",
-    status: "pending",
-    phone: "+233 24 555 1234",
-    email: "mamaskitchen@email.com",
-    description: "Traditional Ghanaian cuisine made with love.",
-    businessRegistration: "BN-2024-001236",
-    submissionDate: "2024-01-20",
-    documents: ["Business Registration", "Health Certificate"],
-    address: "78 Beach Road, Takoradi",
-    bankDetails: "Stanbic Bank - 5555666677",
-    contactPerson: {
-      fullName: "Ama Osei",
-      role: "Restaurant Manager",
-      email: "ama@mamaskitchen.com",
-      mobile: "+233 24 555 1234"
-    }
-  },
-  {
-    id: 4,
-    name: "Green Valley Farms",
-    location: "Tema, Ghana",
-    businessType: "Organic Farm",
-    status: "approved",
-    phone: "+233 20 444 5678",
-    email: "hello@greenvalley.com",
-    description: "Sustainable farming practices for healthy living.",
-    businessRegistration: "BN-2024-001237",
-    submissionDate: "2024-01-08",
-    approvedDate: "2024-01-16",
-    documents: ["Business Registration", "Tax Certificate", "Organic Certification"],
-    address: "Plot 56, Tema Industrial Area",
-    bankDetails: "Zenith Bank - 1122334455",
-    contactPerson: {
-      fullName: "Kofi Boateng",
-      role: "Farm Director",
-      email: "kofi@greenvalley.com",
-      mobile: "+233 20 444 5678"
-    }
-  },
-  {
-    id: 5,
-    name: "Sweet Treats",
-    location: "Accra, Ghana",
-    businessType: "Dessert Shop",
-    status: "pending",
-    phone: "+233 24 777 8899",
-    email: "sweet@treats.com",
-    description: "Delicious desserts and sweet treats for all occasions.",
-    businessRegistration: "BN-2024-001238",
-    submissionDate: "2024-01-21",
-    documents: ["Business Registration"],
-    address: "12 Oxford Street, Accra",
-    bankDetails: "Access Bank - 9988776655",
-    contactPerson: {
-      fullName: "Abena Owusu",
-      role: "Store Manager",
-      email: "abena@sweettreats.com",
-      mobile: "+233 24 777 8899"
-    }
-  },
-  {
-    id: 6,
-    name: "Spice World",
-    location: "Kumasi, Ghana",
-    businessType: "Spice Merchant",
-    status: "rejected",
-    phone: "+233 20 333 2222",
-    email: "info@spiceworld.com",
-    description: "Premium spices and herbs from around the world.",
-    businessRegistration: "BN-2024-001239",
-    submissionDate: "2024-01-05",
-    rejectedDate: "2024-01-19",
-    rejectionReason: "Incomplete documentation",
-    documents: ["Business Registration"],
-    address: "89 Central Market, Kumasi",
-    bankDetails: "UBA - 7766554433",
-    contactPerson: {
-      fullName: "Yaw Mensah",
-      role: "Proprietor",
-      email: "yaw@spiceworld.com",
-      mobile: "+233 20 333 2222"
-    }
-  },
-  {
-    id: 7,
-    name: "Daily Dairy",
-    location: "Accra, Ghana",
-    businessType: "Dairy Products",
-    status: "approved",
-    phone: "+233 24 111 2222",
-    email: "contact@dailydairy.com",
-    description: "Fresh milk, yogurt, and dairy products daily.",
-    businessRegistration: "BN-2024-001240",
-    submissionDate: "2024-01-18",
-    approvedDate: "2024-01-20",
-    documents: ["Business Registration", "Food Safety Certificate", "Health Certificate"],
-    address: "34 Ring Road, Accra",
-    bankDetails: "Fidelity Bank - 4433221100",
-    contactPerson: {
-      fullName: "Nana Appiah",
-      role: "Operations Manager",
-      email: "nana@dailydairy.com",
-      mobile: "+233 24 111 2222"
-    }
-  },
-  {
-    id: 8,
-    name: "Ocean Catch",
-    location: "Tema, Ghana",
-    businessType: "Seafood",
-    status: "pending",
-    phone: "+233 20 999 8888",
-    email: "oceancatch@email.com",
-    description: "Fresh seafood delivered daily from our fishing boats.",
-    businessRegistration: "BN-2024-001241",
-    submissionDate: "2024-01-22",
-    documents: ["Business Registration", "Fishing License"],
-    address: "Port Area, Tema",
-    bankDetails: "CalBank - 2233445566",
-    contactPerson: {
-      fullName: "Kwabena Tetteh",
-      role: "Fleet Manager",
-      email: "kwabena@oceancatch.com",
-      mobile: "+233 20 999 8888"
-    }
-  },
-  {
-    id: 9,
-    name: "Urban Garden",
-    location: "Accra, Ghana",
-    businessType: "Urban Farm",
-    status: "approved",
-    phone: "+233 24 666 7777",
-    email: "info@urbangarden.com",
-    description: "Urban farming bringing fresh produce to the city.",
-    businessRegistration: "BN-2024-001242",
-    submissionDate: "2024-01-14",
-    approvedDate: "2024-01-19",
-    documents: ["Business Registration", "Environmental Permit"],
-    address: "67 Airport Residential, Accra",
-    bankDetails: "GCB Bank - 8877665544",
-    contactPerson: {
-      fullName: "Efua Adjei",
-      role: "Founder & CEO",
-      email: "efua@urbangarden.com",
-      mobile: "+233 24 666 7777"
-    }
-  },
-  {
-    id: 10,
-    name: "Veggie Delight",
-    location: "Kumasi, Ghana",
-    businessType: "Vegetable Market",
-    status: "rejected",
-    phone: "+233 20 222 3333",
-    email: "veggies@delight.com",
-    description: "Fresh vegetables at affordable prices.",
-    businessRegistration: "BN-2024-001243",
-    submissionDate: "2024-01-06",
-    rejectedDate: "2024-01-20",
-    rejectionReason: "Failed health inspection",
-    documents: ["Business Registration"],
-    address: "Central Market, Kumasi",
-    bankDetails: "Absa Bank - 5544332211",
-    contactPerson: {
-      fullName: "Samuel Agyeman",
-      role: "Market Supervisor",
-      email: "samuel@veggiedelight.com",
-      mobile: "+233 20 222 3333"
-    }
-  },
-  {
-    id: 11,
-    name: "Fruit Paradise",
-    location: "Takoradi, Ghana",
-    businessType: "Fruit Vendor",
-    status: "moreInfoRequested",
-    phone: "+233 24 888 9999",
-    email: "paradise@fruits.com",
-    description: "Exotic and local fruits in one place.",
-    businessRegistration: "BN-2024-001244",
-    submissionDate: "2024-01-23",
-    infoRequestedDate: "2024-01-22",
-    infoRequestedMessage: "Please provide additional health certificates and proof of organic certification.",
-    documents: ["Business Registration", "Health Certificate"],
-    address: "Harbor Road, Takoradi",
-    bankDetails: "NIB - 6677889900",
-    contactPerson: {
-      fullName: "Adjoa Baah",
-      role: "Business Owner",
-      email: "adjoa@fruitparadise.com",
-      mobile: "+233 24 888 9999"
-    }
-  },
-  {
-    id: 12,
-    name: "Healthy Bites",
-    location: "Accra, Ghana",
-    businessType: "Health Food Store",
-    status: "approved",
-    phone: "+233 20 777 6666",
-    email: "hello@healthybites.com",
-    description: "Organic and healthy food options for wellness.",
-    businessRegistration: "BN-2024-001245",
-    submissionDate: "2024-01-17",
-    approvedDate: "2024-01-21",
-    documents: ["Business Registration", "Food Safety Certificate", "Tax Certificate"],
-    address: "Osu Oxford Street, Accra",
-    bankDetails: "Prudential Bank - 3344556677",
-    contactPerson: {
-      fullName: "Araba Quansah",
-      role: "Store Manager",
-      email: "araba@healthybites.com",
-      mobile: "+233 20 777 6666"
-    }
-  },
-  {
-    id: 13,
-    name: "Tasty Bites",
-    location: "Accra, Ghana",
-    businessType: "Fast Food",
-    status: "moreInfoRequested",
-    phone: "+233 24 555 9999",
-    email: "info@tastybites.com",
-    description: "Quick and delicious meals on the go.",
-    businessRegistration: "BN-2024-001246",
-    submissionDate: "2024-01-19",
-    infoRequestedDate: "2024-01-21",
-    infoRequestedMessage: "Need updated business license and kitchen inspection report.",
-    documents: ["Business Registration"],
-    address: "Spintex Road, Accra",
-    bankDetails: "GCB Bank - 9988776655",
-    contactPerson: {
-      fullName: "Kojo Ansah",
-      role: "Branch Manager",
-      email: "kojo@tastybites.com",
-      mobile: "+233 24 555 9999"
-    }
-  }
-];
+import React, { useState, useEffect } from 'react'
+import { Search, ListFilter, ArrowDownUp, Store, XCircle, Clock, X, MapPin, Building2, Phone, Mail, FileText, Image as ImageIcon, Calendar, AlertCircle, CheckSquare, XSquare, BadgeCheck, Loader2 } from 'lucide-react'
+import { businessService } from '../../services'
+import toast from 'react-hot-toast'
 
 // Vendor Details Modal Component
 const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInfo, onRescind, showActions = false }) => {
@@ -320,10 +31,10 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
   };
 
   return (
-    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4'>
-      <div className='bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-slate-200/50 dark:border-slate-700/50'>
+    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto'>
+      <div className='bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200/50 dark:border-slate-700/50 my-auto'>
         {/* Header */}
-        <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between'>
+        <div className='sticky top-0 z-10 bg-white dark:bg-slate-900 p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between'>
           <div>
             <h2 className='text-xl font-bold text-slate-800 dark:text-white'>{vendor.name}</h2>
             <p className='text-sm text-slate-500 dark:text-slate-400 mt-1'>Vendor Details</p>
@@ -337,7 +48,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
         </div>
 
         {/* Content */}
-        <div className='p-6 overflow-y-auto max-h-[calc(90vh-200px)]'>
+        <div className='p-6'>
           <div className='space-y-6'>
             {/* Status Badge */}
             <div className='flex items-center gap-2'>
@@ -526,7 +237,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
 
         {/* Actions */}
         {showActions && vendor.status === 'pending' && (
-          <div className='p-6 border-t border-slate-200/50 dark:border-slate-700/50'>
+          <div className='sticky bottom-0 bg-white dark:bg-slate-900 p-6 border-t border-slate-200/50 dark:border-slate-700/50'>
             {showActionDialog ? (
               <div className='space-y-4'>
                 <p className='text-sm font-medium text-slate-800 dark:text-white'>
@@ -595,7 +306,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
 
         {/* Rescind Approval Button for Approved Vendors */}
         {vendor.status === 'approved' && onRescind && (
-          <div className='p-6 border-t border-slate-200/50 dark:border-slate-700/50'>
+          <div className='sticky bottom-0 bg-white dark:bg-slate-900 p-6 border-t border-slate-200/50 dark:border-slate-700/50'>
             {showActionDialog === 'rescind' ? (
               <div className='space-y-4'>
                 <p className='text-sm font-medium text-slate-800 dark:text-white'>Rescind Vendor Approval</p>
@@ -640,7 +351,8 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
 };
 
 export const AllVendors = () => {
-  const [vendors, setVendors] = useState(dummyVendors);
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [businessTypeFilter, setBusinessTypeFilter] = useState('all');
@@ -652,6 +364,49 @@ export const AllVendors = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const itemsPerPage = 10;
+
+  // Fetch all businesses from API
+  useEffect(() => {
+    fetchBusinesses();
+  }, [currentPage, statusFilter]);
+
+  const fetchBusinesses = async () => {
+    setLoading(true);
+    try {
+      const filters = { page: currentPage, limit: itemsPerPage, status: 'all' };
+      if (statusFilter !== 'all') {
+        filters.status = statusFilter === 'approved' ? 'active' : statusFilter;
+      }
+      const response = await businessService.getBusinesses(filters);
+      const transformedVendors = (response.businesses || []).map(business => ({
+        id: business._id,
+        name: business.name,
+        location: business.address?.city || business.address?.text || 'N/A',
+        businessType: business.type || 'Other',
+        status: business.status === 'active' ? 'approved' : business.status || 'pending',
+        phone: business.phone || 'N/A',
+        email: business.email || 'N/A',
+        description: business.description || '',
+        submissionDate: business.createdAt?.split('T')[0] || 'N/A',
+        approvedDate: business.verification?.reviewedAt?.split('T')[0] || null,
+        documents: business.verification?.documents?.map(d => d.url) || [],
+        address: business.address?.text || 'N/A',
+        contactPerson: {
+          fullName: business.owner ? `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() : 'N/A',
+          role: 'Business Owner',
+          email: business.owner?.email || business.email || 'N/A',
+          mobile: business.owner?.phone || business.phone || 'N/A'
+        }
+      }));
+      setVendors(transformedVendors);
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+      toast.error('Failed to fetch businesses');
+      setVendors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get unique business types and locations for filter
   const businessTypes = ['all', ...new Set(vendors.map(v => v.businessType))];
@@ -1062,7 +817,8 @@ export const AllVendors = () => {
 };
 
 export const VendorApproval = () => {
-  const [vendors, setVendors] = useState(dummyVendors.filter(v => v.status === 'pending' || v.status === 'moreInfoRequested'));
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [businessTypeFilter, setBusinessTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
@@ -1074,25 +830,83 @@ export const VendorApproval = () => {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const itemsPerPage = 10;
 
+  // Fetch pending businesses from API
+  useEffect(() => {
+    fetchPendingBusinesses();
+  }, [currentPage]);
+
+  const fetchPendingBusinesses = async () => {
+    setLoading(true);
+    try {
+      const response = await businessService.getPendingBusinesses({ page: currentPage, limit: itemsPerPage });
+      const transformedVendors = (response.businesses || []).map(business => ({
+        id: business._id,
+        name: business.name,
+        location: business.address?.city || business.address?.text || 'N/A',
+        businessType: business.type || 'Other',
+        // Map 'unverified' to 'pending' for display purposes (both require admin attention)
+        status: business.verification?.status === 'unverified' ? 'pending' : (business.verification?.status || 'pending'),
+        phone: business.phone || 'N/A',
+        email: business.email || 'N/A',
+        description: business.description || '',
+        businessRegistration: business.verification?.documents?.[0]?.url || 'N/A',
+        submissionDate: business.verification?.submittedAt?.split('T')[0] || business.createdAt?.split('T')[0] || 'N/A',
+        documents: business.verification?.documents?.map(d => d.url) || [],
+        address: business.address?.text || 'N/A',
+        contactPerson: {
+          fullName: business.owner ? `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() : 'N/A',
+          role: 'Business Owner',
+          email: business.owner?.email || business.email || 'N/A',
+          mobile: business.owner?.phone || business.phone || 'N/A'
+        }
+      }));
+      setVendors(transformedVendors);
+    } catch (error) {
+      console.error('Error fetching pending businesses:', error);
+      toast.error('Failed to fetch pending applications');
+      setVendors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get unique business types and locations for filter
   const businessTypes = ['all', ...new Set(vendors.map(v => v.businessType))];
   const locations = ['all', ...new Set(vendors.map(v => v.location))];
 
   // Handle vendor approval
-  const handleApprove = (vendorId, note) => {
-    setVendors(prev => prev.filter(v => v.id !== vendorId));
-    console.log('Approved vendor:', vendorId, 'Note:', note);
+  const handleApprove = async (vendorId, note) => {
+    try {
+      await businessService.approveBusiness(vendorId);
+      setVendors(prev => prev.filter(v => v.id !== vendorId));
+      toast.success('Business approved successfully');
+    } catch (error) {
+      console.error('Error approving business:', error);
+      toast.error('Failed to approve business');
+    }
   };
 
   // Handle vendor rejection
-  const handleReject = (vendorId, reason) => {
-    setVendors(prev => prev.filter(v => v.id !== vendorId));
-    console.log('Rejected vendor:', vendorId, 'Reason:', reason);
+  const handleReject = async (vendorId, reason) => {
+    try {
+      await businessService.rejectBusiness(vendorId, reason);
+      setVendors(prev => prev.filter(v => v.id !== vendorId));
+      toast.success('Business rejected');
+    } catch (error) {
+      console.error('Error rejecting business:', error);
+      toast.error('Failed to reject business');
+    }
   };
 
   // Handle request more info
-  const handleRequestInfo = (vendorId, message) => {
-    console.log('Requested more info from vendor:', vendorId, 'Message:', message);
+  const handleRequestInfo = async (vendorId, message) => {
+    try {
+      await businessService.requestMoreInfo(vendorId, message);
+      toast.success('Information request sent');
+    } catch (error) {
+      console.error('Error requesting info:', error);
+      toast.error('Failed to send request');
+    }
   };
 
   // Filter and sort vendors

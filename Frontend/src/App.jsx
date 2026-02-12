@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './Pages/Home'
 import Login from './Pages/Login'
 import SignUp from './Pages/SignUp'
@@ -17,9 +17,34 @@ import PendingReview from './Pages/PendingReview'
 import FAQ from './Pages/FAQ'
 import ContactUs from './Pages/ContactUs'
 import Dashboard from './admin/Dashboard'
+import AdminDashboard from './admin/AdminDashboard'
+import AdminLogin from './Pages/AdminLogin'
 import NotFound from './Components/NotFound'
+import MaintenanceMode from './Components/MaintenanceMode'
+import { usePlatformSettings } from './context/PlatformSettingsContext'
+import { useAppContext } from './context/AppContext'
 
 const App = () => {
+  const { settings, loading } = usePlatformSettings();
+  const { user, isLoading } = useAppContext();
+  const location = useLocation();
+
+  // Check if user is admin (check all possible fields)
+  const isAdmin = user && (
+    user.activeRole === 'admin' ||
+    user.role === 'admin' ||
+    (Array.isArray(user.roles) && user.roles.includes('admin'))
+  );
+
+  // Check if current path is admin-related (allow access during maintenance)
+  const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname === '/login';
+
+  // Show maintenance mode for non-admin users on non-admin routes
+  // But always allow admin routes and login page so admins can access the dashboard
+  if (settings.maintenanceMode && !isAdmin && !isAdminRoute && !isLoading) {
+    return <MaintenanceMode />;
+  }
+
   return (
     <main className='overflow-x-hidden text-textColor'>
 
@@ -42,6 +67,8 @@ const App = () => {
         <Route path='/faq' element={<FAQ />} />
         <Route path='/contact-us' element={<ContactUs />} />
         <Route path='/dashboard' element={<Dashboard />} />
+        <Route path='/admin/login' element={<AdminLogin />} />
+        <Route path='/admin' element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>

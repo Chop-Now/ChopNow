@@ -1,8 +1,16 @@
 /**
  * Error handler middleware
  */
+const logger = require('../utils/logger');
+
 const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  // Prefer structured logging; fall back to console if logger unavailable
+  try {
+    logger.error({ err, reqId: req?.id, path: req?.originalUrl, method: req?.method }, 'Unhandled error');
+  } catch {
+    // eslint-disable-next-line no-console
+    console.error(err.stack);
+  }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -44,6 +52,7 @@ const errorHandler = (err, req, res, next) => {
   // Default error
   res.status(err.statusCode || 500).json({
     message: err.message || 'Server Error',
+    requestId: req.id,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 };

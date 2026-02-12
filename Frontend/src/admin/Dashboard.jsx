@@ -1,8 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Content from './components/Content/Content';
 import { AdminModeProvider } from './context/AdminModeContext';
+import { useAppContext } from '../context/AppContext';
+import { businessService } from '../services';
 // Analytics pages
 import { Overview, Reports, Insights, Impact } from './pages/Analytics';
 // Users pages
@@ -20,104 +23,198 @@ import Payouts from './pages/Payouts';
 import Settings from './pages/Settings';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading } = useAppContext();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [businessVerified, setBusinessVerified] = useState(false);
 
-   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
-   const [currentPage, setCurrentPage] = useState("dashboard");
-   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
+  const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
+  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
 
-   const handleNavigateToSettings = (pageOrTab) => {
-     // Check if it's a settings tab
-     if (['profile', 'business', 'security', 'notifications', 'preferences'].includes(pageOrTab)) {
-       setSettingsTab(pageOrTab);
-       setCurrentPage('settings');
-     } else {
-       // Otherwise, navigate to the page directly
-       setCurrentPage(pageOrTab);
-     }
-   };
+  // Check authentication and business verification status
+  useEffect(() => {
+    const checkAccess = async () => {
+      // Wait for auth to load
+      if (isLoading) return;
 
-   const handlePageChange = (pageId) => {
-     setCurrentPage(pageId);
-   };
+      // Check if user is logged in
+      if (!isAuthenticated || !user) {
+        navigate('/login');
+        return;
+      }
 
-   const renderPage = () => {
-     switch(currentPage) {
-       case 'dashboard':
-         return <Content />;
-       // Analytics
-       case 'overview':
-         return <Overview />;
-       case 'reports':
-         return <Reports />;
-       case 'insights':
-         return <Insights />;
-       case 'impact':
-         return <Impact />;
-       // Users
-       case 'all-users':
-         return <AllUsers />;
-       case 'roles':
-         return <RolesPermissions />;
-       case 'activity':
-         return <UserActivity />;
-       // Orders
-       case 'all-orders':
-         return <AllOrders />;
-       case 'pending-orders':
-         return <PendingOrders />;
-       case 'completed-orders':
-         return <CompletedOrders />;
-       case 'deliveries':
-         return <Deliveries />;
-       // Listings
-       case 'all-listings':
-         return <AllListings />;
-       case 'new-listing':
-         return <NewListing />;
-       // Vendors
-       case 'all-vendors':
-         return <AllVendors />;
-       case 'vendor-approval':
-         return <VendorApproval />;
-       // Disputes
-       case 'refunds':
-         return <RefundRequests />;
-       case 'complaints':
-         return <CustomerComplaints />;
-       // Other
-       case 'payouts':
-         return <Payouts />;
-       case 'settings':
-         return <Settings initialTab={settingsTab} />;
-       default:
-         return <Content />;
-     }
-   };
+      // Check user role - only business_owner can access this vendor dashboard
+      // Use activeRole for multi-role users, fallback to role for single-role users
+      const currentRole = user.activeRole || user.role;
+      const userRoles = user.roles || [user.role];
+
+      // Admin users should use the admin dashboard at /admin
+      if (currentRole === 'admin' || userRoles.includes('admin')) {
+        navigate('/admin');
+        return;
+      }
+
+      if (currentRole !== 'business_owner' && !userRoles.includes('business_owner')) {
+        // Consumers and other roles should go to shop
+        navigate('/shop');
+        return;
+      }
+
+      // Business owner - check if their business is verified
+      try {
+        const businessResponse = await businessService.getMyBusinesses();
+        const businesses = businessResponse.businesses || businessResponse || [];
+
+        if (businesses.length === 0) {
+          // No business created yet
+          navigate('/business-verification');
+          return;
+        }
+
+        const business = businesses[0];
+        const verificationStatus = business.verification?.status;
+
+        // Check if business is approved/verified
+        // Business is approved if status is 'active' and verification.status is 'verified' or 'approved'
+        const isApproved = business.status === 'active' &&
+                          (verificationStatus === 'verified' || verificationStatus === 'approved');
+
+        if (!isApproved) {
+          // Check specific verification status
+          if (verificationStatus === 'pending') {
+            // Documents submitted, waiting for review
+            navigate('/pending-review');
+          } else if (verificationStatus === 'unverified') {
+            // Restaurant/cafe that needs to submit documents
+            navigate('/business-verification');
+          } else {
+            // Any other state - go to verification page
+            navigate('/business-verification');
+          }
+          return;
+        }
+
+        // All checks passed - allow access
+        setBusinessVerified(true);
+        setAuthChecked(true);
+      } catch (error) {
+        console.error('Error checking business status:', error);
+        navigate('/business-verification');
+      }
+    };
+
+    checkAccess();
+  }, [isAuthenticated, isLoading, user, navigate]);
+
+  // Show loading while checking auth
+  if (isLoading || !authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleNavigateToSettings = (pageOrTab) => {
+    // Check if it's a settings tab
+    if (['profile', 'business', 'security', 'notifications', 'preferences'].includes(pageOrTab)) {
+      setSettingsTab(pageOrTab);
+      setCurrentPage('settings');
+    } else {
+      // Otherwise, navigate to the page directly
+      setCurrentPage(pageOrTab);
+    }
+  };
+
+  const handlePageChange = (pageId) => {
+    setCurrentPage(pageId);
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <Content onNavigate={setCurrentPage} />;
+      // Analytics
+      case 'overview':
+        return <Overview />;
+      case 'reports':
+        return <Reports />;
+      case 'insights':
+        return <Insights />;
+      case 'impact':
+        return <Impact />;
+      // Users
+      case 'all-users':
+        return <AllUsers />;
+      case 'roles':
+        return <RolesPermissions />;
+      case 'activity':
+        return <UserActivity />;
+      // Orders
+      case 'all-orders':
+        return <AllOrders />;
+      case 'pending-orders':
+        return <PendingOrders />;
+      case 'completed-orders':
+        return <CompletedOrders />;
+      case 'deliveries':
+        return <Deliveries />;
+      // Listings
+      case 'all-listings':
+        return <AllListings />;
+      case 'new-listing':
+        return <NewListing />;
+      // Vendors
+      case 'all-vendors':
+        return <AllVendors />;
+      case 'vendor-approval':
+        return <VendorApproval />;
+      // Disputes
+      case 'refunds':
+        return <RefundRequests />;
+      case 'complaints':
+        return <CustomerComplaints />;
+      // Other
+      case 'payouts':
+        return <Payouts />;
+      case 'settings':
+        return <Settings initialTab={settingsTab} />;
+      default:
+        return <Content />;
+    }
+  };
+
+  // Get user's current role for AdminModeProvider
+  const currentUserRole = user?.activeRole || user?.role;
 
   return (
-    <AdminModeProvider>
+    <AdminModeProvider userRole={currentUserRole}>
       <div className='min-h-scren bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500'>
-          <div className='flex h-screen overflow-hidden'>
-             <Sidebar 
-             collapsed = {sideBarCollapsed} 
-             onToggle = {() => setSideBarCollapsed(!sideBarCollapsed)}
-             currentPage={currentPage} setCurrentPage={setCurrentPage}
-             onPageChange={setCurrentPage}
-              />
-             <div className='flex-1 flex flex-col overflow-hidden'>
-                <Header 
-                  onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)} 
-                  onNavigateToSettings={handleNavigateToSettings}
-                  onPageChange={handlePageChange}
-                />
+        <div className='flex h-screen overflow-hidden'>
+          <Sidebar
+            collapsed={sideBarCollapsed}
+            onToggle={() => setSideBarCollapsed(!sideBarCollapsed)}
+            currentPage={currentPage} setCurrentPage={setCurrentPage}
+            onPageChange={setCurrentPage}
+          />
+          <div className='flex-1 flex flex-col overflow-hidden'>
+            <Header
+              onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)}
+              onNavigateToSettings={handleNavigateToSettings}
+              onPageChange={handlePageChange}
+            />
 
-                  <div className='flex-1 overflow-y-auto bg-transparent'>
-                    <div className='p-6 space-y-6'>
-                       {renderPage()}
-                    </div>
-                  </div>
-             </div>
+            <div className='flex-1 overflow-y-auto bg-transparent'>
+              <div className='p-6 space-y-6'>
+                {renderPage()}
+              </div>
+            </div>
           </div>
+        </div>
       </div>
     </AdminModeProvider>
   )

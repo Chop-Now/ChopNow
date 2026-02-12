@@ -1,16 +1,161 @@
-import React, { useState } from 'react'
-import { User, Upload, Trash2, MoveLeft, Eye, EyeOff } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
+import { authService } from '../services'
+import toast from 'react-hot-toast'
 
 const MyProfile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const navigate = useNavigate()
+
+  // Profile state
+  const [profile, setProfile] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    avatar: null
+  })
+
+  // Password state
+  const [passwords, setPasswords] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await authService.getProfile()
+        setProfile({
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          avatar: data.avatar || null
+        })
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+        toast.error('Failed to load profile')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  // Handle profile save
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    try {
+      const updatedData = await authService.updateProfile({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: profile.phone
+      })
+      // Update local storage
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      localStorage.setItem('user', JSON.stringify({
+        ...storedUser,
+        firstName: updatedData.firstName,
+        lastName: updatedData.lastName,
+        phone: updatedData.phone,
+        avatar: updatedData.avatar
+      }))
+      toast.success('Profile updated successfully')
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error(error.message || 'Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+    if (passwords.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      await authService.changePassword(passwords.currentPassword, passwords.newPassword)
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      toast.success('Password changed successfully')
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast.error(error.message || 'Failed to change password')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    setUploadingAvatar(true)
+    try {
+      const response = await authService.uploadAvatar(formData)
+      setProfile(prev => ({ ...prev, avatar: response.avatar }))
+      // Update local storage
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      localStorage.setItem('user', JSON.stringify({
+        ...storedUser,
+        avatar: response.avatar
+      }))
+      toast.success('Avatar uploaded successfully')
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      toast.error(error.message || 'Failed to upload avatar')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      await authService.deleteAccount()
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('cartItems')
+      toast.success('Account deleted successfully')
+      navigate('/login')
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      toast.error(error.message || 'Failed to delete account')
+    }
+    setShowDeleteModal(false)
+  }
+
+  if (loading) {
+    return (
+      <div className='bg-gray-80 min-h-screen flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-green-600' />
+      </div>
+    )
+  }
 
   return (
      <div className='bg-gray-80 min-h-screen'>
@@ -31,12 +176,16 @@ const MyProfile = () => {
 
           {/* Profile Info */}
           <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-200">
-            <div className="h-12 w-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#1B5E20' }}>
-              <User className="w-6 h-6 text-white" />
-            </div>
+            {profile.avatar ? (
+              <img src={profile.avatar} alt="Avatar" className="h-12 w-12 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="h-12 w-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#1B5E20' }}>
+                <User className="w-6 h-6 text-white" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-textColor truncate">John Doe</p>
-              <p className="text-xs text-gray-50 truncate">john@example.com</p>
+              <p className="text-sm font-semibold text-textColor truncate">{profile.firstName} {profile.lastName}</p>
+              <p className="text-xs text-gray-50 truncate">{profile.email}</p>
             </div>
           </div>
 
@@ -84,14 +233,19 @@ const MyProfile = () => {
               <div className="flex w-full flex-col items-start gap-4">
                 <span className="text-sm font-semibold text-textColor">Avatar</span>
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1B5E20' }}>
-                    <User className="w-8 h-8 text-white" />
-                  </div>
+                  {profile.avatar ? (
+                    <img src={profile.avatar} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1B5E20' }}>
+                      <User className="w-8 h-8 text-white" />
+                    </div>
+                  )}
                   <div className="flex flex-col items-start gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-textColor hover:bg-gray-200 transition cursor-pointer">
-                      <Upload className="w-4 h-4" />
-                      Upload
-                    </button>
+                    <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-textColor hover:bg-gray-200 transition cursor-pointer">
+                      {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {uploadingAvatar ? 'Uploading...' : 'Upload'}
+                      <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploadingAvatar} />
+                    </label>
                     <span className="text-xs text-gray-50">
                       For best results, upload an image 512x512 or larger.
                     </span>
@@ -105,7 +259,9 @@ const MyProfile = () => {
                   <label className="block text-sm font-medium text-textColor mb-2">First name</label>
                   <input
                     type="text"
-                    placeholder="Josef"
+                    placeholder="First name"
+                    value={profile.firstName}
+                    onChange={(e) => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                     onFocus={(e) => e.target.style.borderColor = '#1B5E20'}
                     onBlur={(e) => e.target.style.borderColor = ''}
@@ -115,7 +271,9 @@ const MyProfile = () => {
                   <label className="block text-sm font-medium text-textColor mb-2">Last name</label>
                   <input
                     type="text"
-                    placeholder="Albers"
+                    placeholder="Last name"
+                    value={profile.lastName}
+                    onChange={(e) => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                     onFocus={(e) => e.target.style.borderColor = '#1B5E20'}
                     onBlur={(e) => e.target.style.borderColor = ''}
@@ -129,18 +287,18 @@ const MyProfile = () => {
                   <label className="block text-sm font-medium text-textColor mb-2">Email</label>
                   <input
                     type="email"
-                    placeholder="josef@subframe.com"
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
-                    onFocus={(e) => e.target.style.borderColor = '#1B5E20'}
-                    onBlur={(e) => e.target.style.borderColor = ''}
+                    value={profile.email}
+                    disabled
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm focus:outline-none cursor-not-allowed"
                   />
+                  <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                 </div>
                 <div className="w-full flex-1">
                   <label className="block text-sm font-medium text-textColor mb-2">Phone number</label>
                   <PhoneInput
                     country={'rw'}
-                    value={phone}
-                    onChange={setPhone}
+                    value={profile.phone}
+                    onChange={(phone) => setProfile(prev => ({ ...prev, phone }))}
                     enableSearch={true}
                     searchPlaceholder="Search country"
                     placeholder="Choose your country"
@@ -155,13 +313,16 @@ const MyProfile = () => {
               </div>
 
               {/* Save Changes Button */}
-              <button 
-                className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer"
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
                 style={{ backgroundColor: '#1B5E20' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0D4A14'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1B5E20'}
+                onMouseEnter={(e) => !saving && (e.currentTarget.style.backgroundColor = '#0D4A14')}
+                onMouseLeave={(e) => !saving && (e.currentTarget.style.backgroundColor = '#1B5E20')}
               >
-                Save changes
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? 'Saving...' : 'Save changes'}
               </button>
             </div>
 
@@ -178,6 +339,8 @@ const MyProfile = () => {
                   <input
                     type={showCurrentPassword ? "text" : "password"}
                     placeholder="Enter current password"
+                    value={passwords.currentPassword}
+                    onChange={(e) => setPasswords(prev => ({ ...prev, currentPassword: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -200,6 +363,8 @@ const MyProfile = () => {
                   <input
                     type={showNewPassword ? "text" : "password"}
                     placeholder="Enter new password"
+                    value={passwords.newPassword}
+                    onChange={(e) => setPasswords(prev => ({ ...prev, newPassword: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -224,6 +389,8 @@ const MyProfile = () => {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Re-type new password"
+                    value={passwords.confirmPassword}
+                    onChange={(e) => setPasswords(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -240,13 +407,16 @@ const MyProfile = () => {
                 </div>
               </div>
 
-              <button 
-                className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer"
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPassword || !passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword}
+                className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
                 style={{ backgroundColor: '#1B5E20' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0D4A14'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1B5E20'}
+                onMouseEnter={(e) => !changingPassword && (e.currentTarget.style.backgroundColor = '#0D4A14')}
+                onMouseLeave={(e) => !changingPassword && (e.currentTarget.style.backgroundColor = '#1B5E20')}
               >
-                Change password
+                {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
+                {changingPassword ? 'Changing...' : 'Change password'}
               </button>
             </div>
 
@@ -301,6 +471,7 @@ const MyProfile = () => {
               </button>
               <button
                 type="button"
+                onClick={handleDeleteAccount}
                 className="w-full md:w-36 h-10 rounded-md text-white bg-red-600 font-medium text-sm hover:bg-red-700 active:scale-95 transition"
               >
                 Confirm
