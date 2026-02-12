@@ -1,4 +1,5 @@
 import React from 'react'
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 const MilestoneCard = ({ image, badge, title, description }) => {

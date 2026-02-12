@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 import { assets } from "../assets/assets.js";
 import Navbar from "./Navbar.jsx";

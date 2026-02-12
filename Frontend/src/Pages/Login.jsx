@@ -2,7 +2,6 @@ import { assets } from '../assets/assets'
 import { Eye, EyeOff, Lock, Mail, PersonStanding, Handshake, MapPin, LocateFixed } from 'lucide-react'
 import React, { useState } from 'react'
 
-import LocationPicker from '../Components/maps/LocationPicker'
 import { useGeolocation } from '../Components/maps/useGeolocation'
 import { reverseGeocode, searchAddress } from '../services/geocoding'
 import toast from 'react-hot-toast'
@@ -10,6 +9,7 @@ import { useAppContext } from '../context/AppContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google';
 import { businessService } from '../services';
+import LocationPicker from '../Components/maps/LocationPicker'
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();
@@ -188,7 +188,7 @@ const Login = () => {
                               const result = await reverseGeocode(coords.lat, coords.lng);
                               setAddress(result.display_name || 'Location detected');
                               toast.success('Location detected successfully!');
-                            } catch (error) {
+                            } catch {
                               toast.error('Could not fetch address');
                             }
                             setIsLoadingLocation(false);
@@ -231,7 +231,7 @@ const Login = () => {
                                   } else {
                                     toast.error('Address not found');
                                   }
-                                } catch (error) {
+                                } catch {
                                   toast.error('Could not search address');
                                 }
                               }
@@ -256,7 +256,7 @@ const Login = () => {
                                 } else {
                                   toast.error('Address not found');
                                 }
-                              } catch (error) {
+                              } catch {
                                 toast.error('Could not search address');
                               }
                             }
@@ -285,7 +285,7 @@ const Login = () => {
                           try {
                             const result = await reverseGeocode(latlng.lat, latlng.lng);
                             setAddress(result.display_name || 'Location selected');
-                          } catch (error) {
+                          } catch {
                             setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
                           }
                         }}

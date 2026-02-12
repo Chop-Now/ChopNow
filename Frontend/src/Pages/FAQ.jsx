@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 const FAQ = () => {

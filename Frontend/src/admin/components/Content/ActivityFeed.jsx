@@ -43,7 +43,7 @@ const ActivityFeed = () => {
     }
 
     // Get icon and colors based on activity type
-    const getActivityConfig = (type, icon) => {
+    const getActivityConfig = (type) => {
         const configs = {
             user: {
                 Icon: User,

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { easeOut, motion } from 'motion/react';
 import * as React from 'react';
 import { Linkedin } from 'lucide-react';

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
 import { AnimatedTestimonials } from "./ui/animated-testimonials";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 const Testimonials = () => {

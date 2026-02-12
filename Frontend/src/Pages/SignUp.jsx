@@ -52,12 +52,35 @@ const BUSINESS_CATEGORIES = [
 ];
 
 const SignUp = () => {
+  // ALL hooks must be called at the top, before any conditional returns
   const { googleAuth, register } = useAppContext();
   const { settings, isFeatureEnabled } = usePlatformSettings();
   const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [businessCategory, setBusinessCategory] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState(null);
+  const [address, setAddress] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const { getCurrentLocation } = useGeolocation();
 
-  // Check if registrations are allowed
+  const signupWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await googleAuth(tokenResponse.access_token);
+        navigate('/shop');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    onError: () => console.log('Google Signup Failed'),
+  });
+
+  // Check if registrations are allowed - AFTER all hooks
   if (!isFeatureEnabled('registration')) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-primary via-white to-tertiary/10 flex items-center justify-center p-4'>
@@ -82,29 +105,6 @@ const SignUp = () => {
       </div>
     );
   }
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [businessCategory, setBusinessCategory] = useState('');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-
-  const signupWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await googleAuth(tokenResponse.access_token);
-        navigate('/shop');
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    onError: () => console.log('Google Signup Failed'),
-  });
-
-  const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState(null);
-  const [address, setAddress] = useState('');
-  const [manualAddress, setManualAddress] = useState('');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const { getCurrentLocation } = useGeolocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -189,7 +189,7 @@ const SignUp = () => {
           roles: ['consumer', 'business_owner'], // Dual-role: can shop and manage business
         };
 
-        const registeredUser = await register(userData);
+        await register(userData);
 
         // Step 2: Create business profile with selected category
         const businessData = {
@@ -213,7 +213,7 @@ const SignUp = () => {
         };
 
         // Create the business
-        const createdBusiness = await businessService.createBusiness(businessData);
+        await businessService.createBusiness(businessData);
 
         // Step 3: Redirect based on verification requirements
         if (requiresVerification) {
@@ -470,7 +470,7 @@ const SignUp = () => {
                                 const result = await reverseGeocode(coords.lat, coords.lng);
                                 setAddress(result.display_name || 'Location detected');
                                 toast.success('Location detected successfully!');
-                              } catch (error) {
+                              } catch {
                                 toast.error('Could not fetch address');
                               }
                               setIsLoadingLocation(false);
@@ -513,7 +513,7 @@ const SignUp = () => {
                                     } else {
                                       toast.error('Address not found');
                                     }
-                                  } catch (error) {
+                                  } catch {
                                     toast.error('Could not search address');
                                   }
                                 }
@@ -538,7 +538,7 @@ const SignUp = () => {
                                   } else {
                                     toast.error('Address not found');
                                   }
-                                } catch (error) {
+                                } catch {
                                   toast.error('Could not search address');
                                 }
                               }
@@ -567,7 +567,7 @@ const SignUp = () => {
                             try {
                               const result = await reverseGeocode(latlng.lat, latlng.lng);
                               setAddress(result.display_name || 'Location selected');
-                            } catch (error) {
+                            } catch {
                               setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
                             }
                           }}

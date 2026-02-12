@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 import { Video, X } from "lucide-react";
 import { assets } from "../assets/assets.js";

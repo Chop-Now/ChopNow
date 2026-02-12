@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react'
 import { useAppContext } from '../context/AppContext';
 import ProductCard from './ProductCard';
-import { ChevronDown } from 'lucide-react';
 
 const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPriceRange }, ref) => {
 
@@ -26,6 +25,7 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
 
   const productsPerPage = isMobile ? 10 : 9
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     // Ensure products is an array before filtering
     if (!Array.isArray(products)) {

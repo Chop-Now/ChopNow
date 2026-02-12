@@ -3,7 +3,6 @@ import PageNavbar from '../Components/PageNavbar'
 import React, { useState, useEffect } from 'react'
 import { Award, Leaf, Droplets, Wind, Loader2 } from 'lucide-react'
 import { analyticsService } from '../services'
-import toast from 'react-hot-toast'
 
 const MyImpact = () => {
   const [loading, setLoading] = useState(true)

@@ -1234,6 +1234,7 @@ export const NewListing = () => {
 
 const EditListing = ({ product, onBack }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Parse time from ISO string or Date
   const getLocalDatetime = (dateStr) => {

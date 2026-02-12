@@ -25,7 +25,7 @@ import { usePlatformSettings } from './context/PlatformSettingsContext'
 import { useAppContext } from './context/AppContext'
 
 const App = () => {
-  const { settings, loading } = usePlatformSettings();
+  const { settings } = usePlatformSettings();
   const { user, isLoading } = useAppContext();
   const location = useLocation();
 

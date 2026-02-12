@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Plane, Users, Truck, Check, Sprout, Coins, MessageCircleHeart } from "lucide-react";
 import { assets } from '../assets/assets';
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 const stepsForVendors = [

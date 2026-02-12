@@ -32,6 +32,7 @@ function LocationMarker({ onSelect, selectedPosition }) {
   });
 
   // Update marker when external position changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (selectedPosition) {
       setPosition(selectedPosition);
