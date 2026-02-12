@@ -22,6 +22,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const disputeRoutes = require('./routes/disputeRoutes');
 const payoutRoutes = require('./routes/payoutRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -66,15 +68,15 @@ if (cloudinaryProvided.length > 0 && cloudinaryProvided.length < cloudinaryKeys.
   if (isProduction) process.exit(1);
 }
 
-const resendKey = process.env.RESEND_API_KEY && String(process.env.RESEND_API_KEY).trim() !== '';
+const sendgridKey = process.env.SENDGRID_API_KEY && String(process.env.SENDGRID_API_KEY).trim() !== '';
 const fromEmail = process.env.FROM_EMAIL && String(process.env.FROM_EMAIL).trim() !== '';
 const frontendUrl = process.env.FRONTEND_URL && String(process.env.FRONTEND_URL).trim() !== '';
-if (resendKey && (!fromEmail || !frontendUrl)) {
-  logger.warn('Resend is partially configured. Set RESEND_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.');
+if (sendgridKey && (!fromEmail || !frontendUrl)) {
+  logger.warn('SendGrid is partially configured. Set SENDGRID_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.');
   if (isProduction) process.exit(1);
 }
-if (!resendKey) {
-  logger.warn('RESEND_API_KEY not set: email verification / password reset / OTP emails will be disabled.');
+if (!sendgridKey) {
+  logger.warn('SENDGRID_API_KEY not set: email verification / password reset / OTP emails will be disabled.');
 }
 if (frontendUrl && !/^https?:\/\//i.test(String(process.env.FRONTEND_URL))) {
   logger.warn('FRONTEND_URL should include scheme, e.g. https://www.chopnow.app');
@@ -91,7 +93,7 @@ app.use(pinoHttp({
   customProps: (req) => ({ reqId: req.id }),
 }));
 
-const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174';
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179,http://localhost:5180,http://localhost:3000';
 const allowedOrigins = allowedOriginsEnv.split(',').map((o) => o.trim());
 
 app.use(cors({
@@ -121,8 +123,8 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // stricter for auth endpoints
-  message: 'Too many login attempts from this IP, please try again later.',
+  max: 50, // Allow more attempts during development
+  message: { message: 'Too many login attempts from this IP, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -178,6 +180,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/disputes', disputeRoutes);
 app.use('/api/payouts', payoutRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Error handling
 app.use(notFound);

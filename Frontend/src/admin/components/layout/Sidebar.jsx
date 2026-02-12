@@ -2,6 +2,7 @@ import { assets } from '../../../assets/assets'
 import { ChartNoAxesCombined, ChevronDown, CircleStar, Coins, LayoutDashboard, List, ServerCrash, Settings, ShoppingBasket, Store, User, ExternalLink } from 'lucide-react'
 import React, { useState } from 'react'
 import { useAdminMode } from '../../context/AdminModeContext'
+import { useAppContext } from '../../../context/AppContext'
 
 const shopAdminMenuItems = [
   {
@@ -24,7 +25,6 @@ const shopAdminMenuItems = [
     id: "orders",
     icon: <ShoppingBasket className='w-5 h-5 text-slate-400' />,
     label: "Orders",
-    count: 5,
     submenu: [
       { id: "all-orders", label: "All Orders" },
       { id: "pending-orders", label: "Pending Orders" },
@@ -84,7 +84,6 @@ const websiteAdminMenuItems = [
     id: "orders",
     icon: <ShoppingBasket className='w-5 h-5 text-slate-400' />,
     label: "Orders",
-    count: 5,
     submenu: [
       { id: "all-orders", label: "All Orders" },
       { id: "pending-orders", label: "Pending Orders" },
@@ -130,12 +129,18 @@ const websiteAdminMenuItems = [
   }
 ];
 
-const Sidebar = ({ collapsed, onToggle, currentPage, onPageChange }) => {
-  const { adminMode } = useAdminMode();
+const Sidebar = ({ collapsed, onToggle, currentPage, onPageChange, isAdminDashboard = false }) => {
+  const { adminMode, isAdmin } = useAdminMode();
+  const { user } = useAppContext();
   const [openMenus, setOpenMenus] = useState({})
   const [isHovered, setIsHovered] = useState(false)
 
-  const menuItems = adminMode === 'shop' ? shopAdminMenuItems : websiteAdminMenuItems;
+  // For admin dashboard (/admin), always use website admin menu items
+  // For vendor dashboard (/dashboard), always use shop admin menu items
+  const currentUserRole = user?.activeRole || user?.role;
+  const menuItems = isAdminDashboard
+    ? websiteAdminMenuItems
+    : shopAdminMenuItems;
 
   const toggleMenu = (menuId) => {
     setOpenMenus(prev => {
@@ -162,7 +167,9 @@ const Sidebar = ({ collapsed, onToggle, currentPage, onPageChange }) => {
           {isExpanded && (
             <div>
               <h1 className='text-lg font-bold text-slate-800 dark:text-white'>ChopNow</h1>
-              <p className='text-xs text-slate-500 dark:text-slate-400'>Admin Panel</p>
+              <p className='text-xs text-slate-500 dark:text-slate-400'>
+                {isAdminDashboard ? 'Admin Panel' : 'Vendor Dashboard'}
+              </p>
             </div>
           )}
         </div>
@@ -226,8 +233,8 @@ const Sidebar = ({ collapsed, onToggle, currentPage, onPageChange }) => {
         ))}
       </div>
 
-      {/* View Storefront Button - Only for Shop Admins */}
-      {adminMode === 'shop' && (
+      {/* View Storefront Button - Only for Vendor Dashboard */}
+      {!isAdminDashboard && (
         <div className='p-4 border-t border-slate-200 dark:border-slate-700'>
           <button
             onClick={() => {

@@ -10,7 +10,7 @@ import drinks from './drinks.png';
 import fresh_fruits_image from './fresh_fruits_image.png';
 import grain_image from './grain_image.png';
 import maggi_image from './maggi_image.png';
-import organic_vegitable_image from './organic_vegitable_image.png'; 
+import organic_vegitable_image from './organic_vegitable_image.png';
 import potato_image_1 from "./potato_image_1.png";
 import potato_image_2 from "./potato_image_2.png";
 import potato_image_3 from "./potato_image_3.png";
@@ -34,41 +34,41 @@ import visa from './visa.png';
 import lost from './lost.svg';
 
 export const assets = {
-    ChopNowLogo,
-    bg,
-    pointing,
-    fresh_produce,
-    login_bg,
-    google,
-    oops,
-    airtel_money,
-    bank,
-    mastercard,
-    momo,
-    visa,
-    lost
+  ChopNowLogo,
+  bg,
+  pointing,
+  fresh_produce,
+  login_bg,
+  google,
+  oops,
+  airtel_money,
+  bank,
+  mastercard,
+  momo,
+  visa,
+  lost
 }
 
 export const categories = [
-    {
-        text: 'Organic Veggies',
-        path: 'Vegetables',
-        image: organic_vegitable_image,
-        bgColor: "#FEF6DA"
-    },
-    {
-        text: 'Fresh Fruits',
-        path: 'Fruits',
-        image: fresh_fruits_image,
-        bgColor: "#FEE0E0"
-    },
-    {
-        text: 'Drinks',
-        path: 'Drinks',
-        image: drinks,
-        bgColor: '#F0F5DE'
-    },
-    {
+  {
+    text: 'Organic Veggies',
+    path: 'Vegetables',
+    image: organic_vegitable_image,
+    bgColor: "#FEF6DA"
+  },
+  {
+    text: 'Fresh Fruits',
+    path: 'Fruits',
+    image: fresh_fruits_image,
+    bgColor: "#FEE0E0"
+  },
+  {
+    text: 'Drinks',
+    path: 'Drinks',
+    image: drinks,
+    bgColor: '#F0F5DE'
+  },
+  {
     text: "Instant Food",
     path: "Instant",
     image: maggi_image,
@@ -103,7 +103,7 @@ export const dummyProducts = [
     vendor: "Fresh Farm",
     rating: 4.5,
     quantity: 5,
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "4PM - 6PM Today",
     price: 2500,
     offerPrice: 1500,
@@ -125,15 +125,15 @@ export const dummyProducts = [
     rating: 4.7,
     dietary_information: ["Vegetarian", "Dairy Free"],
     ingredients_allergens: [
-          {
-            ingredient: "Wheat Flour, water sea salt"
-          },
-          {
-            contains: "Wheat. May Contain traces of nuts and soy"
-          }
+      {
+        ingredient: "Wheat Flour, water sea salt"
+      },
+      {
+        contains: "Wheat. May Contain traces of nuts and soy"
+      }
     ],
     quantity: 3,
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "2PM - 4PM Today",
     price: 1200,
     offerPrice: 800,
@@ -146,13 +146,13 @@ export const dummyProducts = [
     createdAt: "2025-03-26T10:12:30.000Z",
     updatedAt: "2025-03-26T10:15:45.000Z",
     inStock: true,
-  }, 
+  },
   {
     _id: "3",
     name: "Plain Yoghurt 250ml",
     category: "Dairy",
     vendor: "Inyange",
-    location: {"Near" : "False"},
+    location: { "Near": "False" },
     pickupTime: "5PM - 7PM Today",
     price: 800,
     offerPrice: 500,
@@ -171,7 +171,7 @@ export const dummyProducts = [
     name: "Fresh Lemonade 500ml",
     category: "Drinks",
     vendor: "Cool Drinks Co.",
-    location: {"Near" : "False"},
+    location: { "Near": "False" },
     pickupTime: "1PM - 3PM Today",
     price: 1500,
     offerPrice: 900,
@@ -190,7 +190,7 @@ export const dummyProducts = [
     name: "Chicken Salad Pack",
     category: "Instant",
     vendor: "Healthy Bites",
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "12PM - 2PM Today",
     price: 3000,
     offerPrice: 2000,
@@ -209,7 +209,7 @@ export const dummyProducts = [
     name: "Fresh Cucumber",
     category: "Vegetables",
     vendor: "Green Valley Farms",
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "3PM - 5PM Today",
     price: 1000,
     offerPrice: 600,
@@ -228,7 +228,7 @@ export const dummyProducts = [
     name: "Ripe Mango",
     category: "Fruits",
     vendor: "Tropical Delights",
-    location: {"Near" : "False"},
+    location: { "Near": "False" },
     pickupTime: "4PM - 6PM Today",
     price: 2000,
     offerPrice: 1200,
@@ -248,7 +248,7 @@ export const dummyProducts = [
     category: "Dairy",
     vendor: "Cheese World",
     quantity: 5,
-    location: {"Near" : "False"},
+    location: { "Near": "False" },
     pickupTime: "2PM - 4PM Today",
     price: 2500,
     offerPrice: 1500,
@@ -266,7 +266,7 @@ export const dummyProducts = [
     name: "Noodle Pack",
     category: "Instant",
     vendor: "Quick Eats",
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "1PM - 3PM Today",
     price: 1800,
     offerPrice: 1000,
@@ -285,7 +285,7 @@ export const dummyProducts = [
     name: "Pastry Box",
     category: "Bakery",
     vendor: "Sweet Treats Bakery",
-    location: {"Near" : "True"},
+    location: { "Near": "True" },
     pickupTime: "11AM - 1PM Today",
     price: 3500,
     offerPrice: 2000,
@@ -302,9 +302,9 @@ export const dummyProducts = [
   {
     _id: "11",
     name: "Fresh Tomatoes 1kg",
-    category: "Vegetables", 
+    category: "Vegetables",
     vendor: "Sunrise Farms",
-    location: {"Near" : "False"},
+    location: { "Near": "False" },
     pickupTime: "3PM - 5PM Today",
     price: 2200,
     offerPrice: 1300,

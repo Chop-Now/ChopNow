@@ -4,15 +4,18 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import AppContextProvider from './context/AppContext'
+import { PlatformSettingsProvider } from './context/PlatformSettingsContext'
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import 'leaflet/dist/leaflet.css';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AppContextProvider>
-        <App />
-      </AppContextProvider>
+      <PlatformSettingsProvider>
+        <AppContextProvider>
+          <App />
+        </AppContextProvider>
+      </PlatformSettingsProvider>
     </GoogleOAuthProvider>
   </BrowserRouter>,
 )

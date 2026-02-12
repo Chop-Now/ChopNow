@@ -120,9 +120,12 @@ reviewSchema.post('save', async function (doc) {
     const Business = mongoose.model('Business');
     const stats = await doc.constructor.calculateAverageRating(doc.business);
 
+    // Update both stats and rating fields for consistency
     await Business.findByIdAndUpdate(doc.business, {
       'stats.averageRating': stats.averageRating,
-      'stats.reviewCount': stats.reviewCount
+      'stats.reviewCount': stats.reviewCount,
+      'rating.average': stats.averageRating,
+      'rating.count': stats.reviewCount
     });
   } catch (error) {
     logger.error({ err: error }, 'Error updating business stats');
@@ -135,9 +138,12 @@ reviewSchema.post('deleteOne', { document: true, query: false }, async function 
     const Business = mongoose.model('Business');
     const stats = await doc.constructor.calculateAverageRating(doc.business);
 
+    // Update both stats and rating fields for consistency
     await Business.findByIdAndUpdate(doc.business, {
       'stats.averageRating': stats.averageRating,
-      'stats.reviewCount': stats.reviewCount
+      'stats.reviewCount': stats.reviewCount,
+      'rating.average': stats.averageRating,
+      'rating.count': stats.reviewCount
     });
   } catch (error) {
     logger.error({ err: error }, 'Error updating business stats');

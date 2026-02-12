@@ -1,73 +1,111 @@
-import React, { useState } from 'react'
-import { Search, SlidersHorizontal, Calendar, Archive, Trash2, Package, Clock, CheckCircle, Truck, Filter } from 'lucide-react'
-
-// Generate more comprehensive dummy orders
-const generateDummyOrders = () => {
-  const customerNames = ['John Doe', 'Jane Smith', 'Alice Johnson', 'Bob Williams', 'Charlie Brown', 'Diana Prince', 'Eve Adams', 'Frank Castle', 'Grace Lee', 'Henry Ford', 'Ivy Chen', 'Jack Ryan', 'Kate Bishop', 'Liam Neeson', 'Mia Wallace'];
-  const statuses = ['Pending', 'Accepted', 'Delivered', 'Picked Up'];
-  const vendors = ['Fresh Farm', 'Cool Drinks Co.', 'Healthy Bites', 'Green Valley Farms', 'Tropical Delights', 'Cheese World', 'Quick Eats', 'Sweet Treats Bakery'];
-  
-  const orders = [];
-  for (let i = 1; i <= 50; i++) {
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const date = new Date(2026, 0, Math.floor(Math.random() * 7) + 1, Math.floor(Math.random() * 12) + 8, Math.floor(Math.random() * 60));
-    const pickupDate = new Date(date.getTime() + Math.random() * 3 * 24 * 60 * 60 * 1000);
-    
-    orders.push({
-      _id: `CN${78900 + i}`,
-      customerName: customerNames[Math.floor(Math.random() * customerNames.length)],
-      vendor: vendors[Math.floor(Math.random() * vendors.length)],
-      status: status,
-      total: Math.floor(Math.random() * 50000) + 5000,
-      pickupWindow: `${pickupDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${new Date(pickupDate.getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-      createdAt: date.toISOString(),
-      type: Math.random() > 0.5 ? 'Pickup' : 'Delivery',
-    });
-  }
-  return orders;
-};
+import React, { useState, useEffect } from 'react'
+import { Search, SlidersHorizontal, Calendar, Archive, Trash2, Package, Clock, CheckCircle, Truck, Filter, Loader2 } from 'lucide-react'
+import { orderService } from '../../services'
+import toast from 'react-hot-toast'
+import { useAdminMode } from '../context/AdminModeContext'
 
 const OrdersTable = ({ title, statusFilter }) => {
-  const allOrders = generateDummyOrders();
+  const { adminMode } = useAdminMode()
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [orders, setOrders] = useState(allOrders);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
-  // Filter orders based on status
+  // Fetch orders from API
+  useEffect(() => {
+    fetchOrders();
+  }, [currentPage, statusFilter]);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      // Build filters based on statusFilter
+      const filters = {
+        page: currentPage,
+        limit: itemsPerPage
+      };
+
+      if (statusFilter === 'pending') {
+        filters.status = 'pending';
+      } else if (statusFilter === 'completed') {
+        filters.status = 'completed';
+      } else if (statusFilter === 'deliveries') {
+        filters.fulfillmentType = 'delivery';
+        filters.status = 'confirmed';
+      }
+
+      // Use admin endpoint if in website admin mode, otherwise use regular orders
+      const response = adminMode === 'website'
+        ? await orderService.getAdminOrders(filters)
+        : await orderService.getOrders(filters);
+
+      // Transform orders to match UI format
+      const transformedOrders = (response.orders || []).map(order => ({
+        _id: order.orderNumber || order._id,
+        orderId: order._id,
+        customerName: order.customer ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : 'Unknown',
+        vendor: order.business?.name || 'Unknown Vendor',
+        status: formatStatus(order.status),
+        total: order.pricing?.total || 0,
+        pickupWindow: order.pickupDetails?.pickupTime || 'N/A',
+        createdAt: order.createdAt,
+        type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
+      }));
+
+      setOrders(transformedOrders);
+      setTotalPages(response.totalPages || 1);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to fetch orders');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatStatus = (status) => {
+    const statusMap = {
+      'pending': 'Pending',
+      'confirmed': 'Accepted',
+      'ready_for_pickup': 'Ready',
+      'out_for_delivery': 'In Transit',
+      'completed': 'Delivered',
+      'cancelled': 'Cancelled'
+    };
+    return statusMap[status] || status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown';
+  };
+
+  // Client-side filtering for search and date (API handles status filter)
   let filteredOrders = orders;
-  if (statusFilter === 'pending') {
-    filteredOrders = orders.filter(order => order.status === 'Pending');
-  } else if (statusFilter === 'completed') {
-    filteredOrders = orders.filter(order => order.status === 'Delivered' || order.status === 'Picked Up');
-  } else if (statusFilter === 'deliveries') {
-    filteredOrders = orders.filter(order => order.status === 'Accepted' && order.type === 'Delivery');
+
+  // Apply search filter (client-side)
+  if (searchTerm) {
+    filteredOrders = filteredOrders.filter(order =>
+      order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.vendor.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }
 
-  // Apply search filter
-  filteredOrders = filteredOrders.filter(order =>
-    order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.vendor.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Apply date range filter
+  // Apply date range filter (client-side)
   if (dateFrom) {
-    filteredOrders = filteredOrders.filter(order => 
+    filteredOrders = filteredOrders.filter(order =>
       new Date(order.createdAt) >= new Date(dateFrom)
     );
   }
   if (dateTo) {
-    filteredOrders = filteredOrders.filter(order => 
+    filteredOrders = filteredOrders.filter(order =>
       new Date(order.createdAt) <= new Date(dateTo + 'T23:59:59')
     );
   }
 
-  // Apply sorting
+  // Apply sorting (client-side)
   filteredOrders = [...filteredOrders].sort((a, b) => {
     if (sortBy === 'newest') {
       return new Date(b.createdAt) - new Date(a.createdAt);
@@ -81,11 +119,10 @@ const OrdersTable = ({ title, statusFilter }) => {
     return 0;
   });
 
-  // Pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  // Display values
+  const currentOrders = filteredOrders;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, endIndex);
   const showingFrom = filteredOrders.length > 0 ? startIndex + 1 : 0;
   const showingTo = Math.min(endIndex, filteredOrders.length);
 

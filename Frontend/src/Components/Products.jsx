@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 
 const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPriceRange }, ref) => {
 
-  const { products, searchQuery } = useAppContext();
+  const { products, searchQuery, productsLoading } = useAppContext();
   const [filteredProducts, setFilteredProducts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [showMobileSort, setShowMobileSort] = useState(false)
@@ -27,35 +27,41 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
   const productsPerPage = isMobile ? 10 : 9
 
   useEffect(() => {
-    let filtered = products.filter(product => product.inStock)
+    // Ensure products is an array before filtering
+    if (!Array.isArray(products)) {
+      setFilteredProducts([])
+      return
+    }
+
+    let filtered = products.filter(product => product?.inStock)
 
     // Filter by category if provided
     if (category) {
       filtered = filtered.filter(
-        product => product.category.toLowerCase() === category.toLowerCase()
+        product => product?.category?.toLowerCase() === category.toLowerCase()
       )
     }
 
     // Filter by search query
-    if (searchQuery.length > 0) {
+    if (searchQuery && searchQuery.length > 0) {
       filtered = filtered.filter(
-        product => product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        product => product?.name?.toLowerCase()?.includes(searchQuery.toLowerCase())
       )
     }
 
     // Filter by price range
-    filtered = filtered.filter(product => product.offerPrice <= priceRange)
+    filtered = filtered.filter(product => (product?.offerPrice || 0) <= priceRange)
 
     // Sort products
     if (sortBy === 'Distance (Nearest First)') {
       // For now, keep original order (would need location data to sort by distance)
       filtered = [...filtered]
     } else if (sortBy === 'Date Posted') {
-      filtered = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      filtered = filtered.sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0))
     } else if (sortBy === 'A to Z') {
-      filtered = filtered.sort((a, b) => a.name.localeCompare(b.name))
+      filtered = filtered.sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
     } else if (sortBy === 'Vendor Rating') {
-      filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      filtered = filtered.sort((a, b) => (b?.rating || 0) - (a?.rating || 0))
     }
 
     setFilteredProducts(filtered)
@@ -182,14 +188,42 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
           </>
         )}
 
-        <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6'>
-          {currentProducts.map((product, index) => (
-            <ProductCard key={index} product={product} />
-          ))}
-        </div>
+        {/* Loading State */}
+        {productsLoading && (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <div className="w-10 h-10 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: 'var(--color-solid)', borderTopColor: 'transparent' }}></div>
+              <p className="text-sm text-gray-500">Loading products...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!productsLoading && currentProducts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-700 mb-1">No products found</h3>
+            <p className="text-sm text-gray-500 max-w-xs">
+              {category ? `No ${category} products available at the moment.` : 'No products match your search criteria.'}
+            </p>
+          </div>
+        )}
+
+        {/* Product Grid */}
+        {!productsLoading && currentProducts.length > 0 && (
+          <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6'>
+            {currentProducts.map((product, index) => (
+              <ProductCard key={product._id || index} product={product} />
+            ))}
+          </div>
+        )}
 
         {/* Pagination absolutely positioned so sidebar matches only grid height */}
-        {totalPages > 1 && (
+        {!productsLoading && totalPages > 1 && (
           <div className="absolute left-0 right-0 top-full mt-8 flex items-center justify-center w-full">
             <div className="flex items-center justify-between w-full max-w-80 text-gray-500 font-medium">
               <button

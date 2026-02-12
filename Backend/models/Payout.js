@@ -22,21 +22,9 @@ const payoutSchema = new Schema({
         default: 'requested'
     },
     method: {
-        type: {
-            type: String,
-            enum: ['bank', 'mobile_money'],
-            required: true
-        },
-        details: {
-            // Bank details
-            bankName: String,
-            accountName: String,
-            accountNumber: String,
-            swiftCode: String,
-            // Mobile money details
-            provider: String,
-            phoneNumber: String
-        }
+        type: String,
+        enum: ['bank', 'mobile'],
+        required: true
     },
     reference: {
         type: String,

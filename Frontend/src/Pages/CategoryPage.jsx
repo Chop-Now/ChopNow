@@ -12,8 +12,10 @@ const CategoryPage = () => {
   const [priceRange, setPriceRange] = useState(50000)
   const productsRef = useRef()
 
-  // Capitalize first letter of category for display
-  const displayCategory = category.charAt(0).toUpperCase() + category.slice(1)
+  // Capitalize first letter of category for display (with fallback)
+  const displayCategory = category
+    ? category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')
+    : 'All Products'
 
   return (
     <div className='bg-white min-h-screen pt-20'>

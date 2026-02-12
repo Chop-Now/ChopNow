@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
-import { Search, Users, Store, Pen, Ban, CheckCircle, Clock, AlertCircle, X, Calendar, MapPin, Leaf, FileText, ChevronDown, Bike, Trash2, Archive, MoreVertical, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Search, Users, Store, Pen, Ban, CheckCircle, Clock, AlertCircle, X, Calendar, MapPin, Leaf, FileText, ChevronDown, Bike, Trash2, Archive, MoreVertical, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react'
+import { userService } from '../../services'
+import toast from 'react-hot-toast'
 
 export const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -9,139 +11,117 @@ export const AllUsers = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [showActionMenu, setShowActionMenu] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [usersData, setUsersData] = useState([])
+  const [totalPages, setTotalPages] = useState(1)
+  const [stats, setStats] = useState({ total: 0, activeVendors: 0, pendingVendors: 0, activeRiders: 0 })
+  const [editingRoles, setEditingRoles] = useState(false)
+  const [userRoles, setUserRoles] = useState([])
+  const [savingRoles, setSavingRoles] = useState(false)
   const itemsPerPage = 10
 
-  // Sample user data
-  const usersData = [
-    {
-      id: 'USR001',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      role: 'customer',
-      status: 'active',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-      joinedDate: '2025-12-15',
-      location: 'Lagos, Nigeria',
-      impact: { meals: 45, co2Saved: 67.5, waterSaved: 135 },
-      recentActivity: [
-        { action: 'Placed order #1234', date: '2026-01-18' },
-        { action: 'Updated profile', date: '2026-01-15' },
-        { action: 'Left review for Mama\'s Kitchen', date: '2026-01-10' }
-      ]
-    },
-    {
-      id: 'VND002',
-      name: 'Mama\'s Kitchen',
-      email: 'mamas.kitchen@vendor.com',
-      role: 'vendor',
-      status: 'active',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mama',
-      joinedDate: '2025-11-20',
-      location: 'Abuja, Nigeria',
-      impact: { meals: 320, co2Saved: 480, waterSaved: 960 },
-      recentActivity: [
-        { action: 'Added 5 new menu items', date: '2026-01-17' },
-        { action: 'Fulfilled order #1230', date: '2026-01-16' },
-        { action: 'Updated business hours', date: '2026-01-12' }
-      ]
-    },
-    {
-      id: 'RDR003',
-      name: 'John Delivery',
-      email: 'john.delivery@rider.com',
-      role: 'rider',
-      status: 'active',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-      joinedDate: '2025-12-01',
-      location: 'Port Harcourt, Nigeria',
-      impact: { deliveries: 180, co2Saved: 90, distance: 540 },
-      recentActivity: [
-        { action: 'Completed delivery #4567', date: '2026-01-19' },
-        { action: 'Completed delivery #4566', date: '2026-01-19' },
-        { action: 'Updated vehicle info', date: '2026-01-14' }
-      ]
-    },
-    {
-      id: 'USR004',
-      name: 'Michael Chen',
-      email: 'michael.chen@email.com',
-      role: 'customer',
-      status: 'pending',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-      joinedDate: '2026-01-18',
-      location: 'Ibadan, Nigeria',
-      impact: { meals: 0, co2Saved: 0, waterSaved: 0 },
-      recentActivity: [
-        { action: 'Account created', date: '2026-01-18' }
-      ]
-    },
-    {
-      id: 'VND005',
-      name: 'Fresh Bites',
-      email: 'fresh.bites@vendor.com',
-      role: 'vendor',
-      status: 'pending',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fresh',
-      joinedDate: '2026-01-17',
-      location: 'Kano, Nigeria',
-      impact: { meals: 0, co2Saved: 0, waterSaved: 0 },
-      recentActivity: [
-        { action: 'Submitted verification documents', date: '2026-01-17' },
-        { action: 'Business profile created', date: '2026-01-17' }
-      ]
-    },
-    {
-      id: 'USR006',
-      name: 'Emma Williams',
-      email: 'emma.williams@email.com',
-      role: 'customer',
-      status: 'suspended',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-      joinedDate: '2025-10-05',
-      location: 'Enugu, Nigeria',
-      impact: { meals: 28, co2Saved: 42, waterSaved: 84 },
-      recentActivity: [
-        { action: 'Account suspended - Policy violation', date: '2026-01-10' },
-        { action: 'Disputed order #0987', date: '2026-01-08' }
-      ]
-    },
-    {
-      id: 'RDR007',
-      name: 'David Rider',
-      email: 'david.rider@rider.com',
-      role: 'rider',
-      status: 'pending',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David',
-      joinedDate: '2026-01-16',
-      location: 'Calabar, Nigeria',
-      impact: { deliveries: 0, co2Saved: 0, distance: 0 },
-      recentActivity: [
-        { action: 'Submitted documents', date: '2026-01-16' },
-        { action: 'Completed rider registration', date: '2026-01-16' }
-      ]
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterRole])
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers()
+  }, [currentPage, filterRole])
+
+  const fetchUsers = async () => {
+    setLoading(true)
+    try {
+      const filters = {
+        page: currentPage,
+        limit: itemsPerPage
+      }
+      if (filterRole !== 'all') {
+        // Map frontend role names to backend
+        const roleMap = {
+          'customer': 'consumer',
+          'vendor': 'business_owner',
+          'rider': 'rider',
+          'admin': 'admin'
+        }
+        filters.role = roleMap[filterRole] || filterRole
+      }
+
+      const response = await userService.getUsers(filters)
+
+      // Transform users to match UI format
+      const transformedUsers = (response.users || []).map(user => {
+        // Get primary role - use activeRole, first role in roles array, or fallback to 'consumer'
+        const primaryRole = user.activeRole || (user.roles && user.roles[0]) || 'consumer';
+        return {
+          id: user._id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+          email: user.email,
+          role: mapRole(primaryRole),
+          roles: user.roles || [primaryRole], // Include full roles array
+          activeRole: user.activeRole || primaryRole,
+          status: user.status || 'active',
+          avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+          joinedDate: user.createdAt?.split('T')[0] || 'N/A',
+          location: user.addresses?.[0]?.city || 'N/A',
+          impact: {
+            meals: user.stats?.ordersCount || 0,
+            co2Saved: (user.stats?.ordersCount || 0) * 1.5,
+            waterSaved: (user.stats?.ordersCount || 0) * 3
+          },
+          recentActivity: []
+        };
+      })
+
+      setUsersData(transformedUsers)
+      setTotalPages(response.totalPages || 1)
+
+      // Calculate stats from all users (need separate call or estimate)
+      setStats({
+        total: response.total || transformedUsers.length,
+        activeVendors: transformedUsers.filter(u => u.role === 'vendor' && u.status === 'active').length,
+        pendingVendors: transformedUsers.filter(u => u.role === 'vendor' && u.status === 'pending').length,
+        activeRiders: transformedUsers.filter(u => u.role === 'rider' && u.status === 'active').length
+      })
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      toast.error('Failed to fetch users')
+      setUsersData([])
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
+
+  const mapRole = (role) => {
+    const roleMap = {
+      'consumer': 'customer',
+      'business_owner': 'vendor',
+      'rider': 'rider',
+      'admin': 'admin'
+    }
+    return roleMap[role] || role
+  }
 
   // Calculate stats
-  const totalUsers = usersData.length
-  const activeVendors = usersData.filter(u => u.role === 'vendor' && u.status === 'active').length
-  const pendingVendors = usersData.filter(u => u.role === 'vendor' && u.status === 'pending').length
-  const activeRiders = usersData.filter(u => u.role === 'rider' && u.status === 'active').length
-  const weeklyChange = 50 // Mock data - positive means increase
+  const totalUsers = stats.total
+  const activeVendors = stats.activeVendors
+  const pendingVendors = stats.pendingVendors
+  const activeRiders = stats.activeRiders
+  const weeklyChange = 0 // Would need analytics API for this
 
-  // Filter users
+  // Filter users - only do local search filtering since backend handles role filtering
   const filteredUsers = usersData.filter(user => {
+    if (!searchQuery) return true
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesRole = filterRole === 'all' || user.role === filterRole
-    return matchesSearch && matchesRole
+    return matchesSearch
   })
 
-  // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentUsers = filteredUsers.slice(startIndex, endIndex)
+  // Since backend handles pagination and role filtering, use fetched data directly
+  // Only do local filtering for search
+  const currentUsers = filteredUsers
+  const displayTotalPages = totalPages
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -157,40 +137,113 @@ export const AllUsers = () => {
       case 'customer': return 'bg-blue-100 text-blue-700'
       case 'vendor': return 'bg-purple-100 text-purple-700'
       case 'rider': return 'bg-orange-100 text-orange-700'
+      case 'admin': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
 
-  const handleApproveUser = (userId) => {
-    console.log('Approving user:', userId)
-    // Add approval logic here
-    alert(`User ${userId} approved!`)
+  const handleApproveUser = async (userId) => {
+    try {
+      await userService.activateUser(userId)
+      toast.success('User activated successfully')
+      fetchUsers()
+    } catch (error) {
+      console.error('Error activating user:', error)
+      toast.error('Failed to activate user')
+    }
   }
 
-  const handleSuspendUser = (userId) => {
+  const handleSuspendUser = async (userId) => {
     if (window.confirm('Are you sure you want to suspend this account?')) {
-      console.log('Suspending user:', userId)
-      // Add suspension logic here
-      alert(`User ${userId} suspended!`)
+      try {
+        await userService.suspendUser(userId)
+        toast.success('User suspended successfully')
+        fetchUsers()
+      } catch (error) {
+        console.error('Error suspending user:', error)
+        toast.error('Failed to suspend user')
+      }
     }
   }
 
   const handleSaveNote = () => {
     console.log('Saving admin note:', adminNote)
-    alert('Admin note saved!')
+    toast.success('Admin note saved!')
   }
 
-  const handleDeleteUser = (userId) => {
+  // Role editing handlers
+  const handleEditRoles = (user) => {
+    setUserRoles(user.roles || [])
+    setEditingRoles(true)
+  }
+
+  const handleToggleRole = (role) => {
+    setUserRoles(prev => {
+      if (prev.includes(role)) {
+        // Don't allow removing the last role
+        if (prev.length <= 1) {
+          toast.error('User must have at least one role')
+          return prev
+        }
+        return prev.filter(r => r !== role)
+      } else {
+        return [...prev, role]
+      }
+    })
+  }
+
+  const handleSaveRoles = async () => {
+    if (!selectedUser || userRoles.length === 0) return
+
+    setSavingRoles(true)
+    try {
+      await userService.updateUser(selectedUser.id, { roles: userRoles })
+      toast.success('User roles updated successfully!')
+      setEditingRoles(false)
+      fetchUsers()
+      // Update selected user with new roles
+      setSelectedUser(prev => ({
+        ...prev,
+        roles: userRoles,
+        role: mapRole(userRoles[0])
+      }))
+    } catch (error) {
+      console.error('Error updating user roles:', error)
+      toast.error(error.message || 'Failed to update user roles')
+    } finally {
+      setSavingRoles(false)
+    }
+  }
+
+  const handleCancelEditRoles = () => {
+    setEditingRoles(false)
+    setUserRoles([])
+  }
+
+  const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      console.log('Deleting user:', userId)
-      alert(`User ${userId} deleted!`)
+      try {
+        await userService.deleteUser(userId)
+        toast.success('User deleted successfully')
+        fetchUsers()
+      } catch (error) {
+        console.error('Error deleting user:', error)
+        toast.error('Failed to delete user')
+      }
     }
     setShowActionMenu(null)
   }
 
-  const handleArchiveUser = (userId) => {
-    console.log('Archiving user:', userId)
-    alert(`User ${userId} archived!`)
+  const handleArchiveUser = async (userId) => {
+    // Archive is same as suspend for now
+    try {
+      await userService.suspendUser(userId)
+      toast.success('User archived successfully')
+      fetchUsers()
+    } catch (error) {
+      console.error('Error archiving user:', error)
+      toast.error('Failed to archive user')
+    }
     setShowActionMenu(null)
   }
 
@@ -369,6 +422,16 @@ export const AllUsers = () => {
             >
               Riders
             </button>
+            <button
+              onClick={() => setFilterRole('admin')}
+              className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
+                filterRole === 'admin'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              Admins
+            </button>
           </div>
         </div>
       </div>
@@ -481,7 +544,7 @@ export const AllUsers = () => {
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
           <div className="text-xs text-gray-600">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} results
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, stats.total)} of {stats.total} results
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -492,11 +555,11 @@ export const AllUsers = () => {
               Previous
             </button>
             <span className="text-xs text-gray-600">
-              Page {currentPage} of {totalPages}
+              Page {currentPage} of {displayTotalPages || 1}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(displayTotalPages, prev + 1))}
+              disabled={currentPage === displayTotalPages || displayTotalPages === 0}
               className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Next
@@ -539,6 +602,95 @@ export const AllUsers = () => {
                   {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)} ID
                 </p>
                 <p className="text-xs font-mono font-semibold text-slate-900 dark:text-white">{selectedUser.id}</p>
+              </div>
+
+              {/* Role Management Section */}
+              <div className="mb-3 p-2 border border-slate-200 dark:border-slate-700 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">User Roles</p>
+                  {!editingRoles ? (
+                    <button
+                      onClick={() => handleEditRoles(selectedUser)}
+                      className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer"
+                    >
+                      Edit Roles
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCancelEditRoles}
+                        className="text-[9px] text-slate-500 hover:text-slate-700 dark:text-slate-400 font-medium cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveRoles}
+                        disabled={savingRoles}
+                        className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        {savingRoles ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {!editingRoles ? (
+                  <div className="flex flex-wrap gap-1">
+                    {(selectedUser.roles || [selectedUser.role]).map(role => (
+                      <span
+                        key={role}
+                        className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                          role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                          role === 'business_owner' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                          role === 'rider' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        }`}
+                      >
+                        {role === 'business_owner' ? 'Vendor' : role.charAt(0).toUpperCase() + role.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {[
+                      { key: 'consumer', label: 'Customer', color: 'blue' },
+                      { key: 'business_owner', label: 'Vendor', color: 'purple' },
+                      { key: 'rider', label: 'Rider', color: 'orange' },
+                      { key: 'admin', label: 'Admin', color: 'red' }
+                    ].map(({ key, label, color }) => (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+                          userRoles.includes(key)
+                            ? `bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800`
+                            : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={userRoles.includes(key)}
+                          onChange={() => handleToggleRole(key)}
+                          className={`w-3.5 h-3.5 rounded border-slate-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                        />
+                        <span className={`text-[10px] font-medium ${
+                          userRoles.includes(key)
+                            ? `text-${color}-700 dark:text-${color}-400`
+                            : 'text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {label}
+                        </span>
+                        {key === 'admin' && (
+                          <span className="text-[8px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1 rounded">
+                            Full Access
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1">
+                      Admin role grants full platform access including settings management.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Approve Button for Pending Users */}
@@ -787,88 +939,34 @@ export const RolesPermissions = () => {
 export const UserActivity = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7days')
   const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [activityData, setActivityData] = useState([])
+  const [totalActivities, setTotalActivities] = useState(0)
   const itemsPerPage = 10
 
-  const activityData = [
-    {
-      id: 1,
-      user: {
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@email.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-        role: 'customer'
-      },
-      action: 'Placed a new order',
-      details: 'Order #1234 - Jollof Rice from Mama\'s Kitchen',
-      timestamp: '2026-01-19T14:30:00',
-      type: 'order'
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Mama\'s Kitchen',
-        email: 'mamas.kitchen@vendor.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mama',
-        role: 'vendor'
-      },
-      action: 'Updated menu items',
-      details: 'Added 3 new dishes to the menu',
-      timestamp: '2026-01-19T13:15:00',
-      type: 'update'
-    },
-    {
-      id: 3,
-      user: {
-        name: 'John Delivery',
-        email: 'john.delivery@rider.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        role: 'rider'
-      },
-      action: 'Completed delivery',
-      details: 'Delivery #4567 - Delivered in 18 minutes',
-      timestamp: '2026-01-19T12:45:00',
-      type: 'delivery'
-    },
-    {
-      id: 4,
-      user: {
-        name: 'Michael Chen',
-        email: 'michael.chen@email.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-        role: 'customer'
-      },
-      action: 'Account created',
-      details: 'New customer registration',
-      timestamp: '2026-01-19T11:20:00',
-      type: 'registration'
-    },
-    {
-      id: 5,
-      user: {
-        name: 'Fresh Bites',
-        email: 'fresh.bites@vendor.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fresh',
-        role: 'vendor'
-      },
-      action: 'Submitted verification',
-      details: 'Business documents uploaded for review',
-      timestamp: '2026-01-19T10:00:00',
-      type: 'verification'
-    },
-    {
-      id: 6,
-      user: {
-        name: 'Emma Williams',
-        email: 'emma.williams@email.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-        role: 'customer'
-      },
-      action: 'Disputed order',
-      details: 'Dispute filed for order #0987',
-      timestamp: '2026-01-19T09:30:00',
-      type: 'dispute'
+  // Fetch activity data from backend
+  useEffect(() => {
+    fetchActivityData()
+  }, [selectedTimeRange, currentPage])
+
+  const fetchActivityData = async () => {
+    setLoading(true)
+    try {
+      const { analyticsService } = await import('../../services')
+      const response = await analyticsService.getUserActivity({
+        timeRange: selectedTimeRange,
+        page: currentPage,
+        limit: itemsPerPage
+      })
+      setActivityData(response.activities || [])
+      setTotalActivities(response.total || 0)
+    } catch (error) {
+      console.error('Error fetching activity data:', error)
+      setActivityData([])
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
   const getActivityIcon = (type) => {
     switch(type) {
@@ -906,12 +1004,11 @@ export const UserActivity = () => {
     return time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  // Sort by latest first and paginate
-  const sortedActivities = [...activityData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-  const totalPages = Math.ceil(sortedActivities.length / itemsPerPage)
+  // Use activity data directly (already sorted and paginated by backend)
+  const totalPages = Math.ceil(totalActivities / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentActivities = sortedActivities.slice(startIndex, endIndex)
+  const endIndex = Math.min(startIndex + itemsPerPage, totalActivities)
+  const currentActivities = activityData
 
   return (
     <div className="p-4 min-h-screen">
@@ -956,6 +1053,16 @@ export const UserActivity = () => {
       </div>
 
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+            <span className="ml-2 text-slate-600 dark:text-slate-400">Loading activities...</span>
+          </div>
+        ) : currentActivities.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+            <p>No activity found for the selected time range</p>
+          </div>
+        ) : (
         <div className="divide-y divide-slate-200 dark:divide-slate-700">
           {currentActivities.map((activity) => (
             <div key={activity.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
@@ -998,11 +1105,12 @@ export const UserActivity = () => {
             </div>
           ))}
         </div>
-        
+        )}
+
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="text-xs text-slate-600 dark:text-slate-400">
-            Showing {startIndex + 1} to {Math.min(endIndex, sortedActivities.length)} of {sortedActivities.length} activities
+            Showing {startIndex + 1} to {endIndex} of {totalActivities} activities
           </div>
           <div className="flex items-center gap-2">
             <button

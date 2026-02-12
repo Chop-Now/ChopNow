@@ -84,9 +84,21 @@ const listingSchema = new mongoose.Schema({
     views: {
         type: Number,
         default: 0
+    },
+    // Statistics
+    stats: {
+        views: { type: Number, default: 0 },
+        orders: { type: Number, default: 0 }
     }
 }, {
     timestamps: true
+});
+
+// Virtual for photos (alias for images)
+listingSchema.virtual('photos').get(function() {
+    return this.images;
+}).set(function(value) {
+    this.images = value;
 });
 
 // Methods

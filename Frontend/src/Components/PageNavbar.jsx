@@ -1,5 +1,5 @@
 import { assets } from '../assets/assets'
-import { Bell, Search, ShoppingCart, User, X, Funnel } from 'lucide-react'
+import { Bell, Search, ShoppingCart, User, X, Funnel, Store, PersonStanding, ArrowRightLeft } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
@@ -9,7 +9,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
     const [showProfileMenu, setShowProfileMenu] = React.useState(false)
     const navigate = useNavigate()
     const location = useLocation()
-    const { setSearchQuery, searchQuery, getTotalCartItems } = useAppContext()
+    const { setSearchQuery, searchQuery, getTotalCartItems, user, isAuthenticated, logout, activeRole, availableRoles, switchRole } = useAppContext()
 
     // Check if we're on cart or my-orders or my-impact or notifications page
     const hideSearch = location.pathname === '/cart' || location.pathname === '/my-orders' || location.pathname === '/my-impact' || location.pathname === '/notifications'
@@ -100,12 +100,85 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                                 className="absolute right-0 top-12 w-48 rounded-lg shadow-lg py-2 z-50"
                                 style={{ backgroundColor: 'white', border: '1px solid #E5E5E5' }}
                             >
-                                <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
-                                    <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
-                                    <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>john@example.com</p>
-                                </div>
-                                <NavLink to='/my-profile' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
-                                <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-solidOne)' }}>Logout</button>
+                                {isAuthenticated && user ? (
+                                    <>
+                                        <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
+                                            <p className="text-sm font-semibold" style={{ color: 'var(--color-textColor)' }}>
+                                                {user.firstName} {user.lastName}
+                                            </p>
+                                            <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>{user.email}</p>
+                                        </div>
+
+                                        {/* Role Switcher - Only show if user has multiple roles */}
+                                        {availableRoles && availableRoles.length > 1 && (
+                                            <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
+                                                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-gray-50)' }}>Switch Mode</p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (activeRole !== 'consumer') {
+                                                                await switchRole('consumer');
+                                                                setShowProfileMenu(false);
+                                                                navigate('/shop');
+                                                            }
+                                                        }}
+                                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                                                            activeRole === 'consumer'
+                                                                ? 'text-white'
+                                                                : 'bg-gray-100 hover:bg-gray-200'
+                                                        }`}
+                                                        style={{
+                                                            backgroundColor: activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
+                                                            color: activeRole === 'consumer' ? 'white' : 'var(--color-textColor)'
+                                                        }}
+                                                    >
+                                                        <PersonStanding className="w-3.5 h-3.5" />
+                                                        Buyer
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (activeRole !== 'business_owner') {
+                                                                await switchRole('business_owner');
+                                                                setShowProfileMenu(false);
+                                                                window.location.href = '/dashboard';
+                                                            }
+                                                        }}
+                                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                                                            activeRole === 'business_owner'
+                                                                ? 'text-white'
+                                                                : 'bg-gray-100 hover:bg-gray-200'
+                                                        }`}
+                                                        style={{
+                                                            backgroundColor: activeRole === 'business_owner' ? 'var(--color-solid)' : undefined,
+                                                            color: activeRole === 'business_owner' ? 'white' : 'var(--color-textColor)'
+                                                        }}
+                                                    >
+                                                        <Store className="w-3.5 h-3.5" />
+                                                        Business
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <NavLink to='/my-profile' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>My Profile</NavLink>
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setShowProfileMenu(false);
+                                                navigate('/login');
+                                            }}
+                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer"
+                                            style={{ color: 'var(--color-solidOne)' }}
+                                        >
+                                            Logout
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <NavLink to='/login' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-textColor)' }}>Login</NavLink>
+                                        <NavLink to='/signup' onClick={() => setShowProfileMenu(false)} className="block px-4 py-2 text-sm hover:bg-gray-50 transition" style={{ color: 'var(--color-solid)' }}>Sign Up</NavLink>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -230,6 +303,97 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                             </div>
                             <span className="text-xs" style={{ color: 'var(--color-gray-50)' }}>Notifications</span>
                         </div>
+
+                        {/* Mobile Role Switcher - Only show if user has multiple roles */}
+                        {isAuthenticated && availableRoles && availableRoles.length > 1 && (
+                            <div className="pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
+                                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-gray-50)' }}>Switch Mode</p>
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            if (activeRole !== 'consumer') {
+                                                await switchRole('consumer');
+                                                setOpen(false);
+                                                navigate('/shop');
+                                            }
+                                        }}
+                                        className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                                            activeRole === 'consumer' ? 'text-white' : 'bg-gray-100'
+                                        }`}
+                                        style={{
+                                            backgroundColor: activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
+                                            color: activeRole === 'consumer' ? 'white' : 'var(--color-textColor)'
+                                        }}
+                                    >
+                                        <PersonStanding className="w-4 h-4" />
+                                        Buyer Mode
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (activeRole !== 'business_owner') {
+                                                await switchRole('business_owner');
+                                                setOpen(false);
+                                                window.location.href = '/dashboard';
+                                            }
+                                        }}
+                                        className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                                            activeRole === 'business_owner' ? 'text-white' : 'bg-gray-100'
+                                        }`}
+                                        style={{
+                                            backgroundColor: activeRole === 'business_owner' ? 'var(--color-solid)' : undefined,
+                                            color: activeRole === 'business_owner' ? 'white' : 'var(--color-textColor)'
+                                        }}
+                                    >
+                                        <Store className="w-4 h-4" />
+                                        Business Mode
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mobile Auth Links */}
+                        {isAuthenticated ? (
+                            <div className="pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
+                                <NavLink
+                                    to='/my-profile'
+                                    onClick={() => setOpen(false)}
+                                    className="flex items-center gap-2 text-sm font-medium py-2"
+                                    style={{ color: 'var(--color-textColor)' }}
+                                >
+                                    <User className="w-4 h-4" />
+                                    My Profile
+                                </NavLink>
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        setOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 text-sm font-medium py-2 w-full"
+                                    style={{ color: 'var(--color-solidOne)' }}
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
+                                <NavLink
+                                    to='/login'
+                                    onClick={() => setOpen(false)}
+                                    className="block text-sm font-medium py-2"
+                                    style={{ color: 'var(--color-textColor)' }}
+                                >
+                                    Login
+                                </NavLink>
+                                <NavLink
+                                    to='/signup'
+                                    onClick={() => setOpen(false)}
+                                    className="block text-sm font-medium py-2"
+                                    style={{ color: 'var(--color-solid)' }}
+                                >
+                                    Sign Up
+                                </NavLink>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

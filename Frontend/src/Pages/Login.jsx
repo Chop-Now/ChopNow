@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google';
+import { businessService } from '../services';
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();
@@ -299,10 +300,13 @@ const Login = () => {
                   onClick={async (e) => {
                     e.preventDefault();
                     // Get email and password from inputs
-                    // This is a quick fix to avoid rewriting the whole form state
                     const form = e.target.closest('form');
-                    const email = form.querySelector('input[type="email"]').value;
-                    const password = form.querySelector('input[type="password"]').value;
+                    const emailInput = form.querySelector('input[type="email"]');
+                    // Password input type changes when "show password" is toggled, so use placeholder to find it
+                    const passwordInput = form.querySelector('input[placeholder="Password"]');
+
+                    const email = emailInput?.value;
+                    const password = passwordInput?.value;
 
                     if (!email || !password) {
                       toast.error("Please enter email and password");
@@ -310,18 +314,72 @@ const Login = () => {
                     }
 
                     try {
-                      await login(email, password, userType);
-                      toast.success("Login successful!");
+                      // Map userType to role for the login function
+                      const preferredRole = userType === 'business' ? 'business_owner' : 'consumer';
+                      const result = await login(email, password, preferredRole);
+                      const loggedInUser = result.user;
 
-                      // Redirect based on role
-                      if (userType === 'business') {
-                        window.location.href = '/dashboard';
+                      // Get roles from response
+                      const userRoles = loggedInUser.roles || [loggedInUser.role];
+                      const currentActiveRole = loggedInUser.activeRole || loggedInUser.role;
+
+                      // Handle business owner login
+                      if (userType === 'business' || currentActiveRole === 'business_owner') {
+                        // Check if user has business_owner role
+                        if (!userRoles.includes('business_owner')) {
+                          toast.error("This account is not registered as a business. You can add a business from your profile.");
+                          // Redirect to shop instead since they're a consumer
+                          window.location.href = '/shop';
+                          return;
+                        }
+
+                        toast.success("Login successful!");
+
+                        // Fetch the business to check verification status
+                        try {
+                          const businessResponse = await businessService.getMyBusinesses();
+                          const businesses = businessResponse.businesses || businessResponse || [];
+
+                          if (businesses.length === 0) {
+                            // No business created yet, redirect to verification
+                            window.location.href = '/business-verification';
+                            return;
+                          }
+
+                          const business = businesses[0]; // Get the first business
+                          const verificationStatus = business.verification?.status;
+
+                          // Check business verification/approval status
+                          // Business is approved if status is 'active' and verification.status is 'verified' or 'approved'
+                          const isApproved = business.status === 'active' &&
+                                            (verificationStatus === 'verified' || verificationStatus === 'approved');
+
+                          if (isApproved) {
+                            // Approved/auto-verified business - go to dashboard
+                            window.location.href = '/dashboard';
+                          } else if (verificationStatus === 'pending') {
+                            // Documents submitted, waiting for review
+                            window.location.href = '/pending-review';
+                          } else if (verificationStatus === 'unverified') {
+                            // Restaurant/cafe that needs to submit documents
+                            window.location.href = '/business-verification';
+                          } else {
+                            // Any other state - go to verification page
+                            window.location.href = '/business-verification';
+                          }
+                        } catch (bizError) {
+                          console.error("Error fetching business:", bizError);
+                          // If we can't fetch business, redirect to verification
+                          window.location.href = '/business-verification';
+                        }
                       } else {
-                        // Redirect consumers to shop as requested
+                        // Consumer login - redirect to shop
+                        toast.success("Login successful!");
                         window.location.href = '/shop';
                       }
 
                     } catch (error) {
+                      console.error("Login error:", error);
                       toast.error(error.message || "Login failed");
                     }
                   }}

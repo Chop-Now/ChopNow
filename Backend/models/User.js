@@ -33,9 +33,6 @@ const addressSchema = new Schema({
     }
 }, { _id: true });
 
-// Add geospatial index on location
-addressSchema.index({ location: '2dsphere' });
-
 const userSchema = new Schema({
     // Authentication
     email: {
@@ -62,11 +59,21 @@ const userSchema = new Schema({
         required: [true, 'Password is required']
     },
 
-    // Role
-    role: {
+    // Roles - Users can have multiple roles (e.g., consumer + business_owner)
+    roles: {
+        type: [String],
+        enum: ['consumer', 'business_owner', 'rider', 'admin'],
+        default: ['consumer'],
+        validate: {
+            validator: (v) => v && v.length > 0,
+            message: 'User must have at least one role'
+        }
+    },
+    // Active role - which role is currently in use
+    activeRole: {
         type: String,
         enum: ['consumer', 'business_owner', 'rider', 'admin'],
-        required: [true, 'Role is required']
+        default: 'consumer'
     },
 
     // Profile
@@ -176,6 +183,23 @@ userSchema.index({ 'addresses.location': '2dsphere' });
 // Virtual for full name
 userSchema.virtual('fullName').get(function () {
     return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+});
+
+// Virtual for backward compatibility - returns activeRole as 'role'
+userSchema.virtual('role').get(function () {
+    return this.activeRole;
+});
+
+// Pre-save middleware to ensure activeRole is in roles array
+userSchema.pre('save', async function() {
+    // If roles is empty, set default
+    if (!this.roles || this.roles.length === 0) {
+        this.roles = ['consumer'];
+    }
+    // If activeRole is not set or not in roles, set to first role
+    if (!this.activeRole || !this.roles.includes(this.activeRole)) {
+        this.activeRole = this.roles[0];
+    }
 });
 
 // Ensure virtuals are included in JSON

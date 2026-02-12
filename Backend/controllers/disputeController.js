@@ -56,16 +56,31 @@ const getMyDisputes = async (req, res) => {
 /**
  * @desc    Get disputes for my business
  * @route   GET /api/disputes/business
- * @access  Private (Business Owner/Manager)
+ * @access  Private (Admin/Business Owner/Manager)
  */
 const getBusinessDisputes = async (req, res) => {
     try {
-        // Note: In a real app, find business by user
-        // For now assuming the business owner role
-        const disputes = await Dispute.find({ business: req.user.businessId }) // Assuming businessId is attached to user
+        const Business = require('../models/Business');
+
+        // If admin, return all disputes
+        if (req.user.activeRole === 'admin' || req.user.roles?.includes('admin')) {
+            const disputes = await Dispute.find({})
+                .populate('customer', 'firstName lastName email')
+                .populate('business', 'name')
+                .sort({ createdAt: -1 });
+            return res.json({ disputes });
+        }
+
+        // For business owner, find their business first
+        const business = await Business.findOne({ owner: req.user._id });
+        if (!business) {
+            return res.json({ disputes: [] });
+        }
+
+        const disputes = await Dispute.find({ business: business._id })
             .populate('customer', 'firstName lastName email')
             .sort({ createdAt: -1 });
-        res.json(disputes);
+        res.json({ disputes });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -82,7 +97,7 @@ const getAdminDisputes = async (req, res) => {
             .populate('customer', 'firstName lastName email')
             .populate('business', 'name')
             .sort({ priority: -1, createdAt: -1 });
-        res.json(disputes);
+        res.json({ disputes });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -113,6 +128,61 @@ const getDisputeById = async (req, res) => {
         }
 
         res.json(dispute);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Get dispute statistics
+ * @route   GET /api/disputes/stats
+ * @access  Private (Admin/Support)
+ */
+const getDisputeStats = async (req, res) => {
+    try {
+        // Get today's date range
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Count resolved today
+        const resolvedToday = await Dispute.countDocuments({
+            status: 'resolved',
+            'resolution.resolvedAt': { $gte: today, $lt: tomorrow }
+        });
+
+        // Count by priority
+        const critical = await Dispute.countDocuments({ status: { $ne: 'resolved' }, priority: 'critical' });
+        const high = await Dispute.countDocuments({ status: { $ne: 'resolved' }, priority: 'high' });
+        const medium = await Dispute.countDocuments({ status: { $ne: 'resolved' }, priority: 'medium' });
+        const low = await Dispute.countDocuments({ status: { $ne: 'resolved' }, priority: 'low' });
+
+        // Total active (not resolved/closed)
+        const totalActive = await Dispute.countDocuments({ status: { $nin: ['resolved', 'closed'] } });
+
+        // Calculate average resolution time (for disputes resolved today)
+        const resolvedDisputes = await Dispute.find({
+            status: 'resolved',
+            'resolution.resolvedAt': { $gte: today, $lt: tomorrow }
+        });
+
+        let avgResolutionMinutes = 0;
+        if (resolvedDisputes.length > 0) {
+            const totalMinutes = resolvedDisputes.reduce((sum, d) => {
+                const created = new Date(d.createdAt).getTime();
+                const resolved = new Date(d.resolution.resolvedAt).getTime();
+                return sum + (resolved - created) / (1000 * 60);
+            }, 0);
+            avgResolutionMinutes = Math.round(totalMinutes / resolvedDisputes.length);
+        }
+
+        res.json({
+            resolvedToday,
+            totalActive,
+            byPriority: { critical, high, medium, low },
+            avgResolutionMinutes
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -155,5 +225,6 @@ module.exports = {
     getBusinessDisputes,
     getAdminDisputes,
     getDisputeById,
-    resolveDispute
+    resolveDispute,
+    getDisputeStats
 };

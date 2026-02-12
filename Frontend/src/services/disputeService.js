@@ -45,6 +45,16 @@ const disputeService = {
             throw error.response?.data || error;
         }
     },
+
+    // Get dispute statistics (Admin/Support)
+    getDisputeStats: async () => {
+        try {
+            const response = await api.get('/api/disputes/stats');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
 };
 
 export default disputeService;

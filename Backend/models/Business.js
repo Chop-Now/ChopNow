@@ -18,7 +18,7 @@ const businessSchema = new Schema({
     },
     type: {
         type: String,
-        enum: ['restaurant', 'bakery', 'supermarket', 'cafe', 'other'],
+        enum: ['farmer', 'supermarket', 'restaurant', 'bakery', 'cafe', 'other'],
         default: 'restaurant'
     },
 
@@ -58,7 +58,7 @@ const businessSchema = new Schema({
     verification: {
         status: {
             type: String,
-            enum: ['unverified', 'pending', 'approved', 'rejected'],
+            enum: ['unverified', 'pending', 'verified', 'approved', 'rejected'],
             default: 'unverified'
         },
         documents: [{
@@ -106,6 +106,54 @@ const businessSchema = new Schema({
             type: Number,
             default: 0
         }
+    },
+
+    // Media/Images
+    media: {
+        logo: { type: String },
+        coverImage: { type: String },
+        photos: [{ type: String }]
+    },
+
+    // Statistics
+    stats: {
+        totalOrders: { type: Number, default: 0 },
+        totalListings: { type: Number, default: 0 },
+        averageRating: { type: Number, default: 0 },
+        reviewCount: { type: Number, default: 0 },
+        balance: { type: Number, default: 0 },
+        impact: {
+            co2Saved: { type: Number, default: 0 },
+            mealsRescued: { type: Number, default: 0 },
+            waterSaved: { type: Number, default: 0 }
+        }
+    },
+
+    // Delivery Settings
+    deliverySettings: {
+        enabled: { type: Boolean, default: false },
+        fee: { type: Number, default: 0 },
+        radius: { type: Number, default: 5 }, // km
+        minOrder: { type: Number, default: 0 }
+    },
+
+    // Contact Info (structured)
+    contact: {
+        email: { type: String },
+        phone: { type: String },
+        whatsapp: { type: String }
+    },
+
+    // Payout Information
+    payoutInfo: {
+        preferredMethod: { type: String, enum: ['bank', 'mobile'], default: 'mobile' },
+        bankName: { type: String },
+        accountHolder: { type: String },
+        accountNumber: { type: String },
+        swiftCode: { type: String },
+        mobileProvider: { type: String, default: 'MTN' },
+        mobilePhone: { type: String },
+        mobileAccountName: { type: String }
     }
 }, {
     timestamps: true

@@ -3,11 +3,37 @@ import { categories } from '../../assets/assets'
 import { Search, SlidersHorizontal, Pencil, Trash2, Package, CheckCircle, XCircle, Clock, Upload, X, Crop, Maximize2, ShoppingCart } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
 import { useAppContext } from '../../context/AppContext'
-import { listingService } from '../../services'
+import { listingService, businessService } from '../../services'
 import toast from 'react-hot-toast'
 
+// Map frontend category paths to backend enum values
+// Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
+const categoryMap = {
+  // Frontend category paths from assets.js
+  'Vegetables': 'fruit-veg',
+  'Fruits': 'fruit-veg',
+  'Drinks': 'beverages',
+  'Instant': 'meals',
+  'Dairy': 'dairy',
+  'Bakery': 'baked-goods',
+  'Grains': 'pantry',
+  'Meat': 'meat',
+  'Meals': 'meals',
+  'Pantry': 'pantry',
+  'Other': 'other',
+  // Direct mapping for already correct values (case-insensitive support)
+  'fruit-veg': 'fruit-veg',
+  'baked-goods': 'baked-goods',
+  'meals': 'meals',
+  'dairy': 'dairy',
+  'meat': 'meat',
+  'beverages': 'beverages',
+  'pantry': 'pantry',
+  'other': 'other'
+};
+
 export const AllListings = () => {
-  const { adminMode } = useAdminMode();
+  const { adminMode, isAdmin } = useAdminMode();
   const { user } = useAppContext();
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,34 +42,66 @@ export const AllListings = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [businessId, setBusinessId] = useState(null);
+  const [businessName, setBusinessName] = useState('');
   const itemsPerPage = 10;
 
-  // Fetch products
+  // Fetch the user's business first
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      // In website admin mode, we don't need to fetch a specific business
+      if (adminMode === 'website' && isAdmin) {
+        setBusinessId('admin'); // Flag for admin mode
+        return;
+      }
+
+      try {
+        const response = await businessService.getMyBusinesses();
+        const businesses = response.businesses || response || [];
+        if (businesses.length > 0) {
+          setBusinessId(businesses[0]._id);
+          setBusinessName(businesses[0].name || '');
+        }
+      } catch (error) {
+        console.error('Error fetching business:', error);
+      }
+    };
+    fetchBusiness();
+  }, [adminMode, isAdmin]);
+
+  // Fetch products when businessId is available
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      // If user has a business, fetch their listings. If admin, fetch all?
-      // Assuming this view is for the logged-in business
-      const businessId = user?.business?._id || user?.business;
-      if (businessId) {
+
+      // Admin website mode - fetch all listings (including inactive/expired)
+      if (adminMode === 'website' && isAdmin) {
+        const response = await listingService.getListings({ status: 'all' });
+        const listings = response.listings || response || [];
+        setProducts(Array.isArray(listings) ? listings : []);
+        return;
+      }
+
+      // Vendor shop mode - fetch only their listings
+      if (businessId && businessId !== 'admin') {
         const data = await listingService.getListingsByBusiness(businessId);
-        setProducts(data);
-      } else if (user?.role === 'admin') {
-        // Fallback for admin view if needed, though usually admin has their own page
-        const data = await listingService.getListings();
-        setProducts(data);
+        const listings = data.listings || data || [];
+        setProducts(Array.isArray(listings) ? listings : []);
       }
     } catch (error) {
       console.error('Error fetching listings:', error);
       toast.error('Failed to load listings');
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, [user]);
+    if (businessId) {
+      fetchProducts();
+    }
+  }, [businessId, adminMode]);
 
   // Toggle product status
   const handleToggleStatus = async (productId, currentStatus) => {
@@ -89,9 +147,9 @@ export const AllListings = () => {
   };
 
   // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+  const filteredProducts = (Array.isArray(products) ? products : []).filter(product => {
+    const matchesSearch = (product?.name || product?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || product?.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -154,7 +212,40 @@ export const AllListings = () => {
 
   // If editing a product, show the edit form
   if (editingProduct) {
-    return <EditListing product={editingProduct} onBack={() => setEditingProduct(null)} />;
+    return <EditListing product={editingProduct} onBack={() => setEditingProduct(null)} onRefresh={fetchProducts} />;
+  }
+
+  // Loading state
+  if (isLoading && !products.length) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading listings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No business found state (for vendors only, not admins)
+  if (!businessId && adminMode === 'shop' && !isAdmin) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 max-w-md">
+          <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Business Found</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            You need to complete your business setup to manage listings.
+          </p>
+          <button
+            onClick={() => window.location.href = '/business-verification'}
+            className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
+          >
+            Complete Business Setup
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -289,23 +380,23 @@ export const AllListings = () => {
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <div className='flex items-center gap-3'>
                       <img
-                        src={product.image[0]}
-                        alt={product.name}
+                        src={product.image?.[0] || product.images?.[0] || '/placeholder-food.jpg'}
+                        alt={product.name || product.title || 'Product'}
                         className='w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700'
                       />
                       <span className='text-xs font-medium text-slate-900 dark:text-white truncate max-w-xs'>
-                        {product.name}
+                        {product.name || product.title || 'Unnamed Product'}
                       </span>
                     </div>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.category}</span>
+                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.category || 'N/A'}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs font-semibold text-slate-900 dark:text-white'>{product.stock}</span>
+                    <span className='text-xs font-semibold text-slate-900 dark:text-white'>{product.stock || product.inventory?.quantity || 0}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.pickupTime}</span>
+                    <span className='text-xs text-slate-600 dark:text-slate-400'>{product.pickupTime || 'Flexible'}</span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <span className='text-xs text-slate-600 dark:text-slate-400'>
@@ -319,7 +410,7 @@ export const AllListings = () => {
                         ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                       }`}>
-                      {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                      {product.status ? product.status.charAt(0).toUpperCase() + product.status.slice(1) : 'Unknown'}
                     </span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
@@ -409,11 +500,14 @@ export const AllListings = () => {
 export const NewListing = () => {
   const { user } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [businessId, setBusinessId] = useState(null);
+  const [businessName, setBusinessName] = useState('');
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
-    vendor: user?.name || '', // Default to user name
+    vendor: '', // Will be set from business name
     price: '',
     offerPrice: '',
     pickupFrom: '',
@@ -432,6 +526,30 @@ export const NewListing = () => {
 
   const [images, setImages] = useState([]);
   const [mainImage, setMainImage] = useState(null);
+
+  // Fetch the user's business on mount
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      try {
+        setIsLoadingBusiness(true);
+        const response = await businessService.getMyBusinesses();
+        const businesses = response.businesses || response || [];
+        if (businesses.length > 0) {
+          setBusinessId(businesses[0]._id);
+          setBusinessName(businesses[0].name || '');
+          setFormData(prev => ({ ...prev, vendor: businesses[0].name || '' }));
+        } else {
+          toast.error('No business found. Please create a business first.');
+        }
+      } catch (error) {
+        console.error('Error fetching business:', error);
+        toast.error('Failed to load business information');
+      } finally {
+        setIsLoadingBusiness(false);
+      }
+    };
+    fetchBusiness();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -472,23 +590,58 @@ export const NewListing = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.price || !formData.stock) {
-      toast.error('Please fill in required fields');
+    // Validate required fields
+    if (!formData.name) {
+      toast.error('Please enter a product name');
+      return;
+    }
+    if (!formData.description) {
+      toast.error('Please enter a description');
+      return;
+    }
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
+    if (!formData.price || Number(formData.price) <= 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    if (!formData.stock || Number(formData.stock) < 0) {
+      toast.error('Please enter stock quantity');
+      return;
+    }
+    if (!businessId) {
+      toast.error('No business found. Please create a business first.');
+      return;
+    }
+    if (!formData.pickupFrom || !formData.pickupTo) {
+      toast.error('Please set pickup window times');
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      // Format times
-      const startTime = formData.pickupFrom ? new Date(formData.pickupFrom).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '00:00';
-      const endTime = formData.pickupTo ? new Date(formData.pickupTo).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '23:59';
+      // Create full Date objects for timeWindow
+      const availableFrom = new Date(formData.pickupFrom);
+      const availableUntil = new Date(formData.pickupTo);
+
+      // Validate dates
+      if (isNaN(availableFrom.getTime()) || isNaN(availableUntil.getTime())) {
+        toast.error('Invalid pickup window dates');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Map category to backend enum
+      const mappedCategory = categoryMap[formData.category] || 'other';
 
       const payload = {
         title: formData.name,
         description: formData.description,
-        category: formData.category,
-        business: user?.business?._id || user?.business,
+        category: mappedCategory,
+        business: businessId,
         pricing: {
           price: Number(formData.offerPrice || formData.price),
           originalPrice: Number(formData.price),
@@ -499,37 +652,36 @@ export const NewListing = () => {
           unit: 'item'
         },
         timeWindow: {
-          availableFrom: startTime,
-          availableUntil: endTime
+          availableFrom: availableFrom.toISOString(),
+          availableUntil: availableUntil.toISOString()
         },
         nutritionalInfo: {
           calories: Number(formData.calories || 0),
           protein: Number(formData.protein || 0),
           carbs: Number(formData.carbs || 0),
           fats: Number(formData.fats || 0),
-          allergens: formData.allergens ? formData.allergens.split(',').map(s => s.trim()) : []
+          allergens: formData.allergens ? formData.allergens.split(',').map(s => s.trim()).filter(Boolean) : []
         },
-        image: [] // Backend uses 'images', creating empty first
+        images: [] // Start with empty, will upload separately
       };
 
       // Create listing
       const newListing = await listingService.createListing(payload);
 
-      // Upload images
+      // Upload images if any
       if (images.length > 0) {
         const imageFormData = new FormData();
         images.forEach(img => {
           if (img.file) imageFormData.append('photos', img.file);
         });
-        // Correct endpoint usage
         await listingService.uploadPhotos(newListing._id, imageFormData);
       }
 
       toast.success('Listing published successfully!');
 
-      // Reset form
+      // Reset form but keep vendor name
       setFormData({
-        name: '', description: '', category: '', vendor: user?.name || '',
+        name: '', description: '', category: '', vendor: businessName,
         price: '', offerPrice: '', pickupFrom: '', pickupTo: '', stock: '',
         calories: '', protein: '', carbs: '', fats: '', allergens: '',
         isRecurring: false, frequency: 'daily', repeatDays: [], endDate: ''
@@ -539,13 +691,50 @@ export const NewListing = () => {
 
     } catch (error) {
       console.error("Creation failed", error);
-      toast.error(error.message || 'Failed to create listing');
+      // Show more detailed error message
+      const errorMessage = error.errors
+        ? error.errors.map(e => e.msg || e.message).join(', ')
+        : (error.message || 'Failed to create listing');
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Show loading while fetching business
+  if (isLoadingBusiness) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading business information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no business found
+  if (!businessId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 max-w-md">
+          <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Business Found</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            You need to have a verified business to create listings.
+          </p>
+          <button
+            onClick={() => window.location.href = '/business-verification'}
+            className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
+          >
+            Complete Business Setup
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen'>

@@ -1,15 +1,18 @@
-import { dummyOrders, assets } from '../assets/assets'
+import { assets } from '../assets/assets'
 import React, { useEffect, useState } from 'react'
 import PageNavbar from '../Components/PageNavbar'
 import Footer from '../Components/Footer'
-import { Truck, Calendar, ChevronLeft, ChevronRight, X, Utensils, Trash2 } from 'lucide-react'
+import { Truck, Calendar, ChevronLeft, ChevronRight, X, Utensils, Trash2, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { orderService } from '../services'
+import toast from 'react-hot-toast'
 
 const MyOrders = () => {
 
     const navigate = useNavigate()
     const [myOrders, setMyOrders] = useState([])
     const [filteredOrders, setFilteredOrders] = useState([])
+    const [loading, setLoading] = useState(true)
     const [selectedVendor, setSelectedVendor] = useState('all')
     const [selectedStatus, setSelectedStatus] = useState('all')
     const [mobileStatusFilter, setMobileStatusFilter] = useState('processing')
@@ -20,10 +23,47 @@ const MyOrders = () => {
     const [selectedOrder, setSelectedOrder] = useState(null)
     const itemsPerPage = 5
 
+    // Transform backend order format to frontend format
+    const transformOrder = (order) => {
+        return {
+            _id: order.orderNumber || order._id,
+            orderId: order._id,
+            vendor: order.business?.name || 'Unknown Vendor',
+            vendorId: order.business?._id,
+            status: order.status?.charAt(0).toUpperCase() + order.status?.slice(1).replace(/_/g, ' ') || 'Pending',
+            amount: order.pricing?.total || 0,
+            type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
+            order_type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
+            createdAt: order.createdAt,
+            paymentMethod: order.payment?.method || 'COD',
+            isPaid: order.payment?.status === 'paid',
+            items: order.items?.map(item => ({
+                quantity: item.quantity,
+                product: {
+                    _id: item.productId || order.listing?._id,
+                    name: item.name || order.listing?.title || 'Product',
+                    image: order.listing?.photos || ['/placeholder-food.jpg'],
+                    offerPrice: item.unitPrice || 0
+                }
+            })) || []
+        }
+    }
+
     const fetchMyOrders = async () => {
-        setMyOrders(dummyOrders)
-        // Show all orders initially (desktop default is "all statuses")
-        setFilteredOrders(dummyOrders)
+        setLoading(true)
+        try {
+            const response = await orderService.getOrders()
+            const orders = (response.orders || []).map(transformOrder)
+            setMyOrders(orders)
+            setFilteredOrders(orders)
+        } catch (error) {
+            console.error('Error fetching orders:', error)
+            toast.error('Failed to fetch orders')
+            setMyOrders([])
+            setFilteredOrders([])
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
@@ -136,6 +176,14 @@ const MyOrders = () => {
                         <h2 className='text-2xl font-medium'>Order History</h2>
                         <p className='text-gray-600'>Review your past and current orders. Thank you for helping reduce food waste!</p>
                     </div>
+
+                    {loading ? (
+                        <div className='flex flex-col items-center justify-center py-16'>
+                            <Loader2 className='w-8 h-8 animate-spin text-green-600 mb-4' />
+                            <p className='text-gray-600'>Loading your orders...</p>
+                        </div>
+                    ) : (
+                    <>
 
                     {/* Mobile Delivery Type Filter */}
                     <div className='md:hidden mb-4'>
@@ -347,7 +395,9 @@ const MyOrders = () => {
                             {/* Mobile Order Cards */}
                             <div className='md:hidden space-y-3'>
                                 {currentOrders.map((order, index) => {
-                                    const firstProduct = order.items[0].product
+                                    const firstProduct = order.items?.[0]?.product || order.items?.[0]?.listing || {}
+                                    const productImage = firstProduct.image?.[0] || firstProduct.images?.[0] || '/placeholder.png'
+                                    const productName = firstProduct.name || firstProduct.title || 'Product'
                                     return (
                                         <div
                                             key={index}
@@ -356,11 +406,11 @@ const MyOrders = () => {
                                         >
                                             <div className='flex items-center gap-3 mb-3'>
                                                 <img
-                                                    src={firstProduct.image[0]}
-                                                    alt={firstProduct.name}
+                                                    src={productImage}
+                                                    alt={productName}
                                                     className='w-12 h-12 rounded-full object-cover shrink-0'
                                                 />
-                                                <p className='text-sm font-medium text-gray-900 line-clamp-2'>{firstProduct.name}</p>
+                                                <p className='text-sm font-medium text-gray-900 line-clamp-2'>{productName}</p>
                                             </div>
                                             <div className='flex justify-between items-start'>
                                                 <div className='flex-1'>
@@ -408,6 +458,8 @@ const MyOrders = () => {
                                 </div>
                             </div>
                         </>
+                    )}
+                    </>
                     )}
                 </div>
 
