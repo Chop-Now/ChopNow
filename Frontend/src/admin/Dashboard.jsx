@@ -26,7 +26,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAppContext();
   const [authChecked, setAuthChecked] = useState(false);
-  const [businessVerified, setBusinessVerified] = useState(false);
 
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -96,7 +95,6 @@ const Dashboard = () => {
         }
 
         // All checks passed - allow access
-        setBusinessVerified(true);
         setAuthChecked(true);
       } catch (error) {
         console.error('Error checking business status:', error);

@@ -7,7 +7,6 @@ import toast from 'react-hot-toast'
 const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInfo, onRescind, showActions = false }) => {
   const [actionNote, setActionNote] = useState('');
   const [showActionDialog, setShowActionDialog] = useState(null);
-  const [viewingDocument, setViewingDocument] = useState(null);
 
   const handleAction = (action) => {
     if (action === 'approve') {
@@ -25,9 +24,8 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
   };
 
   const handleDocumentClick = (doc) => {
-    setViewingDocument(doc);
     // In a real app, this would open the document in a viewer or download it
-    alert(`Viewing document: ${doc}\n\nIn production, this would open the actual document file.`);
+    window.open(doc, '_blank');
   };
 
   return (

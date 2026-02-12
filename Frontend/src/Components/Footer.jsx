@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { assets } from '../assets/assets';
 import { Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 

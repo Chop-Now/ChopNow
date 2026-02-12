@@ -1,4 +1,5 @@
 import React from 'react'
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 import { ArrowLeft, MapPin, Phone, Mail, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'

@@ -1,6 +1,6 @@
-import { Linkedin } from 'lucide-react'
 import React from 'react'
 import { FlipCard } from "./animate-ui/components/community/flip-card";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "motion/react";
 
 const Advisors = () => {

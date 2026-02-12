@@ -1,4 +1,3 @@
-import { assets } from '../assets/assets'
 import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck, Loader2, Tractor, Store, Croissant, UtensilsCrossed } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -88,11 +87,11 @@ const BusinessVerification = () => {
             navigate('/dashboard'); // or wherever they create businesses
           }, 2000);
         }
-      } catch (error) {
-        console.error("Failed to fetch business", error);
+      } catch (err) {
+        console.error("Failed to fetch business", err);
 
         // Check if it's an authentication error
-        if (error?.message?.includes('401') || error?.message?.includes('authorized') || error?.message?.includes('token')) {
+        if (err?.message?.includes('401') || err?.message?.includes('authorized') || err?.message?.includes('token')) {
           toast.error('Session expired. Please log in again.');
           navigate('/login');
         } else {
@@ -253,7 +252,7 @@ const BusinessVerification = () => {
                         setAddress(result.display_name || 'Location detected');
                         setErrors(prev => ({ ...prev, location: false }));
                         toast.success('Location detected successfully!');
-                      } catch (error) {
+                      } catch {
                         toast.error('Could not fetch address');
                       }
                       setIsLoadingLocation(false);
@@ -297,7 +296,7 @@ const BusinessVerification = () => {
                             } else {
                               toast.error('Address not found');
                             }
-                          } catch (error) {
+                          } catch {
                             toast.error('Could not search address');
                           }
                         }
@@ -323,7 +322,7 @@ const BusinessVerification = () => {
                           } else {
                             toast.error('Address not found');
                           }
-                        } catch (error) {
+                        } catch {
                           toast.error('Could not search address');
                         }
                       }
@@ -353,7 +352,7 @@ const BusinessVerification = () => {
                     try {
                       const result = await reverseGeocode(latlng.lat, latlng.lng);
                       setAddress(result.display_name || 'Location selected');
-                    } catch (error) {
+                    } catch {
                       setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
                     }
                   }}

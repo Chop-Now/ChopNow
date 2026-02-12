@@ -1,5 +1,5 @@
 import { ShoppingCart } from 'lucide-react';
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 

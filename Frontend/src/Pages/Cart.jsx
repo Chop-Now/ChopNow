@@ -9,8 +9,7 @@ import { useNavigate } from 'react-router-dom'
 const Cart = () => {
 
     const navigate = useNavigate()
-    const { products, cartItems, removeFromCart, addToCart, getTotalCartItems,
-        getCartAmount, updateCartItem, placeOrder } = useAppContext()
+    const { products, cartItems, removeFromCart, addToCart, getTotalCartItems, placeOrder } = useAppContext()
 
     const [cartArray, setCartArray] = useState([])
     const [fulfillmentMethod, setFulfillmentMethod] = useState('Pickup') // 'Pickup' or 'Delivery'
@@ -41,20 +40,17 @@ const Cart = () => {
 
     const vendorAddress = getVendorInfo()
 
-    const getCart = () => {
-        let tempArray = []
-        for (const key in cartItems) {
-            const product = products.find((item) => item._id === key)
-            if (product) {
-                tempArray.push({ ...product, cartQuantity: cartItems[key] })
-            }
-        }
-        setCartArray(tempArray)
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         if (products.length > 0 && cartItems) {
-            getCart()
+            let tempArray = []
+            for (const key in cartItems) {
+                const product = products.find((item) => item._id === key)
+                if (product) {
+                    tempArray.push({ ...product, cartQuantity: cartItems[key] })
+                }
+            }
+            setCartArray(tempArray)
         }
     }, [products, cartItems])
 

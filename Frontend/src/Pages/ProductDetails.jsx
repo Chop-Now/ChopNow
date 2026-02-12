@@ -1,7 +1,7 @@
 import PageNavbar from '../Components/PageNavbar';
 import Footer from '../Components/Footer';
 import ProductCard from '../Components/ProductCard';
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Home, Star, ShoppingCart, Send, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
@@ -18,7 +18,6 @@ const ProductDetails = () => {
     const [review, setReview] = useState({ rating: 0, comment: '' });
     const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
     const [showMagnifier, setShowMagnifier] = useState(false);
-    const imgRef = useRef(null);
 
     // Reviews state
     const [reviews, setReviews] = useState([]);
@@ -229,7 +228,6 @@ const ProductDetails = () => {
                             onMouseEnter={() => setShowMagnifier(true)}
                             onMouseLeave={() => setShowMagnifier(false)}
                             onMouseMove={handleMouseMove}
-                            ref={imgRef}
                         >
                             <img src={thumbnail} alt="Selected product" className="w-full h-full object-contain max-h-96" />
 

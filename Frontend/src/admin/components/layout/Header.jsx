@@ -6,7 +6,7 @@ import { useAppContext } from '../../../context/AppContext'
 import ConfirmationModal from '../ConfirmationModal'
 
 const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashboard = false }) => {
-  const { adminMode, toggleAdminMode } = useAdminMode();
+  const { toggleAdminMode } = useAdminMode();
   const { user, logout, availableRoles, switchRole } = useAppContext();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -95,9 +95,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
     { id: 'switch-admin', label: 'Switch to Shop Admin', path: 'Header > Admin Mode', icon: 'Store', keywords: ['switch mode', 'admin mode', 'shop admin', 'change mode', 'toggle admin', 'vendor mode'], type: 'action', action: 'switch-admin' },
   ];
 
-  // Check if user is admin
-  const currentUserRole = user?.activeRole || user?.role;
-  const isUserAdmin = currentUserRole === 'admin';
+  // Get current search items based on dashboard type
 
   // Get current search items based on dashboard type
   // For admin dashboard (/admin), always use website admin search items
@@ -106,7 +104,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
   // Filter out admin mode toggle for dedicated dashboards
   const currentSearchItems = baseSearchItems.filter(item => item.action !== 'switch-admin');
 
-  // Dummy notification data
+  // Dummy notification data - using static timestamps (relative order by id)
   const notifications = [
     {
       id: 1,
@@ -116,8 +114,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-green-600 dark:text-green-400',
       title: 'Order Completed',
       message: 'Your order #12345 has been delivered successfully',
-      time: '2 minutes ago',
-      timestamp: Date.now() - 2 * 60 * 1000
+      time: '2 minutes ago'
     },
     {
       id: 2,
@@ -127,8 +124,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-orange-600 dark:text-orange-400',
       title: 'New Order Received',
       message: 'You have a new order from John Doe',
-      time: '15 minutes ago',
-      timestamp: Date.now() - 15 * 60 * 1000
+      time: '15 minutes ago'
     },
     {
       id: 3,
@@ -138,8 +134,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-blue-600 dark:text-blue-400',
       title: 'Sales Milestone',
       message: 'Congratulations! You\'ve reached 100 sales this month',
-      time: '1 hour ago',
-      timestamp: Date.now() - 60 * 60 * 1000
+      time: '1 hour ago'
     },
     {
       id: 4,
@@ -149,8 +144,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-red-600 dark:text-red-400',
       title: 'Low Stock Alert',
       message: 'Product "Fresh Tomatoes" is running low on stock',
-      time: '2 hours ago',
-      timestamp: Date.now() - 2 * 60 * 60 * 1000
+      time: '2 hours ago'
     },
     {
       id: 5,
@@ -160,8 +154,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-green-600 dark:text-green-400',
       title: 'Payment Received',
       message: 'Payment of RWF 45,000 has been confirmed',
-      time: '3 hours ago',
-      timestamp: Date.now() - 3 * 60 * 60 * 1000
+      time: '3 hours ago'
     },
     {
       id: 6,
@@ -171,8 +164,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-orange-600 dark:text-orange-400',
       title: 'Order Shipped',
       message: 'Order #12344 has been shipped to customer',
-      time: '5 hours ago',
-      timestamp: Date.now() - 5 * 60 * 60 * 1000
+      time: '5 hours ago'
     },
     {
       id: 7,
@@ -182,8 +174,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-blue-600 dark:text-blue-400',
       title: 'Revenue Update',
       message: 'Daily revenue increased by 25% compared to yesterday',
-      time: '1 day ago',
-      timestamp: Date.now() - 24 * 60 * 60 * 1000
+      time: '1 day ago'
     },
     {
       id: 8,
@@ -193,39 +184,15 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       iconColor: 'text-green-600 dark:text-green-400',
       title: 'Review Posted',
       message: 'A customer left a 5-star review on your product',
-      time: '2 days ago',
-      timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000
-    },
-    {
-      id: 9,
-      type: 'info',
-      icon: Package,
-      iconBg: 'bg-orange-100 dark:bg-orange-900/30',
-      iconColor: 'text-orange-600 dark:text-orange-400',
-      title: 'New Product Added',
-      message: 'Successfully added "Organic Bananas" to your catalog',
-      time: '3 days ago',
-      timestamp: Date.now() - 3 * 24 * 60 * 60 * 1000
-    },
-    {
-      id: 10,
-      type: 'warning',
-      icon: AlertCircle,
-      iconBg: 'bg-red-100 dark:bg-red-900/30',
-      iconColor: 'text-red-600 dark:text-red-400',
-      title: 'Pending Verification',
-      message: 'Your business verification is pending review',
-      time: '4 days ago',
-      timestamp: Date.now() - 4 * 24 * 60 * 60 * 1000
+      time: '2 days ago'
     }
   ];
 
-  // Get the 8 latest notifications
-  const latestNotifications = notifications
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 8);
+  // Display notifications in order
+  const latestNotifications = notifications;
 
   // Check for saved theme preference or default to light mode
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);

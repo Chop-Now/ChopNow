@@ -123,9 +123,9 @@ export const EmptyStateCard = (props) => (
 /**
  * Compact empty state for smaller spaces
  */
-export const EmptyStateCompact = ({ message, icon: Icon = Inbox }) => (
+export const EmptyStateCompact = ({ message, icon: IconComponent = Inbox }) => (
   <div className="flex flex-col items-center justify-center py-8 text-center">
-    <Icon className="w-8 h-8 text-slate-400 dark:text-slate-500 mb-2" />
+    <IconComponent className="w-8 h-8 text-slate-400 dark:text-slate-500 mb-2" />
     <p className="text-sm text-slate-500 dark:text-slate-400">{message || 'Nothing to show'}</p>
   </div>
 );
