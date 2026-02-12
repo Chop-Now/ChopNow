@@ -41,6 +41,8 @@ const protect = async (req, res, next) => {
 
 /**
  * Role-based authorization middleware
+ * Checks activeRole for authorization, supports multi-role users
+ * Admin users can access admin routes regardless of activeRole
  * @param  {...any} roles - Allowed roles
  */
 const authorize = (...roles) => {
@@ -49,9 +51,35 @@ const authorize = (...roles) => {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    if (!roles.includes(req.user.role)) {
+    const userRoles = req.user.roles || [];
+    const userActiveRole = req.user.activeRole || userRoles[0];
+
+    // IMPORTANT: If the route allows 'admin' and user HAS admin role,
+    // allow access regardless of their current activeRole.
+    // This ensures admins can perform admin tasks without switching roles.
+    if (roles.includes('admin') && userRoles.includes('admin')) {
+      return next();
+    }
+
+    // Check if user's activeRole is in the allowed roles
+    if (!roles.includes(userActiveRole)) {
+      // Check if user HAS one of the required roles but it's not active
+      const hasRequiredRole = roles.some(role => userRoles.includes(role));
+
+      if (hasRequiredRole) {
+        // User has the role but needs to switch to it
+        const availableRole = roles.find(role => userRoles.includes(role));
+        return res.status(403).json({
+          message: `Please switch to your '${availableRole}' role to access this resource`,
+          code: 'WRONG_ACTIVE_ROLE',
+          requiredRole: availableRole,
+          currentActiveRole: userActiveRole,
+          availableRoles: userRoles
+        });
+      }
+
       return res.status(403).json({
-        message: `User role '${req.user.role}' is not authorized to access this route`
+        message: `User role '${userActiveRole}' is not authorized to access this route`
       });
     }
 

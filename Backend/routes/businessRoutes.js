@@ -11,7 +11,11 @@ const {
   uploadPhotos,
   uploadKYC,
   getMyBusinesses,
-  getBusinessStats
+  getBusinessStats,
+  getPendingBusinesses,
+  approveBusiness,
+  rejectBusiness,
+  requestMoreInfo
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -35,6 +39,12 @@ router.get('/', getBusinesses);
 // IMPORTANT: Specific routes must come BEFORE parameterized routes
 // Get my businesses - must be before /:id
 router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusinesses);
+
+// Admin-only: Business approval workflow
+router.get('/pending', protect, authorize('admin'), getPendingBusinesses);
+router.patch('/:id/approve', protect, authorize('admin'), approveBusiness);
+router.patch('/:id/reject', protect, authorize('admin'), rejectBusiness);
+router.patch('/:id/request-info', protect, authorize('admin'), requestMoreInfo);
 
 // Get by ID - comes after specific routes
 router.get('/:id', getBusinessById);

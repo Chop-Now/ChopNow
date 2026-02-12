@@ -1,80 +1,180 @@
 import PageNavbar from '../Components/PageNavbar'
-import React, { useState } from 'react'
-import { Truck, Megaphone, PartyPopper, Store, CheckCheck, ArchiveRestore, EllipsisVertical } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Truck, Megaphone, PartyPopper, Store, CheckCheck, ArchiveRestore, EllipsisVertical, Loader2, Star, ShoppingBag, Bell, X, MapPin, Package, Clock, ChevronRight } from 'lucide-react'
+import { notificationService } from '../services'
+import toast from 'react-hot-toast'
 
 const Notification = () => {
+  const navigate = useNavigate()
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [selectedCategories, setSelectedCategories] = useState([])
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'rider',
-      title: 'Your rider, Alex, is on the way!',
-      description: 'Expected delivery in 15 minutes',
-      isRead: false,
-      timestamp: '5 mins ago'
-    },
-    {
-      id: 2,
-      type: 'order',
-      title: 'Order #12345 confirmed',
-      description: 'Your order has been confirmed and is being prepared',
-      isRead: true,
-      timestamp: '30 mins ago'
-    },
-    {
-      id: 3,
-      type: 'announcement',
-      title: 'New Feature: Track Your Impact',
-      description: 'Now you can see how your purchases help reduce food waste!',
-      isRead: false,
-      timestamp: '2 hours ago'
-    },
-    {
-      id: 4,
-      type: 'milestone',
-      title: 'You saved 50 meals from waste!',
-      description: 'Congratulations! Your efforts are making a difference',
-      isRead: false,
-      timestamp: '1 day ago'
-    },
-    {
-      id: 5,
-      type: 'rider',
-      title: 'Sarah delivered your order',
-      description: 'We hope you enjoyed your meal!',
-      isRead: true,
-      timestamp: '2 days ago'
-    },
-    {
-      id: 6,
-      type: 'order',
-      title: 'Order #12340 is ready for pickup',
-      description: 'Your order is waiting at the restaurant',
-      isRead: false,
-      timestamp: '3 days ago'
-    },
-    {
-      id: 7,
-      type: 'announcement',
-      title: 'Weekend Special Deals',
-      description: 'Check out amazing discounts on surplus food this weekend',
-      isRead: true,
-      timestamp: '4 days ago'
-    },
-    {
-      id: 8,
-      type: 'milestone',
-      title: 'First Week Complete!',
-      description: 'You\'ve been with ChopNow for a week. Thank you for fighting food waste!',
-      isRead: true,
-      timestamp: '1 week ago'
-    }
-  ])
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(null)
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  // Fetch notifications on mount
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
+
+  const fetchNotifications = async () => {
+    setLoading(true)
+    try {
+      const response = await notificationService.getNotifications()
+      const notifs = (response.notifications || []).map(n => ({
+        id: n._id,
+        type: mapNotificationType(n.type),
+        originalType: n.type,
+        title: n.title,
+        description: n.message,
+        isRead: n.read,
+        timestamp: formatTimestamp(n.createdAt),
+        createdAt: n.createdAt,
+        link: n.link,
+        relatedOrder: n.relatedOrder,
+        relatedBusiness: n.relatedBusiness,
+        relatedListing: n.relatedListing,
+        metadata: n.metadata || {}
+      }))
+      setNotifications(notifs)
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+      setNotifications([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Map backend notification types to frontend types
+  const mapNotificationType = (type) => {
+    const typeMap = {
+      'order_confirmed': 'order',
+      'order_ready': 'order',
+      'order_completed': 'order',
+      'order_cancelled': 'order',
+      'order_out_for_delivery': 'rider',
+      'delivery_assigned': 'rider',
+      'delivery_completed': 'rider',
+      'new_order': 'vendor_order',
+      'order_status_changed': 'vendor_order',
+      'new_review': 'review',
+      'review_response': 'review',
+      'impact_milestone': 'milestone',
+      'system': 'announcement',
+      'promotion': 'announcement',
+      'other': 'announcement'
+    }
+    return typeMap[type] || 'order'
+  }
+
+  // Handle notification click - show details
+  const handleNotificationClick = async (notification) => {
+    // Mark as read first
+    if (!notification.isRead) {
+      try {
+        await notificationService.markAsRead(notification.id)
+        setNotifications(prev =>
+          prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
+        )
+      } catch (error) {
+        console.error('Error marking as read:', error)
+      }
+    }
+
+    // Fetch full notification details
+    setDetailLoading(true)
+    try {
+      const fullNotification = await notificationService.getNotificationById(notification.id)
+      setSelectedNotification({
+        ...notification,
+        ...fullNotification,
+        metadata: fullNotification.metadata || notification.metadata || {}
+      })
+    } catch (error) {
+      console.error('Error fetching notification details:', error)
+      // Fallback to current notification data
+      setSelectedNotification(notification)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  // Close detail modal
+  const closeDetail = () => {
+    setSelectedNotification(null)
+  }
+
+  // Navigate from detail view
+  const handleDetailAction = (notification) => {
+    closeDetail()
+    const actionUrl = notification.metadata?.actionUrl || notification.link
+
+    switch (notification.originalType) {
+      case 'order_confirmed':
+      case 'order_ready':
+      case 'order_completed':
+      case 'order_cancelled':
+      case 'order_out_for_delivery':
+      case 'delivery_assigned':
+      case 'review_response':
+        navigate('/my-orders')
+        break
+      case 'new_order':
+      case 'order_status_changed':
+      case 'new_review':
+        navigate('/dashboard')
+        break
+      case 'new_listing_nearby':
+      case 'favorite_business_new_listing':
+        if (notification.relatedListing?._id || notification.relatedListing) {
+          const listingId = notification.relatedListing?._id || notification.relatedListing
+          navigate(`/shop/all/${listingId}`)
+        } else {
+          navigate('/shop')
+        }
+        break
+      default:
+        if (actionUrl) navigate(actionUrl)
+        break
+    }
+  }
+
+  // Format timestamp to relative time
+  const formatTimestamp = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins} mins ago`
+    if (diffHours < 24) return `${diffHours} hours ago`
+    if (diffDays < 7) return `${diffDays} days ago`
+    return `${Math.floor(diffDays / 7)} week${diffDays >= 14 ? 's' : ''} ago`
+  }
+
+  // Format date for detail view
+  const formatFullDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
   const categories = [
     { id: 'order', label: 'Order updates' },
+    { id: 'vendor_order', label: 'Vendor Orders' },
+    { id: 'review', label: 'Reviews' },
     { id: 'rider', label: 'Rider Status' },
     { id: 'announcement', label: 'App announcements' },
     { id: 'milestone', label: 'Impact Milestones' }
@@ -90,8 +190,12 @@ const Notification = () => {
         return { Icon: PartyPopper, color: '#4CAF50', bgColor: '#E8F5E9' }
       case 'order':
         return { Icon: Store, color: '#007A4B', bgColor: '#E0F2ED' }
+      case 'vendor_order':
+        return { Icon: ShoppingBag, color: '#2563EB', bgColor: '#DBEAFE' }
+      case 'review':
+        return { Icon: Star, color: '#F59E0B', bgColor: '#FEF3C7' }
       default:
-        return { Icon: Store, color: '#007A4B', bgColor: '#E0F2ED' }
+        return { Icon: Bell, color: '#007A4B', bgColor: '#E0F2ED' }
     }
   }
 
@@ -108,23 +212,52 @@ const Notification = () => {
     setSelectedCategories([])
   }
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })))
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead()
+      setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })))
+      toast.success('All notifications marked as read')
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+      toast.error('Failed to mark all as read')
+    }
   }
 
-  const archiveAll = () => {
-    setNotifications([])
+  const archiveAll = async () => {
+    try {
+      for (const notif of notifications) {
+        await notificationService.deleteNotification(notif.id)
+      }
+      setNotifications([])
+      toast.success('All notifications archived')
+    } catch (error) {
+      console.error('Error archiving all:', error)
+      toast.error('Failed to archive notifications')
+    }
   }
 
-  const markAsRead = (id) => {
-    setNotifications(prev =>
-      prev.map(notif => notif.id === id ? { ...notif, isRead: true } : notif)
-    )
+  const markAsRead = async (id) => {
+    try {
+      await notificationService.markAsRead(id)
+      setNotifications(prev =>
+        prev.map(notif => notif.id === id ? { ...notif, isRead: true } : notif)
+      )
+    } catch (error) {
+      console.error('Error marking as read:', error)
+      toast.error('Failed to mark as read')
+    }
     setDropdownOpen(null)
   }
 
-  const deleteNotification = (id) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id))
+  const deleteNotification = async (id) => {
+    try {
+      await notificationService.deleteNotification(id)
+      setNotifications(prev => prev.filter(notif => notif.id !== id))
+      toast.success('Notification deleted')
+    } catch (error) {
+      console.error('Error deleting notification:', error)
+      toast.error('Failed to delete notification')
+    }
     setDropdownOpen(null)
   }
 
@@ -133,6 +266,180 @@ const Notification = () => {
     const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(notif.type)
     return filterMatch && categoryMatch
   })
+
+  // Render notification detail modal
+  const renderDetailModal = () => {
+    if (!selectedNotification) return null
+
+    const { Icon, color, bgColor } = getIconConfig(selectedNotification.type)
+    const meta = selectedNotification.metadata || {}
+
+    return (
+      <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4' onClick={closeDetail}>
+        <div
+          className='bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto'
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className='sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between'>
+            <h2 className='text-lg font-semibold text-textColor'>Notification Details</h2>
+            <button
+              onClick={closeDetail}
+              className='p-2 hover:bg-gray-100 rounded-full transition-colors'
+            >
+              <X size={20} className='text-gray-500' />
+            </button>
+          </div>
+
+          {detailLoading ? (
+            <div className='flex items-center justify-center py-12'>
+              <Loader2 className='w-8 h-8 animate-spin text-green-600' />
+            </div>
+          ) : (
+            <div className='p-6'>
+              {/* Icon and Title */}
+              <div className='flex items-start gap-4 mb-6'>
+                <div
+                  className='w-14 h-14 rounded-full flex items-center justify-center shrink-0'
+                  style={{ backgroundColor: bgColor }}
+                >
+                  <Icon size={28} style={{ color }} />
+                </div>
+                <div>
+                  <h3 className='text-xl font-bold text-textColor mb-1'>
+                    {selectedNotification.title}
+                  </h3>
+                  <p className='text-gray-600'>
+                    {selectedNotification.description || selectedNotification.message}
+                  </p>
+                </div>
+              </div>
+
+              {/* Order/Listing Details */}
+              {(meta.orderNumber || meta.listingTitle) && (
+                <div className='bg-gray-50 rounded-xl p-4 mb-4'>
+                  {meta.listingImage && (
+                    <div className='mb-3'>
+                      <img
+                        src={meta.listingImage}
+                        alt={meta.listingTitle}
+                        className='w-full h-32 object-cover rounded-lg'
+                      />
+                    </div>
+                  )}
+
+                  {meta.listingTitle && (
+                    <p className='font-medium text-textColor mb-2'>{meta.listingTitle}</p>
+                  )}
+
+                  <div className='space-y-2'>
+                    {meta.orderNumber && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Package size={16} className='text-gray-400' />
+                        <span className='text-gray-600'>Order:</span>
+                        <span className='font-medium text-textColor'>#{meta.orderNumber}</span>
+                      </div>
+                    )}
+
+                    {meta.orderTotal && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <span className='text-gray-600 ml-6'>Total:</span>
+                        <span className='font-bold text-green-600'>
+                          {meta.currency || 'RWF'} {meta.orderTotal?.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {meta.businessName && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Store size={16} className='text-gray-400' />
+                        <span className='text-gray-600'>From:</span>
+                        <span className='font-medium text-textColor'>{meta.businessName}</span>
+                      </div>
+                    )}
+
+                    {meta.customerName && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <span className='text-gray-600 ml-6'>Customer:</span>
+                        <span className='font-medium text-textColor'>{meta.customerName}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Pickup Code - Prominent Display */}
+              {meta.pickupCode && (
+                <div className='bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4 text-center'>
+                  <p className='text-sm text-green-700 mb-2'>Your Pickup Code</p>
+                  <p className='text-3xl font-bold text-green-600 tracking-widest'>
+                    {meta.pickupCode}
+                  </p>
+                  <p className='text-xs text-green-600 mt-2'>Show this code when you pick up your order</p>
+                </div>
+              )}
+
+              {/* Delivery Address */}
+              {meta.deliveryAddress && (
+                <div className='flex items-start gap-2 text-sm mb-4 bg-blue-50 rounded-lg p-3'>
+                  <MapPin size={16} className='text-blue-500 mt-0.5 shrink-0' />
+                  <div>
+                    <span className='text-blue-700 font-medium'>Delivery Address:</span>
+                    <p className='text-blue-600'>{meta.deliveryAddress}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Fulfillment Type */}
+              {meta.fulfillmentType && (
+                <div className='flex items-center gap-2 text-sm text-gray-600 mb-4'>
+                  {meta.fulfillmentType === 'delivery' ? (
+                    <Truck size={16} className='text-gray-400' />
+                  ) : (
+                    <Store size={16} className='text-gray-400' />
+                  )}
+                  <span className='capitalize'>{meta.fulfillmentType}</span>
+                </div>
+              )}
+
+              {/* Review Details */}
+              {meta.reviewRating && (
+                <div className='bg-yellow-50 rounded-xl p-4 mb-4'>
+                  <div className='flex items-center gap-1 mb-2'>
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={20}
+                        className={i < meta.reviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                      />
+                    ))}
+                  </div>
+                  {meta.reviewText && (
+                    <p className='text-gray-700 italic'>"{meta.reviewText}"</p>
+                  )}
+                </div>
+              )}
+
+              {/* Timestamp */}
+              <div className='flex items-center gap-2 text-sm text-gray-500 mb-6'>
+                <Clock size={16} />
+                <span>{formatFullDate(selectedNotification.createdAt)}</span>
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={() => handleDetailAction(selectedNotification)}
+                className='w-full bg-solid text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-700 transition-colors'
+              >
+                {meta.actionLabel || 'View Details'}
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='bg-white min-h-screen pt-20'>
@@ -280,67 +587,96 @@ const Notification = () => {
 
             {/* Notifications List */}
             <div className='space-y-4'>
-              {filteredNotifications.length === 0 ? (
+              {loading ? (
+                <div className='flex flex-col items-center justify-center py-12'>
+                  <Loader2 className='w-8 h-8 animate-spin text-green-600 mb-4' />
+                  <p className='text-gray-50'>Loading notifications...</p>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
                 <div className='text-center py-12 text-gray-50'>
+                  <Bell size={48} className='mx-auto mb-4 text-gray-300' />
                   <p>No notifications to display</p>
                 </div>
               ) : (
                 filteredNotifications.map(notification => {
                   const { Icon, color, bgColor } = getIconConfig(notification.type)
+                  const meta = notification.metadata || {}
                   return (
                     <div
                       key={notification.id}
-                      className={`relative bg-primary rounded-lg p-3 hover:shadow-md transition-shadow ${!notification.isRead ? 'ring-2 ring-solid ring-opacity-20' : ''
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`relative bg-primary rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${!notification.isRead ? 'ring-2 ring-solid ring-opacity-30 bg-green-50/30' : ''
                         }`}
                     >
-                      <div className='flex gap-3'>
+                      <div className='flex gap-4'>
                         {/* Icon with unread indicator */}
                         <div className='relative shrink-0'>
                           {!notification.isRead && (
-                            <div className='absolute top-0 left-0 w-2.5 h-2.5 bg-blue-500 rounded-full z-10'></div>
+                            <div className='absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full z-10 animate-pulse'></div>
                           )}
                           <div
-                            className='w-11 h-11 rounded-full flex items-center justify-center'
+                            className='w-12 h-12 rounded-full flex items-center justify-center'
                             style={{ backgroundColor: bgColor }}
                           >
-                            <Icon size={20} style={{ color: color }} />
+                            <Icon size={22} style={{ color: color }} />
                           </div>
                         </div>
 
                         {/* Content */}
-                        <div className='flex-1'>
-                          <div className='flex justify-between items-start'>
-                            <div>
-                              <h3 className='font-semibold text-textColor mb-0.5 text-sm'>
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex justify-between items-start gap-2'>
+                            <div className='flex-1 min-w-0'>
+                              <h3 className='font-semibold text-textColor mb-1 text-sm'>
                                 {notification.title}
                               </h3>
-                              <p className='text-xs text-gray-50 mb-1'>
+                              <p className='text-sm text-gray-600 mb-2 line-clamp-2'>
                                 {notification.description}
                               </p>
-                              <span className='text-[10px] text-gray-50'>
-                                {notification.timestamp}
-                              </span>
+
+                              {/* Quick info preview */}
+                              <div className='flex flex-wrap items-center gap-3 text-xs text-gray-500'>
+                                <span>{notification.timestamp}</span>
+                                {meta.orderNumber && (
+                                  <span className='bg-gray-100 px-2 py-0.5 rounded'>
+                                    #{meta.orderNumber}
+                                  </span>
+                                )}
+                                {meta.pickupCode && (
+                                  <span className='bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium'>
+                                    Code: {meta.pickupCode}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             {/* Actions Menu */}
-                            <div className='relative'>
+                            <div className='relative shrink-0' onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={() => setDropdownOpen(dropdownOpen === notification.id ? null : notification.id)}
-                                className='text-gray-50 hover:text-textColor transition-colors'
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDropdownOpen(dropdownOpen === notification.id ? null : notification.id)
+                                }}
+                                className='p-1 text-gray-400 hover:text-textColor transition-colors rounded-full hover:bg-gray-100'
                               >
-                                <EllipsisVertical size={20} />
+                                <EllipsisVertical size={18} />
                               </button>
 
                               {dropdownOpen === notification.id && (
                                 <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10'>
                                   <button
-                                    onClick={() => markAsRead(notification.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      markAsRead(notification.id)
+                                    }}
                                     className='w-full text-left px-4 py-2 text-sm text-textColor hover:bg-gray-100 transition-colors'
                                   >
                                     Mark as read
                                   </button>
                                   <button
-                                    onClick={() => deleteNotification(notification.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      deleteNotification(notification.id)
+                                    }}
                                     className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors'
                                   >
                                     Delete
@@ -348,6 +684,12 @@ const Notification = () => {
                                 </div>
                               )}
                             </div>
+                          </div>
+
+                          {/* Tap to view indicator */}
+                          <div className='flex items-center gap-1 text-xs text-solid mt-2'>
+                            <span>Tap to view details</span>
+                            <ChevronRight size={14} />
                           </div>
                         </div>
                       </div>
@@ -359,6 +701,9 @@ const Notification = () => {
           </main>
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {renderDetailModal()}
     </div>
   )
 }

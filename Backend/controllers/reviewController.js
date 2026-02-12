@@ -1,6 +1,8 @@
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Business = require('../models/Business');
+const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 /**
  * @desc    Create a review
@@ -44,6 +46,30 @@ const createReview = async (req, res) => {
       rating,
       comment
     });
+
+    // Notify business owner of new review with rich metadata
+    const businessDoc = await Business.findById(business).populate('owner');
+    if (businessDoc && businessDoc.owner) {
+      const customerName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A customer';
+      await Notification.createNotification({
+        user: businessDoc.owner._id,
+        title: 'New Review Received',
+        message: `${customerName} left a ${rating}-star review`,
+        type: 'new_review',
+        relatedBusiness: business,
+        relatedOrder: order,
+        link: '/dashboard',
+        metadata: {
+          orderNumber: orderDoc.orderNumber,
+          customerName,
+          reviewRating: rating,
+          reviewText: comment,
+          businessName: businessDoc.name,
+          actionLabel: 'View & Respond',
+          actionUrl: '/dashboard'
+        }
+      });
+    }
 
     res.status(201).json(review);
   } catch (error) {
@@ -171,7 +197,8 @@ const deleteReview = async (req, res) => {
  */
 const addBusinessResponse = async (req, res) => {
   try {
-    const { comment } = req.body;
+    // Accept either 'comment' or 'response' field for backward compatibility
+    const comment = req.body.comment || req.body.response;
 
     if (!comment) {
       return res.status(400).json({ message: 'Please provide a response comment' });
@@ -190,6 +217,28 @@ const addBusinessResponse = async (req, res) => {
     }
 
     await review.addBusinessResponse(comment);
+
+    // Notify the customer that business responded to their review
+    const businessDoc = await Business.findById(review.business._id);
+    if (businessDoc) {
+      await Notification.createNotification({
+        user: review.customer,
+        title: 'Business Responded to Your Review',
+        message: `${businessDoc.name} responded to your review`,
+        type: 'review_response',
+        relatedBusiness: review.business._id,
+        relatedOrder: review.order,
+        link: '/my-orders',
+        metadata: {
+          businessName: businessDoc.name,
+          businessLogo: businessDoc.media?.logo,
+          reviewRating: review.rating,
+          reviewText: comment,
+          actionLabel: 'View Response',
+          actionUrl: '/my-orders'
+        }
+      });
+    }
 
     res.json(review);
   } catch (error) {

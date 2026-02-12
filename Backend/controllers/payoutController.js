@@ -1,5 +1,6 @@
 const Payout = require('../models/Payout');
 const Business = require('../models/Business');
+const PlatformSettings = require('../models/PlatformSettings');
 
 /**
  * @desc    Request a payout
@@ -10,6 +11,17 @@ const requestPayout = async (req, res) => {
     const { amount, method } = req.body;
 
     try {
+        // Get platform settings for minimum withdrawal
+        const platformSettings = await PlatformSettings.getSettings();
+        const minimumWithdrawal = platformSettings.minimumWithdrawal || 5000;
+
+        if (amount < minimumWithdrawal) {
+            return res.status(400).json({
+                message: `Minimum withdrawal amount is ${minimumWithdrawal} RWF`,
+                minimumWithdrawal
+            });
+        }
+
         const business = await Business.findOne({ owner: req.user._id });
         if (!business) {
             return res.status(404).json({ message: 'Business not found' });
@@ -62,8 +74,15 @@ const getMyPayouts = async (req, res) => {
  */
 const getAdminPayouts = async (req, res) => {
     try {
-        const payouts = await Payout.find({})
-            .populate('business', 'name contact stats')
+        const { status } = req.query;
+        const query = {};
+
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const payouts = await Payout.find(query)
+            .populate('business', 'name contact stats payoutInfo')
             .sort({ createdAt: -1 });
         res.json(payouts);
     } catch (error) {

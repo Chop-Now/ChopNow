@@ -1,27 +1,85 @@
 import Footer from '../Components/Footer'
 import PageNavbar from '../Components/PageNavbar'
-import React from 'react'
-import { Award, Leaf, Droplets, Wind } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Award, Leaf, Droplets, Wind, Loader2 } from 'lucide-react'
+import { analyticsService } from '../services'
+import toast from 'react-hot-toast'
 
 const MyImpact = () => {
-  // Dummy data for the chart
-  const chartData = [
-    { month: 'Jan', meals: 8, co2: 20 },
-    { month: 'Feb', meals: 12, co2: 30 },
-    { month: 'Mar', meals: 15, co2: 37 },
-    { month: 'Apr', meals: 10, co2: 25 },
-    { month: 'May', meals: 18, co2: 45 },
-    { month: 'Jun', meals: 22, co2: 55 },
-    { month: 'Jul', meals: 20, co2: 50 },
-    { month: 'Aug', meals: 25, co2: 62 },
-    { month: 'Sep', meals: 30, co2: 75 },
-    { month: 'Oct', meals: 28, co2: 70 },
-    { month: 'Nov', meals: 32, co2: 80 },
-    { month: 'Dec', meals: 35, co2: 88 },
-  ]
+  const [loading, setLoading] = useState(true)
+  const [impactData, setImpactData] = useState({
+    mealsRescued: 0,
+    co2Saved: 0,
+    waterSaved: 0,
+    ordersCount: 0,
+    monthlyData: []
+  })
 
-  const maxMeals = Math.max(...chartData.map(d => d.meals))
-  const maxCo2 = Math.max(...chartData.map(d => d.co2))
+  useEffect(() => {
+    const fetchImpact = async () => {
+      try {
+        const data = await analyticsService.getMyImpact()
+        setImpactData({
+          mealsRescued: data.mealsRescued || 0,
+          co2Saved: data.co2Saved || 0,
+          waterSaved: data.waterSaved || 0,
+          ordersCount: data.ordersCount || 0,
+          monthlyData: data.monthlyData || []
+        })
+      } catch (error) {
+        console.error('Error fetching impact data:', error)
+        // Set default data if API fails
+        setImpactData({
+          mealsRescued: 0,
+          co2Saved: 0,
+          waterSaved: 0,
+          ordersCount: 0,
+          monthlyData: []
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchImpact()
+  }, [])
+
+  // Chart data - use API data if available, otherwise generate from monthly data or default
+  const chartData = impactData.monthlyData.length > 0
+    ? impactData.monthlyData
+    : [
+      { month: 'Jan', meals: 0, co2: 0 },
+      { month: 'Feb', meals: 0, co2: 0 },
+      { month: 'Mar', meals: 0, co2: 0 },
+      { month: 'Apr', meals: 0, co2: 0 },
+      { month: 'May', meals: 0, co2: 0 },
+      { month: 'Jun', meals: 0, co2: 0 },
+      { month: 'Jul', meals: 0, co2: 0 },
+      { month: 'Aug', meals: 0, co2: 0 },
+      { month: 'Sep', meals: 0, co2: 0 },
+      { month: 'Oct', meals: 0, co2: 0 },
+      { month: 'Nov', meals: 0, co2: 0 },
+      { month: 'Dec', meals: 0, co2: 0 },
+    ]
+
+  const maxMeals = Math.max(...chartData.map(d => d.meals), 1)
+  const maxCo2 = Math.max(...chartData.map(d => d.co2), 1)
+
+  // Calculate milestones
+  const mealsMilestone = Math.ceil(impactData.mealsRescued / 50) * 50 + 50 // Next 50 milestone
+  const mealsProgress = Math.min((impactData.mealsRescued / mealsMilestone) * 100, 100)
+  const mealsRemaining = mealsMilestone - impactData.mealsRescued
+
+  const co2Milestone = Math.ceil(impactData.co2Saved / 100) * 100 + 100 // Next 100kg milestone
+  const co2Progress = Math.min((impactData.co2Saved / co2Milestone) * 100, 100)
+  const co2Remaining = co2Milestone - impactData.co2Saved
+
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-white'>
+        <Loader2 className='w-8 h-8 animate-spin text-green-600' />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -43,7 +101,7 @@ const MyImpact = () => {
                 <Leaf className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
               <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Meals Rescued</h3>
-              <p className='text-lg md:text-2xl font-bold text-gray-900'>123</p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.mealsRescued.toLocaleString()}</p>
             </div>
 
             {/* CO2e Saved Card */}
@@ -52,7 +110,7 @@ const MyImpact = () => {
                 <Wind className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
               <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>CO2e Saved</h3>
-              <p className='text-lg md:text-2xl font-bold text-gray-900'>310<span className='text-sm md:text-base'>kg</span></p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.co2Saved.toLocaleString()}<span className='text-sm md:text-base'>kg</span></p>
             </div>
 
             {/* Water Saved Card */}
@@ -61,7 +119,7 @@ const MyImpact = () => {
                 <Droplets className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
               </div>
               <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Water Saved</h3>
-              <p className='text-lg md:text-2xl font-bold text-gray-900'>155,000<span className='text-sm md:text-base'>L</span></p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.waterSaved.toLocaleString()}<span className='text-sm md:text-base'>L</span></p>
             </div>
           </div>
 
@@ -76,23 +134,23 @@ const MyImpact = () => {
                 <div className='flex items-start justify-between mb-3'>
                   <div>
                     <h3 className='text-base font-bold text-gray-900 mb-1'>Food Waste Warrior</h3>
-                    <p className='text-gray-600 text-xs'>Rescue 26 more meals to unlock the Eco-Hero badge!</p>
+                    <p className='text-gray-600 text-xs'>Rescue {mealsRemaining} more meals to reach your next milestone!</p>
                   </div>
                   <div className='flex items-center gap-1 text-xs font-medium whitespace-nowrap' style={{ color: 'var(--color-solid)' }}>
                     <Award className='w-4 h-4' />
-                    <span>Next: Eco-Hero</span>
+                    <span>Next: {mealsMilestone} meals</span>
                   </div>
                 </div>
 
                 <div className='mb-2'>
                   <div className='flex justify-between text-xs mb-1'>
-                    <span className='font-medium text-gray-700'>124 / 150 meals</span>
-                    <span className='font-bold' style={{ color: 'var(--color-solid)' }}>82%</span>
+                    <span className='font-medium text-gray-700'>{impactData.mealsRescued} / {mealsMilestone} meals</span>
+                    <span className='font-bold' style={{ color: 'var(--color-solid)' }}>{Math.round(mealsProgress)}%</span>
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-2'>
                     <div
                       className='h-2 rounded-full transition-all duration-500'
-                      style={{ width: '82%', background: 'linear-gradient(to right, #00A86B, #007A4B)' }}
+                      style={{ width: `${mealsProgress}%`, background: 'linear-gradient(to right, #00A86B, #007A4B)' }}
                     ></div>
                   </div>
                 </div>
@@ -103,23 +161,23 @@ const MyImpact = () => {
                 <div className='flex items-start justify-between mb-3'>
                   <div>
                     <h3 className='text-base font-bold text-gray-900 mb-1'>Carbon Crusader</h3>
-                    <p className='text-gray-600 text-xs'>Save 90 more kg of CO2e to unlock the Climate Champion badge!</p>
+                    <p className='text-gray-600 text-xs'>Save {co2Remaining.toFixed(1)} more kg of CO2e to reach your next milestone!</p>
                   </div>
                   <div className='flex items-center gap-1 text-xs font-medium whitespace-nowrap' style={{ color: 'var(--color-solidOne)' }}>
                     <Award className='w-4 h-4' />
-                    <span>Next: Climate Champion</span>
+                    <span>Next: {co2Milestone}kg</span>
                   </div>
                 </div>
 
                 <div className='mb-2'>
                   <div className='flex justify-between text-xs mb-1'>
-                    <span className='font-medium text-gray-700'>310 / 400 kg</span>
-                    <span className='font-bold' style={{ color: 'var(--color-solidOne)' }}>77%</span>
+                    <span className='font-medium text-gray-700'>{impactData.co2Saved.toFixed(1)} / {co2Milestone} kg</span>
+                    <span className='font-bold' style={{ color: 'var(--color-solidOne)' }}>{Math.round(co2Progress)}%</span>
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-2'>
                     <div
                       className='h-2 rounded-full transition-all duration-500'
-                      style={{ width: '77%', background: 'linear-gradient(to right, #FFB366, #FF7A00)' }}
+                      style={{ width: `${co2Progress}%`, background: 'linear-gradient(to right, #FFB366, #FF7A00)' }}
                     ></div>
                   </div>
                 </div>

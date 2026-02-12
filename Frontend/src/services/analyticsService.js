@@ -40,6 +40,41 @@ const analyticsService = {
             throw error.response?.data || error;
         }
     },
+
+    // Get recent platform activity (Admin only)
+    getRecentActivity: async (limit = 10) => {
+        try {
+            const response = await api.get(`/api/analytics/platform/activity?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Get user activity log (Admin only)
+    getUserActivity: async (params = {}) => {
+        try {
+            const queryParams = new URLSearchParams({
+                limit: params.limit || 20,
+                page: params.page || 1,
+                timeRange: params.timeRange || '7days'
+            });
+            const response = await api.get(`/api/analytics/user-activity?${queryParams.toString()}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Get admin dashboard stats (Admin only)
+    getAdminStats: async () => {
+        try {
+            const response = await api.get('/api/analytics/admin/stats');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
 };
 
 export default analyticsService;

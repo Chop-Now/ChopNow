@@ -1,5 +1,5 @@
 import { assets } from '../assets/assets'
-import { Eye, EyeOff, Lock, Mail, User, MapPin, LocateFixed, PersonStanding, Handshake } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, User, MapPin, LocateFixed, PersonStanding, Handshake, ChevronDown, Tractor, Store, UtensilsCrossed, Croissant } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PhoneInput from 'react-phone-input-2'
@@ -7,18 +7,85 @@ import 'react-phone-input-2/lib/style.css'
 import LocationPicker from '../Components/maps/LocationPicker'
 import { useGeolocation } from '../Components/maps/useGeolocation'
 import { reverseGeocode, searchAddress } from '../services/geocoding'
+import { businessService } from '../services'
 import toast from 'react-hot-toast'
-
 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
+
+// Business categories with their verification requirements
+// ALL categories require document verification for platform safety
+const BUSINESS_CATEGORIES = [
+  {
+    value: 'farmer',
+    label: 'Farmer',
+    icon: Tractor,
+    requiresVerification: true,
+    description: 'Sell fresh produce directly',
+    requiredDocs: 'Farm registration or land ownership document'
+  },
+  {
+    value: 'supermarket',
+    label: 'Supermarket',
+    icon: Store,
+    requiresVerification: true,
+    description: 'Retail grocery store',
+    requiredDocs: 'Business license and tax registration'
+  },
+  {
+    value: 'bakery',
+    label: 'Bakery',
+    icon: Croissant,
+    requiresVerification: true,
+    description: 'Baked goods and pastries',
+    requiredDocs: 'Food handling permit and business license'
+  },
+  {
+    value: 'restaurant',
+    label: 'Restaurant',
+    icon: UtensilsCrossed,
+    requiresVerification: true,
+    description: 'Prepared meals and food service',
+    requiredDocs: 'Health certificate and food handling permit'
+  },
+];
 
 const SignUp = () => {
   const { googleAuth, register } = useAppContext();
+  const { settings, isFeatureEnabled } = usePlatformSettings();
   const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
+
+  // Check if registrations are allowed
+  if (!isFeatureEnabled('registration')) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-primary via-white to-tertiary/10 flex items-center justify-center p-4'>
+        <div className='bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center'>
+          <div className='w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+            <User className='w-8 h-8 text-yellow-600' />
+          </div>
+          <h2 className='text-2xl font-bold text-gray-800 mb-2'>Registration Closed</h2>
+          <p className='text-gray-600 mb-6'>
+            New user registrations are currently disabled. Please check back later or contact support at{' '}
+            <a href={`mailto:${settings.supportEmail}`} className='text-primary hover:underline'>
+              {settings.supportEmail}
+            </a>
+          </p>
+          <Link
+            to='/login'
+            className='inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors'
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [businessCategory, setBusinessCategory] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const signupWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -52,8 +119,22 @@ const SignUp = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+
+    // Check for uppercase, lowercase, and number
+    if (!/[A-Z]/.test(password)) {
+      toast.error("Password must contain at least one uppercase letter");
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      toast.error("Password must contain at least one lowercase letter");
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      toast.error("Password must contain at least one number");
       return;
     }
 
@@ -63,32 +144,67 @@ const SignUp = () => {
         const businessName = form.querySelector('input[placeholder="Business name"]').value;
         const contactPerson = form.querySelector('input[placeholder="Contact person"]').value;
 
-        // Step 1: Register user as business_owner
+        // Validate business category
+        if (!businessCategory) {
+          toast.error("Please select a business category");
+          return;
+        }
+
+        // Validate phone number for business
+        if (!phone || phone.length < 10) {
+          toast.error("Please enter a valid business phone number");
+          return;
+        }
+
+        // Format phone number with + prefix if not present
+        const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+
+        // Parse contact person name - split into first and last name
+        const nameParts = contactPerson.trim().split(' ').filter(part => part.length > 0);
+        const firstName = nameParts[0] || contactPerson;
+        // Get last name from remaining parts, or use first name if not provided
+        let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+        // Backend requires min 2 chars for lastName - use firstName if lastName is too short
+        if (lastName.length < 2) {
+          lastName = firstName;
+        }
+
+        // Validate name lengths
+        if (firstName.length < 2) {
+          toast.error("Contact person name must be at least 2 characters");
+          return;
+        }
+
+        // Check if this category requires verification
+        const selectedCategory = BUSINESS_CATEGORIES.find(c => c.value === businessCategory);
+        const requiresVerification = selectedCategory?.requiresVerification || false;
+
+        // Step 1: Register user as business_owner (with consumer role too for dual-role)
         const userData = {
-          firstName: contactPerson.split(' ')[0] || contactPerson,
-          lastName: contactPerson.split(' ').slice(1).join(' ') || '',
+          firstName,
+          lastName,
           email,
           password,
-          role: 'business_owner',
+          roles: ['consumer', 'business_owner'], // Dual-role: can shop and manage business
         };
 
         const registeredUser = await register(userData);
 
-        // Step 2: Create basic business profile
+        // Step 2: Create business profile with selected category
         const businessData = {
           name: businessName,
-          type: 'restaurant', // Default type, can be changed in verification
-          description: `${businessName} - Pending verification`,
+          type: businessCategory,
+          description: requiresVerification
+            ? `${businessName} - Pending verification`
+            : `${businessName} - ${selectedCategory?.label}`,
           contact: {
-            email: email
-            // Phone will be added during business verification
+            email: email,
+            phone: formattedPhone
           },
           address: {
-            street: 'Pending verification',
-            city: 'Pending verification',
-            state: 'Pending verification',
-            country: 'Rwanda',
-            zipCode: '00000',
+            street: 'To be updated',
+            city: 'To be updated',
             location: {
               type: 'Point',
               coordinates: [30.0619, -1.9403] // Default Kigali coordinates
@@ -96,14 +212,18 @@ const SignUp = () => {
           }
         };
 
-        // Import businessService
-        const { default: businessService } = await import('../services/businessService');
-        await businessService.createBusiness(businessData);
+        // Create the business
+        const createdBusiness = await businessService.createBusiness(businessData);
 
-        toast.success('Account created! Please complete your business verification.');
-
-        // Step 3: Redirect to verification page
-        navigate('/business-verification');
+        // Step 3: Redirect based on verification requirements
+        if (requiresVerification) {
+          toast.success('Account created! Please complete your business verification.');
+          navigate('/business-verification');
+        } else {
+          toast.success('Account created successfully! You can start listing your products.');
+          // Redirect directly to dashboard for non-verification businesses
+          window.location.href = '/dashboard';
+        }
       } catch (error) {
         console.error('Business signup error:', error);
         console.error('Error response:', error.response?.data);
@@ -123,7 +243,7 @@ const SignUp = () => {
           lastName,
           email,
           password,
-          role: 'consumer',
+          roles: ['consumer'], // Consumer-only role
           phone: phone || undefined,
           address: address || undefined
         };
@@ -374,7 +494,6 @@ const SignUp = () => {
                       <div className="mt-3 relative">
                         <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                           <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
-                          <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                           <input
                             type="text"
                             placeholder="Or enter address manually"
@@ -471,6 +590,81 @@ const SignUp = () => {
                       />
                     </div>
 
+                    {/* Business Category Dropdown */}
+                    <div className="mt-4 relative">
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
+                        Business Category
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                        className="flex items-center justify-between w-full bg-transparent border border-gray-300 h-12 rounded-lg px-4 cursor-pointer hover:border-gray-400 transition-colors"
+                      >
+                        {businessCategory ? (
+                          <div className="flex items-center gap-3">
+                            {(() => {
+                              const category = BUSINESS_CATEGORIES.find(c => c.value === businessCategory);
+                              const IconComponent = category?.icon;
+                              return (
+                                <>
+                                  {IconComponent && <IconComponent className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />}
+                                  <span className="text-sm" style={{ color: 'var(--color-textColor)' }}>{category?.label}</span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-sm" style={{ color: 'var(--color-gray-50)' }}>Select your business type</span>
+                        )}
+                        <ChevronDown className={`w-5 h-5 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} style={{ color: 'var(--color-gray-50)' }} />
+                      </button>
+
+                      {showCategoryDropdown && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                          {BUSINESS_CATEGORIES.map((category) => {
+                            const IconComponent = category.icon;
+                            return (
+                              <button
+                                key={category.value}
+                                type="button"
+                                onClick={() => {
+                                  setBusinessCategory(category.value);
+                                  setShowCategoryDropdown(false);
+                                }}
+                                className={`flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${businessCategory === category.value ? 'bg-gray-50' : ''}`}
+                              >
+                                <IconComponent className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                                <div className="flex-1 text-left">
+                                  <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>{category.label}</p>
+                                  <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>{category.description}</p>
+                                </div>
+                                {category.requiresVerification && (
+                                  <span className="text-[10px] px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full">
+                                    Verification Required
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Show verification note with required documents for selected category */}
+                      {businessCategory && (
+                        <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                          <p className="text-xs text-orange-700 font-medium mb-1">
+                            Document Verification Required
+                          </p>
+                          <p className="text-xs text-orange-600">
+                            {BUSINESS_CATEGORIES.find(c => c.value === businessCategory)?.requiredDocs || 'Valid business documents'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            You'll need to upload verification documents after registration before you can start selling.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Contact Person */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
                       <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
@@ -492,6 +686,24 @@ const SignUp = () => {
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
+                      />
+                    </div>
+
+                    {/* Business Phone Number */}
+                    <div className="mt-4">
+                      <PhoneInput
+                        country={'rw'}
+                        value={phone}
+                        onChange={setPhone}
+                        enableSearch={true}
+                        searchPlaceholder="Search country"
+                        placeholder="Business phone number"
+                        containerClass="w-full"
+                        inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent"
+                        buttonClass="!border-gray-300 !rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100"
+                        dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
+                        searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"
+                        inputStyle={{ color: 'var(--color-textColor)' }}
                       />
                     </div>
 

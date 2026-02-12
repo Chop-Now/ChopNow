@@ -18,12 +18,28 @@ const Cart = () => {
     const [deliveryAddress, setDeliveryAddress] = useState('')
     const [showMapEdit, setShowMapEdit] = useState(false)
 
-    // Vendor address (mock data - will come from backend)
-    const vendorAddress = {
-        name: 'Fresh Farm Market',
-        address: 'KN 3 Ave, Kigali, Rwanda',
-        coordinates: { lat: -1.9441, lng: 30.0619 }
+    // Get vendor address from the first product in cart (products should be from same vendor)
+    const getVendorInfo = () => {
+        if (cartArray.length > 0) {
+            const firstProduct = cartArray[0]
+            // Get vendor info from product's business data
+            const businessAddress = firstProduct.business?.address || {}
+            return {
+                name: firstProduct.vendor || firstProduct.business?.name || 'Vendor',
+                address: businessAddress.street
+                    ? `${businessAddress.street}, ${businessAddress.city || ''}, ${businessAddress.country || 'Rwanda'}`.trim()
+                    : 'Address not available',
+                coordinates: businessAddress.coordinates || { lat: -1.9441, lng: 30.0619 } // Default to Kigali
+            }
+        }
+        return {
+            name: 'Vendor',
+            address: 'Address not available',
+            coordinates: { lat: -1.9441, lng: 30.0619 }
+        }
     }
+
+    const vendorAddress = getVendorInfo()
 
     const getCart = () => {
         let tempArray = []
@@ -46,7 +62,16 @@ const Cart = () => {
         return cartArray.reduce((total, product) => total + (product.offerPrice * product.cartQuantity), 0)
     }
 
-    const deliveryFee = fulfillmentMethod === 'Delivery' ? 2000 : 0 // 2000 RWF for delivery
+    // Get delivery fee from business settings, or use default
+    const getDeliveryFee = () => {
+        if (fulfillmentMethod !== 'Delivery') return 0
+        if (cartArray.length > 0) {
+            const firstProduct = cartArray[0]
+            return firstProduct.business?.deliverySettings?.fee || 2000 // Default 2000 RWF
+        }
+        return 2000
+    }
+    const deliveryFee = getDeliveryFee()
     const discount = 0 // Will be calculated later
     const subtotal = calculateSubtotal()
     const total = subtotal - discount + deliveryFee
@@ -90,11 +115,11 @@ const Cart = () => {
                                 {cartArray.map((product, index) => (
                                     <div key={index} className="flex gap-4 p-4 border rounded-xl" style={{ borderColor: '#E5E5E5' }}>
                                         <div
-                                            onClick={() => { navigate(`/shop/${product.category.toLowerCase()}/${product._id}`); window.scrollTo(0, 0) }}
+                                            onClick={() => { navigate(`/shop/${(product.category || 'all').toLowerCase()}/${product._id}`); window.scrollTo(0, 0) }}
                                             className="cursor-pointer w-24 h-24 shrink-0 rounded-lg overflow-hidden border"
                                             style={{ borderColor: '#E5E5E5' }}
                                         >
-                                            <img className="w-full h-full object-cover" src={product.image[0]} alt={product.name} />
+                                            <img className="w-full h-full object-cover" src={product.image?.[0] || '/placeholder-food.jpg'} alt={product.name || 'Product'} />
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between mb-1">

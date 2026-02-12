@@ -26,14 +26,25 @@ const notificationSchema = new Schema({
   type: {
     type: String,
     enum: [
+      // Customer notifications
       'order_confirmed',
       'order_ready',
       'order_out_for_delivery',
       'order_completed',
+      'order_cancelled',
       'new_listing_nearby',
       'favorite_business_new_listing',
       'payment_success',
       'delivery_assigned',
+      // Vendor notifications
+      'new_order',
+      'order_status_changed',
+      // Review notifications
+      'new_review',
+      'review_response',
+      // System
+      'system',
+      'promotion',
       'other'
     ],
     required: [true, 'Notification type is required']
@@ -57,6 +68,12 @@ const notificationSchema = new Schema({
   relatedBusiness: {
     type: Schema.Types.ObjectId,
     ref: 'Business'
+  },
+
+  // Rich metadata for notification details (flexible schema)
+  metadata: {
+    type: Schema.Types.Mixed,
+    default: {}
   },
 
   // Read Status

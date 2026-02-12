@@ -6,7 +6,8 @@ const {
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  verifyPickupCode
+  verifyPickupCode,
+  getAdminOrders
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateCreateOrder, validateUpdateOrderStatus } = require('../middleware/validation');
@@ -53,6 +54,10 @@ router.post('/', protect, validateCreateOrder, createOrder);
  *         description: List of user orders
  */
 router.get('/', protect, getOrders);
+
+// Admin-only: Get all orders across all businesses
+router.get('/admin', protect, authorize('admin'), getAdminOrders);
+
 router.get('/:id', protect, getOrderById);
 
 // Business owner and admin routes

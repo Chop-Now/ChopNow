@@ -32,6 +32,9 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
+        // Check if this request should suppress toast notifications
+        const silentMode = error.config?.silent === true;
+
         if (error.response) {
             // Server responded with error status
             const { status, data } = error.response;
@@ -47,23 +50,23 @@ api.interceptors.response.use(
                     }
                     break;
                 case 403:
-                    toast.error('You do not have permission to perform this action.');
+                    if (!silentMode) toast.error('You do not have permission to perform this action.');
                     break;
                 case 404:
-                    toast.error(data.message || 'Resource not found.');
+                    if (!silentMode) toast.error(data.message || 'Resource not found.');
                     break;
                 case 500:
-                    toast.error('Server error. Please try again later.');
+                    if (!silentMode) toast.error('Server error. Please try again later.');
                     break;
                 default:
-                    toast.error(data.message || 'An error occurred.');
+                    if (!silentMode) toast.error(data.message || 'An error occurred.');
             }
         } else if (error.request) {
             // Request made but no response received
-            toast.error('Unable to connect to server. Please check your connection.');
+            if (!silentMode) toast.error('Unable to connect to server. Please check your connection.');
         } else {
             // Something else happened
-            toast.error('An unexpected error occurred.');
+            if (!silentMode) toast.error('An unexpected error occurred.');
         }
 
         return Promise.reject(error);

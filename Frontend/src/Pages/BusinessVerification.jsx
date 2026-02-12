@@ -1,5 +1,5 @@
 import { assets } from '../assets/assets'
-import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck, Loader2 } from 'lucide-react'
+import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck, Loader2, Tractor, Store, Croissant, UtensilsCrossed } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneInput from 'react-phone-input-2'
@@ -10,6 +10,34 @@ import { reverseGeocode, searchAddress } from '../services/geocoding'
 import { businessService } from '../services'
 import { useAppContext } from '../context/AppContext'
 import toast from 'react-hot-toast'
+
+// Document requirements by business category
+const CATEGORY_REQUIREMENTS = {
+  farmer: {
+    label: 'Farmer',
+    icon: Tractor,
+    requiredDocs: 'Farm registration or land ownership document',
+    examples: ['Farm registration certificate', 'Land ownership document', 'Agricultural permit']
+  },
+  supermarket: {
+    label: 'Supermarket',
+    icon: Store,
+    requiredDocs: 'Business license and tax registration',
+    examples: ['Business license', 'Tax registration certificate', 'Trading license']
+  },
+  bakery: {
+    label: 'Bakery',
+    icon: Croissant,
+    requiredDocs: 'Food handling permit and business license',
+    examples: ['Food handling permit', 'Business license', 'Health department approval']
+  },
+  restaurant: {
+    label: 'Restaurant',
+    icon: UtensilsCrossed,
+    requiredDocs: 'Health certificate and food handling permit',
+    examples: ['Health certificate', 'Food handler permit', 'Restaurant operating license']
+  }
+};
 
 const BusinessVerification = () => {
   const navigate = useNavigate();
@@ -29,6 +57,7 @@ const BusinessVerification = () => {
   const { getCurrentLocation } = useGeolocation();
 
   const [businessId, setBusinessId] = useState(null);
+  const [businessType, setBusinessType] = useState(null);
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -42,6 +71,7 @@ const BusinessVerification = () => {
       try {
         if (user?.business?._id) {
           setBusinessId(user.business._id);
+          setBusinessType(user.business.type);
           return;
         }
 
@@ -50,6 +80,7 @@ const BusinessVerification = () => {
 
         if (businesses && businesses.length > 0) {
           setBusinessId(businesses[0]._id);
+          setBusinessType(businesses[0].type);
         } else {
           // User has no business - show helpful message
           toast.error('Please create a business profile first before verification.');
@@ -335,11 +366,40 @@ const BusinessVerification = () => {
               <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
                 Certification {errors.files && <span className="text-red-500 text-[10px]">*Required - Upload at least one certificate</span>}
               </h3>
+
+              {/* Category-specific requirements */}
+              {businessType && CATEGORY_REQUIREMENTS[businessType] && (
+                <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    {(() => {
+                      const IconComponent = CATEGORY_REQUIREMENTS[businessType]?.icon;
+                      return IconComponent ? <IconComponent className="w-5 h-5 text-orange-600" /> : null;
+                    })()}
+                    <h4 className="text-sm font-semibold text-orange-700">
+                      Required for {CATEGORY_REQUIREMENTS[businessType].label}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-orange-600 mb-2">
+                    {CATEGORY_REQUIREMENTS[businessType].requiredDocs}
+                  </p>
+                  <div className="text-xs text-gray-600">
+                    <p className="font-medium mb-1">Accepted documents:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {CATEGORY_REQUIREMENTS[businessType].examples.map((doc, idx) => (
+                        <li key={idx}>{doc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               <h4 className="text-xs font-medium mb-2" style={{ color: 'var(--color-textColor)' }}>
-                Upload Operation Certificate
+                Upload Verification Documents
               </h4>
               <p className="text-xs mb-4" style={{ color: 'var(--color-gray-50)' }}>
-                Please upload a valid, up to date food handler permit or similar local health department certificate. This document is required for verification.
+                {businessType && CATEGORY_REQUIREMENTS[businessType]
+                  ? `Please upload ${CATEGORY_REQUIREMENTS[businessType].requiredDocs.toLowerCase()}. This document is required for verification.`
+                  : 'Please upload a valid business document or certificate. This document is required for verification.'}
               </p>
 
               {/* File Upload Area */}

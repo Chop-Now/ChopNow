@@ -70,6 +70,22 @@ const orderSchema = new Schema({
       default: 0,
       min: [0, 'Delivery fee cannot be negative']
     },
+    platformFee: {
+      type: Number,
+      default: 0,
+      min: [0, 'Platform fee cannot be negative']
+    },
+    platformFeePercent: {
+      type: Number,
+      default: 10,
+      min: [0, 'Platform fee percent cannot be negative'],
+      max: [100, 'Platform fee percent cannot exceed 100']
+    },
+    vendorAmount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Vendor amount cannot be negative']
+    },
     total: {
       type: Number,
       required: [true, 'Total is required'],
@@ -218,7 +234,7 @@ orderSchema.index({ business: 1, status: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 
 // Generate order number before saving
-orderSchema.pre('save', function(next) {
+orderSchema.pre('save', function() {
   if (this.isNew && !this.orderNumber) {
     // Generate order number: ORD-YYYYMMDD-RANDOM
     const date = new Date();
@@ -226,13 +242,11 @@ orderSchema.pre('save', function(next) {
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     this.orderNumber = `ORD-${dateStr}-${random}`;
   }
-  
+
   // Calculate total
   if (this.pricing.subtotal !== undefined && this.pricing.deliveryFee !== undefined) {
     this.pricing.total = this.pricing.subtotal + this.pricing.deliveryFee;
   }
-  
-  next();
 });
 
 // Method to update order status with timestamp

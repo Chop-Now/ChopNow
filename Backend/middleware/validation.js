@@ -35,9 +35,25 @@ const validateRegister = [
     .withMessage('Last name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
+  // Support both 'role' (legacy single role) and 'roles' (new array format)
+  // Both are optional - controller defaults to ['consumer'] if neither provided
   body('role')
-    .isIn(['consumer', 'business_owner', 'admin'])
-    .withMessage('Role must be consumer, business_owner, or admin'),
+    .optional()
+    .isIn(['consumer', 'business_owner', 'rider', 'admin'])
+    .withMessage('Role must be consumer, business_owner, rider, or admin'),
+  body('roles')
+    .optional()
+    .isArray({ min: 1 })
+    .withMessage('Roles must be a non-empty array')
+    .custom((roles) => {
+      const validRoles = ['consumer', 'business_owner', 'rider', 'admin'];
+      for (const role of roles) {
+        if (!validRoles.includes(role)) {
+          throw new Error(`Invalid role: ${role}. Must be one of: ${validRoles.join(', ')}`);
+        }
+      }
+      return true;
+    }),
   body('phone')
     .optional()
     .trim()
@@ -67,7 +83,7 @@ const validateCreateBusiness = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Business name must be between 2 and 100 characters'),
   body('type')
-    .isIn(['restaurant', 'bakery', 'supermarket', 'grocery', 'cafe', 'other'])
+    .isIn(['farmer', 'restaurant', 'bakery', 'supermarket', 'grocery', 'cafe', 'other'])
     .withMessage('Invalid business type'),
   body('contact.email')
     .isEmail()
@@ -114,17 +130,18 @@ const validateCreateListing = [
     .isMongoId()
     .withMessage('Valid business ID is required'),
   body('category')
-    .isIn(['ready_meals', 'baked_goods', 'produce', 'dairy', 'meat_seafood', 'beverages', 'desserts', 'other'])
-    .withMessage('Invalid category'),
+    .isIn(['fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'])
+    .withMessage('Invalid category. Must be one of: fruit-veg, baked-goods, meals, dairy, meat, beverages, pantry, other'),
   body('pricing.originalPrice')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Original price must be a positive number'),
-  body('pricing.rescuePrice')
+  body('pricing.price')
     .isFloat({ min: 0 })
-    .withMessage('Rescue price must be a positive number'),
-  body('inventory.quantityAvailable')
+    .withMessage('Price must be a positive number'),
+  body('inventory.quantity')
     .isInt({ min: 0 })
-    .withMessage('Quantity available must be a non-negative integer'),
+    .withMessage('Quantity must be a non-negative integer'),
   body('timeWindow.availableFrom')
     .isISO8601()
     .withMessage('Available from must be a valid date'),

@@ -95,7 +95,7 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
               background: `linear-gradient(to right, var(--color-solid) 0%, var(--color-solid) ${(priceRange / 100000) * 100}%, #E5E5E5 ${(priceRange / 100000) * 100}%, #E5E5E5 100%)`
             }}
           />
-          <style jsx>{`
+          <style>{`
             input[type="range"]::-webkit-slider-thumb {
               appearance: none;
               width: 18px;
@@ -106,7 +106,7 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
               border: 3px solid white;
               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
-            
+
             input[type="range"]::-moz-range-thumb {
               width: 18px;
               height: 18px;

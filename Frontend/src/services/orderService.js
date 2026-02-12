@@ -21,6 +21,47 @@ const orderService = {
             throw error.response?.data || error;
         }
     },
+
+    // Get order by ID
+    getOrderById: async (id) => {
+        try {
+            const response = await api.get(`/api/orders/${id}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Cancel order
+    cancelOrder: async (id) => {
+        try {
+            const response = await api.put(`/api/orders/${id}/cancel`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Update order status (for business owner/admin)
+    updateOrderStatus: async (id, status) => {
+        try {
+            const response = await api.put(`/api/orders/${id}/status`, { status });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Get all orders for admin (across all businesses)
+    getAdminOrders: async (filters = {}) => {
+        try {
+            const params = new URLSearchParams(filters);
+            const response = await api.get(`/api/orders/admin?${params.toString()}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
 };
 
 export default orderService;

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { CircleUserRound, ReceiptText, Shield, Power, Trash2, Upload, Camera, Eye, EyeOff, CheckCircle, XCircle, MapPin, Monitor, Smartphone, Plus, Clock, FileText, X, LogOut } from 'lucide-react'
+import { CircleUserRound, ReceiptText, Shield, Power, Trash2, Upload, Camera, Eye, EyeOff, CheckCircle, XCircle, MapPin, Monitor, Smartphone, Plus, Clock, FileText, X, LogOut, Loader2, Settings as SettingsIcon, Percent, Mail, Bell, Globe, Palette, CreditCard, ToggleLeft } from 'lucide-react'
 import { useAdminMode } from '../context/AdminModeContext'
+import { useAppContext } from '../../context/AppContext'
+import { businessService, authService, settingsService } from '../../services'
 import LocationPicker from '../../Components/maps/LocationPicker'
 import ConfirmationModal from '../components/ConfirmationModal'
+import toast from 'react-hot-toast'
 
 const Settings = ({ initialTab = 'profile' }) => {
   const { adminMode } = useAdminMode()
+  const { user } = useAppContext()
   const [activeTab, setActiveTab] = useState(initialTab)
   const [profileImage, setProfileImage] = useState(null)
   const [showPasswordFields, setShowPasswordFields] = useState(false)
@@ -57,22 +61,136 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   // Form state for Shop Admin
   const [shopFormData, setShopFormData] = useState({
-    businessName: 'Green Valley Farms',
+    businessName: '',
     businessLogo: null,
-    businessTagline: 'Fresh, Organic, Locally Sourced',
-    businessEmail: 'contact@greenvalleyfarms.com',
-    contactPerson: 'John Doe',
-    contactEmail: 'john.doe@greenvalleyfarms.com',
-    phoneNumber: '+250 788 123 456'
+    businessTagline: '',
+    businessEmail: '',
+    contactPerson: '',
+    contactEmail: '',
+    phoneNumber: ''
   })
 
   // Form state for Website Admin
   const [adminFormData, setAdminFormData] = useState({
-    name: 'Admin User',
+    name: '',
     profilePicture: null,
-    email: 'admin@chopnow.com',
-    phoneNumber: '+250 788 987 654'
+    email: '',
+    phoneNumber: ''
   })
+
+  // Platform Settings State (Website Admin only)
+  const [platformSettings, setPlatformSettings] = useState({
+    // General Settings
+    platformName: 'ChopNow',
+    platformTagline: 'Save Food, Save Money, Save the Planet',
+    supportEmail: 'support@chopnow.com',
+    supportPhone: '+250 788 000 000',
+    // Commission Settings
+    platformFeePercent: 10,
+    minimumWithdrawal: 5000,
+    payoutSchedule: 'biweekly', // weekly, biweekly, monthly
+    // Features Toggles
+    allowNewRegistrations: true,
+    requireEmailVerification: true,
+    allowGuestCheckout: false,
+    enableReviews: true,
+    enableNotifications: true,
+    maintenanceMode: false,
+    // Notification Settings
+    sendOrderConfirmation: true,
+    sendPayoutNotification: true,
+    sendNewVendorAlert: true,
+    sendWeeklyReport: true
+  })
+  const [platformSettingsLoading, setPlatformSettingsLoading] = useState(false)
+
+  // Load platform settings from API (admin only)
+  useEffect(() => {
+    const loadPlatformSettings = async () => {
+      // Check if user has admin role (either activeRole or in roles array)
+      const isAdmin = user?.activeRole === 'admin' || user?.role === 'admin' || user?.roles?.includes('admin');
+      if (adminMode === 'website' && isAdmin) {
+        try {
+          setPlatformSettingsLoading(true)
+          const settings = await settingsService.getAllSettings()
+          setPlatformSettings({
+            platformName: settings.platformName || 'ChopNow',
+            platformTagline: settings.platformTagline || 'Save Food, Save Money, Save the Planet',
+            supportEmail: settings.supportEmail || 'support@chopnow.com',
+            supportPhone: settings.supportPhone || '+250 788 000 000',
+            platformFeePercent: settings.platformFeePercent ?? 10,
+            minimumWithdrawal: settings.minimumWithdrawal ?? 5000,
+            payoutSchedule: settings.payoutSchedule || 'biweekly',
+            allowNewRegistrations: settings.allowNewRegistrations ?? true,
+            requireEmailVerification: settings.requireEmailVerification ?? true,
+            allowGuestCheckout: settings.allowGuestCheckout ?? false,
+            enableReviews: settings.enableReviews ?? true,
+            enableNotifications: settings.enableNotifications ?? true,
+            maintenanceMode: settings.maintenanceMode ?? false,
+            sendOrderConfirmation: settings.sendOrderConfirmation ?? true,
+            sendPayoutNotification: settings.sendPayoutNotification ?? true,
+            sendNewVendorAlert: settings.sendNewVendorAlert ?? true,
+            sendWeeklyReport: settings.sendWeeklyReport ?? true
+          })
+        } catch (error) {
+          console.error('Error loading platform settings:', error)
+          // Keep default values if loading fails
+        } finally {
+          setPlatformSettingsLoading(false)
+        }
+      }
+    }
+    loadPlatformSettings()
+  }, [adminMode, user])
+
+  // Load user data into forms when user changes
+  useEffect(() => {
+    if (user) {
+      // Set admin form data from user
+      setAdminFormData({
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        profilePicture: user.avatar || null,
+        email: user.email || '',
+        phoneNumber: user.phone || ''
+      })
+
+      // For shop admin, also set contact person info
+      setShopFormData(prev => ({
+        ...prev,
+        contactPerson: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        contactEmail: user.email || '',
+        phoneNumber: user.phone || ''
+      }))
+    }
+  }, [user])
+
+  // Load business data for shop admin
+  useEffect(() => {
+    const loadBusinessData = async () => {
+      if (adminMode === 'shop') {
+        try {
+          const response = await businessService.getMyBusinesses()
+          const businesses = response.businesses || response || []
+          if (businesses.length > 0) {
+            const business = businesses[0]
+            setShopFormData(prev => ({
+              ...prev,
+              businessName: business.businessName || '',
+              businessLogo: business.logo || null,
+              businessTagline: business.tagline || '',
+              businessEmail: business.email || '',
+              contactPerson: business.contactPerson || prev.contactPerson,
+              contactEmail: business.contactEmail || prev.contactEmail,
+              phoneNumber: business.phone || prev.phoneNumber
+            }))
+          }
+        } catch (error) {
+          console.error('Error loading business data:', error)
+        }
+      }
+    }
+    loadBusinessData()
+  }, [adminMode])
 
   const handleShopInputChange = (e) => {
     const { name, value } = e.target
@@ -111,21 +229,57 @@ const Settings = ({ initialTab = 'profile' }) => {
     }
   }
 
-  const handleUpdateProfile = () => {
-    // TODO: Implement API call to update profile
-    console.log('Updating profile...', adminMode === 'shop' ? shopFormData : adminFormData)
-    alert('Profile updated successfully!')
+  const handleUpdateProfile = async () => {
+    try {
+      if (adminMode === 'shop') {
+        // Update business profile
+        const response = await businessService.getMyBusinesses()
+        const businesses = response.businesses || response || []
+        if (businesses.length > 0) {
+          await businessService.updateBusiness(businesses[0]._id, {
+            name: shopFormData.businessName,
+            tagline: shopFormData.businessTagline,
+            email: shopFormData.businessEmail,
+            contactPerson: shopFormData.contactPerson,
+            contactEmail: shopFormData.contactEmail,
+            phone: shopFormData.phoneNumber
+          })
+        }
+        toast.success('Business profile updated successfully!')
+      } else {
+        // Update user profile - parse name into first and last
+        const nameParts = adminFormData.name.trim().split(' ')
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || ''
+
+        await authService.updateProfile({
+          firstName,
+          lastName,
+          phone: adminFormData.phoneNumber
+        })
+        toast.success('Profile updated successfully!')
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error(error.message || 'Failed to update profile')
+    }
   }
 
   const handleLogoutAllDevices = () => {
     setShowLogoutModal(true)
   }
 
-  const handleConfirmLogout = () => {
+  const handleConfirmLogout = async () => {
     setShowLogoutModal(false)
-    // TODO: Implement API call to logout from all devices
-    console.log('Logging out from all devices...')
-    alert('Logged out from all devices successfully!')
+    try {
+      await authService.logoutAllDevices()
+      toast.success('Logged out from all devices successfully')
+      // Redirect to login page after logging out from all devices
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Error logging out from all devices:', error)
+      toast.error(error.message || 'Failed to logout from all devices')
+    }
   }
 
   const handleDeleteAccount = () => {
@@ -147,13 +301,24 @@ const Settings = ({ initialTab = 'profile' }) => {
     }))
   }
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New password and confirm password do not match!')
+      toast.error('New password and confirm password do not match!')
       return
     }
-    // TODO: Implement API call to update password
-    console.log('Updating password...')
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      toast.error('Please fill in all password fields')
+      return
+    }
+    try {
+      await authService.changePassword(passwordData.currentPassword, passwordData.newPassword)
+      toast.success('Password updated successfully!')
+      setShowPasswordFields(false)
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error) {
+      console.error('Error updating password:', error)
+      toast.error(error.message || 'Failed to update password')
+    }
   }
 
   // Business Hours Handlers
@@ -283,10 +448,15 @@ const Settings = ({ initialTab = 'profile' }) => {
     alert(`Two-Factor Authentication ${!twoFactorEnabled ? 'enabled' : 'disabled'} successfully!`)
   }
 
-  const handleLogoutSession = (sessionId) => {
-    // TODO: Implement API call to logout specific session
-    console.log('Logging out session:', sessionId)
-    alert('Session logged out successfully!')
+  const handleLogoutSession = async (sessionId) => {
+    try {
+      await authService.logoutSession(sessionId)
+      setActiveSessions(prev => prev.filter(s => s.id !== sessionId))
+      toast.success('Session logged out successfully')
+    } catch (error) {
+      console.error('Error logging out session:', error)
+      toast.error(error.message || 'Failed to logout session')
+    }
   }
 
   const handleSaveSecurityChanges = () => {
@@ -300,55 +470,79 @@ const Settings = ({ initialTab = 'profile' }) => {
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
   }
 
-  // Dummy data for active sessions
-  const activeSessions = [
-    {
-      id: 1,
-      device: 'Chrome on Windows',
-      location: 'Kigali, Rwanda',
-      icon: Monitor,
-      lastActive: '2 minutes ago'
-    },
-    {
-      id: 2,
-      device: 'Chrome on iPhone 13',
-      location: 'Musanze, Rwanda',
-      icon: Smartphone,
-      lastActive: '1 hour ago'
-    }
-  ]
+  // Platform Settings Handlers
+  const handlePlatformSettingChange = (field, value) => {
+    setPlatformSettings(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
-  // Dummy data for recent login activity
-  const loginActivity = [
-    {
-      id: 1,
-      dateTime: 'Jan 25, 2026 14:30',
-      device: 'Chrome on Windows',
-      location: 'Kigali, Rwanda',
-      status: 'Successful'
-    },
-    {
-      id: 2,
-      dateTime: 'Jan 25, 2026 08:15',
-      device: 'Chrome on iPhone 13',
-      location: 'Musanze, Rwanda',
-      status: 'Successful'
-    },
-    {
-      id: 3,
-      dateTime: 'Jan 24, 2026 22:45',
-      device: 'Safari on MacBook',
-      location: 'Huye, Rwanda',
-      status: 'Failed'
-    },
-    {
-      id: 4,
-      dateTime: 'Jan 24, 2026 18:20',
-      device: 'Chrome on Windows',
-      location: 'Kigali, Rwanda',
-      status: 'Successful'
+  const handleSavePlatformSettings = async () => {
+    try {
+      setPlatformSettingsLoading(true)
+      await settingsService.updateSettings(platformSettings)
+      toast.success('Platform settings saved successfully! Changes will take effect immediately.')
+    } catch (error) {
+      console.error('Error saving platform settings:', error)
+      toast.error(error.message || 'Failed to save platform settings')
+    } finally {
+      setPlatformSettingsLoading(false)
     }
-  ]
+  }
+
+  // State for active sessions and login activity
+  const [activeSessions, setActiveSessions] = useState([])
+  const [loginActivity, setLoginActivity] = useState([])
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [activityLoading, setActivityLoading] = useState(true)
+
+  // Fetch active sessions and login activity
+  useEffect(() => {
+    const fetchSessionsAndActivity = async () => {
+      // Fetch active sessions
+      try {
+        setSessionsLoading(true)
+        const sessionsData = await authService.getActiveSessions()
+        const formattedSessions = (sessionsData.sessions || []).map(session => ({
+          id: session.id || session._id,
+          device: session.device || 'Unknown Device',
+          location: session.location || 'Unknown Location',
+          icon: session.device?.toLowerCase().includes('mobile') || session.device?.toLowerCase().includes('iphone') || session.device?.toLowerCase().includes('android') ? Smartphone : Monitor,
+          lastActive: session.isCurrent ? 'Current session' : session.lastActive || 'Unknown'
+        }))
+        setActiveSessions(formattedSessions)
+      } catch (error) {
+        console.error('Error fetching sessions:', error)
+        // Set default current session if API fails
+        setActiveSessions([{
+          id: 'current',
+          device: navigator.userAgent.includes('Mobile') ? 'Mobile Browser' : 'Desktop Browser',
+          location: 'Current Location',
+          icon: navigator.userAgent.includes('Mobile') ? Smartphone : Monitor,
+          lastActive: 'Current session'
+        }])
+      } finally {
+        setSessionsLoading(false)
+      }
+
+      // Fetch login activity
+      try {
+        setActivityLoading(true)
+        const activityData = await authService.getLoginActivity(10)
+        setLoginActivity(activityData.loginActivity || [])
+      } catch (error) {
+        console.error('Error fetching login activity:', error)
+        setLoginActivity([])
+      } finally {
+        setActivityLoading(false)
+      }
+    }
+
+    if (activeTab === 'security') {
+      fetchSessionsAndActivity()
+    }
+  }, [activeTab])
 
   const sidebarItems = [
     {
@@ -360,7 +554,11 @@ const Settings = ({ initialTab = 'profile' }) => {
       id: 'business',
       label: 'Business Details',
       icon: ReceiptText
-    }] : []),
+    }] : [{
+      id: 'platform',
+      label: 'Platform Settings',
+      icon: SettingsIcon
+    }]),
     {
       id: 'security',
       label: 'Security Settings',
@@ -919,6 +1117,266 @@ const Settings = ({ initialTab = 'profile' }) => {
             </div>
           )}
 
+          {activeTab === 'platform' && adminMode !== 'shop' && (
+            <div className='space-y-4'>
+              {/* Header */}
+              <div>
+                <h1 className='text-2xl font-bold text-slate-800 dark:text-slate-100'>
+                  Platform Settings
+                </h1>
+                <p className='text-sm text-slate-600 dark:text-slate-400 mt-1'>
+                  Configure platform-wide settings and preferences
+                </p>
+              </div>
+
+              {/* General Settings */}
+              <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5'>
+                <div className='flex items-center gap-3 mb-4'>
+                  <div className='w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
+                    <Globe className='w-5 h-5 text-blue-600 dark:text-blue-400' />
+                  </div>
+                  <div>
+                    <h2 className='text-lg font-semibold text-slate-800 dark:text-slate-100'>
+                      General Settings
+                    </h2>
+                    <p className='text-xs text-slate-600 dark:text-slate-400'>
+                      Basic platform information
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Platform Name
+                      </label>
+                      <input
+                        type='text'
+                        value={platformSettings.platformName}
+                        onChange={(e) => handlePlatformSettingChange('platformName', e.target.value)}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Platform Tagline
+                      </label>
+                      <input
+                        type='text'
+                        value={platformSettings.platformTagline}
+                        onChange={(e) => handlePlatformSettingChange('platformTagline', e.target.value)}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Support Email
+                      </label>
+                      <input
+                        type='email'
+                        value={platformSettings.supportEmail}
+                        onChange={(e) => handlePlatformSettingChange('supportEmail', e.target.value)}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Support Phone
+                      </label>
+                      <input
+                        type='tel'
+                        value={platformSettings.supportPhone}
+                        onChange={(e) => handlePlatformSettingChange('supportPhone', e.target.value)}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commission & Payout Settings */}
+              <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5'>
+                <div className='flex items-center gap-3 mb-4'>
+                  <div className='w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center'>
+                    <Percent className='w-5 h-5 text-green-600 dark:text-green-400' />
+                  </div>
+                  <div>
+                    <h2 className='text-lg font-semibold text-slate-800 dark:text-slate-100'>
+                      Commission & Payouts
+                    </h2>
+                    <p className='text-xs text-slate-600 dark:text-slate-400'>
+                      Configure fees and payout schedules
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Platform Fee (%)
+                      </label>
+                      <div className='relative'>
+                        <input
+                          type='number'
+                          min='0'
+                          max='100'
+                          value={platformSettings.platformFeePercent}
+                          onChange={(e) => handlePlatformSettingChange('platformFeePercent', parseFloat(e.target.value))}
+                          className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                        />
+                        <span className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm'>%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Minimum Withdrawal (RWF)
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        value={platformSettings.minimumWithdrawal}
+                        onChange={(e) => handlePlatformSettingChange('minimumWithdrawal', parseInt(e.target.value))}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5'>
+                        Payout Schedule
+                      </label>
+                      <select
+                        value={platformSettings.payoutSchedule}
+                        onChange={(e) => handlePlatformSettingChange('payoutSchedule', e.target.value)}
+                        className='w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                      >
+                        <option value='weekly'>Weekly</option>
+                        <option value='biweekly'>Bi-weekly (1st & 15th)</option>
+                        <option value='monthly'>Monthly</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Toggles */}
+              <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5'>
+                <div className='flex items-center gap-3 mb-4'>
+                  <div className='w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center'>
+                    <ToggleLeft className='w-5 h-5 text-purple-600 dark:text-purple-400' />
+                  </div>
+                  <div>
+                    <h2 className='text-lg font-semibold text-slate-800 dark:text-slate-100'>
+                      Feature Toggles
+                    </h2>
+                    <p className='text-xs text-slate-600 dark:text-slate-400'>
+                      Enable or disable platform features
+                    </p>
+                  </div>
+                </div>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {[
+                    { key: 'allowNewRegistrations', label: 'Allow New Registrations', desc: 'Allow new users to sign up' },
+                    { key: 'requireEmailVerification', label: 'Require Email Verification', desc: 'Users must verify email before accessing' },
+                    { key: 'allowGuestCheckout', label: 'Allow Guest Checkout', desc: 'Allow orders without an account' },
+                    { key: 'enableReviews', label: 'Enable Reviews', desc: 'Allow customers to leave reviews' },
+                    { key: 'enableNotifications', label: 'Enable Notifications', desc: 'Send push and email notifications' },
+                    { key: 'maintenanceMode', label: 'Maintenance Mode', desc: 'Temporarily disable the platform' }
+                  ].map((feature) => (
+                    <div
+                      key={feature.key}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        feature.key === 'maintenanceMode' && platformSettings.maintenanceMode
+                          ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <h3 className='text-sm font-medium text-slate-800 dark:text-slate-100'>
+                          {feature.label}
+                        </h3>
+                        <p className='text-xs text-slate-600 dark:text-slate-400'>
+                          {feature.desc}
+                        </p>
+                      </div>
+                      <label className='relative inline-flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={platformSettings[feature.key]}
+                          onChange={(e) => handlePlatformSettingChange(feature.key, e.target.checked)}
+                          className='sr-only peer'
+                        />
+                        <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 rounded-full peer after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                          feature.key === 'maintenanceMode'
+                            ? 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 peer-checked:after:translate-x-full peer-checked:bg-red-600'
+                            : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:bg-green-600'
+                        }`}></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notification Preferences */}
+              <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5'>
+                <div className='flex items-center gap-3 mb-4'>
+                  <div className='w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center'>
+                    <Bell className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
+                  </div>
+                  <div>
+                    <h2 className='text-lg font-semibold text-slate-800 dark:text-slate-100'>
+                      Admin Notifications
+                    </h2>
+                    <p className='text-xs text-slate-600 dark:text-slate-400'>
+                      Configure which notifications you receive
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-3'>
+                  {[
+                    { key: 'sendOrderConfirmation', label: 'Order Confirmations', desc: 'Receive notification for each new order' },
+                    { key: 'sendPayoutNotification', label: 'Payout Requests', desc: 'Receive notification when vendors request payouts' },
+                    { key: 'sendNewVendorAlert', label: 'New Vendor Registrations', desc: 'Receive notification when new vendors register' },
+                    { key: 'sendWeeklyReport', label: 'Weekly Reports', desc: 'Receive weekly platform performance summary' }
+                  ].map((notification) => (
+                    <div
+                      key={notification.key}
+                      className='flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700'
+                    >
+                      <div>
+                        <h3 className='text-sm font-medium text-slate-800 dark:text-slate-100'>
+                          {notification.label}
+                        </h3>
+                        <p className='text-xs text-slate-600 dark:text-slate-400'>
+                          {notification.desc}
+                        </p>
+                      </div>
+                      <label className='relative inline-flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={platformSettings[notification.key]}
+                          onChange={(e) => handlePlatformSettingChange(notification.key, e.target.checked)}
+                          className='sr-only peer'
+                        />
+                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className='flex items-center justify-end pt-2'>
+                <button
+                  onClick={handleSavePlatformSettings}
+                  disabled={platformSettingsLoading}
+                  className='px-6 py-2.5 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
+                >
+                  {platformSettingsLoading && <Loader2 className='w-4 h-4 animate-spin' />}
+                  Save Platform Settings
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'security' && (
             <div className='space-y-4'>
               {/* Change Password Section */}
@@ -1064,7 +1522,13 @@ const Settings = ({ initialTab = 'profile' }) => {
                   Active Sessions
                 </h2>
                 <div className='space-y-3'>
-                  {activeSessions.map((session) => {
+                  {sessionsLoading ? (
+                    <div className='flex items-center justify-center py-8'>
+                      <Loader2 className='w-6 h-6 text-solid animate-spin' />
+                    </div>
+                  ) : activeSessions.length === 0 ? (
+                    <p className='text-sm text-slate-500 dark:text-slate-400 text-center py-4'>No active sessions found</p>
+                  ) : activeSessions.map((session) => {
                     const Icon = session.icon
                     return (
                       <div
@@ -1108,6 +1572,13 @@ const Settings = ({ initialTab = 'profile' }) => {
                 <h2 className='text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4'>
                   Recent Login Activity
                 </h2>
+                {activityLoading ? (
+                  <div className='flex items-center justify-center py-8'>
+                    <Loader2 className='w-6 h-6 text-solid animate-spin' />
+                  </div>
+                ) : loginActivity.length === 0 ? (
+                  <p className='text-sm text-slate-500 dark:text-slate-400 text-center py-4'>No login activity found</p>
+                ) : (
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
                     <thead>
@@ -1159,6 +1630,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
 
               {/* Action Buttons */}

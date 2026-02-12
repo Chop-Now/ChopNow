@@ -1,10 +1,22 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment variables - NEVER commit these
 .env
 .env.local
+.env.development
+.env.production
 .env.*.local
+Backend/.env
+Frontend/.env
+**/.env
+
+# Sensitive files
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.json
 
 # Logs
 logs
@@ -64,3 +76,16 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+nul
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Claude AI session files
+.claude/
+
+# Debug files
+*.log
+debug/

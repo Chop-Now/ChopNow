@@ -11,12 +11,26 @@ const {
   updateAddress,
   deleteAddress,
   getUsersForAdmin,
+  updateUserByAdmin,
+  suspendUser,
+  activateUser,
+  deleteUserByAdmin,
+  requestPasswordChangeOTP,
+  changePassword,
+  requestSensitiveChangeOTP,
+  verifySensitiveChangeOTP,
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
   resetPassword,
   sendOTP,
   verifyOTP,
+  switchRole,
+  addRole,
+  getActiveSessions,
+  getLoginActivity,
+  logoutSession,
+  logoutAllDevices,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -26,6 +40,7 @@ const {
   validateResetPassword,
   validateForgotPassword
 } = require('../middleware/validation');
+const { checkRegistrationAllowed } = require('../middleware/platformSettings');
 
 // Public routes
 
@@ -61,7 +76,7 @@ const {
  *       400:
  *         description: Invalid input
  */
-router.post('/register', validateRegister, registerUser);
+router.post('/register', checkRegistrationAllowed, validateRegister, registerUser);
 
 /**
  * @swagger
@@ -104,17 +119,42 @@ router.post('/reset-password', validateResetPassword, resetPassword);
 router.post('/send-otp', sendOTP);
 router.post('/verify-otp', verifyOTP);
 
-// Admin-only: list all users
-router.get('/', protect, authorize('admin'), getUsersForAdmin);
-
-// Protected routes
+// Protected routes (MUST be defined BEFORE parameterized routes like /:id)
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
+
+// Password change with OTP verification
+router.post('/profile/password/request-otp', protect, requestPasswordChangeOTP);
+router.put('/profile/password', protect, changePassword);
+
+// Sensitive information change OTP (for vendors)
+router.post('/request-sensitive-change-otp', protect, requestSensitiveChangeOTP);
+router.post('/verify-sensitive-change-otp', protect, verifySensitiveChangeOTP);
+
 router.post('/avatar', protect, upload.single('avatar'), uploadAvatar);
+
+// Role management routes
+router.post('/switch-role', protect, switchRole);
+router.post('/add-role', protect, addRole);
+
+// Session management routes
+router.get('/sessions', protect, getActiveSessions);
+router.delete('/sessions/:sessionId', protect, logoutSession);
+router.post('/logout-all', protect, logoutAllDevices);
+router.get('/login-activity', protect, getLoginActivity);
 
 // Address routes
 router.post('/addresses', protect, addAddress);
 router.put('/addresses/:addressId', protect, updateAddress);
 router.delete('/addresses/:addressId', protect, deleteAddress);
+
+// Admin-only: list all users
+router.get('/', protect, authorize('admin'), getUsersForAdmin);
+
+// Admin-only: user management (parameterized routes AFTER specific routes)
+router.put('/:id', protect, authorize('admin'), updateUserByAdmin);
+router.patch('/:id/suspend', protect, authorize('admin'), suspendUser);
+router.patch('/:id/activate', protect, authorize('admin'), activateUser);
+router.delete('/:id', protect, authorize('admin'), deleteUserByAdmin);
 
 module.exports = router;

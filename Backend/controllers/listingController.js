@@ -198,8 +198,9 @@ const getListingById = async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Increment view count
-    listing.stats.views += 1;
+    // Increment view count (with null check)
+    if (!listing.stats) listing.stats = { views: 0, orders: 0 };
+    listing.stats.views = (listing.stats.views || 0) + 1;
     await listing.save();
 
     res.json(listing);
@@ -234,12 +235,10 @@ const updateListing = async (req, res) => {
       'pricing',
       'inventory',
       'timeWindow',
-      'timeWindow',
       'fulfillment',
       'status',
-      'nutritionalInfo', // Added
-      'images', // Added
-      'business' // Sometimes passed?
+      'nutritionalInfo',
+      'images'
     ];
 
     allowedUpdates.forEach(field => {
@@ -314,12 +313,12 @@ const uploadPhotos = async (req, res) => {
     // Upload to Cloudinary
     const photoUrls = await uploadMultipleToCloudinary(req.files, 'chopnow/listings');
 
-    listing.photos.push(...photoUrls);
+    listing.images.push(...photoUrls);
     await listing.save();
 
     res.json({
       message: 'Photos uploaded successfully',
-      photos: listing.photos
+      images: listing.images
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

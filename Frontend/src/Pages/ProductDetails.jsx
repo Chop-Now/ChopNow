@@ -4,12 +4,13 @@ import ProductCard from '../Components/ProductCard';
 import React, { useEffect, useState, useRef } from 'react'
 import { useAppContext } from '../context/AppContext';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Home, Star, ShoppingCart, Send, Trash2, Share2 } from 'lucide-react';
+import { Home, Star, ShoppingCart, Send, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
+import { reviewService, favoriteService } from '../services';
 import toast from 'react-hot-toast';
 
 const ProductDetails = () => {
 
-    const { products, addToCart, cartItems, removeAllFromCart } = useAppContext()
+    const { products, addToCart, cartItems, removeAllFromCart, isAuthenticated } = useAppContext()
     const navigate = useNavigate()
     const { id } = useParams()
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -18,6 +19,15 @@ const ProductDetails = () => {
     const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
     const [showMagnifier, setShowMagnifier] = useState(false);
     const imgRef = useRef(null);
+
+    // Reviews state
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    // Favorites state
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
 
     const product = products.find((item) => item._id === id);
 
@@ -30,8 +40,40 @@ const ProductDetails = () => {
     }, [products, product])
 
     useEffect(() => {
-        setThumbnail(product?.image[0] ? product.image[0] : null)
+        setThumbnail(product?.image?.[0] || null)
     }, [product])
+
+    // Fetch reviews for the product's business
+    useEffect(() => {
+        const fetchReviews = async () => {
+            if (!product?.vendorId) return;
+            try {
+                setReviewsLoading(true);
+                const data = await reviewService.getBusinessReviews(product.vendorId);
+                setReviews(data.reviews || data || []);
+            } catch (error) {
+                console.error('Failed to fetch reviews:', error);
+                setReviews([]);
+            } finally {
+                setReviewsLoading(false);
+            }
+        };
+        fetchReviews();
+    }, [product?.vendorId])
+
+    // Check if product is favorited (for logged-in users)
+    useEffect(() => {
+        const checkFavorite = async () => {
+            if (!isAuthenticated || !id) return;
+            try {
+                const data = await favoriteService.checkFavorite('listing', id);
+                setIsFavorite(data.isFavorite || false);
+            } catch (error) {
+                console.error('Failed to check favorite status:', error);
+            }
+        };
+        checkFavorite();
+    }, [isAuthenticated, id])
 
     if (!product) {
         return (
@@ -91,8 +133,15 @@ const ProductDetails = () => {
         });
     };
 
-    const handleSubmitReview = (e) => {
+    const handleSubmitReview = async (e) => {
         e.preventDefault();
+
+        if (!isAuthenticated) {
+            toast.error('Please login to submit a review');
+            navigate('/login');
+            return;
+        }
+
         if (review.rating === 0) {
             toast.error('Please select a rating');
             return;
@@ -101,11 +150,46 @@ const ProductDetails = () => {
             toast.error('Please write a review');
             return;
         }
-        toast.success('Review submitted successfully!');
-        setReview({ rating: 0, comment: '' });
+
+        setSubmittingReview(true);
+        try {
+            const newReview = await reviewService.createReview({
+                business: product.vendorId,
+                rating: review.rating,
+                comment: review.comment
+            });
+            setReviews(prev => [newReview, ...prev]);
+            toast.success('Review submitted successfully!');
+            setReview({ rating: 0, comment: '' });
+        } catch (error) {
+            toast.error(error.message || 'Failed to submit review');
+        } finally {
+            setSubmittingReview(false);
+        }
     };
 
-    const discountPercent = Math.round(((product.price - product.offerPrice) / product.price) * 100);
+    const handleToggleFavorite = async () => {
+        if (!isAuthenticated) {
+            toast.error('Please login to add favorites');
+            navigate('/login');
+            return;
+        }
+
+        setFavoriteLoading(true);
+        try {
+            const result = await favoriteService.toggleFavorite('listing', id);
+            setIsFavorite(result.isFavorite);
+            toast.success(result.isFavorite ? 'Added to favorites!' : 'Removed from favorites');
+        } catch (error) {
+            toast.error(error.message || 'Failed to update favorites');
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
+
+    const productPrice = product?.price || 0;
+    const productOfferPrice = product?.offerPrice || productPrice;
+    const discountPercent = productPrice > 0 ? Math.round(((productPrice - productOfferPrice) / productPrice) * 100) : 0;
     const currentCartQuantity = cartItems[product._id] || 0;
 
     return (
@@ -118,7 +202,7 @@ const ProductDetails = () => {
                     <span>/</span>
                     <Link to="/shop" className="hover:opacity-70">Shop</Link>
                     <span>/</span>
-                    <Link to={`/shop/${product.category.toLowerCase()}`} className="hover:opacity-70">{product.category}</Link>
+                    <Link to={`/shop/${(product.category || 'all').toLowerCase()}`} className="hover:opacity-70">{product.category || 'All'}</Link>
                     <span>/</span>
                     <span style={{ color: 'var(--color-solid)' }}>{product.name}</span>
                 </div>
@@ -127,7 +211,7 @@ const ProductDetails = () => {
                     {/* Left Side - Images */}
                     <div className="flex gap-4 lg:w-1/2">
                         <div className="flex flex-col gap-3">
-                            {product.image.map((image, index) => (
+                            {(product.image || []).map((image, index) => (
                                 <div
                                     key={index}
                                     onClick={() => setThumbnail(image)}
@@ -176,14 +260,28 @@ const ProductDetails = () => {
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                             <h1 className="text-2xl md:text-3xl font-semibold" style={{ color: 'var(--color-textColor)' }}>{product.name}</h1>
-                            <button
-                                onClick={handleShareProduct}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:opacity-80 transition-opacity cursor-pointer"
-                                style={{ border: '1px solid var(--color-gray-50)', color: 'var(--color-textColor)' }}
-                            >
-                                <Share2 className="w-4 h-4" />
-                                <span className="text-sm font-medium">Share</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleToggleFavorite}
+                                    disabled={favoriteLoading}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50"
+                                    style={{ border: '1px solid var(--color-gray-50)', color: isFavorite ? 'var(--color-solidOne)' : 'var(--color-textColor)' }}
+                                >
+                                    {favoriteLoading ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Heart className="w-4 h-4" fill={isFavorite ? 'var(--color-solidOne)' : 'none'} />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleShareProduct}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:opacity-80 transition-opacity cursor-pointer"
+                                    style={{ border: '1px solid var(--color-gray-50)', color: 'var(--color-textColor)' }}
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Share</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-2 mb-4">
@@ -211,7 +309,7 @@ const ProductDetails = () => {
                         <div className="mb-4">
                             <div className="flex items-center gap-3">
                                 <p className="text-3xl font-bold" style={{ color: 'var(--color-solid)' }}>
-                                    RWF {product.offerPrice.toLocaleString()}
+                                    RWF {(productOfferPrice || 0).toLocaleString()}
                                 </p>
                                 {discountPercent > 0 && (
                                     <span
@@ -223,7 +321,7 @@ const ProductDetails = () => {
                                 )}
                             </div>
                             <p className="text-sm line-through mt-1" style={{ color: 'var(--color-gray-50)' }}>
-                                RWF {product.price.toLocaleString()}
+                                RWF {(productPrice || 0).toLocaleString()}
                             </p>
                         </div>
 
@@ -280,11 +378,17 @@ const ProductDetails = () => {
                         {/* About Product */}
                         <div className="mb-6">
                             <p className="text-base font-semibold mb-2" style={{ color: 'var(--color-textColor)' }}>About Product</p>
-                            <ul className="list-disc ml-5 space-y-1 text-sm" style={{ color: 'var(--color-gray-50)' }}>
-                                {product.description.map((desc, index) => (
-                                    <li key={index}>{desc}</li>
-                                ))}
-                            </ul>
+                            {Array.isArray(product.description) ? (
+                                <ul className="list-disc ml-5 space-y-1 text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                    {product.description.map((desc, index) => (
+                                        <li key={index}>{desc}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                    {product.description || 'No description available.'}
+                                </p>
+                            )}
                         </div>
 
                         {/* Action Buttons */}
@@ -379,51 +483,75 @@ const ProductDetails = () => {
                             </div>
                             <button
                                 type="submit"
-                                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 hover:opacity-90 transition-opacity"
+                                disabled={submittingReview}
+                                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                                 style={{ backgroundColor: 'var(--color-solid)' }}
                             >
-                                <Send className="w-4 h-4" />
-                                Submit Review
+                                {submittingReview ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Send className="w-4 h-4" />
+                                )}
+                                {submittingReview ? 'Submitting...' : 'Submit Review'}
                             </button>
                         </form>
                     </div>
 
-                    {/* Sample Reviews */}
+                    {/* Reviews List */}
                     <div className="space-y-4">
-                        <div className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>John Doe</p>
-                                    <div className="flex gap-1 mt-1">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star key={star} className="w-4 h-4" fill="var(--color-solidOne)" stroke="var(--color-solidOne)" />
-                                        ))}
-                                    </div>
-                                </div>
-                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>2 days ago</p>
+                        {reviewsLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-solid)' }} />
                             </div>
-                            <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-                                Great product! Fresh and exactly as described. Highly recommend!
-                            </p>
-                        </div>
-
-                        <div className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>Jane Smith</p>
-                                    <div className="flex gap-1 mt-1">
-                                        {[1, 2, 3, 4].map((star) => (
-                                            <Star key={star} className="w-4 h-4" fill="var(--color-solidOne)" stroke="var(--color-solidOne)" />
-                                        ))}
-                                        <Star className="w-4 h-4" fill="none" stroke="var(--color-gray-50)" />
-                                    </div>
-                                </div>
-                                <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>1 week ago</p>
+                        ) : reviews.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                    No reviews yet. Be the first to review this product!
+                                </p>
                             </div>
-                            <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-                                Good quality and reasonable price. Will order again!
-                            </p>
-                        </div>
+                        ) : (
+                            reviews.map((reviewItem) => (
+                                <div key={reviewItem._id} className="p-5 rounded-lg border" style={{ borderColor: '#E5E5E5' }}>
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>
+                                                {reviewItem.user?.firstName || 'Anonymous'} {reviewItem.user?.lastName?.charAt(0) || ''}.
+                                            </p>
+                                            <div className="flex gap-1 mt-1">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Star
+                                                        key={star}
+                                                        className="w-4 h-4"
+                                                        fill={reviewItem.rating >= star ? 'var(--color-solidOne)' : 'none'}
+                                                        stroke={reviewItem.rating >= star ? 'var(--color-solidOne)' : 'var(--color-gray-50)'}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                                            {new Date(reviewItem.createdAt).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
+                                        </p>
+                                    </div>
+                                    <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                                        {reviewItem.comment}
+                                    </p>
+                                    {reviewItem.response && (
+                                        <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
+                                            <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-solid)' }}>
+                                                Business Response:
+                                            </p>
+                                            <p className="text-sm" style={{ color: 'var(--color-textColor)' }}>
+                                                {reviewItem.response.text}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

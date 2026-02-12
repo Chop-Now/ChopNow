@@ -1,5 +1,8 @@
-import React, { useState } from 'react'
-import { Search, History, RotateCw, AlertTriangle, AlertCircle, AlertOctagon, CheckCircle, Phone, MessageSquare, ShieldAlert, Check, BadgeDollarSign, TruckIcon, Clock, Package, Store, Truck, DollarSign, CircleCheck, X, FileText, MapPin, User, Calendar, Image as ImageIcon } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Search, History, RotateCw, AlertTriangle, AlertCircle, AlertOctagon, CheckCircle, Phone, MessageSquare, ShieldAlert, Check, BadgeDollarSign, TruckIcon, Clock, Package, Store, Truck, DollarSign, CircleCheck, X, FileText, MapPin, User, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { disputeService } from '../../services'
+import toast from 'react-hot-toast'
+import { useAdminMode } from '../context/AdminModeContext'
 
 // Placeholder for RefundRequests component
 export const RefundRequests = () => {
@@ -13,255 +16,10 @@ export const RefundRequests = () => {
   );
 };
 
-// Dummy complaints/issues data
-const dummyIssues = [
-  {
-    id: 1,
-    orderId: "ORD-2024-1234",
-    orderValue: 45000,
-    priority: "critical",
-    type: "vendor",
-    title: "Vendor Unresponsive",
-    incident: "Vendor has not responded to customer messages for over 2 hours. Customer is waiting for order confirmation.",
-    fullComplaint: "I placed an order at 8:30 AM and the vendor confirmed they would prepare it. However, it's now been over 2 hours and they haven't responded to any of my messages asking for an update. I've sent 5 messages through the app and called twice, but no one is picking up. This is very frustrating as I need the food for an important meeting. I'm a VIP customer and this level of service is unacceptable.",
-    since: "10:45 AM",
-    reportedAt: "2026-01-19T10:45:00",
-    customer: {
-      name: "John Doe",
-      email: "john.doe@email.com",
-      phone: "+233 24 123 4567",
-      status: "VIP Customer",
-      location: "Accra, Ghana",
-      image: null
-    },
-    vendor: {
-      name: "Mama's Kitchen",
-      phone: "+233 20 555 7890",
-      location: "East Legon, Accra"
-    },
-    deliveryStatus: "pending",
-    rider: null,
-    images: [
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400",
-      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400"
-    ],
-    timeline: [
-      { time: "8:30 AM", event: "Order placed" },
-      { time: "8:45 AM", event: "Vendor confirmed order" },
-      { time: "9:30 AM", event: "First message to vendor" },
-      { time: "10:00 AM", event: "Multiple follow-up messages sent" },
-      { time: "10:45 AM", event: "Complaint filed" }
-    ],
-    actions: ["call", "message", "alert", "resolve"]
-  },
-  {
-    id: 2,
-    orderId: "ORD-2024-1235",
-    orderValue: 28500,
-    priority: "high",
-    type: "missing",
-    title: "Missing Item",
-    incident: "Customer reports that 2 items are missing from their delivered order. They've provided photos as evidence.",
-    fullComplaint: "I received my order 20 minutes ago, but when I opened the bags, I noticed that 2 items are missing - the grilled chicken and the coleslaw that I specifically ordered. I've taken pictures of what I received vs what the receipt shows. This is really disappointing as I paid for a complete meal.",
-    since: "11:20 AM",
-    reportedAt: "2026-01-19T11:20:00",
-    customer: {
-      name: "Sarah Johnson",
-      email: "sarah.johnson@email.com",
-      phone: "+233 20 987 6543",
-      status: "Frequent Orderer",
-      location: "Tema, Ghana",
-      image: null
-    },
-    vendor: {
-      name: "Tasty Bites Restaurant",
-      phone: "+233 24 666 7777",
-      location: "Tema Community 1"
-    },
-    deliveryStatus: "delivered",
-    rider: {
-      name: "Kwame Mensah",
-      phone: "+233 55 111 2222",
-      vehicleNumber: "GT-4567-21"
-    },
-    images: [
-      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",
-      "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400",
-      "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=400"
-    ],
-    timeline: [
-      { time: "10:30 AM", event: "Order placed" },
-      { time: "10:45 AM", event: "Order confirmed by vendor" },
-      { time: "11:00 AM", event: "Rider assigned" },
-      { time: "11:05 AM", event: "Order picked up" },
-      { time: "11:15 AM", event: "Order delivered" },
-      { time: "11:20 AM", event: "Complaint filed - Missing items" }
-    ],
-    actions: ["call", "refund", "alert", "resolve"]
-  },
-  {
-    id: 3,
-    orderId: "ORD-2024-1236",
-    orderValue: 15000,
-    priority: "medium",
-    type: "delivery",
-    title: "Late Delivery",
-    incident: "Order was scheduled for 12:00 PM but hasn't arrived yet. Customer has an important event.",
-    fullComplaint: "I ordered food for a business lunch scheduled at 12:00 PM. It's now 12:30 PM and my food hasn't arrived. The rider hasn't called or sent any updates. I've been tracking the order and it seems like the rider is stuck somewhere. This is very unprofessional and I have guests waiting. I need this resolved immediately or I'll need a full refund.",
-    since: "12:30 PM",
-    reportedAt: "2026-01-19T12:30:00",
-    customer: {
-      name: "Michael Brown",
-      email: "michael.brown@email.com",
-      phone: "+233 24 555 1234",
-      status: "New Customer",
-      location: "Osu, Accra",
-      image: null
-    },
-    vendor: {
-      name: "Quick Meals Express",
-      phone: "+233 20 444 5555",
-      location: "Labadi, Accra"
-    },
-    deliveryStatus: "in_transit",
-    rider: {
-      name: "Emmanuel Osei",
-      phone: "+233 59 333 4444",
-      vehicleNumber: "GT-8901-21"
-    },
-    images: null,
-    timeline: [
-      { time: "11:15 AM", event: "Order placed" },
-      { time: "11:25 AM", event: "Vendor confirmed - Est. ready 11:45 AM" },
-      { time: "11:50 AM", event: "Rider assigned" },
-      { time: "12:00 PM", event: "Order picked up" },
-      { time: "12:30 PM", event: "Complaint filed - Delayed delivery" }
-    ],
-    actions: ["call", "track", "alert", "resolve"]
-  },
-  {
-    id: 4,
-    orderId: "ORD-2024-1237",
-    orderValue: 52000,
-    priority: "critical",
-    type: "missing",
-    title: "Incorrect Order",
-    incident: "Customer received completely wrong items. They ordered vegetables but received meat products.",
-    since: "9:15 AM",
-    customer: {
-      name: "Emily Davis",
-      phone: "+233 20 444 5678",
-      status: "VIP Customer",
-      image: null
-    },
-    actions: ["call", "refund", "alert", "resolve"]
-  },
-  {
-    id: 5,
-    orderId: "ORD-2024-1238",
-    orderValue: 33000,
-    priority: "high",
-    type: "other",
-    title: "Request Refund",
-    incident: "Customer wants full refund due to poor quality of delivered items. Multiple items were spoiled.",
-    since: "11:50 AM",
-    customer: {
-      name: "David Wilson",
-      phone: "+233 24 777 8899",
-      status: "Frequent Orderer",
-      image: null
-    },
-    actions: ["call", "refund", "alert", "resolve"]
-  },
-  {
-    id: 6,
-    orderId: "ORD-2024-1239",
-    orderValue: 19500,
-    priority: "medium",
-    type: "vendor",
-    title: "Vendor Issues",
-    incident: "Vendor marked items as available but they're actually out of stock. Customer frustrated.",
-    since: "1:10 PM",
-    customer: {
-      name: "Lisa Anderson",
-      phone: "+233 20 333 2222",
-      status: "New Customer",
-      image: null
-    },
-    actions: ["call", "message", "alert", "resolve"]
-  },
-  {
-    id: 7,
-    orderId: "ORD-2024-1240",
-    orderValue: 41000,
-    priority: "high",
-    type: "delivery",
-    title: "Late Delivery",
-    incident: "Delivery delayed by 3 hours. Driver had vehicle issues and didn't communicate with customer.",
-    since: "10:00 AM",
-    customer: {
-      name: "Robert Taylor",
-      phone: "+233 24 111 2222",
-      status: "VIP Customer",
-      image: null
-    },
-    actions: ["call", "track", "alert", "resolve"]
-  },
-  {
-    id: 8,
-    orderId: "ORD-2024-1241",
-    orderValue: 22000,
-    priority: "critical",
-    type: "missing",
-    title: "Missing Item",
-    incident: "High-value item missing from order. Customer claims entire bag of items was not delivered.",
-    since: "11:35 AM",
-    customer: {
-      name: "Jennifer Martinez",
-      phone: "+233 20 999 8888",
-      status: "Frequent Orderer",
-      image: null
-    },
-    actions: ["call", "refund", "alert", "resolve"]
-  },
-  {
-    id: 9,
-    orderId: "ORD-2024-1242",
-    orderValue: 16500,
-    priority: "medium",
-    type: "other",
-    title: "Request Refund",
-    incident: "Customer not satisfied with portion sizes. Says items don't match product descriptions.",
-    since: "12:45 PM",
-    customer: {
-      name: "Christopher Lee",
-      phone: "+233 24 666 7777",
-      status: "New Customer",
-      image: null
-    },
-    actions: ["call", "refund", "alert", "resolve"]
-  },
-  {
-    id: 10,
-    orderId: "ORD-2024-1243",
-    orderValue: 38000,
-    priority: "high",
-    type: "vendor",
-    title: "Vendor Unresponsive",
-    incident: "Vendor hasn't confirmed order after 1 hour. Customer needs items urgently for an event.",
-    since: "1:25 PM",
-    customer: {
-      name: "Amanda White",
-      phone: "+233 20 222 3333",
-      status: "VIP Customer",
-      image: null
-    },
-    actions: ["call", "message", "alert", "resolve"]
-  }
-];
-
 export const CustomerComplaints = () => {
-  const [issues, setIssues] = useState(dummyIssues);
+  const { adminMode } = useAdminMode();
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -270,14 +28,112 @@ export const CustomerComplaints = () => {
   const [sortBy, setSortBy] = useState('priority');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIssue, setSelectedIssue] = useState(null);
+  const [resolvingId, setResolvingId] = useState(null);
   const itemsPerPage = 9;
+
+  // Transform backend dispute format to frontend issue format
+  const transformDispute = (dispute) => ({
+    id: dispute._id,
+    orderId: dispute.order?.orderNumber || dispute.orderId || 'N/A',
+    orderValue: dispute.order?.totalAmount || 0,
+    priority: dispute.priority || 'medium',
+    type: dispute.type || 'other',
+    title: dispute.subject || dispute.title || 'Issue',
+    incident: dispute.description || '',
+    fullComplaint: dispute.description || '',
+    since: new Date(dispute.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    reportedAt: dispute.createdAt,
+    customer: {
+      name: dispute.customer?.name || dispute.user?.name || 'Unknown',
+      email: dispute.customer?.email || dispute.user?.email || '',
+      phone: dispute.customer?.phone || dispute.user?.phone || 'N/A',
+      status: dispute.customer?.tier || 'Customer',
+      location: dispute.customer?.address?.city || '',
+      image: dispute.customer?.avatar || null
+    },
+    vendor: dispute.business ? {
+      name: dispute.business.name || 'Unknown Vendor',
+      phone: dispute.business.phone || 'N/A',
+      location: dispute.business.address?.city || ''
+    } : null,
+    deliveryStatus: dispute.order?.status || 'unknown',
+    rider: dispute.rider ? {
+      name: dispute.rider.name || 'Unknown',
+      phone: dispute.rider.phone || 'N/A',
+      vehicleNumber: dispute.rider.vehicleNumber || 'N/A'
+    } : null,
+    images: dispute.attachments || null,
+    timeline: dispute.timeline || [],
+    actions: getActionsForType(dispute.type),
+    status: dispute.status
+  });
+
+  // Get appropriate actions based on dispute type
+  const getActionsForType = (type) => {
+    switch(type) {
+      case 'missing':
+        return ['call', 'refund', 'alert', 'resolve'];
+      case 'vendor':
+        return ['call', 'message', 'alert', 'resolve'];
+      case 'delivery':
+        return ['call', 'track', 'alert', 'resolve'];
+      default:
+        return ['call', 'message', 'alert', 'resolve'];
+    }
+  };
+
+  // Fetch disputes from API
+  const fetchDisputes = async () => {
+    setLoading(true);
+    try {
+      const scope = adminMode === 'website' ? 'admin' : 'business';
+      const response = await disputeService.getDisputes(scope);
+      const disputes = response.disputes || response.data || response || [];
+      const transformedDisputes = disputes
+        .filter(d => d.status !== 'resolved' && d.status !== 'closed')
+        .map(transformDispute);
+      setIssues(transformedDisputes);
+    } catch (error) {
+      console.error('Error fetching disputes:', error);
+      toast.error('Failed to load disputes');
+      setIssues([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDisputes();
+  }, [adminMode]);
+
+  // State for dispute stats
+  const [disputeStats, setDisputeStats] = useState({
+    resolvedToday: 0,
+    avgResolutionMinutes: 0
+  })
+
+  // Fetch dispute stats from API
+  useEffect(() => {
+    const fetchDisputeStats = async () => {
+      try {
+        const stats = await disputeService.getDisputeStats()
+        setDisputeStats({
+          resolvedToday: stats.resolvedToday || 0,
+          avgResolutionMinutes: stats.avgResolutionMinutes || 0
+        })
+      } catch (error) {
+        console.error('Error fetching dispute stats:', error)
+      }
+    }
+    fetchDisputeStats()
+  }, [adminMode])
 
   // Calculate stats
   const stats = {
     critical: issues.filter(i => i.priority === 'critical').length,
     high: issues.filter(i => i.priority === 'high').length,
     medium: issues.filter(i => i.priority === 'medium').length,
-    resolvedToday: 8 // This would come from API in real app
+    resolvedToday: disputeStats.resolvedToday
   };
 
   const activeIssues = issues.filter(i => i.priority === 'critical' || i.priority === 'high').length;
@@ -311,15 +167,38 @@ export const CustomerComplaints = () => {
   const showingFrom = filteredIssues.length > 0 ? startIndex + 1 : 0;
   const showingTo = Math.min(endIndex, filteredIssues.length);
 
-  const handleResolve = (issueId) => {
-    setIssues(prev => prev.filter(i => i.id !== issueId));
+  const handleResolve = async (issueId) => {
+    setResolvingId(issueId);
+    try {
+      await disputeService.resolveDispute(issueId, {
+        resolution: 'Resolved by admin',
+        status: 'resolved'
+      });
+      setIssues(prev => prev.filter(i => i.id !== issueId));
+      toast.success('Dispute resolved successfully');
+    } catch (error) {
+      console.error('Error resolving dispute:', error);
+      toast.error('Failed to resolve dispute');
+      // Still remove from UI for demo purposes
+      setIssues(prev => prev.filter(i => i.id !== issueId));
+    } finally {
+      setResolvingId(null);
+    }
   };
+
+  // Format resolution time for display
+  const formatResolutionTime = (minutes) => {
+    if (minutes < 60) return `${minutes}m`
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+  }
 
   const statsCards = [
     {
       title: 'Critical Priority',
       value: stats.critical,
-      subtitle: 'Avg wait: 12m',
+      subtitle: `${stats.critical} active issues`,
       icon: <AlertOctagon className='w-6 h-6' />,
       bgColor: 'bg-red-50 dark:bg-red-900/20',
       iconColor: 'text-red-600 dark:text-red-400',
@@ -327,7 +206,7 @@ export const CustomerComplaints = () => {
     {
       title: 'High Priority',
       value: stats.high,
-      subtitle: 'Avg wait: 30m',
+      subtitle: `${stats.high} active issues`,
       icon: <AlertTriangle className='w-6 h-6' />,
       bgColor: 'bg-orange-50 dark:bg-orange-900/20',
       iconColor: 'text-orange-600 dark:text-orange-400',
@@ -335,7 +214,7 @@ export const CustomerComplaints = () => {
     {
       title: 'Medium Priority',
       value: stats.medium,
-      subtitle: 'Avg wait: 1h',
+      subtitle: `${stats.medium} active issues`,
       icon: <AlertCircle className='w-6 h-6' />,
       bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
@@ -343,7 +222,7 @@ export const CustomerComplaints = () => {
     {
       title: 'Resolved Today',
       value: stats.resolvedToday,
-      subtitle: 'Avg Resolution: 8m',
+      subtitle: disputeStats.avgResolutionMinutes > 0 ? `Avg Resolution: ${formatResolutionTime(disputeStats.avgResolutionMinutes)}` : 'No resolutions yet',
       icon: <CircleCheck className='w-6 h-6' />,
       bgColor: 'bg-green-50 dark:bg-green-900/20',
       iconColor: 'text-green-600 dark:text-green-400',
@@ -431,9 +310,13 @@ export const CustomerComplaints = () => {
             <History className='w-4 h-4' />
             History
           </button>
-          <button className='flex items-center gap-2 px-4 py-2 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-medium transition-colors cursor-pointer'>
-            <RotateCw className='w-4 h-4' />
-            Refresh Queue
+          <button
+            onClick={fetchDisputes}
+            disabled={loading}
+            className='flex items-center gap-2 px-4 py-2 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50'
+          >
+            <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Refreshing...' : 'Refresh Queue'}
           </button>
         </div>
       </div>
@@ -610,8 +493,19 @@ export const CustomerComplaints = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-12 border border-slate-200/50 dark:border-slate-700/50 text-center'>
+          <Loader2 className='w-12 h-12 mx-auto text-solid animate-spin mb-4' />
+          <h3 className='text-lg font-bold text-slate-800 dark:text-white mb-2'>Loading Disputes...</h3>
+          <p className='text-sm text-slate-600 dark:text-slate-400'>
+            Please wait while we fetch the latest issues.
+          </p>
+        </div>
+      )}
+
       {/* Issues Kanban Cards */}
-      <div className='relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
+      {!loading && <div className='relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
         {currentIssues.map((issue) => {
           const getBorderColor = (priority) => {
             if (priority === 'critical') return 'border-red-500 dark:border-red-500';
@@ -688,7 +582,7 @@ export const CustomerComplaints = () => {
           </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Empty State */}
       {filteredIssues.length === 0 && (
