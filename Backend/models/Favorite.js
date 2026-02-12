@@ -54,24 +54,22 @@ favoriteSchema.index(
 favoriteSchema.index({ user: 1, favoriteType: 1 });
 
 // Validation to ensure either business or listing is set based on favoriteType
-favoriteSchema.pre('save', function(next) {
+favoriteSchema.pre('save', function() {
   if (this.favoriteType === 'business') {
     if (!this.business) {
-      return next(new Error('Business reference is required when favoriteType is "business"'));
+      throw new Error('Business reference is required when favoriteType is "business"');
     }
     if (this.listing) {
-      return next(new Error('Listing reference should not be set when favoriteType is "business"'));
+      throw new Error('Listing reference should not be set when favoriteType is "business"');
     }
   } else if (this.favoriteType === 'listing') {
     if (!this.listing) {
-      return next(new Error('Listing reference is required when favoriteType is "listing"'));
+      throw new Error('Listing reference is required when favoriteType is "listing"');
     }
     if (this.business) {
-      return next(new Error('Business reference should not be set when favoriteType is "listing"'));
+      throw new Error('Business reference should not be set when favoriteType is "listing"');
     }
   }
-  
-  next();
 });
 
 // Static method to toggle favorite

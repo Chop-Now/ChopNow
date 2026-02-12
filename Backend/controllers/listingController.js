@@ -17,7 +17,9 @@ const createListing = async (req, res) => {
       pricing,
       inventory,
       timeWindow,
-      fulfillment
+      fulfillment,
+      nutritionalInfo, // Added
+      images // Added
     } = req.body;
 
     // Validation
@@ -43,7 +45,9 @@ const createListing = async (req, res) => {
       pricing,
       inventory,
       timeWindow,
-      fulfillment
+      fulfillment,
+      nutritionalInfo,
+      images
     });
 
     // Update business stats
@@ -73,8 +77,12 @@ const getListings = async (req, res) => {
     // Filter by category
     if (category) query.category = category;
 
-    // Filter by status (default to active only)
-    query.status = status || 'active';
+    // Filter by status (default to active only). Special-case 'all' to disable status filtering.
+    if (status && status !== 'all') {
+      query.status = status;
+    } else if (!status) {
+      query.status = 'active';
+    }
 
     // Filter by business
     if (business) query.business = business;
@@ -84,10 +92,14 @@ const getListings = async (req, res) => {
       query.$text = { $search: search };
     }
 
-    // Only show listings within time window
-    const now = new Date();
-    query['timeWindow.availableFrom'] = { $lte: now };
-    query['timeWindow.availableUntil'] = { $gt: now };
+    // Only apply the time window filter for the default/public "active now" view.
+    // If a caller explicitly requests a status (e.g. inactive/expired/all), don't filter by time window
+    // so admin/business dashboards can view historical/expired listings.
+    if (!status) {
+      const now = new Date();
+      query['timeWindow.availableFrom'] = { $lte: now };
+      query['timeWindow.availableUntil'] = { $gt: now };
+    }
 
     const listings = await Listing.find(query)
       .populate('business', 'name type address media')
@@ -186,8 +198,9 @@ const getListingById = async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Increment view count
-    listing.stats.views += 1;
+    // Increment view count (with null check)
+    if (!listing.stats) listing.stats = { views: 0, orders: 0 };
+    listing.stats.views = (listing.stats.views || 0) + 1;
     await listing.save();
 
     res.json(listing);
@@ -223,9 +236,11 @@ const updateListing = async (req, res) => {
       'inventory',
       'timeWindow',
       'fulfillment',
-      'status'
+      'status',
+      'nutritionalInfo',
+      'images'
     ];
-    
+
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
         listing[field] = req.body[field];
@@ -298,12 +313,12 @@ const uploadPhotos = async (req, res) => {
     // Upload to Cloudinary
     const photoUrls = await uploadMultipleToCloudinary(req.files, 'chopnow/listings');
 
-    listing.photos.push(...photoUrls);
+    listing.images.push(...photoUrls);
     await listing.save();
 
     res.json({
       message: 'Photos uploaded successfully',
-      photos: listing.photos
+      images: listing.images
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

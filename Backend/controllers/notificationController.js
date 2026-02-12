@@ -46,6 +46,38 @@ const getNotifications = async (req, res) => {
 };
 
 /**
+ * @desc    Get notification by ID with full details
+ * @route   GET /api/notifications/:id
+ * @access  Private
+ */
+const getNotificationById = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id)
+      .populate('relatedOrder', 'orderNumber status pricing fulfillmentType deliveryDetails pickupDetails items createdAt')
+      .populate('relatedListing', 'title photos pricing category')
+      .populate('relatedBusiness', 'name media address contact');
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    // Check authorization
+    if (notification.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Mark as read when viewed
+    if (!notification.read) {
+      await notification.markAsRead();
+    }
+
+    res.json(notification);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * @desc    Mark notification as read
  * @route   PUT /api/notifications/:id/read
  * @access  Private
@@ -132,6 +164,7 @@ const getUnreadCount = async (req, res) => {
 
 module.exports = {
   getNotifications,
+  getNotificationById,
   markAsRead,
   markAllAsRead,
   deleteNotification,

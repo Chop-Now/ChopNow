@@ -1,10 +1,14 @@
-import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store, LayoutDashboard, ChartNoAxesCombined, FileText, Leaf, ShoppingBasket, Clock, Truck, List, Plus, Coins, User, Shield, Activity, Ban, MessageSquare } from 'lucide-react'
+import { Bell, ChevronDown, MenuIcon, Moon, Search, SlidersHorizontal, Sun, CircleUserRound, Settings, BadgeInfo, LogOut, X, Package, TrendingUp, AlertCircle, CheckCircle, Building2, Store, LayoutDashboard, ChartNoAxesCombined, FileText, Leaf, ShoppingBasket, Clock, Truck, List, Plus, Coins, User, Shield, Activity, Ban, MessageSquare, ShoppingCart } from 'lucide-react'
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAdminMode } from '../../context/AdminModeContext'
+import { useAppContext } from '../../../context/AppContext'
 import ConfirmationModal from '../ConfirmationModal'
 
-const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
+const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashboard = false }) => {
   const { adminMode, toggleAdminMode } = useAdminMode();
+  const { user, logout, availableRoles, switchRole } = useAppContext();
+  const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -91,8 +95,16 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
     { id: 'switch-admin', label: 'Switch to Shop Admin', path: 'Header > Admin Mode', icon: 'Store', keywords: ['switch mode', 'admin mode', 'shop admin', 'change mode', 'toggle admin', 'vendor mode'], type: 'action', action: 'switch-admin' },
   ];
 
-  // Get current search items based on admin mode
-  const currentSearchItems = adminMode === 'shop' ? shopAdminSearchItems : websiteAdminSearchItems;
+  // Check if user is admin
+  const currentUserRole = user?.activeRole || user?.role;
+  const isUserAdmin = currentUserRole === 'admin';
+
+  // Get current search items based on dashboard type
+  // For admin dashboard (/admin), always use website admin search items
+  // For vendor dashboard (/dashboard), use shop admin search items
+  const baseSearchItems = isAdminDashboard ? websiteAdminSearchItems : shopAdminSearchItems;
+  // Filter out admin mode toggle for dedicated dashboards
+  const currentSearchItems = baseSearchItems.filter(item => item.action !== 'switch-admin');
 
   // Dummy notification data
   const notifications = [
@@ -366,9 +378,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
 
   const handleConfirmLogout = () => {
     setShowLogoutModal(false);
-    // Add your logout logic here
-    console.log('User logged out');
-    alert('Logged out successfully!');
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -376,19 +387,28 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
     <div className='z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4'>
       <div className='flex items-center justify-between'>
          {/*Left section*/}
-         <div className='flex items-center space-x-4'>
-           <button 
+         <div className='flex items-center gap-4'>
+           <button
              onClick={onMenuClick}
-             className='p-2.5 rounded-md border-2 border-slate-100 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
+             className='p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
            >
             <MenuIcon className='w-5 h-5'/>
            </button>
 
-           <div className='relative' ref={searchRef}>
-              <Search className='w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600 dark:text-slate-400'/>
-              <input 
-                type="text" 
-                placeholder='Search or type command...' 
+           {/* Mobile search button */}
+           <button
+             onClick={() => setIsSearchOpen(true)}
+             className='sm:hidden p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
+           >
+             <Search className='w-5 h-5' />
+           </button>
+
+           {/* Desktop search input */}
+           <div className='relative hidden sm:block' ref={searchRef}>
+              <Search className='w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400'/>
+              <input
+                type="text"
+                placeholder='Search or type command...'
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => {
@@ -396,16 +416,16 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
                     setIsSearchOpen(true);
                   }
                 }}
-                className='w-[400px] pl-10 pr-12 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
+                className='w-64 md:w-80 lg:w-96 pl-10 pr-12 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all'
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => {
                     setSearchQuery('');
                     setIsSearchOpen(false);
                     setSearchResults([]);
                   }}
-                  className='absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  className='absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700'
                 >
                   <X className='w-4 h-4'/>
                 </button>
@@ -414,38 +434,50 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
          </div>
 
          {/*Right side*/}
-         <div className='flex items-center space-x-3'>
-            <div className='flex items-center space-x-3'>
-              {/*Admin Mode Toggle*/}
-              <button
-                onClick={toggleAdminMode}
-                className='flex items-center space-x-2 px-4 py-2 bg-linear-to-r from-solid to-tertiary text-white rounded-md hover:shadow-lg transition-all duration-200'
-              >
-                {adminMode === 'shop' ? (
-                  <>
-                    <Store className='w-4 h-4' />
-                    <span className='text-sm font-medium'>Shop Admin</span>
-                  </>
-                ) : (
-                  <>
-                    <Building2 className='w-4 h-4' />
-                    <span className='text-sm font-medium'>Website Admin</span>
-                  </>
-                )}
-              </button>
+         <div className='flex items-center gap-3'>
+              {/* Shop as Buyer Button - Only show if user has consumer role */}
+              {availableRoles && availableRoles.includes('consumer') && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await switchRole('consumer');
+                      window.location.href = '/shop';
+                    } catch (error) {
+                      console.error('Failed to switch role:', error);
+                    }
+                  }}
+                  className='hidden lg:flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-solid text-solid rounded-lg hover:bg-solid hover:text-white transition-all duration-200'
+                >
+                  <ShoppingCart className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Shop as Buyer</span>
+                </button>
+              )}
+
+              {/* Dashboard Label - Shows current dashboard type */}
+              {isAdminDashboard ? (
+                <div className='hidden sm:flex items-center gap-2 px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg'>
+                  <Building2 className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Admin Panel</span>
+                </div>
+              ) : (
+                <div className='hidden sm:flex items-center gap-2 px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg'>
+                  <Store className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Vendor Dashboard</span>
+                </div>
+              )}
 
               {/*Toggle switch*/}
-              <button 
+              <button
                 onClick={toggleDarkMode}
-                className='p-3 rounded-full border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
+                className='p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
               >
                 {isDarkMode ? <Sun className='w-5 h-5'/> : <Moon className='w-5 h-5'/>}
               </button>
               {/*Notification*/}
-               <div className='relative z-999' ref={notificationRef}>
-                 <button 
+               <div className='relative' ref={notificationRef}>
+                 <button
                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                   className='relative p-3 rounded-full border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
+                   className='relative p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer'
                  >
                   <Bell className='w-5 h-5'/>
                   <span className='absolute top-0.5 right-0.5 w-3 h-3 bg-orange-500 rounded-full animate-ping'></span>
@@ -503,25 +535,36 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
                </div>
               
               {/*User profile*/}
-               <div className='relative z-999' ref={profileRef}>
-                 <div 
+               <div className='relative' ref={profileRef}>
+                 <button
                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                   className='flex items-center space-x-3 pl-3 border-l border-slate-200 dark:border-slate-700 cursor-pointer'
+                   className='flex items-center gap-3 pl-4 ml-2 border-l border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity'
                  >
-                    <img src="https://images.pexels.com/photos/1370719/pexels-photo-1370719.jpeg" alt="user" className='w-10 h-10 rounded-full object-cover'/>
-                    <div className='hidden md:block'>
-                       <p className='text-sm font-medium text-slate-500 dark:text-slate-400'>Tresor</p>
+                    <img
+                      src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'default'}`}
+                      alt="user"
+                      className='w-9 h-9 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600 flex-shrink-0'
+                    />
+                    <div className='hidden md:flex md:flex-col md:justify-center text-left min-w-0'>
+                       <p className='text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]'>
+                         {user?.firstName || 'User'}
+                       </p>
+                       <p className='text-xs text-slate-500 dark:text-slate-400 truncate max-w-[120px]'>
+                         {user?.activeRole === 'admin' ? 'Administrator' : user?.activeRole === 'business_owner' ? 'Vendor' : 'Member'}
+                       </p>
                     </div>
-                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}/>
-                 </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isProfileOpen ? 'rotate-180' : ''}`}/>
+                 </button>
 
                  {/* Profile Dropdown */}
                  {isProfileOpen && (
                    <div className='absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-9999'>
                      {/* User Info Section */}
                      <div className='px-4 py-3 border-b border-slate-200 dark:border-slate-700'>
-                       <p className='text-sm font-semibold text-slate-800 dark:text-white'>Tresor Shingiro</p>
-                       <p className='text-xs text-slate-500 dark:text-slate-400 mt-0.5'>tresor.shingiro@example.com</p>
+                       <p className='text-sm font-semibold text-slate-800 dark:text-white'>
+                         {user?.firstName} {user?.lastName}
+                       </p>
+                       <p className='text-xs text-slate-500 dark:text-slate-400 mt-0.5'>{user?.email}</p>
                      </div>
 
                      {/* Menu Items */}
@@ -564,7 +607,6 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange }) => {
                    </div>
                  )}
                </div>
-            </div>
          </div>
       </div>
 

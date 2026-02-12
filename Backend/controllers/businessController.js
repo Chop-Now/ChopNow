@@ -22,17 +22,57 @@ const createBusiness = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
+
+    // Set location from address coordinates if provided
+    const location = address?.location?.coordinates
+      ? { type: 'Point', coordinates: address.location.coordinates }
+      : undefined;
+
+    // Determine if business type requires verification documents
+    // Restaurants and cafes need health/food preparation certificates
+    // Farmers, supermarkets, and bakeries can sell without document verification
+    const requiresVerification = ['restaurant', 'cafe'].includes(type);
+
+    // Set initial verification and status based on business type
+    const verificationData = requiresVerification
+      ? {
+          status: 'unverified',
+          documents: [],
+        }
+      : {
+          status: 'verified',
+          verifiedAt: new Date(),
+          notes: 'Auto-verified - business type does not require document verification'
+        };
+
+    const businessStatus = requiresVerification ? 'inactive' : 'active';
+
     const business = await Business.create({
       name,
       type,
       description,
       owner: req.user._id,
-      contact,
+      email: contact?.email,
+      phone: contact?.phone,
+      website: contact?.website,
       address,
-      deliverySettings
+      location,
+      deliverySettings,
+      status: businessStatus,
+      verification: verificationData
     });
 
-    res.status(201).json(business);
+    // Upgrade user role if they don't already have business_owner role
+    if (!req.user.roles.includes('business_owner')) {
+      req.user.roles.push('business_owner');
+      req.user.activeRole = 'business_owner';
+      await req.user.save();
+    }
+
+    res.status(201).json({
+      ...business.toObject(),
+      requiresVerification
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -55,8 +95,12 @@ const getBusinesses = async (req, res) => {
     // Filter by type
     if (type) query.type = type;
 
-    // Filter by status (default to active only)
-    query.status = status || 'active';
+    // Filter by status (default to active only). Special-case 'all' to disable status filtering.
+    if (status && status !== 'all') {
+      query.status = status;
+    } else if (!status) {
+      query.status = 'active';
+    }
 
     // Text search
     if (search) {
@@ -137,9 +181,20 @@ const updateBusiness = async (req, res) => {
     const allowedUpdates = ['name', 'type', 'description', 'contact', 'address', 'deliverySettings'];
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        business[field] = req.body[field];
+        if (field === 'contact') {
+          if (req.body.contact.email) business.email = req.body.contact.email;
+          if (req.body.contact.phone) business.phone = req.body.contact.phone;
+          if (req.body.contact.website) business.website = req.body.contact.website;
+        } else {
+          business[field] = req.body[field];
+        }
       }
     });
+
+    // Admin-only: allow operational status change (active/suspended)
+    if (req.user.role === 'admin' && req.body.status !== undefined) {
+      business.status = req.body.status;
+    }
 
     await business.save();
 
@@ -200,6 +255,8 @@ const uploadLogo = async (req, res) => {
     // Upload to Cloudinary
     const result = await uploadToCloudinary(req.file.buffer, 'chopnow/businesses/logos');
 
+    // Initialize media object if not exists
+    if (!business.media) business.media = {};
     business.media.logo = result.secure_url;
     await business.save();
 
@@ -237,6 +294,8 @@ const uploadCoverImage = async (req, res) => {
     // Upload to Cloudinary
     const result = await uploadToCloudinary(req.file.buffer, 'chopnow/businesses/covers');
 
+    // Initialize media object if not exists
+    if (!business.media) business.media = {};
     business.media.coverImage = result.secure_url;
     await business.save();
 
@@ -274,12 +333,112 @@ const uploadPhotos = async (req, res) => {
     // Upload to Cloudinary
     const photoUrls = await uploadMultipleToCloudinary(req.files, 'chopnow/businesses/photos');
 
+    // Initialize media object if not exists
+    if (!business.media) business.media = { photos: [] };
+    if (!business.media.photos) business.media.photos = [];
     business.media.photos.push(...photoUrls);
     await business.save();
 
     res.json({
       message: 'Photos uploaded successfully',
       photos: business.media.photos
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Upload business KYC documents
+ * @route   POST /api/businesses/:id/kyc
+ * @access  Private (owner or admin)
+ */
+const uploadKYC = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Please upload a document (Image or PDF)' });
+    }
+
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Check ownership
+    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Upload all files to Cloudinary
+    const uploadedDocuments = [];
+
+    for (const file of req.files) {
+      // Determine resource type
+      const isPDF = file.mimetype === 'application/pdf';
+      const resourceType = isPDF ? 'pdf' : 'image';
+
+      // Upload to Cloudinary
+      const result = await uploadToCloudinary(file.buffer, 'chopnow/businesses/kyc', resourceType);
+
+      uploadedDocuments.push({
+        url: result.secure_url,
+        uploadedAt: new Date()
+      });
+    }
+
+    // UPDATE BUSINESS DETAILS (Phone, Address, Location)
+    if (req.body.phone) business.phone = req.body.phone;
+
+    if (req.body.address) {
+      // If address is just a string, update the text part
+      if (typeof business.address === 'object') {
+        business.address.text = req.body.address;
+      } else {
+        business.address = req.body.address;
+      }
+    }
+
+    if (req.body.location) {
+      try {
+        const locationData = JSON.parse(req.body.location);
+        if (locationData.lat && locationData.lng) {
+          business.location = {
+            type: 'Point',
+            coordinates: [locationData.lng, locationData.lat]
+          };
+
+          // Also update address object if it exists
+          if (business.address && typeof business.address === 'object') {
+            business.address.lat = locationData.lat;
+            business.address.lng = locationData.lng;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing location:', e);
+      }
+    }
+
+    // Initialize verification object if it doesn't exist
+    if (!business.verification) {
+      business.verification = {
+        status: 'pending',
+        documents: [],
+        submittedAt: new Date()
+      };
+    }
+
+    // Add new documents to existing documents array
+    business.verification.documents.push(...uploadedDocuments);
+    business.verification.status = 'pending';
+    business.verification.submittedAt = new Date();
+
+    await business.save();
+
+    res.json({
+      message: 'KYC documents uploaded successfully. Verification is pending.',
+      verification: business.verification,
+      documentsUploaded: uploadedDocuments.length
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -302,6 +461,196 @@ const getMyBusinesses = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get business statistics
+ * @route   GET /api/businesses/:id/stats
+ * @access  Private (business owner, admin)
+ */
+const getBusinessStats = async (req, res) => {
+  try {
+    const business = await Business.findById(req.params.id);
+    const Listing = require('../models/Listing');
+    const Order = require('../models/Order');
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Check authorization
+    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Count active listings
+    const activeListings = await Listing.countDocuments({
+      business: business._id,
+      status: 'active'
+    });
+
+    // Count orders today
+    const ordersToday = await Order.countDocuments({
+      business: business._id,
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    // Calculate total revenue (from completed orders)
+    const completedOrders = await Order.find({
+      business: business._id,
+      status: 'completed'
+    }).select('pricing.total');
+
+    const totalRevenue = completedOrders.reduce((sum, order) => {
+      return sum + (order.pricing?.total || 0);
+    }, 0);
+
+    // Calculate impact (meals saved) - approximate as number of completed orders
+    const mealsSaved = await Order.countDocuments({
+      business: business._id,
+      status: 'completed'
+    });
+
+    res.json({
+      activeListings,
+      ordersToday,
+      totalRevenue,
+      mealsSaved,
+      totalOrders: business.stats.totalOrders || 0,
+      averageRating: business.stats.averageRating || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get pending businesses (admin approval queue)
+ * @route   GET /api/businesses/pending
+ * @access  Private (admin)
+ */
+const getPendingBusinesses = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Query by verification.status - include 'pending' (submitted KYC) and 'unverified' (awaiting KYC)
+    const query = { 'verification.status': { $in: ['pending', 'unverified'] } };
+
+    const businesses = await Business.find(query)
+      .populate('owner', 'firstName lastName email phone')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Business.countDocuments(query);
+
+    res.json({
+      businesses,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Approve business
+ * @route   PATCH /api/businesses/:id/approve
+ * @access  Private (admin)
+ */
+const approveBusiness = async (req, res) => {
+  try {
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    business.status = 'active';
+    if (business.verification) {
+      business.verification.status = 'approved';
+      business.verification.reviewedAt = new Date();
+      business.verification.reviewedBy = req.user._id;
+    }
+
+    await business.save();
+
+    res.json({ message: 'Business approved successfully', business });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Reject business
+ * @route   PATCH /api/businesses/:id/reject
+ * @access  Private (admin)
+ */
+const rejectBusiness = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Set main status to inactive (rejected is not a valid status in the schema)
+    business.status = 'inactive';
+    if (business.verification) {
+      business.verification.status = 'rejected';
+      business.verification.rejectionReason = reason || 'Application rejected';
+      business.verification.reviewedAt = new Date();
+      business.verification.reviewedBy = req.user._id;
+    }
+
+    await business.save();
+
+    res.json({ message: 'Business rejected', business });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Request more info from business
+ * @route   PATCH /api/businesses/:id/request-info
+ * @access  Private (admin)
+ */
+const requestMoreInfo = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    if (business.verification) {
+      business.verification.status = 'info_requested';
+      business.verification.infoRequestMessage = message || 'Please provide additional information';
+      business.verification.reviewedAt = new Date();
+      business.verification.reviewedBy = req.user._id;
+    }
+
+    await business.save();
+
+    res.json({ message: 'Information requested', business });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createBusiness,
   getBusinesses,
@@ -311,5 +660,11 @@ module.exports = {
   uploadLogo,
   uploadCoverImage,
   uploadPhotos,
-  getMyBusinesses
+  uploadKYC,
+  getMyBusinesses,
+  getBusinessStats,
+  getPendingBusinesses,
+  approveBusiness,
+  rejectBusiness,
+  requestMoreInfo
 };

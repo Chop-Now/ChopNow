@@ -1,32 +1,82 @@
-import { ArrowDownRight, ArrowUpRight, DollarSign, ShoppingBasket, Store, User, Users, Wallet } from 'lucide-react'
-import React from 'react'
+import { ArrowDownRight, ArrowUpRight, ShoppingBasket, Store, Users, Wallet, Loader2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
 import { useAdminMode } from '../../context/AdminModeContext'
+import { analyticsService } from '../../../services'
 
 const StatsGrid = () => {
     const { adminMode } = useAdminMode();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const shopAdminStats = [
+    useEffect(() => {
+        fetchStats();
+    }, [adminMode]);
+
+    const fetchStats = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = adminMode === 'shop'
+                ? await analyticsService.getBusinessOverview()
+                : await analyticsService.getPlatformOverview();
+            setStats(response);
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+            setError('Failed to load stats');
+            // Set default values on error
+            setStats(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Format currency
+    const formatCurrency = (value) => {
+        if (value === undefined || value === null) return 'RWF 0';
+        return `RWF ${Number(value).toLocaleString()}`;
+    };
+
+    // Format number with K/M suffix
+    const formatNumber = (value) => {
+        if (value === undefined || value === null) return '0';
+        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+        return value.toLocaleString();
+    };
+
+    // Calculate change percentage (placeholder - would need historical data)
+    const getChange = (current, previous) => {
+        if (!previous || previous === 0) return { value: '+0%', trend: 'up' };
+        const change = ((current - previous) / previous * 100).toFixed(1);
+        return {
+            value: change >= 0 ? `+${change}%` : `${change}%`,
+            trend: change >= 0 ? 'up' : 'down'
+        };
+    };
+
+    const shopAdminStats = stats ? [
         {
             title: "Total Revenue",
-            value: "RWF 45,231.89",
-            change: "+12.5%",
-            trend: "up",
+            value: formatCurrency(stats.totalRevenue || stats.revenue || 0),
+            change: getChange(stats.totalRevenue, stats.previousRevenue).value,
+            trend: getChange(stats.totalRevenue, stats.previousRevenue).trend,
             icon: <Wallet className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         },
         {
             title: "Total Orders",
-            value: "1,245",
-            change: "-8.3%",
-            trend: "down",
+            value: formatNumber(stats.totalOrders || stats.ordersCount || 0),
+            change: getChange(stats.totalOrders, stats.previousOrders).value,
+            trend: getChange(stats.totalOrders, stats.previousOrders).trend,
             icon: <ShoppingBasket className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-grey-200 dark:text-white",
         },
         {
-            title: "C02e Saved",
-            value: "3,450 kg",
+            title: "CO2e Saved",
+            value: `${formatNumber(stats.co2Saved || stats.impact?.co2Saved || 0)} kg`,
             change: "+5.1%",
             trend: "up",
             icon: <svg className='w-6 h-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -37,8 +87,8 @@ const StatsGrid = () => {
             textColor: "text-black dark:text-white",
         },
         {
-            title: "Average Reviews",
-            value: "4.8/5",
+            title: "Average Rating",
+            value: `${(stats.averageRating || stats.rating || 0).toFixed(1)}/5`,
             change: "+2.3%",
             trend: "up",
             icon: <svg className='w-6 h-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -47,51 +97,110 @@ const StatsGrid = () => {
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         }
-    ];
+    ] : [];
 
-    const websiteAdminStats = [
+    const websiteAdminStats = stats ? [
         {
             title: "Total Revenue",
-            value: "RWF 45,231.89",
-            change: "+12.5%",
-            trend: "up",
+            value: formatCurrency(stats.totalRevenue || stats.revenue || 0),
+            change: getChange(stats.totalRevenue, stats.previousRevenue).value,
+            trend: getChange(stats.totalRevenue, stats.previousRevenue).trend,
             icon: <Wallet className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         },
         {
             title: "Total Orders",
-            value: "1,245",
-            change: "-8.3%",
-            trend: "down",
+            value: formatNumber(stats.totalOrders || stats.ordersCount || 0),
+            change: getChange(stats.totalOrders, stats.previousOrders).value,
+            trend: getChange(stats.totalOrders, stats.previousOrders).trend,
             icon: <ShoppingBasket className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-grey-200 dark:text-white",
         },
         {
             title: "Total Vendors",
-            value: "234",
-            change: "+15.2%",
-            trend: "up",
+            value: formatNumber(stats.totalVendors || stats.vendorsCount || 0),
+            change: getChange(stats.totalVendors, stats.previousVendors).value,
+            trend: getChange(stats.totalVendors, stats.previousVendors).trend,
             icon: <Store className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         },
         {
             title: "Total Users",
-            value: "12,543",
-            change: "+8.7%",
-            trend: "up",
+            value: formatNumber(stats.totalUsers || stats.usersCount || 0),
+            change: getChange(stats.totalUsers, stats.previousUsers).value,
+            trend: getChange(stats.totalUsers, stats.previousUsers).trend,
             icon: <Users className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         }
-    ];
+    ] : [];
 
-    const stats = adminMode === 'shop' ? shopAdminStats : websiteAdminStats;
+    const displayStats = adminMode === 'shop' ? shopAdminStats : websiteAdminStats;
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
+                {[1, 2, 3, 4].map((_, index) => (
+                    <div key={index} className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 animate-pulse'>
+                        <div className='flex items-start justify-between'>
+                            <div className='flex-1'>
+                                <div className='h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded mb-2'></div>
+                                <div className='h-6 w-24 bg-slate-200 dark:bg-slate-700 rounded mb-2'></div>
+                                <div className='h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                            </div>
+                            <div className='w-11 h-11 bg-slate-200 dark:bg-slate-700 rounded-xl'></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    // Error state - show placeholder stats
+    if (error || !stats) {
+        const placeholderStats = adminMode === 'shop' ? [
+            { title: "Total Revenue", value: "RWF 0", change: "+0%", trend: "up", icon: <Wallet className='w-6 h-6' /> },
+            { title: "Total Orders", value: "0", change: "+0%", trend: "up", icon: <ShoppingBasket className='w-6 h-6' /> },
+            { title: "CO2e Saved", value: "0 kg", change: "+0%", trend: "up", icon: <svg className='w-6 h-6' viewBox="0 0 24 24" fill="none"><path d="M12 2L4 7V12C4 16.55 7.16 20.74 12 22C16.84 20.74 20 16.55 20 12V7L12 2Z" stroke="currentColor" strokeWidth="2"/></svg> },
+            { title: "Average Rating", value: "0/5", change: "+0%", trend: "up", icon: <svg className='w-6 h-6' viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/></svg> }
+        ] : [
+            { title: "Total Revenue", value: "RWF 0", change: "+0%", trend: "up", icon: <Wallet className='w-6 h-6' /> },
+            { title: "Total Orders", value: "0", change: "+0%", trend: "up", icon: <ShoppingBasket className='w-6 h-6' /> },
+            { title: "Total Vendors", value: "0", change: "+0%", trend: "up", icon: <Store className='w-6 h-6' /> },
+            { title: "Total Users", value: "0", change: "+0%", trend: "up", icon: <Users className='w-6 h-6' /> }
+        ];
+
+        return (
+            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
+                {placeholderStats.map((stat, index) => (
+                    <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50' key={index}>
+                        <div className='flex items-start justify-between'>
+                            <div className='flex-1'>
+                                <p className='text-xs font-medium text-slate-600 dark:text-slate-400 mb-1'>{stat.title}</p>
+                                <p className='text-xl font-bold text-slate-800 dark:text-white mb-2'>{stat.value}</p>
+                                <div className='flex items-center space-x-1.5'>
+                                    <ArrowUpRight className='w-3 h-3 text-emerald-500'/>
+                                    <span className='text-xs font-semibold text-emerald-500'>{stat.change}</span>
+                                    <span className='text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap'>vs Last Month</span>
+                                </div>
+                            </div>
+                            <div className='p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20'>
+                                <div className='text-black dark:text-white'>{stat.icon}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     return (
         <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
-            {stats.map((stat, index) => {
+            {displayStats.map((stat, index) => {
                 return (
                     <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-xl hover:shadow-slate-200/20 dark:hover:shadow-slate-900/20 transition-all duration-300 group' key={index}>
                         <div className='flex items-start justify-between'>

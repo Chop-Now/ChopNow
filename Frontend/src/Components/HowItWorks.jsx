@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Plane, Users, Truck, Check, Sprout, Coins, MessageCircleHeart } from "lucide-react";
-import { assets } from '@/assets/assets';
+import { assets } from '../assets/assets';
 import { motion } from "motion/react";
 
 const stepsForVendors = [
@@ -74,26 +74,26 @@ const stepsForConsumers = [
 ];
 
 const features = [
-        {
-            icon: <Truck />,
-            title: "Fastest Delivery",
-            description: "Groceries delivered in under 30 minutes."
-        },
-        {
-            icon: <Sprout />,
-            title: "Freshness Guaranteed",
-            description: "Fresh produce straight from local farms."
-        },
-        {
-            icon: <Coins />,
-            title: "Affordable Prices",
-            description: "Save money with discounted surplus food."
-        },
-        {
-            icon: <MessageCircleHeart />,
-            title: "Trusted by Thousands",
-            description: "Join a community of satisfied users."
-        }
+  {
+    icon: <Truck />,
+    title: "Fastest Delivery",
+    description: "Groceries delivered in under 30 minutes."
+  },
+  {
+    icon: <Sprout />,
+    title: "Freshness Guaranteed",
+    description: "Fresh produce straight from local farms."
+  },
+  {
+    icon: <Coins />,
+    title: "Affordable Prices",
+    description: "Save money with discounted surplus food."
+  },
+  {
+    icon: <MessageCircleHeart />,
+    title: "Trusted by Thousands",
+    description: "Join a community of satisfied users."
+  }
 ];
 
 
@@ -104,7 +104,7 @@ const HowItWorks = () => {
   return (
     <div id='howItWorks' className="py-14 w-full relative overflow-hidden" style={{ backgroundColor: '#E8F5E9' }}>
       {/* Section Title */}
-      <motion.div 
+      <motion.div
         className="text-center mb-8 px-4"
         initial={{ y: -30, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
@@ -120,7 +120,7 @@ const HowItWorks = () => {
       </motion.div>
 
       {/* Toggle Switch */}
-      <motion.div 
+      <motion.div
         className="flex justify-center mb-16"
         initial={{ scale: 0.9, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}
@@ -130,11 +130,10 @@ const HowItWorks = () => {
         <div className="bg-white shadow-lg rounded-xl p-1.5 flex gap-1">
           <button
             onClick={() => setActive("consumer")}
-            className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
-              active === "consumer"
+            className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${active === "consumer"
                 ? "text-white"
                 : "text-gray-600 hover:bg-gray-100"
-            }`}
+              }`}
             style={{ backgroundColor: active === "consumer" ? 'var(--color-solid)' : 'transparent' }}
           >
             For Consumers
@@ -142,11 +141,10 @@ const HowItWorks = () => {
 
           <button
             onClick={() => setActive("vendor")}
-            className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
-              active === "vendor"
+            className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${active === "vendor"
                 ? "text-white"
                 : "text-gray-600 hover:bg-gray-100"
-            }`}
+              }`}
             style={{ backgroundColor: active === "vendor" ? 'var(--color-solid)' : 'transparent' }}
           >
             For Vendors
@@ -160,9 +158,8 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <motion.div
               key={step.id}
-              className={`bg-white rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
-                index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
-              }`}
+              className={`bg-white rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
+                }`}
               style={{ height: '350px' }}
               initial={{ y: 50, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
@@ -189,7 +186,7 @@ const HowItWorks = () => {
         </div>
       </div>
       {/* Why We Are The Best Banner */}
-      <motion.div 
+      <motion.div
         className='mt-24 max-w-6xl mx-auto px-4 md:px-6'
         initial={{ y: 50, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
@@ -199,22 +196,22 @@ const HowItWorks = () => {
         <div className='bg-white rounded-3xl shadow-md overflow-hidden'>
           <div className='flex flex-col md:flex-row items-center gap-6 p-6 md:p-8'>
             {/* Left Side - Image */}
-            <motion.div 
+            <motion.div
               className='w-full md:w-1/2 shrink-0 overflow-hidden'
               initial={{ x: -50, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <img 
-                src={assets.fresh_produce} 
-                alt="Man holding basket" 
+              <img
+                src={assets.fresh_produce}
+                alt="Man holding basket"
                 className='w-full h-56 md:h-72 object-cover cursor-pointer transition-transform duration-300 hover:scale-110'
               />
             </motion.div>
 
             {/* Right Side - Content */}
-            <motion.div 
+            <motion.div
               className='flex-1 pl-8 md:pl-12'
               initial={{ x: 50, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
@@ -226,8 +223,8 @@ const HowItWorks = () => {
               </h1>
               <div className='space-y-5'>
                 {features.map((feature, index) => (
-                  <motion.div 
-                    key={index} 
+                  <motion.div
+                    key={index}
                     className='flex items-center gap-4'
                     initial={{ x: 30, opacity: 0 }}
                     whileInView={{ x: 0, opacity: 1 }}

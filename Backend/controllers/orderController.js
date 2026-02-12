@@ -4,6 +4,12 @@ const Business = require('../models/Business');
 const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Notification = require('../models/Notification');
+const PlatformSettings = require('../models/PlatformSettings');
+const logger = require('../utils/logger');
+const {
+  sendOrderConfirmationEmail,
+  sendOrderReadyForPickupEmail,
+} = require('../utils/emailService');
 
 /**
  * @desc    Create a new order
@@ -44,15 +50,20 @@ const createOrder = async (req, res) => {
 
     let deliveryFee = 0;
     if (fulfillmentType === 'delivery') {
-      if (!listingDoc.fulfillment.deliveryEnabled) {
+      if (listingDoc.fulfillment.type !== 'delivery') {
         return res.status(400).json({ message: 'Delivery not available for this listing' });
       }
       if (!deliveryDetails || !deliveryDetails.address) {
         return res.status(400).json({ message: 'Delivery address required for delivery orders' });
       }
-      deliveryFee = listingDoc.business.deliverySettings.fee || 0;
+      deliveryFee = listingDoc.business?.deliverySettings?.fee || 0;
     }
 
+    // Get platform settings for commission calculation
+    const platformSettings = await PlatformSettings.getSettings();
+    const platformFeePercent = platformSettings.platformFeePercent || 10;
+    const platformFee = Math.round((subtotal * platformFeePercent) / 100);
+    const vendorAmount = subtotal - platformFee;
     const total = subtotal + deliveryFee;
 
     // Reserve inventory
@@ -68,6 +79,9 @@ const createOrder = async (req, res) => {
       pricing: {
         subtotal,
         deliveryFee,
+        platformFee,
+        platformFeePercent,
+        vendorAmount,
         total,
         currency: listingDoc.pricing.currency
       },
@@ -94,14 +108,71 @@ const createOrder = async (req, res) => {
     listingDoc.stats.orders += 1;
     await listingDoc.save();
 
-    // Create notification
+    // Get business info for notifications
+    const businessForNotif = await Business.findById(listingDoc.business._id).populate('owner');
+    const customerName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Customer';
+    const deliveryAddr = fulfillmentType === 'delivery' && deliveryDetails?.address
+      ? `${deliveryDetails.address.street || ''}, ${deliveryDetails.address.city || ''}`.trim()
+      : null;
+
+    // Create notification for customer with rich metadata
     await Notification.createNotification({
       user: req.user._id,
-      title: 'Order Created',
-      message: `Your order ${order.orderNumber} has been created`,
+      title: 'Order Confirmed',
+      message: `Your order #${order.orderNumber} has been placed successfully`,
       type: 'order_confirmed',
-      relatedOrder: order._id
+      relatedOrder: order._id,
+      relatedBusiness: listingDoc.business._id,
+      link: '/my-orders',
+      metadata: {
+        orderNumber: order.orderNumber,
+        orderTotal: order.pricing.total,
+        currency: order.pricing.currency,
+        fulfillmentType,
+        pickupCode: order.pickupDetails?.pickupCode,
+        deliveryAddress: deliveryAddr,
+        businessName: businessForNotif?.name || 'Vendor',
+        businessLogo: businessForNotif?.media?.logo,
+        listingTitle: listingDoc.title,
+        listingImage: listingDoc.photos?.[0]
+      }
     });
+
+    // Create notification for vendor with rich metadata
+    if (businessForNotif && businessForNotif.owner) {
+      await Notification.createNotification({
+        user: businessForNotif.owner._id,
+        title: 'New Order Received',
+        message: `New order #${order.orderNumber} from ${customerName}`,
+        type: 'new_order',
+        relatedOrder: order._id,
+        relatedBusiness: businessForNotif._id,
+        link: '/dashboard',
+        metadata: {
+          orderNumber: order.orderNumber,
+          orderTotal: order.pricing.total,
+          currency: order.pricing.currency,
+          fulfillmentType,
+          deliveryAddress: deliveryAddr,
+          customerName,
+          listingTitle: listingDoc.title,
+          listingImage: listingDoc.photos?.[0],
+          actionLabel: 'View Order',
+          actionUrl: '/dashboard'
+        }
+      });
+    }
+
+    // EMAIL: Order confirmation is ESSENTIAL (serves as receipt)
+    const customer = await User.findById(req.user._id);
+    if (customer && customer.preferences?.notifications?.email) {
+      sendOrderConfirmationEmail(
+        customer.email,
+        customerName,
+        order
+      ).catch((err) => logger.error({ err }, 'Failed to send order confirmation email'));
+    }
+    // NOTE: Vendor gets in-app notification only (they check dashboard regularly)
 
     res.status(201).json(order);
   } catch (error) {
@@ -215,32 +286,38 @@ const updateOrderStatus = async (req, res) => {
 
     await order.updateStatus(status);
 
-    // Create notifications based on status
+    // Get related data for rich notifications
+    const listing = await Listing.findById(order.listing);
+    const deliveryAddr = order.fulfillmentType === 'delivery' && order.deliveryDetails?.address
+      ? `${order.deliveryDetails.address.street || ''}, ${order.deliveryDetails.address.city || ''}`.trim()
+      : null;
+
+    // Create notifications with rich metadata based on status
     let notificationTitle = '';
     let notificationMessage = '';
     let notificationType = 'other';
 
     switch (status) {
       case 'confirmed':
-        notificationTitle = 'Order Confirmed';
-        notificationMessage = `Your order ${order.orderNumber} has been confirmed`;
+        notificationTitle = 'Order Confirmed by Vendor';
+        notificationMessage = `${businessDoc.name} is preparing your order #${order.orderNumber}`;
         notificationType = 'order_confirmed';
         break;
       case 'ready_for_pickup':
-        notificationTitle = 'Order Ready';
-        notificationMessage = `Your order ${order.orderNumber} is ready for pickup`;
+        notificationTitle = 'Order Ready for Pickup!';
+        notificationMessage = `Your order #${order.orderNumber} is ready. Show code: ${order.pickupDetails?.pickupCode}`;
         notificationType = 'order_ready';
         break;
       case 'out_for_delivery':
-        notificationTitle = 'Out for Delivery';
-        notificationMessage = `Your order ${order.orderNumber} is out for delivery`;
+        notificationTitle = 'Order Out for Delivery';
+        notificationMessage = `Your order #${order.orderNumber} is on its way to you`;
         notificationType = 'order_out_for_delivery';
         break;
       case 'completed':
         notificationTitle = 'Order Completed';
-        notificationMessage = `Your order ${order.orderNumber} has been completed`;
+        notificationMessage = `Thank you! Your order #${order.orderNumber} has been completed`;
         notificationType = 'order_completed';
-        
+
         // Update user stats
         await User.findByIdAndUpdate(order.customer, {
           $inc: { 'stats.totalSpent': order.pricing.total }
@@ -249,13 +326,44 @@ const updateOrderStatus = async (req, res) => {
     }
 
     if (notificationTitle) {
+      // Create rich notification
       await Notification.createNotification({
         user: order.customer,
         title: notificationTitle,
         message: notificationMessage,
         type: notificationType,
-        relatedOrder: order._id
+        relatedOrder: order._id,
+        relatedBusiness: businessDoc._id,
+        link: '/my-orders',
+        metadata: {
+          orderNumber: order.orderNumber,
+          orderTotal: order.pricing.total,
+          currency: order.pricing.currency,
+          fulfillmentType: order.fulfillmentType,
+          pickupCode: order.pickupDetails?.pickupCode,
+          deliveryAddress: deliveryAddr,
+          businessName: businessDoc.name,
+          businessLogo: businessDoc.media?.logo,
+          listingTitle: listing?.title,
+          listingImage: listing?.photos?.[0],
+          actionLabel: status === 'ready_for_pickup' ? 'View Pickup Code' : 'View Order',
+          actionUrl: '/my-orders'
+        }
       });
+
+      // EMAIL STRATEGY: Only send emails for TIME-SENSITIVE actions
+      // - ready_for_pickup: User MUST act (go pick up food before it spoils)
+      // Other statuses: In-app notification is sufficient
+      const customer = await User.findById(order.customer);
+      if (customer && customer.preferences?.notifications?.email) {
+        const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+
+        if (status === 'ready_for_pickup') {
+          // ESSENTIAL EMAIL: User needs to act NOW
+          sendOrderReadyForPickupEmail(customer.email, customerName, order)
+            .catch((err) => logger.error({ err }, 'Failed to send pickup ready email'));
+        }
+      }
     }
 
     res.json(order);
@@ -290,15 +398,68 @@ const cancelOrder = async (req, res) => {
     const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const listing = await Listing.findById(order.listing._id);
     if (listing) {
-      listing.inventory.quantityAvailable += totalQuantity;
-      listing.inventory.quantityReserved -= totalQuantity;
-      if (listing.status === 'sold_out' && listing.inventory.quantityAvailable > 0) {
+      listing.inventory.quantity += totalQuantity;
+      listing.inventory.reserved -= totalQuantity;
+      if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
         listing.status = 'active';
       }
       await listing.save();
     }
 
     await order.updateStatus('cancelled');
+
+    // Get business and customer info for notifications
+    const business = await Business.findById(order.business).populate('owner');
+    const customer = await User.findById(order.customer);
+    const customerName = customer
+      ? (`${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer')
+      : 'Customer';
+
+    // Create notification for customer with rich metadata
+    await Notification.createNotification({
+      user: order.customer,
+      title: 'Order Cancelled',
+      message: `Your order #${order.orderNumber} has been cancelled`,
+      type: 'order_cancelled',
+      relatedOrder: order._id,
+      relatedBusiness: order.business,
+      link: '/my-orders',
+      metadata: {
+        orderNumber: order.orderNumber,
+        orderTotal: order.pricing.total,
+        currency: order.pricing.currency,
+        businessName: business?.name || 'Vendor',
+        businessLogo: business?.media?.logo,
+        listingTitle: listing?.title,
+        listingImage: listing?.photos?.[0],
+        actionLabel: 'View Details',
+        actionUrl: '/my-orders'
+      }
+    });
+
+    // Create notification for vendor with rich metadata
+    if (business && business.owner) {
+      await Notification.createNotification({
+        user: business.owner._id,
+        title: 'Order Cancelled',
+        message: `Order #${order.orderNumber} was cancelled by ${customerName}`,
+        type: 'order_cancelled',
+        relatedOrder: order._id,
+        relatedBusiness: business._id,
+        link: '/dashboard',
+        metadata: {
+          orderNumber: order.orderNumber,
+          orderTotal: order.pricing.total,
+          currency: order.pricing.currency,
+          customerName,
+          listingTitle: listing?.title,
+          listingImage: listing?.photos?.[0],
+          actionLabel: 'View Orders',
+          actionUrl: '/dashboard'
+        }
+      });
+    }
+    // NOTE: No email for cancellation - in-app notification is sufficient
 
     res.json({ message: 'Order cancelled successfully', order });
   } catch (error) {
@@ -344,11 +505,52 @@ const verifyPickupCode = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all orders (admin only)
+ * @route   GET /api/orders/admin
+ * @access  Private (admin)
+ */
+const getAdminOrders = async (req, res) => {
+  try {
+    const { status, fulfillmentType, business, customer } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+
+    if (status) query.status = status;
+    if (fulfillmentType) query.fulfillmentType = fulfillmentType;
+    if (business) query.business = business;
+    if (customer) query.customer = customer;
+
+    const orders = await Order.find(query)
+      .populate('customer', 'firstName lastName email phone')
+      .populate('business', 'name type address contact')
+      .populate('listing', 'title category photos')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      orders,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  verifyPickupCode
+  verifyPickupCode,
+  getAdminOrders
 };

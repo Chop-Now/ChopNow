@@ -1,0 +1,360 @@
+const sgMail = require('@sendgrid/mail');
+const logger = require('./logger');
+
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@chopnow.app';
+const FROM_NAME = process.env.FROM_NAME || 'ChopNow';
+const APP_URL = process.env.FRONTEND_URL || 'https://www.chopnow.app';
+
+/**
+ * Send email using SendGrid
+ */
+const sendEmail = async (to, subject, html) => {
+  try {
+    const msg = {
+      to,
+      from: {
+        email: FROM_EMAIL,
+        name: FROM_NAME
+      },
+      subject,
+      html
+    };
+
+    await sgMail.send(msg);
+    return true;
+  } catch (error) {
+    logger.error({ err: error }, 'Error sending email via SendGrid');
+    if (error.response) {
+      logger.error({ body: error.response.body }, 'SendGrid error details');
+    }
+    return false;
+  }
+};
+
+/**
+ * Email template wrapper
+ */
+const emailTemplate = (title, content) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #00A86B 0%, #007A4B 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+      <h1 style="color: white; margin: 0;">ChopNow</h1>
+    </div>
+    <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+      <h2 style="color: #1f2937; margin-top: 0;">${title}</h2>
+      ${content}
+    </div>
+  </body>
+  </html>
+`;
+
+/**
+ * Send email verification
+ */
+const sendVerificationEmail = async (email, name, verificationToken) => {
+  const verificationUrl = `${APP_URL}/verify-email?token=${verificationToken}`;
+
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Thank you for signing up. Please verify your email address to complete your registration.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${verificationUrl}" style="background: #00A86B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Verify Email</a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Or copy and paste this link into your browser:</p>
+    <p style="color: #6b7280; font-size: 12px; word-break: break-all;">${verificationUrl}</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">This link will expire in 24 hours.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't create an account, you can safely ignore this email.</p>
+  `;
+
+  return sendEmail(email, 'Verify your ChopNow account', emailTemplate('Welcome to ChopNow!', content));
+};
+
+/**
+ * Send password reset email
+ */
+const sendPasswordResetEmail = async (email, name, resetToken) => {
+  const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+
+  const content = `
+    <p>Hello ${name},</p>
+    <p>We received a request to reset your password. Click the button below to create a new password.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetUrl}" style="background: #00A86B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Reset Password</a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Or copy and paste this link into your browser:</p>
+    <p style="color: #6b7280; font-size: 12px; word-break: break-all;">${resetUrl}</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">This link will expire in 1 hour.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+  `;
+
+  return sendEmail(email, 'Reset your ChopNow password', emailTemplate('Password Reset Request', content));
+};
+
+/**
+ * Send OTP for email login
+ */
+const sendOTPEmail = async (email, name, otpCode) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Use this code to sign in to your ChopNow account:</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background: white; border: 2px solid #00A86B; border-radius: 8px; padding: 20px; display: inline-block;">
+        <div style="font-size: 32px; font-weight: bold; color: #00A86B; letter-spacing: 8px;">${otpCode}</div>
+      </div>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">This code will expire in 10 minutes.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't request this code, please ignore this email or contact support.</p>
+  `;
+
+  return sendEmail(email, 'Your ChopNow login code', emailTemplate('Your Login Code', content));
+};
+
+/**
+ * Send OTP for password change verification
+ */
+const sendPasswordChangeOTP = async (email, name, otpCode) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>You requested to change your password. Use this code to verify your identity:</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background: white; border: 2px solid #00A86B; border-radius: 8px; padding: 20px; display: inline-block;">
+        <div style="font-size: 32px; font-weight: bold; color: #00A86B; letter-spacing: 8px;">${otpCode}</div>
+      </div>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">This code will expire in 10 minutes.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't request to change your password, please secure your account immediately.</p>
+  `;
+
+  return sendEmail(email, 'Password Change Verification - ChopNow', emailTemplate('Password Change Verification', content));
+};
+
+/**
+ * Send OTP for sensitive information change (vendor)
+ */
+const sendSensitiveChangeOTP = async (email, name, otpCode, changeType) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>You requested to update your ${changeType}. Use this code to verify your identity:</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background: white; border: 2px solid #00A86B; border-radius: 8px; padding: 20px; display: inline-block;">
+        <div style="font-size: 32px; font-weight: bold; color: #00A86B; letter-spacing: 8px;">${otpCode}</div>
+      </div>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">This code will expire in 10 minutes.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't make this request, please contact support immediately.</p>
+  `;
+
+  return sendEmail(email, `Verify ${changeType} Update - ChopNow`, emailTemplate('Security Verification', content));
+};
+
+/**
+ * Send order confirmation email
+ */
+const sendOrderConfirmationEmail = async (email, name, order) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Your order has been confirmed. Here are the details:</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
+      ${order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode ?
+        `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00A86B;">${order.pickupDetails.pickupCode}</span></p>` : ''}
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">You can track your order in the app.</p>
+  `;
+
+  return sendEmail(email, `Order Confirmed - #${order.orderNumber}`, emailTemplate('Order Confirmed!', content));
+};
+
+/**
+ * Send order status update email
+ */
+const sendOrderStatusUpdateEmail = async (email, name, order, status) => {
+  const statusMessages = {
+    confirmed: 'Your order has been confirmed by the vendor.',
+    ready_for_pickup: 'Your order is ready for pickup!',
+    out_for_delivery: 'Your order is on the way!',
+    completed: 'Your order has been completed. Thank you!',
+    cancelled: 'Your order has been cancelled.',
+  };
+
+  const content = `
+    <p>Hello ${name},</p>
+    <p>${statusMessages[status] || 'Your order status has been updated.'}</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>New Status:</strong> <span style="text-transform: capitalize;">${status.replace(/_/g, ' ')}</span></p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">View your order in the app for more details.</p>
+  `;
+
+  return sendEmail(email, `Order Update - #${order.orderNumber}`, emailTemplate('Order Update', content));
+};
+
+/**
+ * Send vendor order notification
+ */
+const sendVendorOrderNotification = async (email, businessName, order) => {
+  const content = `
+    <p>Hello ${businessName},</p>
+    <p>You have received a new order. Please review and confirm it.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Log in to your vendor dashboard to manage this order.</p>
+  `;
+
+  return sendEmail(email, `New Order - #${order.orderNumber}`, emailTemplate('New Order Received', content));
+};
+
+/**
+ * Send admin notification (vendor approval, etc.)
+ */
+const sendAdminNotification = async (email, name, subject, message) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>${message}</p>
+  `;
+
+  return sendEmail(email, subject || 'ChopNow Admin Notification', emailTemplate(subject || 'Notification', content));
+};
+
+/**
+ * Send password changed confirmation
+ */
+const sendPasswordChangedConfirmation = async (email, name) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Your password has been successfully changed.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't make this change, please contact our support team immediately and reset your password.</p>
+  `;
+
+  return sendEmail(email, 'Password Changed - ChopNow', emailTemplate('Password Changed Successfully', content));
+};
+
+/**
+ * Send order ready for pickup email with pickup code
+ */
+const sendOrderReadyForPickupEmail = async (email, name, order) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Great news! Your order is ready for pickup.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <div style="margin: 20px 0;">
+        <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">Your Pickup Code:</p>
+        <div style="background: #00A86B; color: white; font-size: 28px; font-weight: bold; letter-spacing: 6px; padding: 15px 30px; border-radius: 8px; display: inline-block;">
+          ${order.pickupDetails?.pickupCode || 'N/A'}
+        </div>
+      </div>
+      <p style="margin: 15px 0 5px 0; font-size: 14px; color: #6b7280;">Show this code to the vendor when you pick up your order.</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Please pick up your order as soon as possible to ensure freshness.</p>
+  `;
+
+  return sendEmail(email, `Your Order is Ready for Pickup - #${order.orderNumber}`, emailTemplate('Order Ready for Pickup!', content));
+};
+
+/**
+ * Send order out for delivery email
+ */
+const sendOrderOutForDeliveryEmail = async (email, name, order) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Your order is on its way!</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      ${order.deliveryDetails?.address ? `<p style="margin: 5px 0;"><strong>Delivery Address:</strong> ${order.deliveryDetails.address.street || ''}, ${order.deliveryDetails.address.city || ''}</p>` : ''}
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Your rider is on the way. Please be ready to receive your order.</p>
+  `;
+
+  return sendEmail(email, `Your Order is On The Way - #${order.orderNumber}`, emailTemplate('Order Out for Delivery!', content));
+};
+
+/**
+ * Send order cancelled email to customer
+ */
+const sendOrderCancelledEmail = async (email, name, order, reason = '') => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>We're sorry to inform you that your order has been cancelled.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      ${reason ? `<p style="margin: 5px 0;"><strong>Reason:</strong> ${reason}</p>` : ''}
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">If you were charged, a refund will be processed within 3-5 business days.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">We apologize for any inconvenience. Please feel free to place a new order.</p>
+  `;
+
+  return sendEmail(email, `Order Cancelled - #${order.orderNumber}`, emailTemplate('Order Cancelled', content));
+};
+
+/**
+ * Send order cancelled notification to vendor
+ */
+const sendVendorOrderCancelledEmail = async (email, businessName, order, customerName) => {
+  const content = `
+    <p>Hello ${businessName},</p>
+    <p>An order has been cancelled.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerName}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Please update your inventory accordingly.</p>
+  `;
+
+  return sendEmail(email, `Order Cancelled - #${order.orderNumber}`, emailTemplate('Order Cancelled', content));
+};
+
+/**
+ * Send order completed/delivered email
+ */
+const sendOrderCompletedEmail = async (email, name, order) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Your order has been completed. Thank you for helping reduce food waste!</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+    </div>
+    <div style="background: #E0F2ED; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0; color: #007A4B; font-weight: bold;">You just helped save food from going to waste!</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">We'd love to hear your feedback. Please leave a review for the vendor.</p>
+  `;
+
+  return sendEmail(email, `Order Completed - #${order.orderNumber}`, emailTemplate('Order Completed!', content));
+};
+
+module.exports = {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendOTPEmail,
+  sendPasswordChangeOTP,
+  sendSensitiveChangeOTP,
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+  sendVendorOrderNotification,
+  sendAdminNotification,
+  sendPasswordChangedConfirmation,
+  sendOrderReadyForPickupEmail,
+  sendOrderOutForDeliveryEmail,
+  sendOrderCancelledEmail,
+  sendVendorOrderCancelledEmail,
+  sendOrderCompletedEmail,
+};
