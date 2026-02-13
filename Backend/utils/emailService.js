@@ -341,6 +341,95 @@ const sendOrderCompletedEmail = async (email, name, order) => {
   return sendEmail(email, `Order Completed - #${order.orderNumber}`, emailTemplate('Order Completed!', content));
 };
 
+/**
+ * Send business verification approved email
+ */
+const sendBusinessApprovedEmail = async (email, businessName, ownerName, adminMessage = '') => {
+  const dashboardUrl = `${APP_URL}/dashboard`;
+
+  const messageSection = adminMessage ? `
+    <div style="background: #f0fdf4; border-left: 4px solid #00A86B; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold; color: #166534;">Message from ChopNow Admin:</p>
+      <p style="margin: 0; color: #15803d;">${adminMessage}</p>
+    </div>
+  ` : '';
+
+  const content = `
+    <p>Hello ${ownerName},</p>
+    <p>Congratulations! Your business <strong>${businessName}</strong> has been verified and approved on ChopNow.</p>
+    ${messageSection}
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="margin: 0 0 15px 0; color: #1f2937;">What's Next?</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+        <li style="margin-bottom: 10px;">Access your vendor dashboard to start managing your business</li>
+        <li style="margin-bottom: 10px;">Add your first food listings to start selling</li>
+        <li style="margin-bottom: 10px;">Set up your business hours and delivery options</li>
+        <li>Start saving food and earning money!</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${dashboardUrl}" style="background: #00A86B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Go to Dashboard</a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Thank you for joining ChopNow in our mission to reduce food waste across Africa!</p>
+  `;
+
+  return sendEmail(email, `Congratulations! ${businessName} is Now Approved on ChopNow`, emailTemplate('Business Approved!', content));
+};
+
+/**
+ * Send business verification rejected email
+ */
+const sendBusinessRejectedEmail = async (email, businessName, ownerName, reason = '') => {
+  const content = `
+    <p>Hello ${ownerName},</p>
+    <p>We have reviewed your business verification application for <strong>${businessName}</strong>.</p>
+    <p>Unfortunately, we were unable to approve your application at this time.</p>
+    ${reason ? `
+    <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold; color: #991b1b;">Reason:</p>
+      <p style="margin: 0; color: #b91c1c;">${reason}</p>
+    </div>
+    ` : ''}
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="margin: 0 0 15px 0; color: #1f2937;">What You Can Do:</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+        <li style="margin-bottom: 10px;">Review the rejection reason above</li>
+        <li style="margin-bottom: 10px;">Update your business information or documents</li>
+        <li style="margin-bottom: 10px;">Resubmit your verification application</li>
+        <li>Contact our support team if you have questions</li>
+      </ul>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">If you believe this decision was made in error, please contact our support team at support@chopnow.app.</p>
+  `;
+
+  return sendEmail(email, `Business Verification Update - ${businessName}`, emailTemplate('Business Verification Update', content));
+};
+
+/**
+ * Send business more info requested email
+ */
+const sendBusinessInfoRequestedEmail = async (email, businessName, ownerName, message = '') => {
+  const dashboardUrl = `${APP_URL}/dashboard`;
+
+  const content = `
+    <p>Hello ${ownerName},</p>
+    <p>We are reviewing your business verification application for <strong>${businessName}</strong>.</p>
+    <p>To complete the verification process, we need some additional information from you.</p>
+    ${message ? `
+    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold; color: #1e40af;">Information Requested:</p>
+      <p style="margin: 0; color: #1d4ed8;">${message}</p>
+    </div>
+    ` : ''}
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${dashboardUrl}" style="background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Update Your Application</a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Please provide the requested information as soon as possible so we can complete your verification.</p>
+  `;
+
+  return sendEmail(email, `Action Required: Additional Information Needed - ${businessName}`, emailTemplate('Additional Information Needed', content));
+};
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -357,4 +446,7 @@ module.exports = {
   sendOrderCancelledEmail,
   sendVendorOrderCancelledEmail,
   sendOrderCompletedEmail,
+  sendBusinessApprovedEmail,
+  sendBusinessRejectedEmail,
+  sendBusinessInfoRequestedEmail,
 };
