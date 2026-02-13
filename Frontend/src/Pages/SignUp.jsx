@@ -767,9 +767,9 @@ const SignUp = () => {
                 {/* Terms and Privacy */}
                 <p className="text-xs mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
                   By creating an account, you agree to our{' '}
-                  <a className="hover:underline font-medium" href="#" style={{ color: 'var(--color-solid)' }}>Terms of Service</a>
+                  <Link to="/terms-of-service" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Terms of Service</Link>
                   {' '}and{' '}
-                  <a className="hover:underline font-medium" href="#" style={{ color: 'var(--color-solid)' }}>Privacy Policy</a>
+                  <Link to="/privacy-policy" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Privacy Policy</Link>
                 </p>
 
                 {/* Sign in link */}

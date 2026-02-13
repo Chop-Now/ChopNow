@@ -46,6 +46,10 @@ const Footer = () => {
                                             <Link to="/faq" className="hover:underline transition">{link}</Link>
                                         ) : link === "Contact Us" ? (
                                             <Link to="/contact-us" className="hover:underline transition">{link}</Link>
+                                        ) : link === "Privacy Policy" ? (
+                                            <Link to="/privacy-policy" className="hover:underline transition">{link}</Link>
+                                        ) : link === "Terms & Conditions" ? (
+                                            <Link to="/terms-of-service" className="hover:underline transition">{link}</Link>
                                         ) : (
                                             <a href="#" className="hover:underline transition">{link}</a>
                                         )}
