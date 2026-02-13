@@ -16,6 +16,8 @@ import BusinessVerification from './Pages/BusinessVerification'
 import PendingReview from './Pages/PendingReview'
 import FAQ from './Pages/FAQ'
 import ContactUs from './Pages/ContactUs'
+import TermsOfService from './Pages/TermsOfService'
+import PrivacyPolicy from './Pages/PrivacyPolicy'
 import Dashboard from './admin/Dashboard'
 import AdminDashboard from './admin/AdminDashboard'
 import AdminLogin from './Pages/AdminLogin'
@@ -66,6 +68,8 @@ const App = () => {
         <Route path='/notifications' element={<Notification />} />
         <Route path='/faq' element={<FAQ />} />
         <Route path='/contact-us' element={<ContactUs />} />
+        <Route path='/terms-of-service' element={<TermsOfService />} />
+        <Route path='/privacy-policy' element={<PrivacyPolicy />} />
         <Route path='/dashboard' element={<Dashboard />} />
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin' element={<AdminDashboard />} />
