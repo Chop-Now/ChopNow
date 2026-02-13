@@ -170,12 +170,14 @@ const deliverySchema = new Schema({
   timestamps: true
 });
 
-// Indexes
-deliverySchema.index({ 'pickupLocation.location': '2dsphere' });
-deliverySchema.index({ 'dropoffLocation.location': '2dsphere' });
-deliverySchema.index({ currentLocation: '2dsphere' });
-deliverySchema.index({ rider: 1, status: 1 });
-deliverySchema.index({ status: 1, createdAt: -1 });
+// Indexes for query optimization
+deliverySchema.index({ 'pickupLocation.location': '2dsphere' });         // Nearby pickup search
+deliverySchema.index({ 'dropoffLocation.location': '2dsphere' });        // Nearby dropoff search
+deliverySchema.index({ currentLocation: '2dsphere' });                   // Real-time location tracking
+deliverySchema.index({ rider: 1, status: 1, createdAt: -1 });            // Rider's deliveries
+deliverySchema.index({ status: 1, createdAt: -1 });                      // Deliveries by status
+deliverySchema.index({ 'statusTimestamps.deliveredAt': -1 }, { sparse: true }); // Completed deliveries
+deliverySchema.index({ status: 1, rider: 1 }, { sparse: true });         // Available/unassigned deliveries
 
 // Validate coordinates
 deliverySchema.pre('save', function() {

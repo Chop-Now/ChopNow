@@ -118,9 +118,17 @@ listingSchema.methods.reserveQuantity = async function (qty) {
     return this.save();
 };
 
-// Indexes
-listingSchema.index({ business: 1, status: 1 });
-listingSchema.index({ 'timeWindow.availableFrom': 1, 'timeWindow.availableUntil': 1 }); // For expiry queries
-listingSchema.index({ location: '2dsphere' }); // If we add location to listing (usually business location used)
+// Indexes for query optimization
+listingSchema.index({ business: 1, status: 1 });                                        // Business listings lookup
+listingSchema.index({ business: 1, status: 1, createdAt: -1 });                         // Business listings sorted
+listingSchema.index({ 'timeWindow.availableFrom': 1, 'timeWindow.availableUntil': 1 }); // Time-based queries
+listingSchema.index({ status: 1, category: 1, createdAt: -1 });                         // Category browsing
+listingSchema.index({ status: 1, createdAt: -1 });                                      // Recent active listings
+listingSchema.index({ category: 1, status: 1, 'pricing.price': 1 });                   // Price filtering by category
+listingSchema.index({ 'pricing.price': 1, status: 1 });                                // Price sorting
+listingSchema.index({ 'inventory.quantity': 1, status: 1 });                           // Stock availability
+listingSchema.index({ 'stats.views': -1 });                                            // Popular listings
+listingSchema.index({ 'stats.orders': -1 });                                           // Best sellers
+listingSchema.index({ title: 'text', description: 'text' });                           // Full-text search
 
 module.exports = mongoose.model('Listing', listingSchema);

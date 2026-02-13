@@ -42,9 +42,12 @@ const payoutSchema = new Schema({
     timestamps: true
 });
 
-// Indexes
-payoutSchema.index({ business: 1, status: 1 });
-payoutSchema.index({ status: 1 });
+// Indexes for query optimization
+payoutSchema.index({ business: 1, status: 1, createdAt: -1 });           // Business payouts history
+payoutSchema.index({ status: 1, createdAt: -1 });                        // Processing queue
+payoutSchema.index({ processedBy: 1, processedAt: -1 }, { sparse: true }); // Admin processing history
+payoutSchema.index({ method: 1, status: 1 });                            // Payouts by method
+payoutSchema.index({ 'amount': -1, status: 1 });                         // High-value payouts tracking
 
 const Payout = mongoose.model('Payout', payoutSchema);
 

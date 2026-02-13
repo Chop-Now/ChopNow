@@ -21,6 +21,7 @@ const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const uploadDocs = require('../middleware/uploadDocs');
 const { validateCreateBusiness } = require('../middleware/validation');
+const { cacheBusinesses, cacheBusiness, invalidateAfter } = require('../middleware/cache');
 
 // Public routes
 
@@ -34,7 +35,7 @@ const { validateCreateBusiness } = require('../middleware/validation');
  *       200:
  *         description: List of businesses
  */
-router.get('/', getBusinesses);
+router.get('/', cacheBusinesses, getBusinesses);
 
 // IMPORTANT: Specific routes must come BEFORE parameterized routes
 // Get my businesses - must be before /:id
@@ -42,12 +43,12 @@ router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusin
 
 // Admin-only: Business approval workflow
 router.get('/pending', protect, authorize('admin'), getPendingBusinesses);
-router.patch('/:id/approve', protect, authorize('admin'), approveBusiness);
-router.patch('/:id/reject', protect, authorize('admin'), rejectBusiness);
-router.patch('/:id/request-info', protect, authorize('admin'), requestMoreInfo);
+router.patch('/:id/approve', protect, authorize('admin'), invalidateAfter('business'), approveBusiness);
+router.patch('/:id/reject', protect, authorize('admin'), invalidateAfter('business'), rejectBusiness);
+router.patch('/:id/request-info', protect, authorize('admin'), invalidateAfter('business'), requestMoreInfo);
 
 // Get by ID - comes after specific routes
-router.get('/:id', getBusinessById);
+router.get('/:id', cacheBusiness, getBusinessById);
 
 // Get business stats - must be before other /:id routes
 router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);
@@ -83,9 +84,9 @@ router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusin
  *       201:
  *         description: Business created
  */
-router.post('/', protect, authorize('business_owner', 'admin', 'consumer'), validateCreateBusiness, createBusiness);
-router.put('/:id', protect, authorize('business_owner', 'admin'), updateBusiness);
-router.delete('/:id', protect, authorize('business_owner', 'admin'), deleteBusiness);
+router.post('/', protect, authorize('business_owner', 'admin', 'consumer'), validateCreateBusiness, invalidateAfter('business', (req, body) => body?.business?._id), createBusiness);
+router.put('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('business'), updateBusiness);
+router.delete('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('business'), deleteBusiness);
 
 // Image upload routes
 router.post('/:id/logo', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('logo'), uploadLogo);

@@ -228,10 +228,18 @@ const orderSchema = new Schema({
   timestamps: true
 });
 
-// Indexes
-orderSchema.index({ customer: 1, status: 1, createdAt: -1 });
-orderSchema.index({ business: 1, status: 1, createdAt: -1 });
-orderSchema.index({ status: 1, createdAt: -1 });
+// Indexes for query optimization
+orderSchema.index({ customer: 1, status: 1, createdAt: -1 });                     // Customer order history
+orderSchema.index({ business: 1, status: 1, createdAt: -1 });                     // Business orders
+orderSchema.index({ status: 1, createdAt: -1 });                                  // Orders by status
+orderSchema.index({ listing: 1, status: 1 });                                     // Orders per listing
+orderSchema.index({ 'payment.paymentStatus': 1, status: 1 });                    // Payment tracking
+orderSchema.index({ fulfillmentType: 1, status: 1, createdAt: -1 });             // Pickup vs delivery
+orderSchema.index({ 'pickupDetails.pickupCode': 1 }, { sparse: true });          // Pickup code lookup
+orderSchema.index({ customer: 1, createdAt: -1 });                               // All customer orders
+orderSchema.index({ business: 1, createdAt: -1 });                               // All business orders
+orderSchema.index({ 'statusTimestamps.completedAt': -1 }, { sparse: true });     // Completed orders
+orderSchema.index({ 'pricing.total': -1, status: 1 });                           // Revenue analytics
 
 // Generate order number before saving
 orderSchema.pre('save', function() {

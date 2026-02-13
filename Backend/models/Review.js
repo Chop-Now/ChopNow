@@ -62,9 +62,12 @@ const reviewSchema = new Schema({
   timestamps: true
 });
 
-// Indexes
-reviewSchema.index({ business: 1, status: 1, createdAt: -1 });
-reviewSchema.index({ customer: 1, createdAt: -1 });
+// Indexes for query optimization
+reviewSchema.index({ business: 1, status: 1, createdAt: -1 });           // Business reviews sorted by date
+reviewSchema.index({ customer: 1, createdAt: -1 });                      // Customer's reviews
+reviewSchema.index({ business: 1, rating: -1, status: 1 });              // Top-rated reviews for business
+reviewSchema.index({ rating: -1, status: 1, createdAt: -1 });            // Reviews by rating
+reviewSchema.index({ 'businessResponse.respondedAt': -1 }, { sparse: true }); // Reviews with responses
 
 // Ensure rating is an integer
 reviewSchema.pre('save', function (next) {
