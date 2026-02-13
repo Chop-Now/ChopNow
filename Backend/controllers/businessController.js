@@ -1,5 +1,11 @@
 const Business = require('../models/Business');
 const { uploadToCloudinary, uploadMultipleToCloudinary } = require('../utils/cloudinaryUpload');
+const {
+  sendBusinessApprovedEmail,
+  sendBusinessRejectedEmail,
+  sendBusinessInfoRequestedEmail,
+} = require('../utils/emailService');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Create a new business
@@ -568,23 +574,48 @@ const getPendingBusinesses = async (req, res) => {
  */
 const approveBusiness = async (req, res) => {
   try {
-    const business = await Business.findById(req.params.id);
+    const { message } = req.body;
+
+    const business = await Business.findById(req.params.id)
+      .populate('owner', 'firstName lastName email');
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
     }
 
     business.status = 'active';
-    if (business.verification) {
-      business.verification.status = 'approved';
-      business.verification.reviewedAt = new Date();
-      business.verification.reviewedBy = req.user._id;
+    if (!business.verification) {
+      business.verification = {};
+    }
+    business.verification.status = 'approved';
+    business.verification.reviewedAt = new Date();
+    business.verification.reviewedBy = req.user._id;
+    if (message) {
+      business.verification.approvalMessage = message;
     }
 
     await business.save();
 
+    // Send approval email to business owner
+    if (business.owner && business.owner.email) {
+      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      try {
+        await sendBusinessApprovedEmail(
+          business.owner.email,
+          business.name,
+          ownerName,
+          message || ''
+        );
+        logger.info({ businessId: business._id, email: business.owner.email }, 'Business approval email sent');
+      } catch (emailError) {
+        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business approval email');
+        // Don't fail the approval if email fails
+      }
+    }
+
     res.json({ message: 'Business approved successfully', business });
   } catch (error) {
+    logger.error({ err: error }, 'Error approving business');
     res.status(500).json({ message: error.message });
   }
 };
@@ -598,7 +629,8 @@ const rejectBusiness = async (req, res) => {
   try {
     const { reason } = req.body;
 
-    const business = await Business.findById(req.params.id);
+    const business = await Business.findById(req.params.id)
+      .populate('owner', 'firstName lastName email');
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -606,17 +638,36 @@ const rejectBusiness = async (req, res) => {
 
     // Set main status to inactive (rejected is not a valid status in the schema)
     business.status = 'inactive';
-    if (business.verification) {
-      business.verification.status = 'rejected';
-      business.verification.rejectionReason = reason || 'Application rejected';
-      business.verification.reviewedAt = new Date();
-      business.verification.reviewedBy = req.user._id;
+    if (!business.verification) {
+      business.verification = {};
     }
+    business.verification.status = 'rejected';
+    business.verification.rejectionReason = reason || 'Application rejected';
+    business.verification.reviewedAt = new Date();
+    business.verification.reviewedBy = req.user._id;
 
     await business.save();
 
+    // Send rejection email to business owner
+    if (business.owner && business.owner.email) {
+      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      try {
+        await sendBusinessRejectedEmail(
+          business.owner.email,
+          business.name,
+          ownerName,
+          reason || ''
+        );
+        logger.info({ businessId: business._id, email: business.owner.email }, 'Business rejection email sent');
+      } catch (emailError) {
+        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business rejection email');
+        // Don't fail the rejection if email fails
+      }
+    }
+
     res.json({ message: 'Business rejected', business });
   } catch (error) {
+    logger.error({ err: error }, 'Error rejecting business');
     res.status(500).json({ message: error.message });
   }
 };
@@ -630,23 +681,43 @@ const requestMoreInfo = async (req, res) => {
   try {
     const { message } = req.body;
 
-    const business = await Business.findById(req.params.id);
+    const business = await Business.findById(req.params.id)
+      .populate('owner', 'firstName lastName email');
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
     }
 
-    if (business.verification) {
-      business.verification.status = 'info_requested';
-      business.verification.infoRequestMessage = message || 'Please provide additional information';
-      business.verification.reviewedAt = new Date();
-      business.verification.reviewedBy = req.user._id;
+    if (!business.verification) {
+      business.verification = {};
     }
+    business.verification.status = 'info_requested';
+    business.verification.infoRequestMessage = message || 'Please provide additional information';
+    business.verification.reviewedAt = new Date();
+    business.verification.reviewedBy = req.user._id;
 
     await business.save();
 
+    // Send info request email to business owner
+    if (business.owner && business.owner.email) {
+      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      try {
+        await sendBusinessInfoRequestedEmail(
+          business.owner.email,
+          business.name,
+          ownerName,
+          message || ''
+        );
+        logger.info({ businessId: business._id, email: business.owner.email }, 'Business info request email sent');
+      } catch (emailError) {
+        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business info request email');
+        // Don't fail the request if email fails
+      }
+    }
+
     res.json({ message: 'Information requested', business });
   } catch (error) {
+    logger.error({ err: error }, 'Error requesting info from business');
     res.status(500).json({ message: error.message });
   }
 };

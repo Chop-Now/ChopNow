@@ -105,9 +105,9 @@ const businessService = {
     },
 
     // Approve business (admin)
-    approveBusiness: async (id) => {
+    approveBusiness: async (id, message = '') => {
         try {
-            const response = await api.patch(`/api/businesses/${id}/approve`);
+            const response = await api.patch(`/api/businesses/${id}/approve`, { message });
             return response.data;
         } catch (error) {
             throw error.response?.data || error;

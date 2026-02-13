@@ -174,7 +174,7 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
               </div>
             )}
 
-            {/* Dates */
+            {/* Dates */}
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50'>
               <div className='space-y-1'>
                 <p className='text-xs font-medium text-slate-500 dark:text-slate-400'>Submission Date</p>
@@ -210,7 +210,6 @@ const VendorDetailsModal = ({ vendor, onClose, onApprove, onReject, onRequestInf
                 </div>
               )}
             </div>
-}
 
             {vendor.rejectionReason && (
               <div className='p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800'>
@@ -875,12 +874,13 @@ export const VendorApproval = () => {
   // Handle vendor approval
   const handleApprove = async (vendorId, note) => {
     try {
-      await businessService.approveBusiness(vendorId);
+      await businessService.approveBusiness(vendorId, note);
       setVendors(prev => prev.filter(v => v.id !== vendorId));
-      toast.success('Business approved successfully');
+      setSelectedVendor(null);
+      toast.success('Business approved successfully. Email notification sent to vendor.');
     } catch (error) {
       console.error('Error approving business:', error);
-      toast.error('Failed to approve business');
+      toast.error(error.message || 'Failed to approve business');
     }
   };
 
@@ -889,10 +889,11 @@ export const VendorApproval = () => {
     try {
       await businessService.rejectBusiness(vendorId, reason);
       setVendors(prev => prev.filter(v => v.id !== vendorId));
-      toast.success('Business rejected');
+      setSelectedVendor(null);
+      toast.success('Business rejected. Email notification sent to vendor.');
     } catch (error) {
       console.error('Error rejecting business:', error);
-      toast.error('Failed to reject business');
+      toast.error(error.message || 'Failed to reject business');
     }
   };
 
@@ -900,10 +901,17 @@ export const VendorApproval = () => {
   const handleRequestInfo = async (vendorId, message) => {
     try {
       await businessService.requestMoreInfo(vendorId, message);
-      toast.success('Information request sent');
+      // Update the vendor status locally instead of removing
+      setVendors(prev => prev.map(v =>
+        v.id === vendorId
+          ? { ...v, status: 'moreInfoRequested', infoRequestedMessage: message, infoRequestedDate: new Date().toISOString() }
+          : v
+      ));
+      setSelectedVendor(null);
+      toast.success('Information request sent. Email notification sent to vendor.');
     } catch (error) {
       console.error('Error requesting info:', error);
-      toast.error('Failed to send request');
+      toast.error(error.message || 'Failed to send request');
     }
   };
 
