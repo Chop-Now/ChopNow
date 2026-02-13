@@ -1,7 +1,7 @@
 import Footer from '../Components/Footer'
 import PageNavbar from '../Components/PageNavbar'
 import React, { useState, useEffect } from 'react'
-import { Award, Leaf, Droplets, Wind, Loader2 } from 'lucide-react'
+import { Award, Leaf, Droplets, Wind, Loader2, Scale, TrendingUp, TrendingDown } from 'lucide-react'
 import { analyticsService } from '../services'
 
 const MyImpact = () => {
@@ -10,8 +10,10 @@ const MyImpact = () => {
     mealsRescued: 0,
     co2Saved: 0,
     waterSaved: 0,
+    foodWasteSaved: 0,
     ordersCount: 0,
-    monthlyData: []
+    monthlyData: [],
+    comparison: null
   })
 
   useEffect(() => {
@@ -22,8 +24,10 @@ const MyImpact = () => {
           mealsRescued: data.mealsRescued || 0,
           co2Saved: data.co2Saved || 0,
           waterSaved: data.waterSaved || 0,
+          foodWasteSaved: data.foodWasteSaved || 0,
           ordersCount: data.ordersCount || 0,
-          monthlyData: data.monthlyData || []
+          monthlyData: data.monthlyData || [],
+          comparison: data.comparison || null
         })
       } catch (error) {
         console.error('Error fetching impact data:', error)
@@ -32,8 +36,10 @@ const MyImpact = () => {
           mealsRescued: 0,
           co2Saved: 0,
           waterSaved: 0,
+          foodWasteSaved: 0,
           ordersCount: 0,
-          monthlyData: []
+          monthlyData: [],
+          comparison: null
         })
       } finally {
         setLoading(false)
@@ -93,7 +99,7 @@ const MyImpact = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className='grid grid-cols-3 gap-2 md:gap-4 mb-8'>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8'>
             {/* Meals Rescued Card */}
             <div className='bg-white rounded-lg shadow-md p-3 md:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center'>
               <div className='flex items-center justify-center mb-1'>
@@ -101,6 +107,12 @@ const MyImpact = () => {
               </div>
               <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Meals Rescued</h3>
               <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.mealsRescued.toLocaleString()}</p>
+              {impactData.comparison && (
+                <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-green-600' : 'text-red-500'}`}>
+                  {impactData.comparison.percentageChange.trend === 'up' ? <TrendingUp className='w-3 h-3' /> : <TrendingDown className='w-3 h-3' />}
+                  <span>{impactData.comparison.percentageChange.meals >= 0 ? '+' : ''}{impactData.comparison.percentageChange.meals}% vs last month</span>
+                </div>
+              )}
             </div>
 
             {/* CO2e Saved Card */}
@@ -119,6 +131,15 @@ const MyImpact = () => {
               </div>
               <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Water Saved</h3>
               <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.waterSaved.toLocaleString()}<span className='text-sm md:text-base'>L</span></p>
+            </div>
+
+            {/* Food Waste Saved Card */}
+            <div className='bg-white rounded-lg shadow-md p-3 md:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center'>
+              <div className='flex items-center justify-center mb-1'>
+                <Scale className='w-5 h-5 md:w-6 md:h-6' style={{ color: 'var(--color-solid)' }} />
+              </div>
+              <h3 className='text-gray-600 text-[10px] md:text-xs font-medium mb-1'>Food Waste Saved</h3>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>{impactData.foodWasteSaved.toLocaleString()}<span className='text-sm md:text-base'>kg</span></p>
             </div>
           </div>
 

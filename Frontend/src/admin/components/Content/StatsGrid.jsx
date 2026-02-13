@@ -17,9 +17,11 @@ const StatsGrid = () => {
         setLoading(true);
         setError(null);
         try {
+            // Use getAdminStats for website mode as it has historical comparison data
+            // Use getBusinessOverview for shop mode
             const response = adminMode === 'shop'
                 ? await analyticsService.getBusinessOverview()
-                : await analyticsService.getPlatformOverview();
+                : await analyticsService.getAdminStats();
             setStats(response);
         } catch (err) {
             console.error('Error fetching stats:', err);
@@ -102,36 +104,44 @@ const StatsGrid = () => {
     const websiteAdminStats = stats ? [
         {
             title: "Total Revenue",
-            value: formatCurrency(stats.totalRevenue || stats.revenue || 0),
-            change: getChange(stats.totalRevenue, stats.previousRevenue).value,
-            trend: getChange(stats.totalRevenue, stats.previousRevenue).trend,
+            value: formatCurrency(stats.revenue?.total || 0),
+            change: stats.revenue?.percentChange !== undefined
+                ? `${stats.revenue.percentChange >= 0 ? '+' : ''}${stats.revenue.percentChange}%`
+                : '+0%',
+            trend: stats.revenue?.trend || 'up',
             icon: <Wallet className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         },
         {
             title: "Total Orders",
-            value: formatNumber(stats.totalOrders || stats.ordersCount || 0),
-            change: getChange(stats.totalOrders, stats.previousOrders).value,
-            trend: getChange(stats.totalOrders, stats.previousOrders).trend,
+            value: formatNumber(stats.orders?.total || 0),
+            change: stats.orders?.percentChange !== undefined
+                ? `${stats.orders.percentChange >= 0 ? '+' : ''}${stats.orders.percentChange}%`
+                : '+0%',
+            trend: stats.orders?.trend || 'up',
             icon: <ShoppingBasket className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-grey-200 dark:text-white",
         },
         {
             title: "Total Vendors",
-            value: formatNumber(stats.totalVendors || stats.vendorsCount || 0),
-            change: getChange(stats.totalVendors, stats.previousVendors).value,
-            trend: getChange(stats.totalVendors, stats.previousVendors).trend,
+            value: formatNumber(stats.businesses?.active || 0),
+            change: stats.businesses?.percentChange !== undefined
+                ? `${stats.businesses.percentChange >= 0 ? '+' : ''}${stats.businesses.percentChange}%`
+                : '+0%',
+            trend: stats.businesses?.trend || 'up',
             icon: <Store className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",
         },
         {
             title: "Total Users",
-            value: formatNumber(stats.totalUsers || stats.usersCount || 0),
-            change: getChange(stats.totalUsers, stats.previousUsers).value,
-            trend: getChange(stats.totalUsers, stats.previousUsers).trend,
+            value: formatNumber(stats.users?.total || 0),
+            change: stats.users?.percentChange !== undefined
+                ? `${stats.users.percentChange >= 0 ? '+' : ''}${stats.users.percentChange}%`
+                : '+0%',
+            trend: stats.users?.trend || 'up',
             icon: <Users className='w-6 h-6' />,
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             textColor: "text-black dark:text-white",

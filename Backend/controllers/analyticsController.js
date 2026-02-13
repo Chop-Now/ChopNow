@@ -129,49 +129,202 @@ const getImpactLeaderboard = async (req, res) => {
 };
 
 /**
+ * Environmental Impact Constants
+ * Based on research data for food waste environmental impact
+ */
+const IMPACT_FACTORS = {
+    CO2_PER_MEAL: 2.5,           // kg CO2e saved per meal rescued
+    WATER_PER_MEAL: 1000,        // liters of water saved per meal
+    AVG_MEAL_WEIGHT: 0.5,        // average kg per meal for food waste calculation
+};
+
+/**
  * @desc    Get my impact (Consumer/Business)
  * @route   GET /api/analytics/impact/my
  * @access  Private
  */
 const getMyImpact = async (req, res) => {
     try {
-        if (req.user.role === 'consumer') {
-            // Calculate consumer impact based on orders
-            const orders = await Order.find({ customer: req.user._id, status: 'delivered' })
-                .populate('business');
+        const userRole = req.user.activeRole || req.user.role;
 
-            let mealsRescued = 0;
-            let co2Saved = 0;
-            let waterSaved = 0;
+        if (userRole === 'consumer') {
+            // Get all completed orders for consumer
+            const orders = await Order.find({
+                customer: req.user._id,
+                status: 'completed'
+            }).sort({ createdAt: 1 });
 
-            // Simplified calculation - in real app, fetch from Listing details snapshot in Order
-            // Assuming 1 item = 1 meal, and some constants
+            // Calculate total impact
+            let totalMealsRescued = 0;
+            let totalCo2Saved = 0;
+            let totalWaterSaved = 0;
+            let totalFoodWasteSaved = 0;
+
             orders.forEach(order => {
                 order.items.forEach(item => {
-                    mealsRescued += item.quantity;
-                    co2Saved += (item.quantity * 2.5); // 2.5kg CO2 per meal
-                    waterSaved += (item.quantity * 1000); // 1000L water per meal (beef example)
+                    const quantity = item.quantity || 1;
+                    totalMealsRescued += quantity;
+                    totalCo2Saved += (quantity * IMPACT_FACTORS.CO2_PER_MEAL);
+                    totalWaterSaved += (quantity * IMPACT_FACTORS.WATER_PER_MEAL);
+                    totalFoodWasteSaved += (quantity * IMPACT_FACTORS.AVG_MEAL_WEIGHT);
                 });
             });
 
-            res.json({
-                mealsRescued,
-                co2Saved,
-                waterSaved,
-                history: [] // Add history if needed
+            // Calculate monthly breakdown for charts (last 12 months)
+            const monthlyData = await calculateMonthlyImpact(req.user._id, 'consumer');
+
+            // Calculate previous month for comparison
+            const now = new Date();
+            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+            const thisMonthOrders = await Order.find({
+                customer: req.user._id,
+                status: 'completed',
+                createdAt: { $gte: thisMonthStart }
             });
-        } else if (req.user.role === 'business_owner' || req.user.role === 'manager') {
+
+            const lastMonthOrders = await Order.find({
+                customer: req.user._id,
+                status: 'completed',
+                createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+            });
+
+            const thisMonthMeals = thisMonthOrders.reduce((sum, order) =>
+                sum + order.items.reduce((itemSum, item) => itemSum + (item.quantity || 1), 0), 0);
+            const lastMonthMeals = lastMonthOrders.reduce((sum, order) =>
+                sum + order.items.reduce((itemSum, item) => itemSum + (item.quantity || 1), 0), 0);
+
+            // Calculate percentage change
+            const mealsChange = lastMonthMeals > 0
+                ? ((thisMonthMeals - lastMonthMeals) / lastMonthMeals * 100).toFixed(1)
+                : thisMonthMeals > 0 ? 100 : 0;
+
+            res.json({
+                mealsRescued: totalMealsRescued,
+                co2Saved: Math.round(totalCo2Saved * 10) / 10,
+                waterSaved: Math.round(totalWaterSaved),
+                foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
+                ordersCount: orders.length,
+                monthlyData,
+                comparison: {
+                    thisMonth: {
+                        meals: thisMonthMeals,
+                        co2: Math.round(thisMonthMeals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+                        orders: thisMonthOrders.length
+                    },
+                    lastMonth: {
+                        meals: lastMonthMeals,
+                        co2: Math.round(lastMonthMeals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+                        orders: lastMonthOrders.length
+                    },
+                    percentageChange: {
+                        meals: parseFloat(mealsChange),
+                        trend: parseFloat(mealsChange) >= 0 ? 'up' : 'down'
+                    }
+                }
+            });
+        } else if (userRole === 'business_owner' || userRole === 'manager') {
             const business = await Business.findOne({ owner: req.user._id });
             if (!business) {
                 return res.status(404).json({ message: 'Business not found' });
             }
-            res.json(business.stats.impact);
+
+            // Calculate real impact from completed orders for this business
+            const orders = await Order.find({
+                business: business._id,
+                status: 'completed'
+            });
+
+            let totalMealsRescued = 0;
+            let totalCo2Saved = 0;
+            let totalWaterSaved = 0;
+            let totalFoodWasteSaved = 0;
+
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    const quantity = item.quantity || 1;
+                    totalMealsRescued += quantity;
+                    totalCo2Saved += (quantity * IMPACT_FACTORS.CO2_PER_MEAL);
+                    totalWaterSaved += (quantity * IMPACT_FACTORS.WATER_PER_MEAL);
+                    totalFoodWasteSaved += (quantity * IMPACT_FACTORS.AVG_MEAL_WEIGHT);
+                });
+            });
+
+            // Update business stats with real calculated values
+            await Business.findByIdAndUpdate(business._id, {
+                'stats.impact.co2Saved': totalCo2Saved,
+                'stats.impact.mealsRescued': totalMealsRescued,
+                'stats.impact.waterSaved': totalWaterSaved
+            });
+
+            // Calculate monthly breakdown
+            const monthlyData = await calculateMonthlyImpact(business._id, 'business');
+
+            res.json({
+                mealsRescued: totalMealsRescued,
+                co2Saved: Math.round(totalCo2Saved * 10) / 10,
+                waterSaved: Math.round(totalWaterSaved),
+                foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
+                ordersCount: orders.length,
+                monthlyData
+            });
         } else {
             res.status(400).json({ message: 'Invalid role for impact stats' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+};
+
+/**
+ * Calculate monthly impact data for the last 12 months
+ * @param {ObjectId} id - User ID or Business ID
+ * @param {string} type - 'consumer' or 'business'
+ * @returns {Array} Monthly impact data
+ */
+const calculateMonthlyImpact = async (id, type) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const monthlyData = [];
+
+    // Get data for last 12 months
+    for (let i = 11; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+
+        const query = {
+            status: 'completed',
+            createdAt: { $gte: monthStart, $lte: monthEnd }
+        };
+
+        if (type === 'consumer') {
+            query.customer = id;
+        } else {
+            query.business = id;
+        }
+
+        const orders = await Order.find(query);
+
+        let meals = 0;
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                meals += item.quantity || 1;
+            });
+        });
+
+        monthlyData.push({
+            month: months[monthStart.getMonth()],
+            year: monthStart.getFullYear(),
+            meals,
+            co2: Math.round(meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+            water: Math.round(meals * IMPACT_FACTORS.WATER_PER_MEAL),
+            orders: orders.length
+        });
+    }
+
+    return monthlyData;
 };
 
 /**
@@ -451,20 +604,43 @@ const getUserActivity = async (req, res) => {
  */
 const getAdminStats = async (req, res) => {
     try {
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
         // Total users by role
         const totalUsers = await User.countDocuments();
-        const consumers = await User.countDocuments({ role: 'consumer' });
-        const vendors = await User.countDocuments({ role: 'business_owner' });
-        const riders = await User.countDocuments({ role: 'rider' });
+        const consumers = await User.countDocuments({ roles: 'consumer' });
+        const vendors = await User.countDocuments({ roles: 'business_owner' });
+        const riders = await User.countDocuments({ roles: 'rider' });
+
+        // Users this month vs last month for percentage calculation
+        const usersThisMonth = await User.countDocuments({ createdAt: { $gte: thisMonthStart } });
+        const usersLastMonth = await User.countDocuments({
+            createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+        });
+        const usersPercentChange = usersLastMonth > 0
+            ? ((usersThisMonth - usersLastMonth) / usersLastMonth * 100).toFixed(1)
+            : usersThisMonth > 0 ? 100 : 0;
 
         // Active vs pending vendors
-        const activeVendors = await Business.countDocuments({ status: 'approved' });
-        const pendingVendors = await Business.countDocuments({ status: 'pending' });
+        const activeVendors = await Business.countDocuments({ status: 'active' });
+        const pendingVendors = await Business.countDocuments({ 'verification.status': 'pending' });
+
+        // Vendors this month vs last month
+        const vendorsThisMonth = await Business.countDocuments({ createdAt: { $gte: thisMonthStart } });
+        const vendorsLastMonth = await Business.countDocuments({
+            createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+        });
+        const vendorsPercentChange = vendorsLastMonth > 0
+            ? ((vendorsThisMonth - vendorsLastMonth) / vendorsLastMonth * 100).toFixed(1)
+            : vendorsThisMonth > 0 ? 100 : 0;
 
         // Weekly growth
-        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         const newUsersThisWeek = await User.countDocuments({ createdAt: { $gte: weekAgo } });
-        const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
         const newUsersLastWeek = await User.countDocuments({
             createdAt: { $gte: twoWeeksAgo, $lt: weekAgo }
         });
@@ -473,14 +649,112 @@ const getAdminStats = async (req, res) => {
         // Order stats
         const totalOrders = await Order.countDocuments();
         const completedOrders = await Order.countDocuments({ status: 'completed' });
-        const pendingOrders = await Order.countDocuments({ status: { $in: ['pending', 'confirmed'] } });
+        const pendingOrders = await Order.countDocuments({ status: { $in: ['pending_payment', 'paid', 'confirmed', 'ready_for_pickup', 'out_for_delivery'] } });
 
-        // Revenue
+        // Orders this month vs last month
+        const ordersThisMonth = await Order.countDocuments({ createdAt: { $gte: thisMonthStart } });
+        const ordersLastMonth = await Order.countDocuments({
+            createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+        });
+        const ordersPercentChange = ordersLastMonth > 0
+            ? ((ordersThisMonth - ordersLastMonth) / ordersLastMonth * 100).toFixed(1)
+            : ordersThisMonth > 0 ? 100 : 0;
+
+        // Revenue calculations
         const revenueData = await Order.aggregate([
             { $match: { status: 'completed' } },
             { $group: { _id: null, total: { $sum: '$pricing.total' } } }
         ]);
         const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+        // Revenue this month vs last month
+        const revenueThisMonthData = await Order.aggregate([
+            { $match: { status: 'completed', createdAt: { $gte: thisMonthStart } } },
+            { $group: { _id: null, total: { $sum: '$pricing.total' } } }
+        ]);
+        const revenueLastMonthData = await Order.aggregate([
+            { $match: { status: 'completed', createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
+            { $group: { _id: null, total: { $sum: '$pricing.total' } } }
+        ]);
+        const revenueThisMonth = revenueThisMonthData.length > 0 ? revenueThisMonthData[0].total : 0;
+        const revenueLastMonth = revenueLastMonthData.length > 0 ? revenueLastMonthData[0].total : 0;
+        const revenuePercentChange = revenueLastMonth > 0
+            ? ((revenueThisMonth - revenueLastMonth) / revenueLastMonth * 100).toFixed(1)
+            : revenueThisMonth > 0 ? 100 : 0;
+
+        // Calculate platform-wide impact
+        const completedOrdersForImpact = await Order.find({ status: 'completed' });
+        let totalMealsRescued = 0;
+        let totalCo2Saved = 0;
+        completedOrdersForImpact.forEach(order => {
+            order.items.forEach(item => {
+                totalMealsRescued += item.quantity || 1;
+                totalCo2Saved += (item.quantity || 1) * IMPACT_FACTORS.CO2_PER_MEAL;
+            });
+        });
+
+        // Impact this month vs last month
+        const impactOrdersThisMonth = await Order.find({
+            status: 'completed',
+            createdAt: { $gte: thisMonthStart }
+        });
+        const impactOrdersLastMonth = await Order.find({
+            status: 'completed',
+            createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+        });
+
+        let co2ThisMonth = 0;
+        let co2LastMonth = 0;
+        impactOrdersThisMonth.forEach(order => {
+            order.items.forEach(item => {
+                co2ThisMonth += (item.quantity || 1) * IMPACT_FACTORS.CO2_PER_MEAL;
+            });
+        });
+        impactOrdersLastMonth.forEach(order => {
+            order.items.forEach(item => {
+                co2LastMonth += (item.quantity || 1) * IMPACT_FACTORS.CO2_PER_MEAL;
+            });
+        });
+        const co2PercentChange = co2LastMonth > 0
+            ? ((co2ThisMonth - co2LastMonth) / co2LastMonth * 100).toFixed(1)
+            : co2ThisMonth > 0 ? 100 : 0;
+
+        // Average rating
+        const ratingData = await Review.aggregate([
+            { $match: { status: 'active' } },
+            { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
+        ]);
+        const avgRating = ratingData.length > 0 ? Math.round(ratingData[0].avgRating * 10) / 10 : 0;
+        const reviewCount = ratingData.length > 0 ? ratingData[0].count : 0;
+
+        // Weekly order trends for chart (last 4 weeks)
+        const weeklyTrends = [];
+        for (let i = 3; i >= 0; i--) {
+            const weekStart = new Date(now);
+            weekStart.setDate(weekStart.getDate() - (i + 1) * 7);
+            const weekEnd = new Date(now);
+            weekEnd.setDate(weekEnd.getDate() - i * 7);
+
+            const weekOrders = await Order.countDocuments({
+                createdAt: { $gte: weekStart, $lt: weekEnd }
+            });
+
+            // Previous period (4 weeks before)
+            const prevWeekStart = new Date(weekStart);
+            prevWeekStart.setDate(prevWeekStart.getDate() - 28);
+            const prevWeekEnd = new Date(weekEnd);
+            prevWeekEnd.setDate(prevWeekEnd.getDate() - 28);
+
+            const prevWeekOrders = await Order.countDocuments({
+                createdAt: { $gte: prevWeekStart, $lt: prevWeekEnd }
+            });
+
+            weeklyTrends.push({
+                name: `Week ${4 - i}`,
+                thisMonth: weekOrders,
+                lastMonth: prevWeekOrders
+            });
+        }
 
         res.json({
             users: {
@@ -488,20 +762,49 @@ const getAdminStats = async (req, res) => {
                 consumers,
                 vendors,
                 riders,
-                weeklyChange
+                weeklyChange,
+                thisMonth: usersThisMonth,
+                lastMonth: usersLastMonth,
+                percentChange: parseFloat(usersPercentChange),
+                trend: parseFloat(usersPercentChange) >= 0 ? 'up' : 'down'
             },
             businesses: {
                 active: activeVendors,
-                pending: pendingVendors
+                pending: pendingVendors,
+                thisMonth: vendorsThisMonth,
+                lastMonth: vendorsLastMonth,
+                percentChange: parseFloat(vendorsPercentChange),
+                trend: parseFloat(vendorsPercentChange) >= 0 ? 'up' : 'down'
             },
             orders: {
                 total: totalOrders,
                 completed: completedOrders,
-                pending: pendingOrders
+                pending: pendingOrders,
+                thisMonth: ordersThisMonth,
+                lastMonth: ordersLastMonth,
+                percentChange: parseFloat(ordersPercentChange),
+                trend: parseFloat(ordersPercentChange) >= 0 ? 'up' : 'down'
             },
             revenue: {
-                total: totalRevenue
-            }
+                total: totalRevenue,
+                thisMonth: revenueThisMonth,
+                lastMonth: revenueLastMonth,
+                percentChange: parseFloat(revenuePercentChange),
+                trend: parseFloat(revenuePercentChange) >= 0 ? 'up' : 'down'
+            },
+            impact: {
+                mealsRescued: totalMealsRescued,
+                co2Saved: Math.round(totalCo2Saved * 10) / 10,
+                co2ThisMonth: Math.round(co2ThisMonth * 10) / 10,
+                co2LastMonth: Math.round(co2LastMonth * 10) / 10,
+                percentChange: parseFloat(co2PercentChange),
+                trend: parseFloat(co2PercentChange) >= 0 ? 'up' : 'down'
+            },
+            reviews: {
+                avgRating,
+                count: reviewCount
+            },
+            weeklyTrends
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

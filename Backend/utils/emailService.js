@@ -430,6 +430,39 @@ const sendBusinessInfoRequestedEmail = async (email, businessName, ownerName, me
   return sendEmail(email, `Action Required: Additional Information Needed - ${businessName}`, emailTemplate('Additional Information Needed', content));
 };
 
+/**
+ * Send business rescinded (approval revoked) email
+ */
+const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason = '') => {
+  const dashboardUrl = `${APP_URL}/dashboard`;
+
+  const content = `
+    <p>Hello ${ownerName},</p>
+    <p>We are writing to inform you that the verification status for <strong>${businessName}</strong> has been rescinded and your account has been moved back to pending review.</p>
+    ${reason ? `
+    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold; color: #92400e;">Reason:</p>
+      <p style="margin: 0; color: #b45309;">${reason}</p>
+    </div>
+    ` : ''}
+    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0; font-weight: bold; color: #374151;">What This Means:</p>
+      <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+        <li>Your business account is currently on hold</li>
+        <li>Your listings will not be visible to customers</li>
+        <li>You may need to update your business information or documentation</li>
+        <li>Once issues are resolved, you can request re-verification</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${dashboardUrl}" style="background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Review Your Account</a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">If you have questions about this decision, please contact our support team at support@chopnow.app.</p>
+  `;
+
+  return sendEmail(email, `Important: Business Verification Status Update - ${businessName}`, emailTemplate('Verification Status Update', content));
+};
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -449,4 +482,5 @@ module.exports = {
   sendBusinessApprovedEmail,
   sendBusinessRejectedEmail,
   sendBusinessInfoRequestedEmail,
+  sendBusinessRescindedEmail,
 };

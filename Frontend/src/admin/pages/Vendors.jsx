@@ -405,6 +405,66 @@ export const AllVendors = () => {
     }
   };
 
+  // Handle vendor approval
+  const handleApprove = async (vendorId, note) => {
+    try {
+      await businessService.approveBusiness(vendorId, note);
+      setVendors(prev => prev.map(v =>
+        v.id === vendorId ? { ...v, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] } : v
+      ));
+      setSelectedVendor(null);
+      toast.success('Business approved successfully. Email notification sent to vendor.');
+    } catch (error) {
+      console.error('Error approving business:', error);
+      toast.error(error.message || 'Failed to approve business');
+    }
+  };
+
+  // Handle vendor rejection
+  const handleReject = async (vendorId, reason) => {
+    try {
+      await businessService.rejectBusiness(vendorId, reason);
+      setVendors(prev => prev.map(v =>
+        v.id === vendorId ? { ...v, status: 'rejected', rejectedDate: new Date().toISOString().split('T')[0], rejectionReason: reason } : v
+      ));
+      setSelectedVendor(null);
+      toast.success('Business rejected. Email notification sent to vendor.');
+    } catch (error) {
+      console.error('Error rejecting business:', error);
+      toast.error(error.message || 'Failed to reject business');
+    }
+  };
+
+  // Handle request more info
+  const handleRequestInfo = async (vendorId, message) => {
+    try {
+      await businessService.requestMoreInfo(vendorId, message);
+      setVendors(prev => prev.map(v =>
+        v.id === vendorId ? { ...v, status: 'moreInfoRequested', infoRequestedDate: new Date().toISOString(), infoRequestedMessage: message } : v
+      ));
+      setSelectedVendor(null);
+      toast.success('Information request sent. Email notification sent to vendor.');
+    } catch (error) {
+      console.error('Error requesting info:', error);
+      toast.error(error.message || 'Failed to send request');
+    }
+  };
+
+  // Handle vendor rescind
+  const handleRescind = async (vendorId, reason) => {
+    try {
+      await businessService.rescindBusiness(vendorId, reason);
+      setVendors(prev => prev.map(v =>
+        v.id === vendorId ? { ...v, status: 'pending', approvedDate: null } : v
+      ));
+      setSelectedVendor(null);
+      toast.success('Vendor approval rescinded. Email notification sent to vendor.');
+    } catch (error) {
+      console.error('Error rescinding business:', error);
+      toast.error(error.message || 'Failed to rescind vendor approval');
+    }
+  };
+
   // Get unique business types and locations for filter
   const businessTypes = ['all', ...new Set(vendors.map(v => v.businessType))];
   const locations = ['all', ...new Set(vendors.map(v => v.location))];
@@ -778,34 +838,10 @@ export const AllVendors = () => {
         <VendorDetailsModal
           vendor={selectedVendor}
           onClose={() => setSelectedVendor(null)}
-          onApprove={(vendorId, note) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Approved vendor:', vendorId, 'Note:', note);
-          }}
-          onReject={(vendorId, reason) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'rejected', rejectedDate: new Date().toISOString().split('T')[0], rejectionReason: reason } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Rejected vendor:', vendorId, 'Reason:', reason);
-          }}
-          onRequestInfo={(vendorId, message) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'moreInfoRequested', infoRequestedDate: new Date().toISOString().split('T')[0], infoRequestedMessage: message } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Requested more info from vendor:', vendorId, 'Message:', message);
-          }}
-          onRescind={(vendorId, reason) => {
-            setVendors(prev => prev.map(v => 
-              v.id === vendorId ? { ...v, status: 'pending' } : v
-            ));
-            setSelectedVendor(null);
-            console.log('Rescinded approval for vendor:', vendorId, 'Reason:', reason);
-          }}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onRequestInfo={handleRequestInfo}
+          onRescind={handleRescind}
           showActions={selectedVendor.status === 'pending' || selectedVendor.status === 'moreInfoRequested'}
         />
       )}
