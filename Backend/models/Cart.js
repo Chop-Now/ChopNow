@@ -110,6 +110,11 @@ cartSchema.statics.getOrCreateCart = async function(userId) {
     return cart;
 };
 
+// Indexes for query optimization
+// Note: user index is already created by unique: true constraint
+cartSchema.index({ 'items.listing': 1 });                         // Find carts containing specific listings
+cartSchema.index({ updatedAt: -1 });                              // Recently updated carts (for cleanup)
+
 const Cart = mongoose.model('Cart', cartSchema);
 
 module.exports = Cart;

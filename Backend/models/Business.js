@@ -159,9 +159,16 @@ const businessSchema = new Schema({
     timestamps: true
 });
 
-// Indexes
-businessSchema.index({ location: '2dsphere' });
-businessSchema.index({ name: 'text', description: 'text' });
+// Indexes for query optimization
+businessSchema.index({ location: '2dsphere' });                           // Geospatial queries (nearby businesses)
+businessSchema.index({ name: 'text', description: 'text' });              // Full-text search
+businessSchema.index({ owner: 1 });                                        // Owner's businesses lookup
+businessSchema.index({ status: 1, type: 1 });                             // Filter by status and type
+businessSchema.index({ status: 1, createdAt: -1 });                       // Active businesses by date
+businessSchema.index({ 'verification.status': 1, createdAt: -1 });        // Admin approval queue
+businessSchema.index({ type: 1, status: 1, 'rating.average': -1 });       // Top rated by type
+businessSchema.index({ 'stats.totalOrders': -1 });                        // Top businesses by orders
+businessSchema.index({ 'metrics.mealsSaved': -1 });                       // Impact leaderboard
 
 const Business = mongoose.model('Business', businessSchema);
 

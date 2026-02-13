@@ -177,8 +177,16 @@ const userSchema = new Schema({
     timestamps: true
 });
 
-// Indexes
-userSchema.index({ 'addresses.location': '2dsphere' });
+// Indexes for query optimization
+userSchema.index({ 'addresses.location': '2dsphere' });           // Geospatial queries
+userSchema.index({ status: 1, createdAt: -1 });                   // Active users sorted by date
+userSchema.index({ roles: 1 });                                    // Filter by role
+userSchema.index({ activeRole: 1, status: 1 });                   // Role-based queries
+userSchema.index({ emailVerified: 1, status: 1 });                // Verified users
+userSchema.index({ 'stats.ordersCount': -1 });                    // Top customers
+userSchema.index({ verificationToken: 1 }, { sparse: true });     // Token lookups
+userSchema.index({ resetPasswordToken: 1 }, { sparse: true });    // Password reset lookups
+userSchema.index({ otpCode: 1, otpExpires: 1 }, { sparse: true }); // OTP validation
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function () {

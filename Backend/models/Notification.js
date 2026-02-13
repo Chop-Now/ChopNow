@@ -97,9 +97,13 @@ const notificationSchema = new Schema({
   timestamps: true
 });
 
-// Indexes
-notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
-notificationSchema.index({ user: 1, type: 1, createdAt: -1 });
+// Indexes for query optimization
+notificationSchema.index({ user: 1, read: 1, createdAt: -1 });           // User unread notifications
+notificationSchema.index({ user: 1, type: 1, createdAt: -1 });           // User notifications by type
+notificationSchema.index({ relatedOrder: 1 }, { sparse: true });         // Order-related notifications
+notificationSchema.index({ relatedBusiness: 1 }, { sparse: true });      // Business notifications
+notificationSchema.index({ sent: 1, createdAt: -1 });                    // Batch sending queue
+notificationSchema.index({ read: 1, readAt: 1 });                        // For cleanup of old notifications
 
 // Method to mark notification as read
 notificationSchema.methods.markAsRead = function () {

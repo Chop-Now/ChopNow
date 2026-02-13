@@ -70,11 +70,13 @@ const disputeSchema = new Schema({
     timestamps: true
 });
 
-// Indexes
-disputeSchema.index({ status: 1 });
-disputeSchema.index({ priority: 1 });
-disputeSchema.index({ business: 1 });
-disputeSchema.index({ customer: 1 });
+// Indexes for query optimization
+disputeSchema.index({ status: 1, priority: -1, createdAt: -1 });         // Admin queue (high priority first)
+disputeSchema.index({ business: 1, status: 1, createdAt: -1 });          // Business disputes
+disputeSchema.index({ customer: 1, status: 1, createdAt: -1 });          // Customer disputes
+disputeSchema.index({ order: 1 });                                        // Dispute by order lookup
+disputeSchema.index({ type: 1, status: 1, createdAt: -1 });              // Disputes by type
+disputeSchema.index({ 'resolution.resolvedBy': 1, 'resolution.resolvedAt': -1 }, { sparse: true }); // Admin resolution tracking
 
 const Dispute = mongoose.model('Dispute', disputeSchema);
 

@@ -29,6 +29,7 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const requestId = require('./middleware/requestId');
 const logger = require('./utils/logger');
+const metrics = require('./utils/metrics');
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use(helmet());
 
 // Request correlation id + structured request logging
 app.use(requestId);
+app.use(metrics.metricsMiddleware()); // Collect request metrics
 app.use(pinoHttp({
   logger,
   genReqId: (req) => req.id,
@@ -194,15 +196,126 @@ if (process.env.SENTRY_DSN && String(process.env.SENTRY_DSN).trim() !== '') {
 app.use(errorHandler);
 
 // Database connection and server start
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    logger.info('Connected to MongoDB');
+const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');
+const redis = require('./config/redis');
+
+// Enhanced health check endpoint with database stats
+app.get('/health/db', async (req, res) => {
+  const dbHealth = await healthCheck();
+  const statusCode = dbHealth.healthy ? 200 : 503;
+  res.status(statusCode).json(dbHealth);
+});
+
+// Redis cache health check endpoint
+app.get('/health/cache', async (req, res) => {
+  const cacheStats = await redis.getStats();
+  const statusCode = cacheStats.available ? 200 : 503;
+  res.status(statusCode).json(cacheStats);
+});
+
+// Combined health check for all services
+app.get('/health/all', async (req, res) => {
+  const [dbHealth, cacheStats] = await Promise.all([
+    healthCheck(),
+    redis.getStats(),
+  ]);
+
+  const allHealthy = dbHealth.healthy;
+  const statusCode = allHealthy ? 200 : 503;
+
+  res.status(statusCode).json({
+    status: allHealthy ? 'healthy' : 'degraded',
+    services: {
+      database: dbHealth,
+      cache: cacheStats,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Metrics endpoint for monitoring
+app.get('/metrics', async (req, res) => {
+  const appMetrics = metrics.getMetrics();
+  const mongoMetrics = await metrics.getMongoMetrics();
+
+  res.json({
+    application: appMetrics,
+    mongodb: mongoMetrics,
+  });
+});
+
+// Prometheus-compatible metrics endpoint (optional)
+app.get('/metrics/prometheus', async (req, res) => {
+  const appMetrics = metrics.getMetrics();
+
+  // Generate Prometheus-format metrics
+  const lines = [
+    '# HELP chopnow_http_requests_total Total HTTP requests',
+    '# TYPE chopnow_http_requests_total counter',
+    `chopnow_http_requests_total ${appMetrics.http.totalRequests}`,
+    '',
+    '# HELP chopnow_http_errors_total Total HTTP errors',
+    '# TYPE chopnow_http_errors_total counter',
+    `chopnow_http_errors_total ${appMetrics.http.errors}`,
+    '',
+    '# HELP chopnow_http_latency_p50 HTTP latency 50th percentile',
+    '# TYPE chopnow_http_latency_p50 gauge',
+    `chopnow_http_latency_p50 ${appMetrics.http.latency.p50}`,
+    '',
+    '# HELP chopnow_http_latency_p95 HTTP latency 95th percentile',
+    '# TYPE chopnow_http_latency_p95 gauge',
+    `chopnow_http_latency_p95 ${appMetrics.http.latency.p95}`,
+    '',
+    '# HELP chopnow_http_latency_p99 HTTP latency 99th percentile',
+    '# TYPE chopnow_http_latency_p99 gauge',
+    `chopnow_http_latency_p99 ${appMetrics.http.latency.p99}`,
+    '',
+    '# HELP chopnow_cache_hit_rate Cache hit rate percentage',
+    '# TYPE chopnow_cache_hit_rate gauge',
+    `chopnow_cache_hit_rate ${appMetrics.cache.hitRate}`,
+    '',
+    '# HELP chopnow_memory_heap_used_bytes Heap memory used',
+    '# TYPE chopnow_memory_heap_used_bytes gauge',
+    `chopnow_memory_heap_used_bytes ${appMetrics.memory.raw.heapUsed}`,
+    '',
+    '# HELP chopnow_uptime_seconds Application uptime',
+    '# TYPE chopnow_uptime_seconds counter',
+    `chopnow_uptime_seconds ${appMetrics.uptime.seconds}`,
+  ];
+
+  res.set('Content-Type', 'text/plain');
+  res.send(lines.join('\n'));
+});
+
+// Setup graceful shutdown handlers
+setupGracefulShutdown();
+
+// Connect to database and start server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+
+    // Initialize Redis (optional - won't fail if unavailable)
+    await redis.initRedis();
+
     const port = process.env.PORT || 5000;
     app.listen(port, () => {
-      logger.info(`Server running on port ${port}`);
+      logger.info({ port, env: process.env.NODE_ENV || 'development' }, `Server running on port ${port}`);
     });
-  })
-  .catch((error) => {
-    logger.error({ err: error }, 'Database connection error');
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to start server');
     process.exit(1);
-  });
+  }
+};
+
+// Handle graceful shutdown for Redis
+process.on('SIGTERM', async () => {
+  await redis.close();
+});
+
+process.on('SIGINT', async () => {
+  await redis.close();
+});
+
+startServer();
