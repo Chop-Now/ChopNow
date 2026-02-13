@@ -15,7 +15,8 @@ const {
   getPendingBusinesses,
   approveBusiness,
   rejectBusiness,
-  requestMoreInfo
+  requestMoreInfo,
+  rescindBusiness
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -46,6 +47,7 @@ router.get('/pending', protect, authorize('admin'), getPendingBusinesses);
 router.patch('/:id/approve', protect, authorize('admin'), invalidateAfter('business'), approveBusiness);
 router.patch('/:id/reject', protect, authorize('admin'), invalidateAfter('business'), rejectBusiness);
 router.patch('/:id/request-info', protect, authorize('admin'), invalidateAfter('business'), requestMoreInfo);
+router.patch('/:id/rescind', protect, authorize('admin'), invalidateAfter('business'), rescindBusiness);
 
 // Get by ID - comes after specific routes
 router.get('/:id', cacheBusiness, getBusinessById);

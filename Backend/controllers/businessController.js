@@ -4,6 +4,7 @@ const {
   sendBusinessApprovedEmail,
   sendBusinessRejectedEmail,
   sendBusinessInfoRequestedEmail,
+  sendBusinessRescindedEmail,
 } = require('../utils/emailService');
 const logger = require('../utils/logger');
 
@@ -722,6 +723,63 @@ const requestMoreInfo = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Rescind business approval (revoke approved status)
+ * @route   PATCH /api/businesses/:id/rescind
+ * @access  Private (admin)
+ */
+const rescindBusiness = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const business = await Business.findById(req.params.id)
+      .populate('owner', 'firstName lastName email');
+
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // Can only rescind if currently approved/active
+    if (business.verification?.status !== 'approved' && business.status !== 'active') {
+      return res.status(400).json({ message: 'Can only rescind approved businesses' });
+    }
+
+    // Move back to pending status for re-review
+    business.status = 'inactive';
+    if (!business.verification) {
+      business.verification = {};
+    }
+    business.verification.status = 'pending';
+    business.verification.rescindReason = reason || 'Approval rescinded for review';
+    business.verification.rescindedAt = new Date();
+    business.verification.rescindedBy = req.user._id;
+
+    await business.save();
+
+    // Send rescind email to business owner
+    if (business.owner && business.owner.email) {
+      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      try {
+        await sendBusinessRescindedEmail(
+          business.owner.email,
+          business.name,
+          ownerName,
+          reason || ''
+        );
+        logger.info({ businessId: business._id, email: business.owner.email }, 'Business rescind email sent');
+      } catch (emailError) {
+        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business rescind email');
+        // Don't fail the rescind if email fails
+      }
+    }
+
+    res.json({ message: 'Business approval rescinded', business });
+  } catch (error) {
+    logger.error({ err: error }, 'Error rescinding business');
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createBusiness,
   getBusinesses,
@@ -737,5 +795,6 @@ module.exports = {
   getPendingBusinesses,
   approveBusiness,
   rejectBusiness,
-  requestMoreInfo
+  requestMoreInfo,
+  rescindBusiness
 };

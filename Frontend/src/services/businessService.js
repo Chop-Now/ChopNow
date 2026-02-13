@@ -134,6 +134,16 @@ const businessService = {
         }
     },
 
+    // Rescind business approval (admin)
+    rescindBusiness: async (id, reason) => {
+        try {
+            const response = await api.patch(`/api/businesses/${id}/rescind`, { reason });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
     // Get business stats
     getBusinessStats: async (id) => {
         try {
