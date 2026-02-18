@@ -31,6 +31,7 @@ const {
   getLoginActivity,
   logoutSession,
   logoutAllDevices,
+  refreshAccessToken,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -38,7 +39,7 @@ const {
   validateRegister,
   validateLogin,
   validateResetPassword,
-  validateForgotPassword
+  validateForgotPassword,
 } = require('../middleware/validation');
 const { checkRegistrationAllowed } = require('../middleware/platformSettings');
 
@@ -118,6 +119,9 @@ router.post('/reset-password', validateResetPassword, resetPassword);
 // OTP login
 router.post('/send-otp', sendOTP);
 router.post('/verify-otp', verifyOTP);
+
+// Token refresh
+router.post('/refresh-token', refreshAccessToken);
 
 // Protected routes (MUST be defined BEFORE parameterized routes like /:id)
 router.get('/profile', protect, getUserProfile);

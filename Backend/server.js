@@ -35,9 +35,13 @@ const app = express();
 
 // --- Environment validation ---
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
-const missingEnv = requiredEnv.filter((key) => !process.env[key] || String(process.env[key]).trim() === '');
+const missingEnv = requiredEnv.filter(
+  (key) => !process.env[key] || String(process.env[key]).trim() === ''
+);
 if (missingEnv.length) {
-  logger.error(`Missing required environment variables: ${missingEnv.join(', ')}. See .env.example.`);
+  logger.error(
+    `Missing required environment variables: ${missingEnv.join(', ')}. See .env.example.`
+  );
   process.exit(1);
 }
 
@@ -50,67 +54,118 @@ if (isProduction) {
   const unsafeSecrets = ['changeme', 'your_jwt_secret', 'your_secure_random', 'example', 'test'];
   const jwt = String(process.env.JWT_SECRET);
   if (jwt.length < 32 || unsafeSecrets.some((s) => jwt.toLowerCase().includes(s))) {
-    logger.error('Production requires a strong JWT_SECRET (at least 32 characters, no placeholders).');
+    logger.error(
+      'Production requires a strong JWT_SECRET (at least 32 characters, no placeholders).'
+    );
     process.exit(1);
   }
 }
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri.startsWith('mongodb')) {
-  logger.error('MONGO_URI must be a valid MongoDB connection string (e.g. mongodb://... or mongodb+srv://...).');
+  logger.error(
+    'MONGO_URI must be a valid MongoDB connection string (e.g. mongodb://... or mongodb+srv://...).'
+  );
   process.exit(1);
 }
 
 // --- Optional integrations validation (warn or fail fast where appropriate) ---
 const cloudinaryKeys = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
-const cloudinaryProvided = cloudinaryKeys.filter((k) => process.env[k] && String(process.env[k]).trim() !== '');
+const cloudinaryProvided = cloudinaryKeys.filter(
+  (k) => process.env[k] && String(process.env[k]).trim() !== ''
+);
 if (cloudinaryProvided.length > 0 && cloudinaryProvided.length < cloudinaryKeys.length) {
-  logger.warn(`Cloudinary is partially configured. Set all of: ${cloudinaryKeys.join(', ')} to enable uploads.`);
+  logger.warn(
+    `Cloudinary is partially configured. Set all of: ${cloudinaryKeys.join(', ')} to enable uploads.`
+  );
   if (isProduction) process.exit(1);
 }
 
-const sendgridKey = process.env.SENDGRID_API_KEY && String(process.env.SENDGRID_API_KEY).trim() !== '';
+const sendgridKey =
+  process.env.SENDGRID_API_KEY && String(process.env.SENDGRID_API_KEY).trim() !== '';
 const fromEmail = process.env.FROM_EMAIL && String(process.env.FROM_EMAIL).trim() !== '';
 const frontendUrl = process.env.FRONTEND_URL && String(process.env.FRONTEND_URL).trim() !== '';
 if (sendgridKey && (!fromEmail || !frontendUrl)) {
-  logger.warn('SendGrid is partially configured. Set SENDGRID_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.');
+  logger.warn(
+    'SendGrid is partially configured. Set SENDGRID_API_KEY, FROM_EMAIL, and FRONTEND_URL to enable email flows.'
+  );
   if (isProduction) process.exit(1);
 }
 if (!sendgridKey) {
-  logger.warn('SENDGRID_API_KEY not set: email verification / password reset / OTP emails will be disabled.');
+  logger.warn(
+    'SENDGRID_API_KEY not set: email verification / password reset / OTP emails will be disabled.'
+  );
 }
 if (frontendUrl && !/^https?:\/\//i.test(String(process.env.FRONTEND_URL))) {
   logger.warn('FRONTEND_URL should include scheme, e.g. https://www.chopnow.app');
 }
 
+// --- CORS Origins ---
+const allowedOriginsEnv =
+  process.env.ALLOWED_ORIGINS ||
+  'http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179,http://localhost:5180,http://localhost:3000';
+const allowedOrigins = allowedOriginsEnv.split(',').map((o) => o.trim());
+
 // --- Security & core middleware ---
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https://res.cloudinary.com',
+          'https://*.tile.openstreetmap.org',
+        ],
+        connectSrc: ["'self'", ...allowedOrigins],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  })
+);
 
 // Request correlation id + structured request logging
 app.use(requestId);
 app.use(metrics.metricsMiddleware()); // Collect request metrics
-app.use(pinoHttp({
-  logger,
-  genReqId: (req) => req.id,
-  customProps: (req) => ({ reqId: req.id }),
-}));
+app.use(
+  pinoHttp({
+    logger,
+    genReqId: (req) => req.id,
+    customProps: (req) => ({ reqId: req.id }),
+  })
+);
 
-const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179,http://localhost:5180,http://localhost:3000';
-const allowedOrigins = allowedOriginsEnv.split(',').map((o) => o.trim());
-
-app.use(cors({
-  origin(origin, callback) {
-    // Allow tools like curl / Postman with no origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin(origin, callback) {
+      // In production, block requests with no origin (except health checks handled before CORS)
+      if (!origin) {
+        if (isProduction) {
+          return callback(new Error('Not allowed by CORS'));
+        }
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
@@ -125,14 +180,42 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50, // Allow more attempts during development
+  max: isProduction ? 10 : 50,
   message: { message: 'Too many login attempts from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many OTP requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { message: 'Too many password reset attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 // Apply general API limiter
 app.use('/api', apiLimiter);
+
+// --- Security well-known ---
+app.get('/.well-known/security.txt', (req, res) => {
+  res
+    .type('text/plain')
+    .send(
+      `Contact: mailto:security@chopnow.app\n` +
+        `Preferred-Languages: en\n` +
+        `Canonical: https://api.chopnow.app/.well-known/security.txt\n` +
+        `Policy: https://chopnow.app/security-policy\n`
+    );
+});
 
 // --- Health checks ---
 app.get('/health', (req, res) => {
@@ -144,7 +227,10 @@ app.get('/ready', (req, res) => {
   if (dbReady) {
     res.json({ status: 'ready', database: 'connected' });
   } else {
-    res.status(503).json({ status: 'not ready', database: mongoose.STATES[mongoose.connection.readyState] || 'disconnected' });
+    res.status(503).json({
+      status: 'not ready',
+      database: mongoose.STATES[mongoose.connection.readyState] || 'disconnected',
+    });
   }
 });
 
@@ -154,24 +240,43 @@ app.get('/', (req, res) => {
     message: 'Welcome to ChopNow API',
     version: '1.0.0',
     endpoints: {
-      users: '/api/users',
-      businesses: '/api/businesses',
-      listings: '/api/listings',
-      orders: '/api/orders',
-      reviews: '/api/reviews',
-      favorites: '/api/favorites',
-      notifications: '/api/notifications',
+      users: '/api/v1/users',
+      businesses: '/api/v1/businesses',
+      listings: '/api/v1/listings',
+      orders: '/api/v1/orders',
+      reviews: '/api/v1/reviews',
+      favorites: '/api/v1/favorites',
+      notifications: '/api/v1/notifications',
     },
   });
 });
 
 // Auth routes with stricter limiter
-app.use('/api/users/login', authLimiter);
-app.use('/api/users/register', authLimiter);
+app.use('/api/v1/users/login', authLimiter);
+app.use('/api/v1/users/register', authLimiter);
+app.use('/api/v1/users/forgot-password', passwordResetLimiter);
+app.use('/api/v1/users/reset-password', passwordResetLimiter);
+app.use('/api/v1/users/send-otp', otpLimiter);
+app.use('/api/v1/users/verify-otp', otpLimiter);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
+// API v1 routes
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/businesses', businessRoutes);
+app.use('/api/v1/listings', listingRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/disputes', disputeRoutes);
+app.use('/api/v1/payouts', payoutRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/settings', settingsRoutes);
+
+// Backward compatibility: redirect /api/* to /api/v1/*
 app.use('/api/users', userRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/listings', listingRoutes);
@@ -215,10 +320,7 @@ app.get('/health/cache', async (req, res) => {
 
 // Combined health check for all services
 app.get('/health/all', async (req, res) => {
-  const [dbHealth, cacheStats] = await Promise.all([
-    healthCheck(),
-    redis.getStats(),
-  ]);
+  const [dbHealth, cacheStats] = await Promise.all([healthCheck(), redis.getStats()]);
 
   const allHealthy = dbHealth.healthy;
   const statusCode = allHealthy ? 200 : 503;
@@ -300,9 +402,17 @@ const startServer = async () => {
     await redis.initRedis();
 
     const port = process.env.PORT || 5000;
-    app.listen(port, () => {
-      logger.info({ port, env: process.env.NODE_ENV || 'development' }, `Server running on port ${port}`);
+    const server = app.listen(port, () => {
+      logger.info(
+        { port, env: process.env.NODE_ENV || 'development' },
+        `Server running on port ${port}`
+      );
     });
+
+    // Request timeout: 30s (prevents hung connections)
+    server.timeout = 30000;
+    server.keepAliveTimeout = 65000; // Slightly higher than ALB/nginx default (60s)
+    server.headersTimeout = 66000;
   } catch (error) {
     logger.error({ err: error }, 'Failed to start server');
     process.exit(1);

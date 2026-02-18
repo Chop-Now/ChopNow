@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Business = require('../models/Business');
+const logger = require('../utils/logger');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
@@ -44,13 +45,14 @@ const createReview = async (req, res) => {
       customer: req.user._id,
       business,
       rating,
-      comment
+      comment,
     });
 
     // Notify business owner of new review with rich metadata
     const businessDoc = await Business.findById(business).populate('owner');
     if (businessDoc && businessDoc.owner) {
-      const customerName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A customer';
+      const customerName =
+        `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A customer';
       await Notification.createNotification({
         user: businessDoc.owner._id,
         title: 'New Review Received',
@@ -66,14 +68,17 @@ const createReview = async (req, res) => {
           reviewText: comment,
           businessName: businessDoc.name,
           actionLabel: 'View & Respond',
-          actionUrl: '/dashboard'
-        }
+          actionUrl: '/dashboard',
+        },
       });
     }
 
     res.status(201).json(review);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -91,14 +96,15 @@ const getBusinessReviews = async (req, res) => {
 
     const query = {
       business: req.params.businessId,
-      status
+      status,
     };
 
     const reviews = await Review.find(query)
       .populate('customer', 'firstName lastName avatar')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Review.countDocuments(query);
 
@@ -106,10 +112,13 @@ const getBusinessReviews = async (req, res) => {
       reviews,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -123,7 +132,8 @@ const getReviewById = async (req, res) => {
     const review = await Review.findById(req.params.id)
       .populate('customer', 'firstName lastName avatar')
       .populate('business', 'name type')
-      .populate('order', 'orderNumber');
+      .populate('order', 'orderNumber')
+      .lean();
 
     if (!review) {
       return res.status(404).json({ message: 'Review not found' });
@@ -131,7 +141,10 @@ const getReviewById = async (req, res) => {
 
     res.json(review);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -160,7 +173,10 @@ const updateReview = async (req, res) => {
 
     res.json(review);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -186,7 +202,10 @@ const deleteReview = async (req, res) => {
 
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -235,14 +254,17 @@ const addBusinessResponse = async (req, res) => {
           reviewRating: review.rating,
           reviewText: comment,
           actionLabel: 'View Response',
-          actionUrl: '/my-orders'
-        }
+          actionUrl: '/my-orders',
+        },
       });
     }
 
     res.json(review);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -256,11 +278,15 @@ const getMyReviews = async (req, res) => {
     const reviews = await Review.find({ customer: req.user._id })
       .populate('business', 'name type media')
       .populate('order', 'orderNumber')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(reviews);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Review error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -271,5 +297,5 @@ module.exports = {
   updateReview,
   deleteReview,
   addBusinessResponse,
-  getMyReviews
+  getMyReviews,
 };

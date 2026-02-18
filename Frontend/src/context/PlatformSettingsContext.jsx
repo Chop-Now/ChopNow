@@ -23,36 +23,42 @@ export const PlatformSettingsProvider = ({ children }) => {
     allowGuestCheckout: false,
     enableReviews: true,
     enableNotifications: true,
-    maintenanceMode: false
+    maintenanceMode: false,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Fetch public settings on mount
   useEffect(() => {
+    let isMounted = true;
     const fetchSettings = async () => {
       try {
         setLoading(true);
         const publicSettings = await settingsService.getPublicSettings();
-        setSettings(prev => ({ ...prev, ...publicSettings }));
+        if (!isMounted) return;
+        setSettings((prev) => ({ ...prev, ...publicSettings }));
         setError(null);
       } catch (err) {
+        if (!isMounted) return;
         console.error('Failed to fetch platform settings:', err);
         setError(err.message);
         // Use defaults if fetch fails
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchSettings();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Refresh settings
   const refreshSettings = async () => {
     try {
       const publicSettings = await settingsService.getPublicSettings();
-      setSettings(prev => ({ ...prev, ...publicSettings }));
+      setSettings((prev) => ({ ...prev, ...publicSettings }));
       return publicSettings;
     } catch (err) {
       console.error('Failed to refresh platform settings:', err);
@@ -63,12 +69,12 @@ export const PlatformSettingsProvider = ({ children }) => {
   // Check if a feature is enabled
   const isFeatureEnabled = (featureName) => {
     const featureMap = {
-      'registration': settings.allowNewRegistrations,
-      'emailVerification': settings.requireEmailVerification,
-      'guestCheckout': settings.allowGuestCheckout,
-      'reviews': settings.enableReviews,
-      'notifications': settings.enableNotifications,
-      'maintenance': settings.maintenanceMode
+      registration: settings.allowNewRegistrations,
+      emailVerification: settings.requireEmailVerification,
+      guestCheckout: settings.allowGuestCheckout,
+      reviews: settings.enableReviews,
+      notifications: settings.enableNotifications,
+      maintenance: settings.maintenanceMode,
     };
     return featureMap[featureName] ?? true;
   };
@@ -82,13 +88,11 @@ export const PlatformSettingsProvider = ({ children }) => {
     error,
     refreshSettings,
     isFeatureEnabled,
-    isMaintenanceMode
+    isMaintenanceMode,
   };
 
   return (
-    <PlatformSettingsContext.Provider value={value}>
-      {children}
-    </PlatformSettingsContext.Provider>
+    <PlatformSettingsContext.Provider value={value}>{children}</PlatformSettingsContext.Provider>
   );
 };
 

@@ -6,7 +6,10 @@ const logger = require('../utils/logger');
 const errorHandler = (err, req, res, next) => {
   // Prefer structured logging; fall back to console if logger unavailable
   try {
-    logger.error({ err, reqId: req?.id, path: req?.originalUrl, method: req?.method }, 'Unhandled error');
+    logger.error(
+      { err, reqId: req?.id, path: req?.originalUrl, method: req?.method },
+      'Unhandled error'
+    );
   } catch {
     // eslint-disable-next-line no-console
     console.error(err.stack);
@@ -14,10 +17,10 @@ const errorHandler = (err, req, res, next) => {
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
-    const errors = Object.values(err.errors).map(e => e.message);
+    const errors = Object.values(err.errors).map((e) => e.message);
     return res.status(400).json({
       message: 'Validation Error',
-      errors: errors
+      errors: errors,
     });
   }
 
@@ -25,35 +28,52 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern)[0];
     return res.status(400).json({
-      message: `${field} already exists`
+      message: `${field} already exists`,
     });
   }
 
   // Mongoose cast error (invalid ObjectId)
   if (err.name === 'CastError') {
     return res.status(400).json({
-      message: 'Invalid ID format'
+      message: 'Invalid ID format',
     });
   }
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
-      message: 'Invalid token'
+      message: 'Invalid token',
     });
   }
 
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({
-      message: 'Token expired'
+      message: 'Token expired',
     });
   }
 
-  // Default error
-  res.status(err.statusCode || 500).json({
-    message: err.message || 'Server Error',
+  // Multer file upload errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      message: 'File too large',
+    });
+  }
+
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      message: 'Unexpected file field',
+    });
+  }
+
+  const statusCode = err.statusCode || 500;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Default error - sanitize message in production for 500 errors
+  res.status(statusCode).json({
+    message:
+      isProduction && statusCode === 500 ? 'Internal server error' : err.message || 'Server Error',
     requestId: req.id,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(!isProduction && { stack: err.stack }),
   });
 };
 
@@ -62,7 +82,7 @@ const errorHandler = (err, req, res, next) => {
  */
 const notFound = (req, res, next) => {
   res.status(404).json({
-    message: `Route ${req.originalUrl} not found`
+    message: `Route ${req.originalUrl} not found`,
   });
 };
 

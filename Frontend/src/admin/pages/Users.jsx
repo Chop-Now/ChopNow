@@ -1,65 +1,157 @@
-import React, { useState, useEffect } from 'react'
-import { Search, Users, Store, Pen, Ban, CheckCircle, Clock, AlertCircle, X, Calendar, MapPin, Leaf, FileText, Bike, Trash2, Archive, MoreVertical, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react'
-import { userService } from '../../services'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react';
+import {
+  Search,
+  Users,
+  Store,
+  Pen,
+  Ban,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  X,
+  Calendar,
+  MapPin,
+  Leaf,
+  FileText,
+  Bike,
+  Trash2,
+  Archive,
+  MoreVertical,
+  ArrowUpRight,
+  ArrowDownRight,
+  Loader2,
+} from 'lucide-react';
+import { userService } from '../../services';
+import toast from 'react-hot-toast';
 
 export const AllUsers = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterRole, setFilterRole] = useState('all')
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [adminNote, setAdminNote] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [showActionMenu, setShowActionMenu] = useState(null)
-  const [selectedUsers, setSelectedUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [usersData, setUsersData] = useState([])
-  const [totalPages, setTotalPages] = useState(1)
-  const [stats, setStats] = useState({ total: 0, activeVendors: 0, pendingVendors: 0, activeRiders: 0 })
-  const [editingRoles, setEditingRoles] = useState(false)
-  const [userRoles, setUserRoles] = useState([])
-  const [savingRoles, setSavingRoles] = useState(false)
-  const itemsPerPage = 10
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [adminNote, setAdminNote] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showActionMenu, setShowActionMenu] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [usersData, setUsersData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({
+    total: 0,
+    activeVendors: 0,
+    pendingVendors: 0,
+    activeRiders: 0,
+  });
+  const [editingRoles, setEditingRoles] = useState(false);
+  const [userRoles, setUserRoles] = useState([]);
+  const [savingRoles, setSavingRoles] = useState(false);
+  const itemsPerPage = 10;
 
   // Reset to page 1 when filter changes
   useEffect(() => {
-    setCurrentPage(1)
-  }, [filterRole])
+    setCurrentPage(1);
+  }, [filterRole]);
 
   // Fetch users from API
   useEffect(() => {
-    fetchUsers()
-  }, [currentPage, filterRole])
+    let isMounted = true;
+    const loadUsers = async () => {
+      setLoading(true);
+      try {
+        const filters = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+        if (filterRole !== 'all') {
+          const roleMap = {
+            customer: 'consumer',
+            vendor: 'business_owner',
+            rider: 'rider',
+            admin: 'admin',
+          };
+          filters.role = roleMap[filterRole] || filterRole;
+        }
+
+        const response = await userService.getUsers(filters);
+        if (!isMounted) return;
+
+        const transformedUsers = (response.users || []).map((user) => {
+          const primaryRole = user.activeRole || (user.roles && user.roles[0]) || 'consumer';
+          return {
+            id: user._id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+            email: user.email,
+            role: mapRole(primaryRole),
+            roles: user.roles || [primaryRole],
+            activeRole: user.activeRole || primaryRole,
+            status: user.status || 'active',
+            avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+            joinedDate: user.createdAt?.split('T')[0] || 'N/A',
+            location: user.addresses?.[0]?.city || 'N/A',
+            impact: {
+              meals: user.stats?.ordersCount || 0,
+              co2Saved: (user.stats?.ordersCount || 0) * 1.5,
+              waterSaved: (user.stats?.ordersCount || 0) * 3,
+            },
+            recentActivity: [],
+          };
+        });
+
+        setUsersData(transformedUsers);
+        setTotalPages(response.totalPages || 1);
+
+        setStats({
+          total: response.total || transformedUsers.length,
+          activeVendors: transformedUsers.filter(
+            (u) => u.role === 'vendor' && u.status === 'active'
+          ).length,
+          pendingVendors: transformedUsers.filter(
+            (u) => u.role === 'vendor' && u.status === 'pending'
+          ).length,
+          activeRiders: transformedUsers.filter((u) => u.role === 'rider' && u.status === 'active')
+            .length,
+        });
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Error fetching users:', error);
+        toast.error('Failed to fetch users');
+        setUsersData([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    loadUsers();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, filterRole]);
 
   const fetchUsers = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const filters = {
         page: currentPage,
-        limit: itemsPerPage
-      }
+        limit: itemsPerPage,
+      };
       if (filterRole !== 'all') {
-        // Map frontend role names to backend
         const roleMap = {
-          'customer': 'consumer',
-          'vendor': 'business_owner',
-          'rider': 'rider',
-          'admin': 'admin'
-        }
-        filters.role = roleMap[filterRole] || filterRole
+          customer: 'consumer',
+          vendor: 'business_owner',
+          rider: 'rider',
+          admin: 'admin',
+        };
+        filters.role = roleMap[filterRole] || filterRole;
       }
 
-      const response = await userService.getUsers(filters)
+      const response = await userService.getUsers(filters);
 
-      // Transform users to match UI format
-      const transformedUsers = (response.users || []).map(user => {
-        // Get primary role - use activeRole, first role in roles array, or fallback to 'consumer'
+      const transformedUsers = (response.users || []).map((user) => {
         const primaryRole = user.activeRole || (user.roles && user.roles[0]) || 'consumer';
         return {
           id: user._id,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
           email: user.email,
           role: mapRole(primaryRole),
-          roles: user.roles || [primaryRole], // Include full roles array
+          roles: user.roles || [primaryRole],
           activeRole: user.activeRole || primaryRole,
           status: user.status || 'active',
           avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
@@ -68,221 +160,234 @@ export const AllUsers = () => {
           impact: {
             meals: user.stats?.ordersCount || 0,
             co2Saved: (user.stats?.ordersCount || 0) * 1.5,
-            waterSaved: (user.stats?.ordersCount || 0) * 3
+            waterSaved: (user.stats?.ordersCount || 0) * 3,
           },
-          recentActivity: []
+          recentActivity: [],
         };
-      })
+      });
 
-      setUsersData(transformedUsers)
-      setTotalPages(response.totalPages || 1)
+      setUsersData(transformedUsers);
+      setTotalPages(response.totalPages || 1);
 
-      // Calculate stats from all users (need separate call or estimate)
       setStats({
         total: response.total || transformedUsers.length,
-        activeVendors: transformedUsers.filter(u => u.role === 'vendor' && u.status === 'active').length,
-        pendingVendors: transformedUsers.filter(u => u.role === 'vendor' && u.status === 'pending').length,
-        activeRiders: transformedUsers.filter(u => u.role === 'rider' && u.status === 'active').length
-      })
+        activeVendors: transformedUsers.filter((u) => u.role === 'vendor' && u.status === 'active')
+          .length,
+        pendingVendors: transformedUsers.filter(
+          (u) => u.role === 'vendor' && u.status === 'pending'
+        ).length,
+        activeRiders: transformedUsers.filter((u) => u.role === 'rider' && u.status === 'active')
+          .length,
+      });
     } catch (error) {
-      console.error('Error fetching users:', error)
-      toast.error('Failed to fetch users')
-      setUsersData([])
+      console.error('Error fetching users:', error);
+      toast.error('Failed to fetch users');
+      setUsersData([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const mapRole = (role) => {
     const roleMap = {
-      'consumer': 'customer',
-      'business_owner': 'vendor',
-      'rider': 'rider',
-      'admin': 'admin'
-    }
-    return roleMap[role] || role
-  }
+      consumer: 'customer',
+      business_owner: 'vendor',
+      rider: 'rider',
+      admin: 'admin',
+    };
+    return roleMap[role] || role;
+  };
 
   // Calculate stats
-  const totalUsers = stats.total
-  const activeVendors = stats.activeVendors
-  const pendingVendors = stats.pendingVendors
-  const activeRiders = stats.activeRiders
-  const weeklyChange = 0 // Would need analytics API for this
+  const totalUsers = stats.total;
+  const activeVendors = stats.activeVendors;
+  const pendingVendors = stats.pendingVendors;
+  const activeRiders = stats.activeRiders;
+  const weeklyChange = 0; // Would need analytics API for this
 
   // Filter users - only do local search filtering since backend handles role filtering
-  const filteredUsers = usersData.filter(user => {
-    if (!searchQuery) return true
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesSearch
-  })
+  const filteredUsers = usersData.filter((user) => {
+    if (!searchQuery) return true;
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   // Since backend handles pagination and role filtering, use fetched data directly
   // Only do local filtering for search
-  const currentUsers = filteredUsers
-  const displayTotalPages = totalPages
+  const currentUsers = filteredUsers;
+  const displayTotalPages = totalPages;
 
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-700'
-      case 'pending': return 'bg-yellow-100 text-yellow-700'
-      case 'suspended': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-700';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'suspended':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
-  }
+  };
 
   const getRoleBadgeColor = (role) => {
-    switch(role) {
-      case 'customer': return 'bg-blue-100 text-blue-700'
-      case 'vendor': return 'bg-purple-100 text-purple-700'
-      case 'rider': return 'bg-orange-100 text-orange-700'
-      case 'admin': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
+    switch (role) {
+      case 'customer':
+        return 'bg-blue-100 text-blue-700';
+      case 'vendor':
+        return 'bg-purple-100 text-purple-700';
+      case 'rider':
+        return 'bg-orange-100 text-orange-700';
+      case 'admin':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
-  }
+  };
 
   const handleApproveUser = async (userId) => {
     try {
-      await userService.activateUser(userId)
-      toast.success('User activated successfully')
-      fetchUsers()
+      await userService.activateUser(userId);
+      toast.success('User activated successfully');
+      fetchUsers();
     } catch (error) {
-      console.error('Error activating user:', error)
-      toast.error('Failed to activate user')
+      console.error('Error activating user:', error);
+      toast.error('Failed to activate user');
     }
-  }
+  };
 
   const handleSuspendUser = async (userId) => {
     if (window.confirm('Are you sure you want to suspend this account?')) {
       try {
-        await userService.suspendUser(userId)
-        toast.success('User suspended successfully')
-        fetchUsers()
+        await userService.suspendUser(userId);
+        toast.success('User suspended successfully');
+        fetchUsers();
       } catch (error) {
-        console.error('Error suspending user:', error)
-        toast.error('Failed to suspend user')
+        console.error('Error suspending user:', error);
+        toast.error('Failed to suspend user');
       }
     }
-  }
+  };
 
   const handleSaveNote = () => {
-    console.log('Saving admin note:', adminNote)
-    toast.success('Admin note saved!')
-  }
+    console.log('Saving admin note:', adminNote);
+    toast.success('Admin note saved!');
+  };
 
   // Role editing handlers
   const handleEditRoles = (user) => {
-    setUserRoles(user.roles || [])
-    setEditingRoles(true)
-  }
+    setUserRoles(user.roles || []);
+    setEditingRoles(true);
+  };
 
   const handleToggleRole = (role) => {
-    setUserRoles(prev => {
+    setUserRoles((prev) => {
       if (prev.includes(role)) {
         // Don't allow removing the last role
         if (prev.length <= 1) {
-          toast.error('User must have at least one role')
-          return prev
+          toast.error('User must have at least one role');
+          return prev;
         }
-        return prev.filter(r => r !== role)
+        return prev.filter((r) => r !== role);
       } else {
-        return [...prev, role]
+        return [...prev, role];
       }
-    })
-  }
+    });
+  };
 
   const handleSaveRoles = async () => {
-    if (!selectedUser || userRoles.length === 0) return
+    if (!selectedUser || userRoles.length === 0) return;
 
-    setSavingRoles(true)
+    setSavingRoles(true);
     try {
-      await userService.updateUser(selectedUser.id, { roles: userRoles })
-      toast.success('User roles updated successfully!')
-      setEditingRoles(false)
-      fetchUsers()
+      await userService.updateUser(selectedUser.id, { roles: userRoles });
+      toast.success('User roles updated successfully!');
+      setEditingRoles(false);
+      fetchUsers();
       // Update selected user with new roles
-      setSelectedUser(prev => ({
+      setSelectedUser((prev) => ({
         ...prev,
         roles: userRoles,
-        role: mapRole(userRoles[0])
-      }))
+        role: mapRole(userRoles[0]),
+      }));
     } catch (error) {
-      console.error('Error updating user roles:', error)
-      toast.error(error.message || 'Failed to update user roles')
+      console.error('Error updating user roles:', error);
+      toast.error(error.message || 'Failed to update user roles');
     } finally {
-      setSavingRoles(false)
+      setSavingRoles(false);
     }
-  }
+  };
 
   const handleCancelEditRoles = () => {
-    setEditingRoles(false)
-    setUserRoles([])
-  }
+    setEditingRoles(false);
+    setUserRoles([]);
+  };
 
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await userService.deleteUser(userId)
-        toast.success('User deleted successfully')
-        fetchUsers()
+        await userService.deleteUser(userId);
+        toast.success('User deleted successfully');
+        fetchUsers();
       } catch (error) {
-        console.error('Error deleting user:', error)
-        toast.error('Failed to delete user')
+        console.error('Error deleting user:', error);
+        toast.error('Failed to delete user');
       }
     }
-    setShowActionMenu(null)
-  }
+    setShowActionMenu(null);
+  };
 
   const handleArchiveUser = async (userId) => {
     // Archive is same as suspend for now
     try {
-      await userService.suspendUser(userId)
-      toast.success('User archived successfully')
-      fetchUsers()
+      await userService.suspendUser(userId);
+      toast.success('User archived successfully');
+      fetchUsers();
     } catch (error) {
-      console.error('Error archiving user:', error)
-      toast.error('Failed to archive user')
+      console.error('Error archiving user:', error);
+      toast.error('Failed to archive user');
     }
-    setShowActionMenu(null)
-  }
+    setShowActionMenu(null);
+  };
 
   const handleSelectUser = (userId) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    )
-  }
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
 
   const handleSelectAll = () => {
     if (selectedUsers.length === currentUsers.length) {
-      setSelectedUsers([])
+      setSelectedUsers([]);
     } else {
-      setSelectedUsers(currentUsers.map(user => user.id))
+      setSelectedUsers(currentUsers.map((user) => user.id));
     }
-  }
+  };
 
   const handleBulkArchive = () => {
-    console.log('Archiving users:', selectedUsers)
-    alert(`Archived ${selectedUsers.length} users!`)
-    setSelectedUsers([])
-  }
+    console.log('Archiving users:', selectedUsers);
+    alert(`Archived ${selectedUsers.length} users!`);
+    setSelectedUsers([]);
+  };
 
   const handleBulkDelete = () => {
     if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
-      console.log('Deleting users:', selectedUsers)
-      alert(`Deleted ${selectedUsers.length} users!`)
-      setSelectedUsers([])
+      console.log('Deleting users:', selectedUsers);
+      alert(`Deleted ${selectedUsers.length} users!`);
+      setSelectedUsers([]);
     }
-  }
+  };
 
   return (
     <div className="p-4 min-h-screen">
       {/* Page Title */}
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-        <p className="text-xs text-gray-600 mt-1">Manage customer, vendor, or rider accounts, track status, and view profiles</p>
+        <p className="text-xs text-gray-600 mt-1">
+          Manage customer, vendor, or rider accounts, track status, and view profiles
+        </p>
       </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -295,12 +400,16 @@ export const AllUsers = () => {
                 {weeklyChange >= 0 ? (
                   <>
                     <ArrowUpRight className="w-3 h-3 text-green-600 dark:text-green-400" />
-                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">+{weeklyChange} this week</span>
+                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                      +{weeklyChange} this week
+                    </span>
                   </>
                 ) : (
                   <>
                     <ArrowDownRight className="w-3 h-3 text-red-600 dark:text-red-400" />
-                    <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">{weeklyChange} this week</span>
+                    <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                      {weeklyChange} this week
+                    </span>
                   </>
                 )}
               </div>
@@ -314,10 +423,16 @@ export const AllUsers = () => {
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-4 border border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Active Vendors</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{activeVendors}</p>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Active Vendors
+              </p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                {activeVendors}
+              </p>
               {pendingVendors > 0 && (
-                <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium mt-1">{pendingVendors} pending approvals</p>
+                <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium mt-1">
+                  {pendingVendors} pending approvals
+                </p>
               )}
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-full">
@@ -329,9 +444,15 @@ export const AllUsers = () => {
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-4 border border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Active Riders</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{activeRiders}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Available for delivery</p>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Active Riders
+              </p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                {activeRiders}
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                Available for delivery
+              </p>
             </div>
             <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-full">
               <Bike className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -344,7 +465,9 @@ export const AllUsers = () => {
       {selectedUsers.length > 0 && (
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-3 mb-4 border border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected</p>
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={handleBulkArchive}
@@ -445,7 +568,9 @@ export const AllUsers = () => {
                 <th className="px-4 py-2 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedUsers.length === currentUsers.length && currentUsers.length > 0}
+                    checked={
+                      selectedUsers.length === currentUsers.length && currentUsers.length > 0
+                    }
                     onChange={handleSelectAll}
                     className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                   />
@@ -466,7 +591,10 @@ export const AllUsers = () => {
             </thead>
             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
               {currentUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr
+                  key={user.id}
+                  className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                >
                   <td className="px-4 py-3 whitespace-nowrap">
                     <input
                       type="checkbox"
@@ -483,18 +611,26 @@ export const AllUsers = () => {
                         className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700"
                       />
                       <div className="ml-3">
-                        <div className="text-xs font-medium text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">{user.email}</div>
+                        <div className="text-xs font-medium text-slate-900 dark:text-white">
+                          {user.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
+                    <span
+                      className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}
+                    >
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-0.5 inline-flex items-center gap-1 text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                    <span
+                      className={`px-2 py-0.5 inline-flex items-center gap-1 text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                       {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                     </span>
@@ -509,7 +645,9 @@ export const AllUsers = () => {
                       </button>
                       <div className="relative">
                         <button
-                          onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
+                          onClick={() =>
+                            setShowActionMenu(showActionMenu === user.id ? null : user.id)
+                          }
                           className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                         >
                           <MoreVertical className="w-4 h-4" />
@@ -540,15 +678,16 @@ export const AllUsers = () => {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
           <div className="text-xs text-gray-600">
-            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, stats.total)} of {stats.total} results
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+            {Math.min(currentPage * itemsPerPage, stats.total)} of {stats.total} results
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -558,7 +697,7 @@ export const AllUsers = () => {
               Page {currentPage} of {displayTotalPages || 1}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(displayTotalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev) => Math.min(displayTotalPages, prev + 1))}
               disabled={currentPage === displayTotalPages || displayTotalPages === 0}
               className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -571,8 +710,14 @@ export const AllUsers = () => {
       {/* Right Sidebar */}
       {selectedUser && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-9999" onClick={() => setSelectedUser(null)}></div>
-          <div className="fixed top-0 right-0 h-full w-full md:w-[380px] bg-white dark:bg-slate-900 shadow-2xl z-10000 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 bg-black/30 z-9999"
+            onClick={() => setSelectedUser(null)}
+          ></div>
+          <div
+            className="fixed top-0 right-0 h-full w-full md:w-[380px] bg-white dark:bg-slate-900 shadow-2xl z-10000 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4">
               {/* Header with Close Button */}
               <div className="flex justify-between items-center mb-3">
@@ -592,8 +737,12 @@ export const AllUsers = () => {
                   alt={selectedUser.name}
                   className="w-16 h-16 rounded-full border-2 border-slate-200 dark:border-slate-700 mb-2"
                 />
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{selectedUser.name}</h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">{selectedUser.email}</p>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {selectedUser.name}
+                </h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {selectedUser.email}
+                </p>
               </div>
 
               {/* User ID - removed gray background */}
@@ -601,13 +750,17 @@ export const AllUsers = () => {
                 <p className="text-[10px] text-slate-600 dark:text-slate-400">
                   {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)} ID
                 </p>
-                <p className="text-xs font-mono font-semibold text-slate-900 dark:text-white">{selectedUser.id}</p>
+                <p className="text-xs font-mono font-semibold text-slate-900 dark:text-white">
+                  {selectedUser.id}
+                </p>
               </div>
 
               {/* Role Management Section */}
               <div className="mb-3 p-2 border border-slate-200 dark:border-slate-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">User Roles</p>
+                  <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                    User Roles
+                  </p>
                   {!editingRoles ? (
                     <button
                       onClick={() => handleEditRoles(selectedUser)}
@@ -636,17 +789,22 @@ export const AllUsers = () => {
 
                 {!editingRoles ? (
                   <div className="flex flex-wrap gap-1">
-                    {(selectedUser.roles || [selectedUser.role]).map(role => (
+                    {(selectedUser.roles || [selectedUser.role]).map((role) => (
                       <span
                         key={role}
                         className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                          role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                          role === 'business_owner' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                          role === 'rider' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          role === 'admin'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : role === 'business_owner'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                              : role === 'rider'
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                         }`}
                       >
-                        {role === 'business_owner' ? 'Vendor' : role.charAt(0).toUpperCase() + role.slice(1)}
+                        {role === 'business_owner'
+                          ? 'Vendor'
+                          : role.charAt(0).toUpperCase() + role.slice(1)}
                       </span>
                     ))}
                   </div>
@@ -656,7 +814,7 @@ export const AllUsers = () => {
                       { key: 'consumer', label: 'Customer', color: 'blue' },
                       { key: 'business_owner', label: 'Vendor', color: 'purple' },
                       { key: 'rider', label: 'Rider', color: 'orange' },
-                      { key: 'admin', label: 'Admin', color: 'red' }
+                      { key: 'admin', label: 'Admin', color: 'red' },
                     ].map(({ key, label, color }) => (
                       <label
                         key={key}
@@ -672,11 +830,13 @@ export const AllUsers = () => {
                           onChange={() => handleToggleRole(key)}
                           className={`w-3.5 h-3.5 rounded border-slate-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
                         />
-                        <span className={`text-[10px] font-medium ${
-                          userRoles.includes(key)
-                            ? `text-${color}-700 dark:text-${color}-400`
-                            : 'text-slate-600 dark:text-slate-400'
-                        }`}>
+                        <span
+                          className={`text-[10px] font-medium ${
+                            userRoles.includes(key)
+                              ? `text-${color}-700 dark:text-${color}-400`
+                              : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
                           {label}
                         </span>
                         {key === 'admin' && (
@@ -715,7 +875,7 @@ export const AllUsers = () => {
                         {new Date(selectedUser.joinedDate).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
-                          day: 'numeric'
+                          day: 'numeric',
                         })}
                       </p>
                     </div>
@@ -724,7 +884,9 @@ export const AllUsers = () => {
                     <MapPin className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                     <div>
                       <p className="text-[9px] text-slate-600 dark:text-slate-400">Location</p>
-                      <p className="text-[10px] font-semibold text-slate-900 dark:text-white">{selectedUser.location}</p>
+                      <p className="text-[10px] font-semibold text-slate-900 dark:text-white">
+                        {selectedUser.location}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -739,17 +901,29 @@ export const AllUsers = () => {
                   </h4>
                   <div className="grid grid-cols-2 gap-1.5">
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Meals Saved</p>
-                      <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.meals}</p>
+                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                        Meals Saved
+                      </p>
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">
+                        {selectedUser.impact.meals}
+                      </p>
                     </div>
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">CO₂ Saved (kg)</p>
-                      <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.co2Saved}</p>
+                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                        CO₂ Saved (kg)
+                      </p>
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">
+                        {selectedUser.impact.co2Saved}
+                      </p>
                     </div>
                     {selectedUser.impact.waterSaved !== undefined && (
                       <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">Water Saved (L)</p>
-                        <p className="text-base font-bold text-green-700 dark:text-green-400">{selectedUser.impact.waterSaved}</p>
+                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                          Water Saved (L)
+                        </p>
+                        <p className="text-base font-bold text-green-700 dark:text-green-400">
+                          {selectedUser.impact.waterSaved}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -758,17 +932,24 @@ export const AllUsers = () => {
 
               {/* Recent Activity */}
               <div className="mb-3">
-                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5">Recent Activity</h4>
+                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5">
+                  Recent Activity
+                </h4>
                 <div className="space-y-1.5">
                   {selectedUser.recentActivity.slice(0, 3).map((activity, index) => (
-                    <div key={index} className="flex items-start gap-1.5 p-1.5 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-start gap-1.5 p-1.5 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    >
                       <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full mt-1"></div>
                       <div className="flex-1">
-                        <p className="text-[10px] font-medium text-slate-900 dark:text-white">{activity.action}</p>
+                        <p className="text-[10px] font-medium text-slate-900 dark:text-white">
+                          {activity.action}
+                        </p>
                         <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
                           {new Date(activity.date).toLocaleDateString('en-US', {
                             month: 'short',
-                            day: 'numeric'
+                            day: 'numeric',
                           })}
                         </p>
                       </div>
@@ -803,7 +984,9 @@ export const AllUsers = () => {
 
               {/* Danger Zone */}
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
-                <h4 className="text-xs font-semibold text-red-900 dark:text-red-400 mb-1.5">Danger Zone</h4>
+                <h4 className="text-xs font-semibold text-red-900 dark:text-red-400 mb-1.5">
+                  Danger Zone
+                </h4>
                 <p className="text-[10px] text-red-700 dark:text-red-400 mb-2">
                   {selectedUser.status === 'suspended'
                     ? 'This account is currently suspended.'
@@ -827,8 +1010,8 @@ export const AllUsers = () => {
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
 export const RolesPermissions = () => {
   const roles = [
@@ -844,8 +1027,8 @@ export const RolesPermissions = () => {
         'Manage settings',
         'Approve/suspend accounts',
         'Handle disputes',
-        'Manage payouts'
-      ]
+        'Manage payouts',
+      ],
     },
     {
       name: 'Vendor Manager',
@@ -856,8 +1039,8 @@ export const RolesPermissions = () => {
         'Approve vendors',
         'Manage listings',
         'View vendor analytics',
-        'Handle vendor disputes'
-      ]
+        'Handle vendor disputes',
+      ],
     },
     {
       name: 'Customer Support',
@@ -868,8 +1051,8 @@ export const RolesPermissions = () => {
         'View orders',
         'Handle customer complaints',
         'View disputes',
-        'Add admin notes'
-      ]
+        'Add admin notes',
+      ],
     },
     {
       name: 'Finance Manager',
@@ -879,17 +1062,19 @@ export const RolesPermissions = () => {
         'View financial reports',
         'Manage payouts',
         'View transaction history',
-        'Generate financial reports'
-      ]
-    }
-  ]
+        'Generate financial reports',
+      ],
+    },
+  ];
 
   return (
     <div className="p-4 min-h-screen">
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Roles & Permissions</h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Manage admin roles and their access levels</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Manage admin roles and their access levels
+          </p>
         </div>
         <button className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold py-2 px-4 text-sm rounded-lg transition-colors cursor-pointer">
           + Create New Role
@@ -898,11 +1083,18 @@ export const RolesPermissions = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {roles.map((role, index) => (
-          <div key={index} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50 p-4 flex flex-col h-[400px]">
+          <div
+            key={index}
+            className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50 p-4 flex flex-col h-[400px]"
+          >
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">{role.name}</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{role.description}</p>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {role.name}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  {role.description}
+                </p>
               </div>
               <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-semibold px-2 py-1 rounded-full">
                 {role.userCount} {role.userCount === 1 ? 'user' : 'users'}
@@ -910,10 +1102,15 @@ export const RolesPermissions = () => {
             </div>
 
             <div className="border-t border-slate-200 dark:border-slate-700 pt-3 flex-1 overflow-y-auto">
-              <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Permissions</h4>
+              <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Permissions
+              </h4>
               <ul className="space-y-1.5">
                 {role.permissions.map((permission, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  <li
+                    key={idx}
+                    className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
+                  >
                     <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
                     {permission}
                   </li>
@@ -933,89 +1130,105 @@ export const RolesPermissions = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const UserActivity = () => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('7days')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [activityData, setActivityData] = useState([])
-  const [totalActivities, setTotalActivities] = useState(0)
-  const itemsPerPage = 10
+  const [selectedTimeRange, setSelectedTimeRange] = useState('7days');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [activityData, setActivityData] = useState([]);
+  const [totalActivities, setTotalActivities] = useState(0);
+  const itemsPerPage = 10;
 
   // Fetch activity data from backend
   useEffect(() => {
-    fetchActivityData()
-  }, [selectedTimeRange, currentPage])
+    fetchActivityData();
+  }, [selectedTimeRange, currentPage]);
 
   const fetchActivityData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const { analyticsService } = await import('../../services')
+      const { analyticsService } = await import('../../services');
       const response = await analyticsService.getUserActivity({
         timeRange: selectedTimeRange,
         page: currentPage,
-        limit: itemsPerPage
-      })
-      setActivityData(response.activities || [])
-      setTotalActivities(response.total || 0)
+        limit: itemsPerPage,
+      });
+      setActivityData(response.activities || []);
+      setTotalActivities(response.total || 0);
     } catch (error) {
-      console.error('Error fetching activity data:', error)
-      setActivityData([])
+      console.error('Error fetching activity data:', error);
+      setActivityData([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getActivityIcon = (type) => {
-    switch(type) {
-      case 'order': return <FileText className="w-4 h-4 text-blue-600" />
-      case 'delivery': return <CheckCircle className="w-4 h-4 text-green-600" />
-      case 'update': return <Pen className="w-4 h-4 text-purple-600" />
-      case 'registration': return <Users className="w-4 h-4 text-orange-600" />
-      case 'verification': return <Clock className="w-4 h-4 text-yellow-600" />
-      case 'dispute': return <AlertCircle className="w-4 h-4 text-red-600" />
-      default: return <FileText className="w-4 h-4 text-gray-600" />
+    switch (type) {
+      case 'order':
+        return <FileText className="w-4 h-4 text-blue-600" />;
+      case 'delivery':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'update':
+        return <Pen className="w-4 h-4 text-purple-600" />;
+      case 'registration':
+        return <Users className="w-4 h-4 text-orange-600" />;
+      case 'verification':
+        return <Clock className="w-4 h-4 text-yellow-600" />;
+      case 'dispute':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
+      default:
+        return <FileText className="w-4 h-4 text-gray-600" />;
     }
-  }
+  };
 
   const getActivityBgColor = (type) => {
-    switch(type) {
-      case 'order': return 'bg-blue-50 dark:bg-blue-900/20'
-      case 'delivery': return 'bg-green-50 dark:bg-green-900/20'
-      case 'update': return 'bg-purple-50 dark:bg-purple-900/20'
-      case 'registration': return 'bg-orange-50 dark:bg-orange-900/20'
-      case 'verification': return 'bg-yellow-50 dark:bg-yellow-900/20'
-      case 'dispute': return 'bg-red-50 dark:bg-red-900/20'
-      default: return 'bg-slate-50 dark:bg-slate-800'
+    switch (type) {
+      case 'order':
+        return 'bg-blue-50 dark:bg-blue-900/20';
+      case 'delivery':
+        return 'bg-green-50 dark:bg-green-900/20';
+      case 'update':
+        return 'bg-purple-50 dark:bg-purple-900/20';
+      case 'registration':
+        return 'bg-orange-50 dark:bg-orange-900/20';
+      case 'verification':
+        return 'bg-yellow-50 dark:bg-yellow-900/20';
+      case 'dispute':
+        return 'bg-red-50 dark:bg-red-900/20';
+      default:
+        return 'bg-slate-50 dark:bg-slate-800';
     }
-  }
+  };
 
   const formatTimeAgo = (timestamp) => {
-    const now = new Date()
-    const time = new Date(timestamp)
-    const diffMs = now - time
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
 
-    if (diffMins < 60) return `${diffMins} minutes ago`
-    if (diffHours < 24) return `${diffHours} hours ago`
-    return time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    return time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   // Use activity data directly (already sorted and paginated by backend)
-  const totalPages = Math.ceil(totalActivities / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = Math.min(startIndex + itemsPerPage, totalActivities)
-  const currentActivities = activityData
+  const totalPages = Math.ceil(totalActivities / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalActivities);
+  const currentActivities = activityData;
 
   return (
     <div className="p-4 min-h-screen">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Activity</h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Monitor all user actions across the platform</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Monitor all user actions across the platform
+          </p>
         </div>
 
         <div className="flex gap-2">
@@ -1063,48 +1276,65 @@ export const UserActivity = () => {
             <p>No activity found for the selected time range</p>
           </div>
         ) : (
-        <div className="divide-y divide-slate-200 dark:divide-slate-700">
-          {currentActivities.map((activity) => (
-            <div key={activity.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-              <div className="flex items-start gap-3">
-                {/* Activity Icon */}
-                <div className={`p-2 rounded-full ${getActivityBgColor(activity.type)}`}>
-                  {getActivityIcon(activity.type)}
-                </div>
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+            {currentActivities.map((activity) => (
+              <div
+                key={activity.id}
+                className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  {/* Activity Icon */}
+                  <div className={`p-2 rounded-full ${getActivityBgColor(activity.type)}`}>
+                    {getActivityIcon(activity.type)}
+                  </div>
 
-                {/* Activity Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <img
-                          src={activity.user.avatar}
-                          alt={activity.user.name}
-                          className="w-6 h-6 rounded-full border-2 border-slate-200 dark:border-slate-700"
-                        />
-                        <div>
-                          <p className="text-xs font-semibold text-slate-900 dark:text-white">{activity.user.name}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">{activity.user.email}</p>
+                  {/* Activity Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <img
+                            src={activity.user.avatar}
+                            alt={activity.user.name}
+                            className="w-6 h-6 rounded-full border-2 border-slate-200 dark:border-slate-700"
+                          />
+                          <div>
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                              {activity.user.name}
+                            </p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {activity.user.email}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                              activity.user.role === 'customer'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                : activity.user.role === 'vendor'
+                                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                                  : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                            }`}
+                          >
+                            {activity.user.role}
+                          </span>
                         </div>
-                        <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                          activity.user.role === 'customer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
-                          activity.user.role === 'vendor' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' :
-                          'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
-                        }`}>
-                          {activity.user.role}
-                        </span>
+                        <p className="text-xs font-medium text-slate-900 dark:text-white mt-1">
+                          {activity.action}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                          {activity.details}
+                        </p>
                       </div>
-                      <p className="text-xs font-medium text-slate-900 dark:text-white mt-1">{activity.action}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{activity.details}</p>
-                    </div>
 
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatTimeAgo(activity.timestamp)}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {formatTimeAgo(activity.timestamp)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
 
         {/* Pagination */}
@@ -1114,7 +1344,7 @@ export const UserActivity = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -1124,7 +1354,7 @@ export const UserActivity = () => {
               Page {currentPage} of {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -1134,5 +1364,5 @@ export const UserActivity = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

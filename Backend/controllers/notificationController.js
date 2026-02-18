@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Get user notifications
@@ -28,20 +29,26 @@ const getNotifications = async (req, res) => {
       .populate('relatedBusiness', 'name media')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.getUnreadCount(req.user._id);
+    const [total, unreadCount] = await Promise.all([
+      Notification.countDocuments(query),
+      Notification.getUnreadCount(req.user._id),
+    ]);
 
     res.json({
       notifications,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
-      unreadCount
+      unreadCount,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -53,7 +60,10 @@ const getNotifications = async (req, res) => {
 const getNotificationById = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id)
-      .populate('relatedOrder', 'orderNumber status pricing fulfillmentType deliveryDetails pickupDetails items createdAt')
+      .populate(
+        'relatedOrder',
+        'orderNumber status pricing fulfillmentType deliveryDetails pickupDetails items createdAt'
+      )
       .populate('relatedListing', 'title photos pricing category')
       .populate('relatedBusiness', 'name media address contact');
 
@@ -73,7 +83,10 @@ const getNotificationById = async (req, res) => {
 
     res.json(notification);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -99,7 +112,10 @@ const markAsRead = async (req, res) => {
 
     res.json(notification);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -114,10 +130,13 @@ const markAllAsRead = async (req, res) => {
 
     res.json({
       message: 'All notifications marked as read',
-      modifiedCount
+      modifiedCount,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -143,7 +162,10 @@ const deleteNotification = async (req, res) => {
 
     res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -158,7 +180,10 @@ const getUnreadCount = async (req, res) => {
 
     res.json({ count });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Notification error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -168,5 +193,5 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  getUnreadCount
+  getUnreadCount,
 };

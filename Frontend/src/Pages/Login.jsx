@@ -1,15 +1,24 @@
-import { assets } from '../assets/assets'
-import { Eye, EyeOff, Lock, Mail, PersonStanding, Handshake, MapPin, LocateFixed } from 'lucide-react'
-import React, { useState } from 'react'
+import { assets } from '../assets/assets';
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  PersonStanding,
+  Handshake,
+  MapPin,
+  LocateFixed,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
-import { useGeolocation } from '../Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '../services/geocoding'
-import toast from 'react-hot-toast'
-import { useAppContext } from '../context/AppContext'
-import { useNavigate, Link } from 'react-router-dom'
+import { useGeolocation } from '../Components/maps/useGeolocation';
+import { reverseGeocode, searchAddress } from '../services/geocoding';
+import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { businessService } from '../services';
-import LocationPicker from '../Components/maps/LocationPicker'
+import LocationPicker from '../Components/maps/LocationPicker';
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();
@@ -27,7 +36,7 @@ const Login = () => {
         console.error(err);
       }
     },
-    onError: () => console.log('Google Login Failed'),
+    onError: () => toast.error('Google Login Failed'),
   });
 
   const [location, setLocation] = useState(null);
@@ -41,7 +50,11 @@ const Login = () => {
       <div className="flex w-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
-          <img className="h-full w-full object-cover" src={assets.login_bg} alt="Login background" />
+          <img
+            className="h-full w-full object-cover"
+            src={assets.login_bg}
+            alt="Login background"
+          />
         </div>
 
         {/* Right Side - Form Container */}
@@ -55,8 +68,15 @@ const Login = () => {
             {/* User Type Selection */}
             {!userType ? (
               <div className="flex flex-col">
-                <h2 className="text-4xl font-medium text-center" style={{ color: 'var(--color-textColor)' }}>Sign in</h2>
-                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign in</p>
+                <h2
+                  className="text-4xl font-medium text-center"
+                  style={{ color: 'var(--color-textColor)' }}
+                >
+                  Sign in
+                </h2>
+                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                  Choose how you want to sign in
+                </p>
 
                 {/* Sign in as Buyer Button */}
                 <button
@@ -67,7 +87,9 @@ const Login = () => {
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <PersonStanding className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign in as Buyer</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                    Sign in as Buyer
+                  </span>
                 </button>
 
                 {/* Sign in as Business Button */}
@@ -79,18 +101,30 @@ const Login = () => {
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <Handshake className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign in as Business</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                    Sign in as Business
+                  </span>
                 </button>
 
                 {/* Sign up link */}
                 <p className="text-sm mt-8 text-center" style={{ color: 'var(--color-gray-50)' }}>
-                  Don't have an account? <Link to="/signup" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Sign up</Link>
+                  Don't have an account?{' '}
+                  <Link
+                    to="/signup"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Sign up
+                  </Link>
                 </p>
               </div>
             ) : (
               <form className="flex flex-col">
                 <div className="relative mb-4">
-                  <h2 className="text-2xl font-medium text-center" style={{ color: 'var(--color-textColor)' }}>
+                  <h2
+                    className="text-2xl font-medium text-center"
+                    style={{ color: 'var(--color-textColor)' }}
+                  >
                     {userType === 'buyer' ? 'Sign in as Buyer' : 'Sign in as Business'}
                   </h2>
                   <button
@@ -115,13 +149,20 @@ const Login = () => {
                       className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
-                      <span className="ml-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Continue with Google</span>
+                      <span
+                        className="ml-2 text-sm font-medium"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        Continue with Google
+                      </span>
                     </button>
 
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">
                       <div className="w-full h-px bg-gray-300"></div>
-                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>or sign in with email</p>
+                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                        or sign in with email
+                      </p>
                       <div className="w-full h-px bg-gray-300"></div>
                     </div>
                   </>
@@ -143,7 +184,7 @@ const Login = () => {
                 <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                   <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
                     className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
@@ -155,9 +196,15 @@ const Login = () => {
                     className="shrink-0"
                   >
                     {showPassword ? (
-                      <EyeOff className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                      <EyeOff
+                        className="w-5 h-5 cursor-pointer"
+                        style={{ color: 'var(--color-gray-50)' }}
+                      />
                     ) : (
-                      <Eye className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                      <Eye
+                        className="w-5 h-5 cursor-pointer"
+                        style={{ color: 'var(--color-gray-50)' }}
+                      />
                     )}
                   </button>
                 </div>
@@ -166,15 +213,32 @@ const Login = () => {
                 <div className="w-full flex items-center justify-between mt-6">
                   <div className="flex items-center gap-2">
                     <input className="w-4 h-4 cursor-pointer" type="checkbox" id="checkbox" />
-                    <label className="text-sm cursor-pointer" htmlFor="checkbox" style={{ color: 'var(--color-gray-50)' }}>Remember me</label>
+                    <label
+                      className="text-sm cursor-pointer"
+                      htmlFor="checkbox"
+                      style={{ color: 'var(--color-gray-50)' }}
+                    >
+                      Remember me
+                    </label>
                   </div>
-                  <a className="text-sm hover:underline" href="#" style={{ color: 'var(--color-solid)' }}>Forgot password?</a>
+                  <a
+                    className="text-sm hover:underline"
+                    href="#"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Forgot password?
+                  </a>
                 </div>
 
                 {/* Location Section - Only for Buyers */}
                 {userType === 'buyer' && (
                   <div className="mt-6">
-                    <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
+                    <h3
+                      className="text-sm font-medium mb-3"
+                      style={{ color: 'var(--color-textColor)' }}
+                    >
+                      Your Location
+                    </h3>
 
                     {/* Use Current Location Button */}
                     <button
@@ -203,7 +267,10 @@ const Login = () => {
                       className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
                       <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
-                      <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
                         {isLoadingLocation ? 'Detecting location...' : 'Use my current location'}
                       </span>
                     </button>
@@ -225,7 +292,10 @@ const Login = () => {
                                   const results = await searchAddress(manualAddress);
                                   if (results && results.length > 0) {
                                     const result = results[0];
-                                    setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                                    setLocation({
+                                      lat: parseFloat(result.lat),
+                                      lng: parseFloat(result.lon),
+                                    });
                                     setAddress(result.display_name);
                                     toast.success('Address found!');
                                   } else {
@@ -250,7 +320,10 @@ const Login = () => {
                                 const results = await searchAddress(manualAddress);
                                 if (results && results.length > 0) {
                                   const result = results[0];
-                                  setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                                  setLocation({
+                                    lat: parseFloat(result.lat),
+                                    lng: parseFloat(result.lon),
+                                  });
                                   setAddress(result.display_name);
                                   toast.success('Address found!');
                                 } else {
@@ -309,7 +382,7 @@ const Login = () => {
                     const password = passwordInput?.value;
 
                     if (!email || !password) {
-                      toast.error("Please enter email and password");
+                      toast.error('Please enter email and password');
                       return;
                     }
 
@@ -327,13 +400,15 @@ const Login = () => {
                       if (userType === 'business' || currentActiveRole === 'business_owner') {
                         // Check if user has business_owner role
                         if (!userRoles.includes('business_owner')) {
-                          toast.error("This account is not registered as a business. You can add a business from your profile.");
+                          toast.error(
+                            'This account is not registered as a business. You can add a business from your profile.'
+                          );
                           // Redirect to shop instead since they're a consumer
                           window.location.href = '/shop';
                           return;
                         }
 
-                        toast.success("Login successful!");
+                        toast.success('Login successful!');
 
                         // Fetch the business to check verification status
                         try {
@@ -351,8 +426,10 @@ const Login = () => {
 
                           // Check business verification/approval status
                           // Business is approved if status is 'active' and verification.status is 'verified' or 'approved'
-                          const isApproved = business.status === 'active' &&
-                                            (verificationStatus === 'verified' || verificationStatus === 'approved');
+                          const isApproved =
+                            business.status === 'active' &&
+                            (verificationStatus === 'verified' ||
+                              verificationStatus === 'approved');
 
                           if (isApproved) {
                             // Approved/auto-verified business - go to dashboard
@@ -368,19 +445,18 @@ const Login = () => {
                             window.location.href = '/business-verification';
                           }
                         } catch (bizError) {
-                          console.error("Error fetching business:", bizError);
+                          console.error('Error fetching business:', bizError);
                           // If we can't fetch business, redirect to verification
                           window.location.href = '/business-verification';
                         }
                       } else {
                         // Consumer login - redirect to shop
-                        toast.success("Login successful!");
+                        toast.success('Login successful!');
                         window.location.href = '/shop';
                       }
-
                     } catch (error) {
-                      console.error("Login error:", error);
-                      toast.error(error.message || "Login failed");
+                      console.error('Login error:', error);
+                      toast.error(error.message || 'Login failed');
                     }
                   }}
                   className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
@@ -391,7 +467,14 @@ const Login = () => {
 
                 {/* Sign up link */}
                 <p className="text-sm mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
-                  Don't have an account? <Link to="/signup" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Sign up</Link>
+                  Don't have an account?{' '}
+                  <Link
+                    to="/signup"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Sign up
+                  </Link>
                 </p>
               </form>
             )}
@@ -399,7 +482,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react'
-import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
-import { authService } from '../services'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react';
+import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { authService } from '../services';
+import toast from 'react-hot-toast';
 
 const MyProfile = () => {
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const navigate = useNavigate()
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const navigate = useNavigate();
 
   // Profile state
   const [profile, setProfile] = useState({
@@ -23,152 +23,164 @@ const MyProfile = () => {
     lastName: '',
     email: '',
     phone: '',
-    avatar: null
-  })
+    avatar: null,
+  });
 
   // Password state
   const [passwords, setPasswords] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
-  })
+    confirmPassword: '',
+  });
 
   // Fetch profile on mount
   useEffect(() => {
+    let isMounted = true;
     const fetchProfile = async () => {
       try {
-        const data = await authService.getProfile()
+        const data = await authService.getProfile();
+        if (!isMounted) return;
         setProfile({
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           email: data.email || '',
           phone: data.phone || '',
-          avatar: data.avatar || null
-        })
+          avatar: data.avatar || null,
+        });
       } catch (error) {
-        console.error('Error fetching profile:', error)
-        toast.error('Failed to load profile')
+        if (!isMounted) return;
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile');
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false);
       }
-    }
-    fetchProfile()
-  }, [])
+    };
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Handle profile save
   const handleSaveProfile = async () => {
-    setSaving(true)
+    setSaving(true);
     try {
       const updatedData = await authService.updateProfile({
         firstName: profile.firstName,
         lastName: profile.lastName,
-        phone: profile.phone
-      })
+        phone: profile.phone,
+      });
       // Update local storage
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-      localStorage.setItem('user', JSON.stringify({
-        ...storedUser,
-        firstName: updatedData.firstName,
-        lastName: updatedData.lastName,
-        phone: updatedData.phone,
-        avatar: updatedData.avatar
-      }))
-      toast.success('Profile updated successfully')
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          ...storedUser,
+          firstName: updatedData.firstName,
+          lastName: updatedData.lastName,
+          phone: updatedData.phone,
+          avatar: updatedData.avatar,
+        })
+      );
+      toast.success('Profile updated successfully');
     } catch (error) {
-      console.error('Error updating profile:', error)
-      toast.error(error.message || 'Failed to update profile')
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Failed to update profile');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   // Handle password change
   const handleChangePassword = async () => {
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error('Passwords do not match')
-      return
+      toast.error('Passwords do not match');
+      return;
     }
     if (passwords.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters')
-      return
+      toast.error('Password must be at least 8 characters');
+      return;
     }
 
-    setChangingPassword(true)
+    setChangingPassword(true);
     try {
-      await authService.changePassword(passwords.currentPassword, passwords.newPassword)
-      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      toast.success('Password changed successfully')
+      await authService.changePassword(passwords.currentPassword, passwords.newPassword);
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Password changed successfully');
     } catch (error) {
-      console.error('Error changing password:', error)
-      toast.error(error.message || 'Failed to change password')
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Failed to change password');
     } finally {
-      setChangingPassword(false)
+      setChangingPassword(false);
     }
-  }
+  };
 
   // Handle avatar upload
   const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const formData = new FormData()
-    formData.append('avatar', file)
+    const formData = new FormData();
+    formData.append('avatar', file);
 
-    setUploadingAvatar(true)
+    setUploadingAvatar(true);
     try {
-      const response = await authService.uploadAvatar(formData)
-      setProfile(prev => ({ ...prev, avatar: response.avatar }))
+      const response = await authService.uploadAvatar(formData);
+      setProfile((prev) => ({ ...prev, avatar: response.avatar }));
       // Update local storage
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-      localStorage.setItem('user', JSON.stringify({
-        ...storedUser,
-        avatar: response.avatar
-      }))
-      toast.success('Avatar uploaded successfully')
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          ...storedUser,
+          avatar: response.avatar,
+        })
+      );
+      toast.success('Avatar uploaded successfully');
     } catch (error) {
-      console.error('Error uploading avatar:', error)
-      toast.error(error.message || 'Failed to upload avatar')
+      console.error('Error uploading avatar:', error);
+      toast.error(error.message || 'Failed to upload avatar');
     } finally {
-      setUploadingAvatar(false)
+      setUploadingAvatar(false);
     }
-  }
+  };
 
   // Handle account deletion
   const handleDeleteAccount = async () => {
     try {
-      await authService.deleteAccount()
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('cartItems')
-      toast.success('Account deleted successfully')
-      navigate('/login')
+      await authService.deleteAccount();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('cartItems');
+      toast.success('Account deleted successfully');
+      navigate('/login');
     } catch (error) {
-      console.error('Error deleting account:', error)
-      toast.error(error.message || 'Failed to delete account')
+      console.error('Error deleting account:', error);
+      toast.error(error.message || 'Failed to delete account');
     }
-    setShowDeleteModal(false)
-  }
+    setShowDeleteModal(false);
+  };
 
   if (loading) {
     return (
-      <div className='bg-gray-80 min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-green-600' />
+      <div className="bg-gray-80 min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
       </div>
-    )
+    );
   }
 
   return (
-     <div className='bg-gray-80 min-h-screen'>
+    <div className="bg-gray-80 min-h-screen">
       <div className="flex w-full">
         {/* Settings Menu - Sidebar */}
         <aside className="hidden lg:block w-72 bg-white border-r border-gray-200 p-6 h-screen fixed left-0 top-0 shrink-0 overflow-y-auto">
           {/* Back Button */}
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-textColor transition mb-6 cursor-pointer"
             style={{ color: 'var(--color-textColor)' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1B5E20'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-textColor)'}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#1B5E20')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-textColor)')}
           >
             <MoveLeft className="w-5 h-5" />
             <span className="text-sm font-medium">Back</span>
@@ -177,26 +189,40 @@ const MyProfile = () => {
           {/* Profile Info */}
           <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-200">
             {profile.avatar ? (
-              <img src={profile.avatar} alt="Avatar" className="h-12 w-12 rounded-full object-cover shrink-0" />
+              <img
+                src={profile.avatar}
+                alt="Avatar"
+                className="h-12 w-12 rounded-full object-cover shrink-0"
+              />
             ) : (
-              <div className="h-12 w-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#1B5E20' }}>
+              <div
+                className="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: '#1B5E20' }}
+              >
                 <User className="w-6 h-6 text-white" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-textColor truncate">{profile.firstName} {profile.lastName}</p>
+              <p className="text-sm font-semibold text-textColor truncate">
+                {profile.firstName} {profile.lastName}
+              </p>
               <p className="text-xs text-gray-50 truncate">{profile.email}</p>
             </div>
           </div>
 
           {/* Settings Menu */}
           <h2 className="text-xl font-bold text-textColor mb-4">Settings</h2>
-          
+
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <span className="text-xs font-semibold text-gray-50 uppercase tracking-wider">Personal</span>
+              <span className="text-xs font-semibold text-gray-50 uppercase tracking-wider">
+                Personal
+              </span>
               <div className="flex flex-col gap-1">
-                <button className="text-left px-3 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: '#1B5E20' }}>
+                <button
+                  className="text-left px-3 py-2 rounded-lg text-white text-sm font-medium"
+                  style={{ backgroundColor: '#1B5E20' }}
+                >
                   Account
                 </button>
               </div>
@@ -208,12 +234,12 @@ const MyProfile = () => {
         <div className="w-full lg:w-[calc(100%-18rem)] lg:ml-72 flex flex-col items-center py-12 px-4 lg:px-12">
           <div className="flex w-full max-w-3xl flex-col items-start gap-12">
             {/* Mobile Back Button */}
-            <button 
+            <button
               onClick={() => navigate(-1)}
               className="lg:hidden flex items-center gap-2 text-textColor transition cursor-pointer"
               style={{ color: 'var(--color-textColor)' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#1B5E20'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-textColor)'}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#1B5E20')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-textColor)')}
             >
               <MoveLeft className="w-5 h-5" />
               <span className="text-sm font-medium">Back</span>
@@ -228,23 +254,40 @@ const MyProfile = () => {
             {/* Profile Section */}
             <div className="flex w-full flex-col items-start gap-6">
               <h3 className="text-xl font-semibold text-textColor">Profile</h3>
-              
+
               {/* Avatar */}
               <div className="flex w-full flex-col items-start gap-4">
                 <span className="text-sm font-semibold text-textColor">Avatar</span>
                 <div className="flex items-center gap-4">
                   {profile.avatar ? (
-                    <img src={profile.avatar} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
+                    <img
+                      src={profile.avatar}
+                      alt="Avatar"
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
                   ) : (
-                    <div className="h-16 w-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1B5E20' }}>
+                    <div
+                      className="h-16 w-16 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: '#1B5E20' }}
+                    >
                       <User className="w-8 h-8 text-white" />
                     </div>
                   )}
                   <div className="flex flex-col items-start gap-2">
                     <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-textColor hover:bg-gray-200 transition cursor-pointer">
-                      {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {uploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
                       {uploadingAvatar ? 'Uploading...' : 'Upload'}
-                      <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploadingAvatar} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                      />
                     </label>
                     <span className="text-xs text-gray-50">
                       For best results, upload an image 512x512 or larger.
@@ -256,15 +299,17 @@ const MyProfile = () => {
               {/* Name Fields */}
               <div className="flex w-full items-center gap-4 flex-col sm:flex-row">
                 <div className="w-full flex-1">
-                  <label className="block text-sm font-medium text-textColor mb-2">First name</label>
+                  <label className="block text-sm font-medium text-textColor mb-2">
+                    First name
+                  </label>
                   <input
                     type="text"
                     placeholder="First name"
                     value={profile.firstName}
-                    onChange={(e) => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, firstName: e.target.value }))}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
-                    onFocus={(e) => e.target.style.borderColor = '#1B5E20'}
-                    onBlur={(e) => e.target.style.borderColor = ''}
+                    onFocus={(e) => (e.target.style.borderColor = '#1B5E20')}
+                    onBlur={(e) => (e.target.style.borderColor = '')}
                   />
                 </div>
                 <div className="w-full flex-1">
@@ -273,10 +318,10 @@ const MyProfile = () => {
                     type="text"
                     placeholder="Last name"
                     value={profile.lastName}
-                    onChange={(e) => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, lastName: e.target.value }))}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
-                    onFocus={(e) => e.target.style.borderColor = '#1B5E20'}
-                    onBlur={(e) => e.target.style.borderColor = ''}
+                    onFocus={(e) => (e.target.style.borderColor = '#1B5E20')}
+                    onBlur={(e) => (e.target.style.borderColor = '')}
                   />
                 </div>
               </div>
@@ -294,11 +339,13 @@ const MyProfile = () => {
                   <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                 </div>
                 <div className="w-full flex-1">
-                  <label className="block text-sm font-medium text-textColor mb-2">Phone number</label>
+                  <label className="block text-sm font-medium text-textColor mb-2">
+                    Phone number
+                  </label>
                   <PhoneInput
                     country={'rw'}
                     value={profile.phone}
-                    onChange={(phone) => setProfile(prev => ({ ...prev, phone }))}
+                    onChange={(phone) => setProfile((prev) => ({ ...prev, phone }))}
                     enableSearch={true}
                     searchPlaceholder="Search country"
                     placeholder="Choose your country"
@@ -332,15 +379,19 @@ const MyProfile = () => {
             {/* Password Section */}
             <div className="flex w-full flex-col items-start gap-6">
               <h3 className="text-xl font-semibold text-textColor">Password</h3>
-              
+
               <div className="w-full">
-                <label className="block text-sm font-medium text-textColor mb-2">Current password</label>
+                <label className="block text-sm font-medium text-textColor mb-2">
+                  Current password
+                </label>
                 <div className="relative">
                   <input
-                    type={showCurrentPassword ? "text" : "password"}
+                    type={showCurrentPassword ? 'text' : 'password'}
                     placeholder="Enter current password"
                     value={passwords.currentPassword}
-                    onChange={(e) => setPasswords(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswords((prev) => ({ ...prev, currentPassword: e.target.value }))
+                    }
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -358,13 +409,17 @@ const MyProfile = () => {
               </div>
 
               <div className="w-full">
-                <label className="block text-sm font-medium text-textColor mb-2">New password</label>
+                <label className="block text-sm font-medium text-textColor mb-2">
+                  New password
+                </label>
                 <div className="relative">
                   <input
-                    type={showNewPassword ? "text" : "password"}
+                    type={showNewPassword ? 'text' : 'password'}
                     placeholder="Enter new password"
                     value={passwords.newPassword}
-                    onChange={(e) => setPasswords(prev => ({ ...prev, newPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswords((prev) => ({ ...prev, newPassword: e.target.value }))
+                    }
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -380,17 +435,20 @@ const MyProfile = () => {
                   </button>
                 </div>
                 <p className="text-xs text-gray-50 mt-2">
-                  Your password must have at least 8 characters, include one uppercase letter, and one number.
+                  Your password must have at least 8 characters, include one uppercase letter, and
+                  one number.
                 </p>
               </div>
 
               <div className="w-full">
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Re-type new password"
                     value={passwords.confirmPassword}
-                    onChange={(e) => setPasswords(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswords((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                    }
                     className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
                   />
                   <button
@@ -409,11 +467,20 @@ const MyProfile = () => {
 
               <button
                 onClick={handleChangePassword}
-                disabled={changingPassword || !passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword}
+                disabled={
+                  changingPassword ||
+                  !passwords.currentPassword ||
+                  !passwords.newPassword ||
+                  !passwords.confirmPassword
+                }
                 className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
                 style={{ backgroundColor: '#1B5E20' }}
-                onMouseEnter={(e) => !changingPassword && (e.currentTarget.style.backgroundColor = '#0D4A14')}
-                onMouseLeave={(e) => !changingPassword && (e.currentTarget.style.backgroundColor = '#1B5E20')}
+                onMouseEnter={(e) =>
+                  !changingPassword && (e.currentTarget.style.backgroundColor = '#0D4A14')
+                }
+                onMouseLeave={(e) =>
+                  !changingPassword && (e.currentTarget.style.backgroundColor = '#1B5E20')
+                }
               >
                 {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
                 {changingPassword ? 'Changing...' : 'Change password'}
@@ -426,7 +493,7 @@ const MyProfile = () => {
             {/* Danger Zone */}
             <div className="flex w-full flex-col items-start gap-6">
               <h3 className="text-xl font-semibold text-textColor">Danger zone</h3>
-              
+
               <div className="w-full bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-start justify-between gap-4 flex-col sm:flex-row">
                   <div className="flex-1">
@@ -453,13 +520,27 @@ const MyProfile = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="flex flex-col items-center bg-white shadow-md rounded-xl py-6 px-5 md:w-[460px] w-[370px] border border-gray-200">
             <div className="flex items-center justify-center p-4 bg-red-100 rounded-full">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2.875 5.75h1.917m0 0h15.333m-15.333 0v13.417a1.917 1.917 0 0 0 1.916 1.916h9.584a1.917 1.917 0 0 0 1.916-1.916V5.75m-10.541 0V3.833a1.917 1.917 0 0 1 1.916-1.916h3.834a1.917 1.917 0 0 1 1.916 1.916V5.75m-5.75 4.792v5.75m3.834-5.75v5.75" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2.875 5.75h1.917m0 0h15.333m-15.333 0v13.417a1.917 1.917 0 0 0 1.916 1.916h9.584a1.917 1.917 0 0 0 1.916-1.916V5.75m-10.541 0V3.833a1.917 1.917 0 0 1 1.916-1.916h3.834a1.917 1.917 0 0 1 1.916 1.916V5.75m-5.75 4.792v5.75m3.834-5.75v5.75"
+                  stroke="#DC2626"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h2 className="text-gray-900 font-semibold mt-4 text-xl">Are you sure?</h2>
             <p className="text-sm text-gray-600 mt-2 text-center">
-              Do you really want to continue? This action<br />cannot be undone.
+              Do you really want to continue? This action
+              <br />
+              cannot be undone.
             </p>
             <div className="flex items-center justify-center gap-4 mt-5 w-full">
               <button
@@ -480,8 +561,8 @@ const MyProfile = () => {
           </div>
         </div>
       )}
-      </div>
-  )
-}
+    </div>
+  );
+};
 
-export default MyProfile
+export default MyProfile;

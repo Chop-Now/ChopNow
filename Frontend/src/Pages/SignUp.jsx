@@ -1,14 +1,29 @@
-import { assets } from '../assets/assets'
-import { Eye, EyeOff, Lock, Mail, User, MapPin, LocateFixed, PersonStanding, Handshake, ChevronDown, Tractor, Store, UtensilsCrossed, Croissant } from 'lucide-react'
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
-import LocationPicker from '../Components/maps/LocationPicker'
-import { useGeolocation } from '../Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '../services/geocoding'
-import { businessService } from '../services'
-import toast from 'react-hot-toast'
+import { assets } from '../assets/assets';
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  User,
+  MapPin,
+  LocateFixed,
+  PersonStanding,
+  Handshake,
+  ChevronDown,
+  Tractor,
+  Store,
+  UtensilsCrossed,
+  Croissant,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import LocationPicker from '../Components/maps/LocationPicker';
+import { useGeolocation } from '../Components/maps/useGeolocation';
+import { reverseGeocode, searchAddress } from '../services/geocoding';
+import { businessService } from '../services';
+import toast from 'react-hot-toast';
 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
@@ -23,7 +38,7 @@ const BUSINESS_CATEGORIES = [
     icon: Tractor,
     requiresVerification: true,
     description: 'Sell fresh produce directly',
-    requiredDocs: 'Farm registration or land ownership document'
+    requiredDocs: 'Farm registration or land ownership document',
   },
   {
     value: 'supermarket',
@@ -31,7 +46,7 @@ const BUSINESS_CATEGORIES = [
     icon: Store,
     requiresVerification: true,
     description: 'Retail grocery store',
-    requiredDocs: 'Business license and tax registration'
+    requiredDocs: 'Business license and tax registration',
   },
   {
     value: 'bakery',
@@ -39,7 +54,7 @@ const BUSINESS_CATEGORIES = [
     icon: Croissant,
     requiresVerification: true,
     description: 'Baked goods and pastries',
-    requiredDocs: 'Food handling permit and business license'
+    requiredDocs: 'Food handling permit and business license',
   },
   {
     value: 'restaurant',
@@ -47,7 +62,7 @@ const BUSINESS_CATEGORIES = [
     icon: UtensilsCrossed,
     requiresVerification: true,
     description: 'Prepared meals and food service',
-    requiredDocs: 'Health certificate and food handling permit'
+    requiredDocs: 'Health certificate and food handling permit',
   },
 ];
 
@@ -77,27 +92,28 @@ const SignUp = () => {
         console.error(err);
       }
     },
-    onError: () => console.log('Google Signup Failed'),
+    onError: () => toast.error('Google Signup Failed'),
   });
 
   // Check if registrations are allowed - AFTER all hooks
   if (!isFeatureEnabled('registration')) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-primary via-white to-tertiary/10 flex items-center justify-center p-4'>
-        <div className='bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center'>
-          <div className='w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-            <User className='w-8 h-8 text-yellow-600' />
+      <div className="min-h-screen bg-gradient-to-br from-primary via-white to-tertiary/10 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-8 h-8 text-yellow-600" />
           </div>
-          <h2 className='text-2xl font-bold text-gray-800 mb-2'>Registration Closed</h2>
-          <p className='text-gray-600 mb-6'>
-            New user registrations are currently disabled. Please check back later or contact support at{' '}
-            <a href={`mailto:${settings.supportEmail}`} className='text-primary hover:underline'>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Registration Closed</h2>
+          <p className="text-gray-600 mb-6">
+            New user registrations are currently disabled. Please check back later or contact
+            support at{' '}
+            <a href={`mailto:${settings.supportEmail}`} className="text-primary hover:underline">
               {settings.supportEmail}
             </a>
           </p>
           <Link
-            to='/login'
-            className='inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors'
+            to="/login"
+            className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             Go to Login
           </Link>
@@ -115,26 +131,26 @@ const SignUp = () => {
     const confirmPassword = form.querySelector('input[placeholder="Confirm password"]').value;
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+      toast.error('Password must be at least 8 characters long');
       return;
     }
 
     // Check for uppercase, lowercase, and number
     if (!/[A-Z]/.test(password)) {
-      toast.error("Password must contain at least one uppercase letter");
+      toast.error('Password must contain at least one uppercase letter');
       return;
     }
     if (!/[a-z]/.test(password)) {
-      toast.error("Password must contain at least one lowercase letter");
+      toast.error('Password must contain at least one lowercase letter');
       return;
     }
     if (!/[0-9]/.test(password)) {
-      toast.error("Password must contain at least one number");
+      toast.error('Password must contain at least one number');
       return;
     }
 
@@ -146,13 +162,13 @@ const SignUp = () => {
 
         // Validate business category
         if (!businessCategory) {
-          toast.error("Please select a business category");
+          toast.error('Please select a business category');
           return;
         }
 
         // Validate phone number for business
         if (!phone || phone.length < 10) {
-          toast.error("Please enter a valid business phone number");
+          toast.error('Please enter a valid business phone number');
           return;
         }
 
@@ -160,7 +176,10 @@ const SignUp = () => {
         const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
 
         // Parse contact person name - split into first and last name
-        const nameParts = contactPerson.trim().split(' ').filter(part => part.length > 0);
+        const nameParts = contactPerson
+          .trim()
+          .split(' ')
+          .filter((part) => part.length > 0);
         const firstName = nameParts[0] || contactPerson;
         // Get last name from remaining parts, or use first name if not provided
         let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
@@ -172,12 +191,12 @@ const SignUp = () => {
 
         // Validate name lengths
         if (firstName.length < 2) {
-          toast.error("Contact person name must be at least 2 characters");
+          toast.error('Contact person name must be at least 2 characters');
           return;
         }
 
         // Check if this category requires verification
-        const selectedCategory = BUSINESS_CATEGORIES.find(c => c.value === businessCategory);
+        const selectedCategory = BUSINESS_CATEGORIES.find((c) => c.value === businessCategory);
         const requiresVerification = selectedCategory?.requiresVerification || false;
 
         // Step 1: Register user as business_owner (with consumer role too for dual-role)
@@ -200,16 +219,16 @@ const SignUp = () => {
             : `${businessName} - ${selectedCategory?.label}`,
           contact: {
             email: email,
-            phone: formattedPhone
+            phone: formattedPhone,
           },
           address: {
             street: 'To be updated',
             city: 'To be updated',
             location: {
               type: 'Point',
-              coordinates: [30.0619, -1.9403] // Default Kigali coordinates
-            }
-          }
+              coordinates: [30.0619, -1.9403], // Default Kigali coordinates
+            },
+          },
         };
 
         // Create the business
@@ -229,7 +248,8 @@ const SignUp = () => {
         console.error('Error response:', error.response?.data);
         console.error('Error message:', error.response?.data?.message || error.message);
 
-        const errorMessage = error.response?.data?.message || error.message || "Business signup failed";
+        const errorMessage =
+          error.response?.data?.message || error.message || 'Business signup failed';
         toast.error(errorMessage);
       }
     } else {
@@ -245,7 +265,7 @@ const SignUp = () => {
           password,
           roles: ['consumer'], // Consumer-only role
           phone: phone || undefined,
-          address: address || undefined
+          address: address || undefined,
         };
 
         await register(userData);
@@ -258,7 +278,7 @@ const SignUp = () => {
         console.error('Error response:', error.response?.data);
         console.error('Error message:', error.response?.data?.message || error.message);
 
-        const errorMessage = error.response?.data?.message || error.message || "Signup failed";
+        const errorMessage = error.response?.data?.message || error.message || 'Signup failed';
         toast.error(errorMessage);
       }
     }
@@ -269,7 +289,11 @@ const SignUp = () => {
       <div className="flex w-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
-          <img className="h-full w-full object-cover" src={assets.login_bg} alt="Signup background" />
+          <img
+            className="h-full w-full object-cover"
+            src={assets.login_bg}
+            alt="Signup background"
+          />
         </div>
 
         {/* Right Side - Form Container */}
@@ -283,8 +307,15 @@ const SignUp = () => {
             {/* User Type Selection */}
             {!userType ? (
               <div className="flex flex-col">
-                <h2 className="text-4xl font-medium text-center" style={{ color: 'var(--color-textColor)' }}>Sign up</h2>
-                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>Choose how you want to sign up</p>
+                <h2
+                  className="text-4xl font-medium text-center"
+                  style={{ color: 'var(--color-textColor)' }}
+                >
+                  Sign up
+                </h2>
+                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                  Choose how you want to sign up
+                </p>
 
                 {/* Sign up as Buyer Button */}
                 <button
@@ -295,7 +326,9 @@ const SignUp = () => {
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <PersonStanding className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign up as Buyer</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                    Sign up as Buyer
+                  </span>
                 </button>
 
                 {/* Sign up as Business Button */}
@@ -307,18 +340,30 @@ const SignUp = () => {
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <Handshake className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign up as Business</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                    Sign up as Business
+                  </span>
                 </button>
 
                 {/* Sign in link */}
                 <p className="text-sm mt-8 text-center" style={{ color: 'var(--color-gray-50)' }}>
-                  Already have an account? <Link to="/login" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Sign in</Link>
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Sign in
+                  </Link>
                 </p>
               </div>
             ) : (
               <form className="flex flex-col" onSubmit={handleSubmit}>
                 <div className="relative mb-4">
-                  <h2 className="text-2xl font-medium text-center" style={{ color: 'var(--color-textColor)' }}>
+                  <h2
+                    className="text-2xl font-medium text-center"
+                    style={{ color: 'var(--color-textColor)' }}
+                  >
                     {userType === 'buyer' ? 'Sign up as Buyer' : 'Sign up as Business'}
                   </h2>
                   <button
@@ -331,7 +376,9 @@ const SignUp = () => {
                   </button>
                 </div>
                 <p className="text-sm mb-6 text-center" style={{ color: 'var(--color-gray-50)' }}>
-                  {userType === 'buyer' ? 'Create your buyer account' : 'Create your business account'}
+                  {userType === 'buyer'
+                    ? 'Create your buyer account'
+                    : 'Create your business account'}
                 </p>
 
                 {userType === 'buyer' ? (
@@ -344,13 +391,20 @@ const SignUp = () => {
                       className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
-                      <span className="ml-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>Sign up with Google</span>
+                      <span
+                        className="ml-2 text-sm font-medium"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        Sign up with Google
+                      </span>
                     </button>
 
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">
                       <div className="w-full h-px bg-gray-300"></div>
-                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>or sign up with email</p>
+                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                        or sign up with email
+                      </p>
                       <div className="w-full h-px bg-gray-300"></div>
                     </div>
 
@@ -412,7 +466,7 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
@@ -424,9 +478,15 @@ const SignUp = () => {
                         className="shrink-0"
                       >
                         {showPassword ? (
-                          <EyeOff className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <EyeOff
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         ) : (
-                          <Eye className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <Eye
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         )}
                       </button>
                     </div>
@@ -435,7 +495,7 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input
-                        type={showConfirmPassword ? "text" : "password"}
+                        type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
@@ -447,16 +507,27 @@ const SignUp = () => {
                         className="shrink-0"
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <EyeOff
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         ) : (
-                          <Eye className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <Eye
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         )}
                       </button>
                     </div>
 
                     {/* Location Section */}
                     <div className="mt-6">
-                      <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>Your Location</h3>
+                      <h3
+                        className="text-sm font-medium mb-3"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        Your Location
+                      </h3>
 
                       {/* Use Current Location Button */}
                       <button
@@ -485,7 +556,10 @@ const SignUp = () => {
                         className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                       >
                         <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
-                        <span className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: 'var(--color-textColor)' }}
+                        >
                           {isLoadingLocation ? 'Detecting location...' : 'Use my current location'}
                         </span>
                       </button>
@@ -507,7 +581,10 @@ const SignUp = () => {
                                     const results = await searchAddress(manualAddress);
                                     if (results && results.length > 0) {
                                       const result = results[0];
-                                      setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                                      setLocation({
+                                        lat: parseFloat(result.lat),
+                                        lng: parseFloat(result.lon),
+                                      });
                                       setAddress(result.display_name);
                                       toast.success('Address found!');
                                     } else {
@@ -532,7 +609,10 @@ const SignUp = () => {
                                   const results = await searchAddress(manualAddress);
                                   if (results && results.length > 0) {
                                     const result = results[0];
-                                    setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                                    setLocation({
+                                      lat: parseFloat(result.lat),
+                                      lng: parseFloat(result.lon),
+                                    });
                                     setAddress(result.display_name);
                                     toast.success('Address found!');
                                   } else {
@@ -592,7 +672,10 @@ const SignUp = () => {
 
                     {/* Business Category Dropdown */}
                     <div className="mt-4 relative">
-                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
+                      <label
+                        className="block text-xs font-medium mb-1.5"
+                        style={{ color: 'var(--color-gray-50)' }}
+                      >
                         Business Category
                       </label>
                       <button
@@ -603,20 +686,37 @@ const SignUp = () => {
                         {businessCategory ? (
                           <div className="flex items-center gap-3">
                             {(() => {
-                              const category = BUSINESS_CATEGORIES.find(c => c.value === businessCategory);
+                              const category = BUSINESS_CATEGORIES.find(
+                                (c) => c.value === businessCategory
+                              );
                               const IconComponent = category?.icon;
                               return (
                                 <>
-                                  {IconComponent && <IconComponent className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />}
-                                  <span className="text-sm" style={{ color: 'var(--color-textColor)' }}>{category?.label}</span>
+                                  {IconComponent && (
+                                    <IconComponent
+                                      className="w-5 h-5"
+                                      style={{ color: 'var(--color-solid)' }}
+                                    />
+                                  )}
+                                  <span
+                                    className="text-sm"
+                                    style={{ color: 'var(--color-textColor)' }}
+                                  >
+                                    {category?.label}
+                                  </span>
                                 </>
                               );
                             })()}
                           </div>
                         ) : (
-                          <span className="text-sm" style={{ color: 'var(--color-gray-50)' }}>Select your business type</span>
+                          <span className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                            Select your business type
+                          </span>
                         )}
-                        <ChevronDown className={`w-5 h-5 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} style={{ color: 'var(--color-gray-50)' }} />
+                        <ChevronDown
+                          className={`w-5 h-5 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`}
+                          style={{ color: 'var(--color-gray-50)' }}
+                        />
                       </button>
 
                       {showCategoryDropdown && (
@@ -633,10 +733,20 @@ const SignUp = () => {
                                 }}
                                 className={`flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${businessCategory === category.value ? 'bg-gray-50' : ''}`}
                               >
-                                <IconComponent className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
+                                <IconComponent
+                                  className="w-5 h-5"
+                                  style={{ color: 'var(--color-solid)' }}
+                                />
                                 <div className="flex-1 text-left">
-                                  <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>{category.label}</p>
-                                  <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>{category.description}</p>
+                                  <p
+                                    className="text-sm font-medium"
+                                    style={{ color: 'var(--color-textColor)' }}
+                                  >
+                                    {category.label}
+                                  </p>
+                                  <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                                    {category.description}
+                                  </p>
                                 </div>
                                 {category.requiresVerification && (
                                   <span className="text-[10px] px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full">
@@ -656,10 +766,12 @@ const SignUp = () => {
                             Document Verification Required
                           </p>
                           <p className="text-xs text-orange-600">
-                            {BUSINESS_CATEGORIES.find(c => c.value === businessCategory)?.requiredDocs || 'Valid business documents'}
+                            {BUSINESS_CATEGORIES.find((c) => c.value === businessCategory)
+                              ?.requiredDocs || 'Valid business documents'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            You'll need to upload verification documents after registration before you can start selling.
+                            You'll need to upload verification documents after registration before
+                            you can start selling.
                           </p>
                         </div>
                       )}
@@ -711,7 +823,7 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
@@ -723,9 +835,15 @@ const SignUp = () => {
                         className="shrink-0"
                       >
                         {showPassword ? (
-                          <EyeOff className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <EyeOff
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         ) : (
-                          <Eye className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <Eye
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         )}
                       </button>
                     </div>
@@ -734,7 +852,7 @@ const SignUp = () => {
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                       <input
-                        type={showConfirmPassword ? "text" : "password"}
+                        type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
@@ -746,9 +864,15 @@ const SignUp = () => {
                         className="shrink-0"
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <EyeOff
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         ) : (
-                          <Eye className="w-5 h-5 cursor-pointer" style={{ color: 'var(--color-gray-50)' }} />
+                          <Eye
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ color: 'var(--color-gray-50)' }}
+                          />
                         )}
                       </button>
                     </div>
@@ -767,14 +891,33 @@ const SignUp = () => {
                 {/* Terms and Privacy */}
                 <p className="text-xs mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
                   By creating an account, you agree to our{' '}
-                  <Link to="/terms-of-service" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link to="/privacy-policy" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Privacy Policy</Link>
+                  <Link
+                    to="/terms-of-service"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link
+                    to="/privacy-policy"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Privacy Policy
+                  </Link>
                 </p>
 
                 {/* Sign in link */}
                 <p className="text-sm mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
-                  Already have an account? <Link to="/login" className="hover:underline font-medium" style={{ color: 'var(--color-solid)' }}>Sign in</Link>
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="hover:underline font-medium"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    Sign in
+                  </Link>
                 </p>
               </form>
             )}
@@ -782,7 +925,7 @@ const SignUp = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;

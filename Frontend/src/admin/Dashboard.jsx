@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Sidebar from './components/layout/Sidebar'
-import Header from './components/layout/Header'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
 import Content from './components/Content/Content';
 import { AdminModeProvider } from './context/AdminModeContext';
 import { useAppContext } from '../context/AppContext';
@@ -21,6 +21,7 @@ import { RefundRequests, CustomerComplaints } from './pages/Disputes';
 // Other pages
 import Payouts from './pages/Payouts';
 import Settings from './pages/Settings';
+import DashboardNotifications from './pages/DashboardNotifications';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,11 +29,12 @@ const Dashboard = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
 
   // Check authentication and business verification status
   useEffect(() => {
+    let isMounted = true;
     const checkAccess = async () => {
       // Wait for auth to load
       if (isLoading) return;
@@ -63,6 +65,7 @@ const Dashboard = () => {
       // Business owner - check if their business is verified
       try {
         const businessResponse = await businessService.getMyBusinesses();
+        if (!isMounted) return;
         const businesses = businessResponse.businesses || businessResponse || [];
 
         if (businesses.length === 0) {
@@ -76,8 +79,9 @@ const Dashboard = () => {
 
         // Check if business is approved/verified
         // Business is approved if status is 'active' and verification.status is 'verified' or 'approved'
-        const isApproved = business.status === 'active' &&
-                          (verificationStatus === 'verified' || verificationStatus === 'approved');
+        const isApproved =
+          business.status === 'active' &&
+          (verificationStatus === 'verified' || verificationStatus === 'approved');
 
         if (!isApproved) {
           // Check specific verification status
@@ -97,12 +101,16 @@ const Dashboard = () => {
         // All checks passed - allow access
         setAuthChecked(true);
       } catch (error) {
+        if (!isMounted) return;
         console.error('Error checking business status:', error);
         navigate('/business-verification');
       }
     };
 
     checkAccess();
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, isLoading, user, navigate]);
 
   // Show loading while checking auth
@@ -179,6 +187,8 @@ const Dashboard = () => {
       // Other
       case 'payouts':
         return <Payouts />;
+      case 'notifications':
+        return <DashboardNotifications />;
       case 'settings':
         return <Settings initialTab={settingsTab} />;
       default:
@@ -191,31 +201,30 @@ const Dashboard = () => {
 
   return (
     <AdminModeProvider userRole={currentUserRole}>
-      <div className='min-h-scren bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500'>
-        <div className='flex h-screen overflow-hidden'>
+      <div className="min-h-scren bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
+        <div className="flex h-screen overflow-hidden">
           <Sidebar
             collapsed={sideBarCollapsed}
             onToggle={() => setSideBarCollapsed(!sideBarCollapsed)}
-            currentPage={currentPage} setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
             onPageChange={setCurrentPage}
           />
-          <div className='flex-1 flex flex-col overflow-hidden'>
+          <div className="flex-1 flex flex-col overflow-hidden">
             <Header
               onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)}
               onNavigateToSettings={handleNavigateToSettings}
               onPageChange={handlePageChange}
             />
 
-            <div className='flex-1 overflow-y-auto bg-transparent'>
-              <div className='p-6 space-y-6'>
-                {renderPage()}
-              </div>
+            <div className="flex-1 overflow-y-auto bg-transparent">
+              <div className="p-6 space-y-6">{renderPage()}</div>
             </div>
           </div>
         </div>
       </div>
     </AdminModeProvider>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

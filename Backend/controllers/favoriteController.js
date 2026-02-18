@@ -1,4 +1,5 @@
 const Favorite = require('../models/Favorite');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Toggle favorite (add or remove)
@@ -17,7 +18,10 @@ const toggleFavorite = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Favorite error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -29,20 +33,38 @@ const toggleFavorite = async (req, res) => {
 const getFavorites = async (req, res) => {
   try {
     const { favoriteType } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
     let query = { user: req.user._id };
 
     if (favoriteType) {
       query.favoriteType = favoriteType;
     }
 
-    const favorites = await Favorite.find(query)
-      .populate('business', 'name type address media stats')
-      .populate('listing', 'title category pricing photos timeWindow')
-      .sort({ createdAt: -1 });
+    const [favorites, total] = await Promise.all([
+      Favorite.find(query)
+        .populate('business', 'name type address media stats')
+        .populate('listing', 'title category pricing photos timeWindow')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Favorite.countDocuments(query),
+    ]);
 
-    res.json(favorites);
+    res.json({
+      favorites,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Favorite error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -59,12 +81,15 @@ const checkFavorite = async (req, res) => {
 
     res.json({ isFavorited });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Favorite error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
 module.exports = {
   toggleFavorite,
   getFavorites,
-  checkFavorite
+  checkFavorite,
 };

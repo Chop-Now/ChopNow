@@ -1,6 +1,7 @@
 const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const { uploadMultipleToCloudinary } = require('../utils/cloudinaryUpload');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Create a new listing
@@ -19,7 +20,7 @@ const createListing = async (req, res) => {
       timeWindow,
       fulfillment,
       nutritionalInfo, // Added
-      images // Added
+      images, // Added
     } = req.body;
 
     // Validation
@@ -34,7 +35,9 @@ const createListing = async (req, res) => {
     }
 
     if (businessDoc.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized to create listing for this business' });
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to create listing for this business' });
     }
 
     const listing = await Listing.create({
@@ -47,7 +50,7 @@ const createListing = async (req, res) => {
       timeWindow,
       fulfillment,
       nutritionalInfo,
-      images
+      images,
     });
 
     // Update business stats
@@ -56,7 +59,10 @@ const createListing = async (req, res) => {
 
     res.status(201).json(listing);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -105,7 +111,8 @@ const getListings = async (req, res) => {
       .populate('business', 'name type address media')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Listing.countDocuments(query);
 
@@ -113,10 +120,13 @@ const getListings = async (req, res) => {
       listings,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -143,19 +153,21 @@ const getNearbyListings = async (req, res) => {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
+            coordinates: [parseFloat(lng), parseFloat(lat)],
           },
-          $maxDistance: parseInt(radius)
-        }
-      }
-    }).select('_id');
+          $maxDistance: parseInt(radius),
+        },
+      },
+    })
+      .select('_id')
+      .lean();
 
-    const businessIds = nearbyBusinesses.map(b => b._id);
+    const businessIds = nearbyBusinesses.map((b) => b._id);
 
     // Then find active listings from those businesses
     let query = {
       business: { $in: businessIds },
-      status: 'active'
+      status: 'active',
     };
 
     if (category) query.category = category;
@@ -169,7 +181,8 @@ const getNearbyListings = async (req, res) => {
       .populate('business', 'name type address media')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Listing.countDocuments(query);
 
@@ -177,10 +190,13 @@ const getNearbyListings = async (req, res) => {
       listings,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -191,8 +207,10 @@ const getNearbyListings = async (req, res) => {
  */
 const getListingById = async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id)
-      .populate('business', 'name type address contact media deliverySettings');
+    const listing = await Listing.findById(req.params.id).populate(
+      'business',
+      'name type address contact media deliverySettings'
+    );
 
     if (!listing) {
       return res.status(404).json({ message: 'Listing not found' });
@@ -205,7 +223,10 @@ const getListingById = async (req, res) => {
 
     res.json(listing);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -223,7 +244,10 @@ const updateListing = async (req, res) => {
     }
 
     // Check ownership
-    if (listing.business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (
+      listing.business.owner.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({ message: 'Not authorized to update this listing' });
     }
 
@@ -238,10 +262,10 @@ const updateListing = async (req, res) => {
       'fulfillment',
       'status',
       'nutritionalInfo',
-      'images'
+      'images',
     ];
 
-    allowedUpdates.forEach(field => {
+    allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
         listing[field] = req.body[field];
       }
@@ -251,7 +275,10 @@ const updateListing = async (req, res) => {
 
     res.json(listing);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -269,7 +296,10 @@ const deleteListing = async (req, res) => {
     }
 
     // Check ownership
-    if (listing.business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (
+      listing.business.owner.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({ message: 'Not authorized to delete this listing' });
     }
 
@@ -284,7 +314,10 @@ const deleteListing = async (req, res) => {
 
     res.json({ message: 'Listing deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -306,7 +339,10 @@ const uploadPhotos = async (req, res) => {
     }
 
     // Check ownership
-    if (listing.business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (
+      listing.business.owner.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -318,10 +354,13 @@ const uploadPhotos = async (req, res) => {
 
     res.json({
       message: 'Photos uploaded successfully',
-      images: listing.images
+      images: listing.images,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -333,18 +372,32 @@ const uploadPhotos = async (req, res) => {
 const getListingsByBusiness = async (req, res) => {
   try {
     const { status } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
     let query = { business: req.params.businessId };
 
     if (status) {
       query.status = status;
     }
 
-    const listings = await Listing.find(query)
-      .sort({ createdAt: -1 });
+    const [listings, total] = await Promise.all([
+      Listing.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Listing.countDocuments(query),
+    ]);
 
-    res.json(listings);
+    res.json({
+      listings,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -356,5 +409,5 @@ module.exports = {
   updateListing,
   deleteListing,
   uploadPhotos,
-  getListingsByBusiness
+  getListingsByBusiness,
 };
