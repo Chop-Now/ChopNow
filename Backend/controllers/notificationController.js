@@ -13,7 +13,7 @@ const getNotifications = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    let query = { user: req.user._id };
+    const query = { user: req.user._id };
 
     if (read !== undefined) {
       query.read = read === 'true';

@@ -3,7 +3,7 @@
  */
 const logger = require('../utils/logger');
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   // Prefer structured logging; fall back to console if logger unavailable
   try {
     logger.error(
@@ -11,8 +11,7 @@ const errorHandler = (err, req, res, next) => {
       'Unhandled error'
     );
   } catch {
-    // eslint-disable-next-line no-console
-    console.error(err.stack);
+    console.error(err.stack); // eslint-disable-line no-console
   }
 
   // Mongoose validation error
@@ -80,7 +79,7 @@ const errorHandler = (err, req, res, next) => {
 /**
  * 404 Not Found handler
  */
-const notFound = (req, res, next) => {
+const notFound = (req, res, _next) => {
   res.status(404).json({
     message: `Route ${req.originalUrl} not found`,
   });

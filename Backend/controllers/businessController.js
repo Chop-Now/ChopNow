@@ -91,7 +91,7 @@ const getBusinesses = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let query = {};
+    const query = {};
 
     // Filter by type
     if (type) query.type = type;

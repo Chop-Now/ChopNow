@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const User = require('./models/User');

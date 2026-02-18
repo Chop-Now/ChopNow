@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Script to promote a user to admin
  * Usage: node scripts/makeAdmin.js <email>

@@ -48,7 +48,7 @@ const uploadMultipleToCloudinary = async (files, folder = 'chopnow') => {
     const results = await Promise.all(uploadPromises);
     return results.map((result) => result.secure_url);
   } catch (error) {
-    throw new Error('Failed to upload images: ' + error.message);
+    throw new Error('Failed to upload images: ' + error.message, { cause: error });
   }
 };
 
@@ -62,7 +62,7 @@ const deleteFromCloudinary = async (publicId) => {
     const result = await cloudinary.uploader.destroy(publicId);
     return result;
   } catch (error) {
-    throw new Error('Failed to delete image: ' + error.message);
+    throw new Error('Failed to delete image: ' + error.message, { cause: error });
   }
 };
 
