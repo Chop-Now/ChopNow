@@ -19,23 +19,23 @@ const getConnectionOptions = () => {
 
   return {
     // Connection Pool Settings
-    maxPoolSize: isProduction ? 100 : 10,      // Max concurrent connections
-    minPoolSize: isProduction ? 10 : 2,        // Min connections to maintain
+    maxPoolSize: isProduction ? 100 : 10, // Max concurrent connections
+    minPoolSize: isProduction ? 10 : 2, // Min connections to maintain
 
     // Timeouts
-    serverSelectionTimeoutMS: 10000,           // Timeout for server selection
-    socketTimeoutMS: 45000,                    // Socket timeout
-    connectTimeoutMS: 30000,                   // Initial connection timeout
+    serverSelectionTimeoutMS: 10000, // Timeout for server selection
+    socketTimeoutMS: 45000, // Socket timeout
+    connectTimeoutMS: 30000, // Initial connection timeout
 
     // Write/Read Settings
-    retryWrites: true,                         // Retry failed writes
-    retryReads: true,                          // Retry failed reads
+    retryWrites: true, // Retry failed writes
+    retryReads: true, // Retry failed reads
 
     // Heartbeat Settings
-    heartbeatFrequencyMS: 10000,               // How often to check server health
+    heartbeatFrequencyMS: 10000, // How often to check server health
 
     // Buffer Settings
-    maxIdleTimeMS: 30000,                      // Close idle connections after 30s
+    maxIdleTimeMS: 30000, // Close idle connections after 30s
 
     // Auto Index (disable in production for performance)
     autoIndex: !isProduction,
@@ -55,11 +55,14 @@ const connectDB = async () => {
 
   const options = getConnectionOptions();
 
-  logger.info({
-    maxPoolSize: options.maxPoolSize,
-    minPoolSize: options.minPoolSize,
-    env: process.env.NODE_ENV || 'development'
-  }, 'Initializing MongoDB connection');
+  logger.info(
+    {
+      maxPoolSize: options.maxPoolSize,
+      minPoolSize: options.minPoolSize,
+      env: process.env.NODE_ENV || 'development',
+    },
+    'Initializing MongoDB connection'
+  );
 
   try {
     await mongoose.connect(mongoUri, options);
@@ -84,19 +87,25 @@ const handleConnectionError = async (error) => {
   connectionRetries++;
 
   if (connectionRetries <= MAX_RETRIES) {
-    logger.warn({
-      attempt: connectionRetries,
-      maxRetries: MAX_RETRIES,
-      retryInMs: RETRY_DELAY_MS
-    }, `Retrying MongoDB connection in ${RETRY_DELAY_MS / 1000}s...`);
+    logger.warn(
+      {
+        attempt: connectionRetries,
+        maxRetries: MAX_RETRIES,
+        retryInMs: RETRY_DELAY_MS,
+      },
+      `Retrying MongoDB connection in ${RETRY_DELAY_MS / 1000}s...`
+    );
 
-    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     return connectDB();
   } else {
-    logger.error({
-      attempts: connectionRetries,
-      error: error.message
-    }, 'Max MongoDB connection retries exceeded. Exiting.');
+    logger.error(
+      {
+        attempts: connectionRetries,
+        error: error.message,
+      },
+      'Max MongoDB connection retries exceeded. Exiting.'
+    );
     process.exit(1);
   }
 };
@@ -121,7 +130,7 @@ const setupConnectionListeners = () => {
       logger.info('Attempting to reconnect to MongoDB...');
       setTimeout(() => {
         connectionRetries = 0;
-        connectDB().catch(err => {
+        connectDB().catch((err) => {
           logger.error({ err }, 'Reconnection failed');
         });
       }, RETRY_DELAY_MS);
@@ -164,7 +173,7 @@ const getConnectionStatus = () => {
     0: 'disconnected',
     1: 'connected',
     2: 'connecting',
-    3: 'disconnecting'
+    3: 'disconnecting',
   };
 
   return {
@@ -173,7 +182,7 @@ const getConnectionStatus = () => {
     isConnected,
     host: mongoose.connection.host,
     name: mongoose.connection.name,
-    retries: connectionRetries
+    retries: connectionRetries,
   };
 };
 
@@ -193,7 +202,7 @@ const getPoolStats = async () => {
       current: serverStatus.connections?.current || 0,
       available: serverStatus.connections?.available || 0,
       totalCreated: serverStatus.connections?.totalCreated || 0,
-      active: serverStatus.connections?.active || 0
+      active: serverStatus.connections?.active || 0,
     };
   } catch (error) {
     logger.debug({ err: error }, 'Could not get pool stats');
@@ -213,7 +222,7 @@ const healthCheck = async () => {
         healthy: false,
         status: 'disconnected',
         latencyMs: null,
-        error: 'Database not connected'
+        error: 'Database not connected',
       };
     }
 
@@ -225,14 +234,14 @@ const healthCheck = async () => {
       healthy: true,
       status: 'connected',
       latencyMs,
-      poolStats: await getPoolStats()
+      poolStats: await getPoolStats(),
     };
   } catch (error) {
     return {
       healthy: false,
       status: 'error',
       latencyMs: Date.now() - startTime,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -265,9 +274,11 @@ const setupGracefulShutdown = () => {
     process.exit(1);
   });
 
-  // Handle unhandled promise rejections
+  // Handle unhandled promise rejections - exit to prevent undefined state
   process.on('unhandledRejection', async (reason, promise) => {
-    logger.error({ reason, promise }, 'Unhandled promise rejection');
+    logger.error({ reason }, 'Unhandled promise rejection - shutting down');
+    await closeDB();
+    process.exit(1);
   });
 };
 
@@ -278,5 +289,5 @@ module.exports = {
   getPoolStats,
   healthCheck,
   setupGracefulShutdown,
-  getConnectionOptions
+  getConnectionOptions,
 };

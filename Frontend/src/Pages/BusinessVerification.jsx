@@ -1,14 +1,27 @@
-import { MapPin, LocateFixed, CloudUpload, X, ChevronRight, BadgeAlert, CircleCheck, Loader2, Tractor, Store, Croissant, UtensilsCrossed } from 'lucide-react'
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
-import LocationPicker from '../Components/maps/LocationPicker'
-import { useGeolocation } from '../Components/maps/useGeolocation'
-import { reverseGeocode, searchAddress } from '../services/geocoding'
-import { businessService } from '../services'
-import { useAppContext } from '../context/AppContext'
-import toast from 'react-hot-toast'
+import {
+  MapPin,
+  LocateFixed,
+  CloudUpload,
+  X,
+  ChevronRight,
+  BadgeAlert,
+  CircleCheck,
+  Loader2,
+  Tractor,
+  Store,
+  Croissant,
+  UtensilsCrossed,
+} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import LocationPicker from '../Components/maps/LocationPicker';
+import { useGeolocation } from '../Components/maps/useGeolocation';
+import { reverseGeocode, searchAddress } from '../services/geocoding';
+import { businessService } from '../services';
+import { useAppContext } from '../context/AppContext';
+import toast from 'react-hot-toast';
 
 // Document requirements by business category
 const CATEGORY_REQUIREMENTS = {
@@ -16,26 +29,26 @@ const CATEGORY_REQUIREMENTS = {
     label: 'Farmer',
     icon: Tractor,
     requiredDocs: 'Farm registration or land ownership document',
-    examples: ['Farm registration certificate', 'Land ownership document', 'Agricultural permit']
+    examples: ['Farm registration certificate', 'Land ownership document', 'Agricultural permit'],
   },
   supermarket: {
     label: 'Supermarket',
     icon: Store,
     requiredDocs: 'Business license and tax registration',
-    examples: ['Business license', 'Tax registration certificate', 'Trading license']
+    examples: ['Business license', 'Tax registration certificate', 'Trading license'],
   },
   bakery: {
     label: 'Bakery',
     icon: Croissant,
     requiredDocs: 'Food handling permit and business license',
-    examples: ['Food handling permit', 'Business license', 'Health department approval']
+    examples: ['Food handling permit', 'Business license', 'Health department approval'],
   },
   restaurant: {
     label: 'Restaurant',
     icon: UtensilsCrossed,
     requiredDocs: 'Health certificate and food handling permit',
-    examples: ['Health certificate', 'Food handler permit', 'Restaurant operating license']
-  }
+    examples: ['Health certificate', 'Food handler permit', 'Restaurant operating license'],
+  },
 };
 
 const BusinessVerification = () => {
@@ -51,7 +64,7 @@ const BusinessVerification = () => {
   const [errors, setErrors] = useState({
     phone: false,
     location: false,
-    files: false
+    files: false,
   });
   const { getCurrentLocation } = useGeolocation();
 
@@ -59,6 +72,7 @@ const BusinessVerification = () => {
   const [businessType, setBusinessType] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchBusiness = async () => {
       // Check if user is authenticated
       if (!user) {
@@ -69,12 +83,14 @@ const BusinessVerification = () => {
 
       try {
         if (user?.business?._id) {
+          if (!isMounted) return;
           setBusinessId(user.business._id);
           setBusinessType(user.business.type);
           return;
         }
 
         const response = await businessService.getMyBusinesses();
+        if (!isMounted) return;
         const businesses = response?.businesses || response;
 
         if (businesses && businesses.length > 0) {
@@ -84,14 +100,19 @@ const BusinessVerification = () => {
           // User has no business - show helpful message
           toast.error('Please create a business profile first before verification.');
           setTimeout(() => {
-            navigate('/dashboard'); // or wherever they create businesses
+            if (isMounted) navigate('/dashboard');
           }, 2000);
         }
       } catch (err) {
-        console.error("Failed to fetch business", err);
+        if (!isMounted) return;
+        console.error('Failed to fetch business', err);
 
         // Check if it's an authentication error
-        if (err?.message?.includes('401') || err?.message?.includes('authorized') || err?.message?.includes('token')) {
+        if (
+          err?.message?.includes('401') ||
+          err?.message?.includes('authorized') ||
+          err?.message?.includes('token')
+        ) {
           toast.error('Session expired. Please log in again.');
           navigate('/login');
         } else {
@@ -101,6 +122,9 @@ const BusinessVerification = () => {
     };
 
     fetchBusiness();
+    return () => {
+      isMounted = false;
+    };
   }, [user, navigate]);
 
   const handleSubmit = async (e) => {
@@ -110,13 +134,13 @@ const BusinessVerification = () => {
     const newErrors = {
       phone: !phone || phone.length < 10,
       location: !location || !address,
-      files: uploadedFiles.length === 0
+      files: uploadedFiles.length === 0,
     };
 
     setErrors(newErrors);
 
     // Check if there are any errors
-    if (Object.values(newErrors).some(error => error)) {
+    if (Object.values(newErrors).some((error) => error)) {
       if (newErrors.phone) toast.error('Please enter a valid business phone number');
       if (newErrors.location) toast.error('Please select your business location');
       if (newErrors.files) toast.error('Please upload at least one certificate document');
@@ -124,7 +148,7 @@ const BusinessVerification = () => {
     }
 
     if (!businessId) {
-      toast.error("Business profile not found. Please ensure you have created a business.");
+      toast.error('Business profile not found. Please ensure you have created a business.');
       return;
     }
 
@@ -136,7 +160,7 @@ const BusinessVerification = () => {
       formData.append('address', address);
       formData.append('location', JSON.stringify(location));
 
-      uploadedFiles.forEach(file => {
+      uploadedFiles.forEach((file) => {
         formData.append('documents', file);
       });
 
@@ -155,23 +179,28 @@ const BusinessVerification = () => {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      setUploadedFiles(prev => [...prev, ...files]);
-      setErrors(prev => ({ ...prev, files: false }));
+      setUploadedFiles((prev) => [...prev, ...files]);
+      setErrors((prev) => ({ ...prev, files: false }));
     }
   };
 
   const removeFile = (indexToRemove) => {
-    setUploadedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    setUploadedFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   return (
     <div className="min-h-screen w-full bg-gray-100">
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Breadcrumbs */}
-        <div className="flex items-center justify-center space-x-4 text-xs mb-8" style={{ color: 'var(--color-gray-50)' }}>
+        <div
+          className="flex items-center justify-center space-x-4 text-xs mb-8"
+          style={{ color: 'var(--color-gray-50)' }}
+        >
           <p className="text-green-600 font-medium">Account creation</p>
           <ChevronRight className="w-3 h-3" />
-          <p style={{ color: 'var(--color-textColor)' }} className="font-medium">Business details</p>
+          <p style={{ color: 'var(--color-textColor)' }} className="font-medium">
+            Business details
+          </p>
           <ChevronRight className="w-3 h-3" />
           <p>Dashboard</p>
         </div>
@@ -182,7 +211,8 @@ const BusinessVerification = () => {
             Business Verification
           </h1>
           <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-            Just a few more details to get your business live on ChopNow and start selling surplus food.
+            Just a few more details to get your business live on ChopNow and start selling surplus
+            food.
           </p>
         </div>
 
@@ -197,19 +227,28 @@ const BusinessVerification = () => {
               </h3>
             </div>
             <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
-              To ensure the safety of our customers and maintain a trustworthy marketplace we need to verify your business's identity and confirm you're authorized to handle food. This helps prevent fraud and ensures compliance with local health regulations.
+              To ensure the safety of our customers and maintain a trustworthy marketplace we need
+              to verify your business's identity and confirm you're authorized to handle food. This
+              helps prevent fraud and ensures compliance with local health regulations.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Contact Information */}
             <div>
-              <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
+              <h3
+                className="text-base font-medium mb-3"
+                style={{ color: 'var(--color-textColor)' }}
+              >
                 Contact Information
               </h3>
               <div>
-                <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-textColor)' }}>
-                  Business Phone Number {errors.phone && <span className="text-red-500 text-[10px]">*Required</span>}
+                <label
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: 'var(--color-textColor)' }}
+                >
+                  Business Phone Number{' '}
+                  {errors.phone && <span className="text-red-500 text-[10px]">*Required</span>}
                 </label>
                 <PhoneInput
                   country={'rw'}
@@ -217,7 +256,7 @@ const BusinessVerification = () => {
                   onChange={(value) => {
                     setPhone(value);
                     if (value && value.length >= 10) {
-                      setErrors(prev => ({ ...prev, phone: false }));
+                      setErrors((prev) => ({ ...prev, phone: false }));
                     }
                   }}
                   enableSearch={true}
@@ -235,8 +274,12 @@ const BusinessVerification = () => {
 
             {/* Business Location */}
             <div>
-              <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
-                Business Location {errors.location && <span className="text-red-500 text-[10px]">*Required</span>}
+              <h3
+                className="text-base font-medium mb-3"
+                style={{ color: 'var(--color-textColor)' }}
+              >
+                Business Location{' '}
+                {errors.location && <span className="text-red-500 text-[10px]">*Required</span>}
               </h3>
 
               {/* Use Current Location Button */}
@@ -250,7 +293,7 @@ const BusinessVerification = () => {
                       try {
                         const result = await reverseGeocode(coords.lat, coords.lng);
                         setAddress(result.display_name || 'Location detected');
-                        setErrors(prev => ({ ...prev, location: false }));
+                        setErrors((prev) => ({ ...prev, location: false }));
                         toast.success('Location detected successfully!');
                       } catch {
                         toast.error('Could not fetch address');
@@ -274,7 +317,9 @@ const BusinessVerification = () => {
 
               {/* Manual Address Input */}
               <div className="relative mb-3">
-                <div className={`flex items-center w-full bg-transparent border h-12 rounded-lg overflow-hidden px-4 gap-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}>
+                <div
+                  className={`flex items-center w-full bg-transparent border h-12 rounded-lg overflow-hidden px-4 gap-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
+                >
                   <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
                   <input
                     type="text"
@@ -289,9 +334,12 @@ const BusinessVerification = () => {
                             const results = await searchAddress(manualAddress);
                             if (results && results.length > 0) {
                               const result = results[0];
-                              setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                              setLocation({
+                                lat: parseFloat(result.lat),
+                                lng: parseFloat(result.lon),
+                              });
                               setAddress(result.display_name);
-                              setErrors(prev => ({ ...prev, location: false }));
+                              setErrors((prev) => ({ ...prev, location: false }));
                               toast.success('Address found!');
                             } else {
                               toast.error('Address not found');
@@ -315,9 +363,12 @@ const BusinessVerification = () => {
                           const results = await searchAddress(manualAddress);
                           if (results && results.length > 0) {
                             const result = results[0];
-                            setLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+                            setLocation({
+                              lat: parseFloat(result.lat),
+                              lng: parseFloat(result.lon),
+                            });
                             setAddress(result.display_name);
-                            setErrors(prev => ({ ...prev, location: false }));
+                            setErrors((prev) => ({ ...prev, location: false }));
                             toast.success('Address found!');
                           } else {
                             toast.error('Address not found');
@@ -348,7 +399,7 @@ const BusinessVerification = () => {
                   selectedLocation={location}
                   onLocationSelect={async (latlng) => {
                     setLocation({ lat: latlng.lat, lng: latlng.lng });
-                    setErrors(prev => ({ ...prev, location: false }));
+                    setErrors((prev) => ({ ...prev, location: false }));
                     try {
                       const result = await reverseGeocode(latlng.lat, latlng.lng);
                       setAddress(result.display_name || 'Location selected');
@@ -362,8 +413,16 @@ const BusinessVerification = () => {
 
             {/* Certification */}
             <div>
-              <h3 className="text-base font-medium mb-3" style={{ color: 'var(--color-textColor)' }}>
-                Certification {errors.files && <span className="text-red-500 text-[10px]">*Required - Upload at least one certificate</span>}
+              <h3
+                className="text-base font-medium mb-3"
+                style={{ color: 'var(--color-textColor)' }}
+              >
+                Certification{' '}
+                {errors.files && (
+                  <span className="text-red-500 text-[10px]">
+                    *Required - Upload at least one certificate
+                  </span>
+                )}
               </h3>
 
               {/* Category-specific requirements */}
@@ -372,7 +431,9 @@ const BusinessVerification = () => {
                   <div className="flex items-center gap-2 mb-2">
                     {(() => {
                       const IconComponent = CATEGORY_REQUIREMENTS[businessType]?.icon;
-                      return IconComponent ? <IconComponent className="w-5 h-5 text-orange-600" /> : null;
+                      return IconComponent ? (
+                        <IconComponent className="w-5 h-5 text-orange-600" />
+                      ) : null;
                     })()}
                     <h4 className="text-sm font-semibold text-orange-700">
                       Required for {CATEGORY_REQUIREMENTS[businessType].label}
@@ -409,7 +470,11 @@ const BusinessVerification = () => {
                 <CloudUpload className="w-10 h-10" style={{ color: 'var(--color-solid)' }} />
                 <p style={{ color: 'var(--color-gray-50)' }}>Drag & drop your files here</p>
                 <p className="text-gray-400 text-xs">
-                  Or <span className="underline" style={{ color: 'var(--color-solid)' }}>click</span> to upload
+                  Or{' '}
+                  <span className="underline" style={{ color: 'var(--color-solid)' }}>
+                    click
+                  </span>{' '}
+                  to upload
                 </p>
                 <input
                   id="fileInput"
@@ -424,13 +489,22 @@ const BusinessVerification = () => {
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="border border-gray-300 rounded-lg p-3 flex items-center justify-between">
+                    <div
+                      key={index}
+                      className="border border-gray-300 rounded-lg p-3 flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
-                          <CloudUpload className="w-4 h-4" style={{ color: 'var(--color-solid)' }} />
+                          <CloudUpload
+                            className="w-4 h-4"
+                            style={{ color: 'var(--color-solid)' }}
+                          />
                         </div>
                         <div>
-                          <p className="text-xs font-medium" style={{ color: 'var(--color-textColor)' }}>
+                          <p
+                            className="text-xs font-medium"
+                            style={{ color: 'var(--color-textColor)' }}
+                          >
                             {file.name}
                           </p>
                           <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
@@ -488,7 +562,7 @@ const BusinessVerification = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BusinessVerification
+export default BusinessVerification;

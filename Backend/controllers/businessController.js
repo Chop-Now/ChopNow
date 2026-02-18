@@ -15,20 +15,12 @@ const logger = require('../utils/logger');
  */
 const createBusiness = async (req, res) => {
   try {
-    const {
-      name,
-      type,
-      description,
-      contact,
-      address,
-      deliverySettings
-    } = req.body;
+    const { name, type, description, contact, address, deliverySettings } = req.body;
 
     // Validation
     if (!name || !type || !contact || !address) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
-
 
     // Set location from address coordinates if provided
     const location = address?.location?.coordinates
@@ -49,7 +41,7 @@ const createBusiness = async (req, res) => {
       : {
           status: 'verified',
           verifiedAt: new Date(),
-          notes: 'Auto-verified - business type does not require document verification'
+          notes: 'Auto-verified - business type does not require document verification',
         };
 
     const businessStatus = requiresVerification ? 'inactive' : 'active';
@@ -66,7 +58,7 @@ const createBusiness = async (req, res) => {
       location,
       deliverySettings,
       status: businessStatus,
-      verification: verificationData
+      verification: verificationData,
     });
 
     // Upgrade user role if they don't already have business_owner role
@@ -78,10 +70,12 @@ const createBusiness = async (req, res) => {
 
     res.status(201).json({
       ...business.toObject(),
-      requiresVerification
+      requiresVerification,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -120,10 +114,10 @@ const getBusinesses = async (req, res) => {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
+            coordinates: [parseFloat(lng), parseFloat(lat)],
           },
-          $maxDistance: parseInt(radius) // in meters
-        }
+          $maxDistance: parseInt(radius), // in meters
+        },
       };
     }
 
@@ -131,7 +125,8 @@ const getBusinesses = async (req, res) => {
       .populate('owner', 'firstName lastName email')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Business.countDocuments(query);
 
@@ -139,10 +134,12 @@ const getBusinesses = async (req, res) => {
       businesses,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -154,7 +151,8 @@ const getBusinesses = async (req, res) => {
 const getBusinessById = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id)
-      .populate('owner', 'firstName lastName email phone');
+      .populate('owner', 'firstName lastName email phone')
+      .lean();
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -162,7 +160,9 @@ const getBusinessById = async (req, res) => {
 
     res.json(business);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -185,8 +185,15 @@ const updateBusiness = async (req, res) => {
     }
 
     // Update fields
-    const allowedUpdates = ['name', 'type', 'description', 'contact', 'address', 'deliverySettings'];
-    allowedUpdates.forEach(field => {
+    const allowedUpdates = [
+      'name',
+      'type',
+      'description',
+      'contact',
+      'address',
+      'deliverySettings',
+    ];
+    allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
         if (field === 'contact') {
           if (req.body.contact.email) business.email = req.body.contact.email;
@@ -207,7 +214,9 @@ const updateBusiness = async (req, res) => {
 
     res.json(business);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -233,7 +242,9 @@ const deleteBusiness = async (req, res) => {
 
     res.json({ message: 'Business deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -269,10 +280,12 @@ const uploadLogo = async (req, res) => {
 
     res.json({
       message: 'Logo uploaded successfully',
-      logo: result.secure_url
+      logo: result.secure_url,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -308,10 +321,12 @@ const uploadCoverImage = async (req, res) => {
 
     res.json({
       message: 'Cover image uploaded successfully',
-      coverImage: result.secure_url
+      coverImage: result.secure_url,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -348,10 +363,12 @@ const uploadPhotos = async (req, res) => {
 
     res.json({
       message: 'Photos uploaded successfully',
-      photos: business.media.photos
+      photos: business.media.photos,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -390,7 +407,7 @@ const uploadKYC = async (req, res) => {
 
       uploadedDocuments.push({
         url: result.secure_url,
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
       });
     }
 
@@ -412,7 +429,7 @@ const uploadKYC = async (req, res) => {
         if (locationData.lat && locationData.lng) {
           business.location = {
             type: 'Point',
-            coordinates: [locationData.lng, locationData.lat]
+            coordinates: [locationData.lng, locationData.lat],
           };
 
           // Also update address object if it exists
@@ -422,7 +439,7 @@ const uploadKYC = async (req, res) => {
           }
         }
       } catch (e) {
-        console.error('Error parsing location:', e);
+        logger.error({ err: e }, 'Error parsing location');
       }
     }
 
@@ -431,7 +448,7 @@ const uploadKYC = async (req, res) => {
       business.verification = {
         status: 'pending',
         documents: [],
-        submittedAt: new Date()
+        submittedAt: new Date(),
       };
     }
 
@@ -445,10 +462,12 @@ const uploadKYC = async (req, res) => {
     res.json({
       message: 'KYC documents uploaded successfully. Verification is pending.',
       verification: business.verification,
-      documentsUploaded: uploadedDocuments.length
+      documentsUploaded: uploadedDocuments.length,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -459,12 +478,27 @@ const uploadKYC = async (req, res) => {
  */
 const getMyBusinesses = async (req, res) => {
   try {
-    const businesses = await Business.find({ owner: req.user._id })
-      .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    res.json(businesses);
+    const query = { owner: req.user._id };
+
+    const [businesses, total] = await Promise.all([
+      Business.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Business.countDocuments(query),
+    ]);
+
+    res.json({
+      businesses,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -475,7 +509,7 @@ const getMyBusinesses = async (req, res) => {
  */
 const getBusinessStats = async (req, res) => {
   try {
-    const business = await Business.findById(req.params.id);
+    const business = await Business.findById(req.params.id).lean();
     const Listing = require('../models/Listing');
     const Order = require('../models/Order');
 
@@ -494,33 +528,31 @@ const getBusinessStats = async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Count active listings
-    const activeListings = await Listing.countDocuments({
-      business: business._id,
-      status: 'active'
-    });
+    // Run all independent queries in parallel
+    const [activeListings, ordersToday, revenueResult, mealsSaved] = await Promise.all([
+      // Count active listings
+      Listing.countDocuments({
+        business: business._id,
+        status: 'active',
+      }),
+      // Count orders today
+      Order.countDocuments({
+        business: business._id,
+        createdAt: { $gte: today, $lt: tomorrow },
+      }),
+      // Calculate total revenue using aggregation instead of loading all orders
+      Order.aggregate([
+        { $match: { business: business._id, status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+      ]),
+      // Calculate impact (meals saved)
+      Order.countDocuments({
+        business: business._id,
+        status: 'completed',
+      }),
+    ]);
 
-    // Count orders today
-    const ordersToday = await Order.countDocuments({
-      business: business._id,
-      createdAt: { $gte: today, $lt: tomorrow }
-    });
-
-    // Calculate total revenue (from completed orders)
-    const completedOrders = await Order.find({
-      business: business._id,
-      status: 'completed'
-    }).select('pricing.total');
-
-    const totalRevenue = completedOrders.reduce((sum, order) => {
-      return sum + (order.pricing?.total || 0);
-    }, 0);
-
-    // Calculate impact (meals saved) - approximate as number of completed orders
-    const mealsSaved = await Order.countDocuments({
-      business: business._id,
-      status: 'completed'
-    });
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
     res.json({
       activeListings,
@@ -528,10 +560,12 @@ const getBusinessStats = async (req, res) => {
       totalRevenue,
       mealsSaved,
       totalOrders: business.stats.totalOrders || 0,
-      averageRating: business.stats.averageRating || 0
+      averageRating: business.stats.averageRating || 0,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -553,7 +587,8 @@ const getPendingBusinesses = async (req, res) => {
       .populate('owner', 'firstName lastName email phone')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Business.countDocuments(query);
 
@@ -561,10 +596,12 @@ const getPendingBusinesses = async (req, res) => {
       businesses,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -577,8 +614,10 @@ const approveBusiness = async (req, res) => {
   try {
     const { message } = req.body;
 
-    const business = await Business.findById(req.params.id)
-      .populate('owner', 'firstName lastName email');
+    const business = await Business.findById(req.params.id).populate(
+      'owner',
+      'firstName lastName email'
+    );
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -599,7 +638,9 @@ const approveBusiness = async (req, res) => {
 
     // Send approval email to business owner
     if (business.owner && business.owner.email) {
-      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      const ownerName =
+        `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() ||
+        'Business Owner';
       try {
         await sendBusinessApprovedEmail(
           business.owner.email,
@@ -607,9 +648,15 @@ const approveBusiness = async (req, res) => {
           ownerName,
           message || ''
         );
-        logger.info({ businessId: business._id, email: business.owner.email }, 'Business approval email sent');
+        logger.info(
+          { businessId: business._id, email: business.owner.email },
+          'Business approval email sent'
+        );
       } catch (emailError) {
-        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business approval email');
+        logger.error(
+          { err: emailError, businessId: business._id },
+          'Failed to send business approval email'
+        );
         // Don't fail the approval if email fails
       }
     }
@@ -617,7 +664,9 @@ const approveBusiness = async (req, res) => {
     res.json({ message: 'Business approved successfully', business });
   } catch (error) {
     logger.error({ err: error }, 'Error approving business');
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -630,8 +679,10 @@ const rejectBusiness = async (req, res) => {
   try {
     const { reason } = req.body;
 
-    const business = await Business.findById(req.params.id)
-      .populate('owner', 'firstName lastName email');
+    const business = await Business.findById(req.params.id).populate(
+      'owner',
+      'firstName lastName email'
+    );
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -651,7 +702,9 @@ const rejectBusiness = async (req, res) => {
 
     // Send rejection email to business owner
     if (business.owner && business.owner.email) {
-      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      const ownerName =
+        `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() ||
+        'Business Owner';
       try {
         await sendBusinessRejectedEmail(
           business.owner.email,
@@ -659,9 +712,15 @@ const rejectBusiness = async (req, res) => {
           ownerName,
           reason || ''
         );
-        logger.info({ businessId: business._id, email: business.owner.email }, 'Business rejection email sent');
+        logger.info(
+          { businessId: business._id, email: business.owner.email },
+          'Business rejection email sent'
+        );
       } catch (emailError) {
-        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business rejection email');
+        logger.error(
+          { err: emailError, businessId: business._id },
+          'Failed to send business rejection email'
+        );
         // Don't fail the rejection if email fails
       }
     }
@@ -669,7 +728,9 @@ const rejectBusiness = async (req, res) => {
     res.json({ message: 'Business rejected', business });
   } catch (error) {
     logger.error({ err: error }, 'Error rejecting business');
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -682,8 +743,10 @@ const requestMoreInfo = async (req, res) => {
   try {
     const { message } = req.body;
 
-    const business = await Business.findById(req.params.id)
-      .populate('owner', 'firstName lastName email');
+    const business = await Business.findById(req.params.id).populate(
+      'owner',
+      'firstName lastName email'
+    );
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -701,7 +764,9 @@ const requestMoreInfo = async (req, res) => {
 
     // Send info request email to business owner
     if (business.owner && business.owner.email) {
-      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      const ownerName =
+        `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() ||
+        'Business Owner';
       try {
         await sendBusinessInfoRequestedEmail(
           business.owner.email,
@@ -709,9 +774,15 @@ const requestMoreInfo = async (req, res) => {
           ownerName,
           message || ''
         );
-        logger.info({ businessId: business._id, email: business.owner.email }, 'Business info request email sent');
+        logger.info(
+          { businessId: business._id, email: business.owner.email },
+          'Business info request email sent'
+        );
       } catch (emailError) {
-        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business info request email');
+        logger.error(
+          { err: emailError, businessId: business._id },
+          'Failed to send business info request email'
+        );
         // Don't fail the request if email fails
       }
     }
@@ -719,7 +790,9 @@ const requestMoreInfo = async (req, res) => {
     res.json({ message: 'Information requested', business });
   } catch (error) {
     logger.error({ err: error }, 'Error requesting info from business');
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -732,8 +805,10 @@ const rescindBusiness = async (req, res) => {
   try {
     const { reason } = req.body;
 
-    const business = await Business.findById(req.params.id)
-      .populate('owner', 'firstName lastName email');
+    const business = await Business.findById(req.params.id).populate(
+      'owner',
+      'firstName lastName email'
+    );
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
@@ -758,7 +833,9 @@ const rescindBusiness = async (req, res) => {
 
     // Send rescind email to business owner
     if (business.owner && business.owner.email) {
-      const ownerName = `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Business Owner';
+      const ownerName =
+        `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() ||
+        'Business Owner';
       try {
         await sendBusinessRescindedEmail(
           business.owner.email,
@@ -766,9 +843,15 @@ const rescindBusiness = async (req, res) => {
           ownerName,
           reason || ''
         );
-        logger.info({ businessId: business._id, email: business.owner.email }, 'Business rescind email sent');
+        logger.info(
+          { businessId: business._id, email: business.owner.email },
+          'Business rescind email sent'
+        );
       } catch (emailError) {
-        logger.error({ err: emailError, businessId: business._id }, 'Failed to send business rescind email');
+        logger.error(
+          { err: emailError, businessId: business._id },
+          'Failed to send business rescind email'
+        );
         // Don't fail the rescind if email fails
       }
     }
@@ -776,7 +859,9 @@ const rescindBusiness = async (req, res) => {
     res.json({ message: 'Business approval rescinded', business });
   } catch (error) {
     logger.error({ err: error }, 'Error rescinding business');
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -796,5 +881,5 @@ module.exports = {
   approveBusiness,
   rejectBusiness,
   requestMoreInfo,
-  rescindBusiness
+  rescindBusiness,
 };

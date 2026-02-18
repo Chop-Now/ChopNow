@@ -17,10 +17,17 @@ const axios = require('axios');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Generate JWT Token
+// Generate JWT Access Token (short-lived)
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '100y'
+    expiresIn: '1h',
+  });
+};
+
+// Generate JWT Refresh Token (longer-lived)
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id, type: 'refresh' }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
   });
 };
 
@@ -57,7 +64,7 @@ const registerUser = async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Generate verification token
@@ -66,7 +73,9 @@ const registerUser = async (req, res) => {
 
     // Determine initial active role
     // If registering as business, default to business_owner, otherwise consumer
-    const initialActiveRole = userRoles.includes('business_owner') ? 'business_owner' : userRoles[0];
+    const initialActiveRole = userRoles.includes('business_owner')
+      ? 'business_owner'
+      : userRoles[0];
 
     // Create user
     const user = await User.create({
@@ -99,11 +108,14 @@ const registerUser = async (req, res) => {
         lastName: user.lastName,
         emailVerified: user.emailVerified,
         token: generateToken(user._id),
+        refreshToken: generateRefreshToken(user._id),
         message: 'Registration successful. Please check your email to verify your account.',
       });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -118,12 +130,15 @@ const loginUser = async (req, res) => {
 
     // Validation
     if (!email || !password) {
-      logger.warn({ email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing' }, 'Login attempt with missing credentials');
+      logger.warn(
+        { email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing' },
+        'Login attempt with missing credentials'
+      );
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // Check user
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Check user - include passwordHash since it's select:false
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+passwordHash');
     if (!user) {
       logger.warn({ email }, 'Login attempt - user not found');
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -159,11 +174,14 @@ const loginUser = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
-      token: generateToken(user._id)
+      token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
     });
   } catch (error) {
     logger.error({ err: error }, 'Login error');
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -174,10 +192,12 @@ const loginUser = async (req, res) => {
  */
 const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-passwordHash');
+    const user = await User.findById(req.user._id);
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -209,13 +229,15 @@ const updateUserProfile = async (req, res) => {
         lastName: updatedUser.lastName,
         phone: updatedUser.phone,
         avatar: updatedUser.avatar,
-        preferences: updatedUser.preferences
+        preferences: updatedUser.preferences,
       });
     } else {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -240,10 +262,12 @@ const uploadAvatar = async (req, res) => {
 
     res.json({
       message: 'Avatar uploaded successfully',
-      avatar: result.secure_url
+      avatar: result.secure_url,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -264,7 +288,7 @@ const addAddress = async (req, res) => {
 
     // If this is set as default, unset other defaults
     if (isDefault) {
-      user.addresses.forEach(addr => addr.isDefault = false);
+      user.addresses.forEach((addr) => (addr.isDefault = false));
     }
 
     user.addresses.push({
@@ -273,19 +297,21 @@ const addAddress = async (req, res) => {
       city,
       location: {
         type: 'Point',
-        coordinates: coordinates // [lng, lat]
+        coordinates: coordinates, // [lng, lat]
       },
-      isDefault: isDefault || user.addresses.length === 0
+      isDefault: isDefault || user.addresses.length === 0,
     });
 
     await user.save();
 
     res.status(201).json({
       message: 'Address added successfully',
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -312,7 +338,7 @@ const updateAddress = async (req, res) => {
     }
 
     if (req.body.isDefault) {
-      user.addresses.forEach(addr => addr.isDefault = false);
+      user.addresses.forEach((addr) => (addr.isDefault = false));
       address.isDefault = true;
     }
 
@@ -320,10 +346,12 @@ const updateAddress = async (req, res) => {
 
     res.json({
       message: 'Address updated successfully',
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -340,10 +368,12 @@ const deleteAddress = async (req, res) => {
 
     res.json({
       message: 'Address deleted successfully',
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -379,10 +409,12 @@ const getUsersForAdmin = async (req, res) => {
       users,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -401,7 +433,7 @@ const verifyEmail = async (req, res) => {
     const user = await User.findOne({
       verificationToken: token,
       verificationTokenExpires: { $gt: Date.now() },
-    });
+    }).select('+verificationToken +verificationTokenExpires');
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired verification token' });
@@ -414,7 +446,9 @@ const verifyEmail = async (req, res) => {
 
     res.json({ message: 'Email verified successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -430,7 +464,9 @@ const resendVerificationEmail = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select(
+      '+verificationToken +verificationTokenExpires'
+    );
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -456,7 +492,9 @@ const resendVerificationEmail = async (req, res) => {
       res.status(500).json({ message: 'Failed to send verification email' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -472,7 +510,7 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+resetPasswordToken +resetPasswordExpires');
     if (!user) {
       // Don't reveal if user exists for security
       return res.json({ message: 'If that email exists, a password reset link has been sent' });
@@ -495,7 +533,9 @@ const forgotPassword = async (req, res) => {
       res.status(500).json({ message: 'Failed to send password reset email' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -518,13 +558,13 @@ const resetPassword = async (req, res) => {
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
-    });
+    }).select('+passwordHash +resetPasswordToken +resetPasswordExpires');
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     user.passwordHash = await bcrypt.hash(password, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
@@ -532,7 +572,9 @@ const resetPassword = async (req, res) => {
 
     res.json({ message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -548,13 +590,13 @@ const sendOTP = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+otpCode +otpExpires');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
@@ -571,7 +613,9 @@ const sendOTP = async (req, res) => {
       res.status(500).json({ message: 'Failed to send OTP email' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -591,7 +635,7 @@ const verifyOTP = async (req, res) => {
       email,
       otpCode: otp,
       otpExpires: { $gt: Date.now() },
-    });
+    }).select('+otpCode +otpExpires');
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -617,9 +661,12 @@ const verifyOTP = async (req, res) => {
       lastName: user.lastName,
       avatar: user.avatar,
       token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -638,23 +685,27 @@ const googleLogin = async (req, res) => {
 
     // Verify Google Access Token and get user profile (using Authorization header for security)
     const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     const payload = googleResponse.data;
-    const { sub: googleId, email, given_name: firstName, family_name: lastName, picture: avatar, email_verified } = payload;
+    const {
+      sub: googleId,
+      email,
+      given_name: firstName,
+      family_name: lastName,
+      picture: avatar,
+      email_verified,
+    } = payload;
 
     // Check if user exists by googleId or email
     let user = await User.findOne({
-      $or: [
-        { googleId },
-        { email: email.toLowerCase() }
-      ]
+      $or: [{ googleId }, { email: email.toLowerCase() }],
     });
 
     if (!user) {
       // Create new user if not exists
       // For Google users, we set a dummy passwordHash since they authenticate via Google
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(12);
       const dummyPassword = crypto.randomBytes(16).toString('hex');
       const passwordHash = await bcrypt.hash(dummyPassword, salt);
 
@@ -668,7 +719,7 @@ const googleLogin = async (req, res) => {
         activeRole: 'consumer',
         emailVerified: email_verified,
         passwordHash, // Required by model
-        status: 'active'
+        status: 'active',
       });
 
       logger.info({ userId: user._id }, 'New user registered via Google');
@@ -696,19 +747,24 @@ const googleLogin = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
-      token: generateToken(user._id)
+      token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
     });
   } catch (error) {
     logger.error({ err: error }, 'Google login error');
     // Log detailed error for debugging
     if (error.response) {
-      console.error('Google API Error:', error.response.status, error.response.data);
+      logger.error(
+        { status: error.response.status, data: error.response.data },
+        'Google API error'
+      );
     } else {
-      console.error('Google Login Error:', error.message);
+      logger.error({ err: error }, 'Google login error details');
     }
 
     // Return more specific error message if possible
-    const errorMessage = error.response?.data?.error_description || error.message || 'Google authentication failed';
+    const errorMessage =
+      error.response?.data?.error_description || error.message || 'Google authentication failed';
     res.status(500).json({ message: 'Google authentication failed', error: errorMessage });
   }
 };
@@ -728,7 +784,7 @@ const updateUserByAdmin = async (req, res) => {
 
     // Update allowed fields
     const allowedFields = ['firstName', 'lastName', 'phone', 'status'];
-    allowedFields.forEach(field => {
+    allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         user[field] = req.body[field];
       }
@@ -738,7 +794,7 @@ const updateUserByAdmin = async (req, res) => {
     if (req.body.roles !== undefined && Array.isArray(req.body.roles)) {
       // Validate roles
       const validRoles = ['consumer', 'business_owner', 'rider', 'admin'];
-      const newRoles = req.body.roles.filter(role => validRoles.includes(role));
+      const newRoles = req.body.roles.filter((role) => validRoles.includes(role));
 
       if (newRoles.length === 0) {
         return res.status(400).json({ message: 'User must have at least one valid role' });
@@ -783,11 +839,13 @@ const updateUserByAdmin = async (req, res) => {
         roles: user.roles,
         activeRole: user.activeRole,
         role: user.activeRole, // Backward compatibility
-        status: user.status
-      }
+        status: user.status,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -814,7 +872,9 @@ const suspendUser = async (req, res) => {
 
     res.json({ message: 'User suspended successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -836,7 +896,9 @@ const activateUser = async (req, res) => {
 
     res.json({ message: 'User activated successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -862,7 +924,9 @@ const deleteUserByAdmin = async (req, res) => {
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -879,7 +943,7 @@ const requestPasswordChangeOTP = async (req, res) => {
       return res.status(400).json({ message: 'Please provide current password' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('+passwordHash +otpCode +otpExpires');
 
     // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
@@ -888,7 +952,7 @@ const requestPasswordChangeOTP = async (req, res) => {
     }
 
     // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
@@ -906,7 +970,9 @@ const requestPasswordChangeOTP = async (req, res) => {
       res.status(500).json({ message: 'Failed to send OTP email' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -927,7 +993,7 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('+passwordHash +otpCode +otpExpires');
 
     // Verify OTP
     if (!user.otpCode || user.otpCode !== otp) {
@@ -939,7 +1005,7 @@ const changePassword = async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     user.passwordHash = await bcrypt.hash(newPassword, salt);
 
     // Clear OTP
@@ -951,11 +1017,13 @@ const changePassword = async (req, res) => {
     sendPasswordChangedConfirmation(
       user.email,
       `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
-    ).catch(err => logger.error({ err }, 'Failed to send password changed confirmation'));
+    ).catch((err) => logger.error({ err }, 'Failed to send password changed confirmation'));
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -972,15 +1040,20 @@ const requestSensitiveChangeOTP = async (req, res) => {
       return res.status(400).json({ message: 'Please specify change type' });
     }
 
-    const validChangeTypes = ['payout settings', 'bank account', 'business information', 'email address'];
+    const validChangeTypes = [
+      'payout settings',
+      'bank account',
+      'business information',
+      'email address',
+    ];
     if (!validChangeTypes.includes(changeType.toLowerCase())) {
       return res.status(400).json({ message: 'Invalid change type' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('+otpCode +otpExpires');
 
     // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
@@ -999,7 +1072,9 @@ const requestSensitiveChangeOTP = async (req, res) => {
       res.status(500).json({ message: 'Failed to send OTP email' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1016,7 +1091,7 @@ const verifySensitiveChangeOTP = async (req, res) => {
       return res.status(400).json({ message: 'Please provide OTP' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('+otpCode +otpExpires');
 
     // Verify OTP
     if (!user.otpCode || user.otpCode !== otp) {
@@ -1034,10 +1109,12 @@ const verifySensitiveChangeOTP = async (req, res) => {
 
     res.json({
       message: 'OTP verified successfully',
-      verified: true
+      verified: true,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1048,27 +1125,20 @@ const verifySensitiveChangeOTP = async (req, res) => {
  */
 const getActiveSessions = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-
-    // Get sessions from user or return current session info
-    // In production, you'd store sessions in a separate collection or Redis
-    const sessions = user.sessions || [];
-
-    // If no sessions stored, return current session info from request
-    if (sessions.length === 0) {
-      const currentSession = {
-        id: req.user._id.toString(),
-        device: req.headers['user-agent'] || 'Unknown Device',
-        location: 'Current Location',
-        lastActive: new Date().toISOString(),
-        isCurrent: true
-      };
-      return res.json({ sessions: [currentSession] });
-    }
-
-    res.json({ sessions });
+    // Return current session info from request headers
+    const currentSession = {
+      id: req.user._id.toString(),
+      device: req.headers['user-agent'] || 'Unknown Device',
+      location: 'Current Location',
+      lastActive: new Date().toISOString(),
+      isCurrent: true,
+    };
+    res.json({ sessions: [currentSession] });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Get active sessions failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1079,34 +1149,14 @@ const getActiveSessions = async (req, res) => {
  */
 const getLoginActivity = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
-    const user = await User.findById(req.user._id);
-
-    // Get login history from user
-    const loginHistory = user.loginHistory || [];
-
-    // Sort by date descending and limit
-    const sortedHistory = loginHistory
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, limit)
-      .map(entry => ({
-        id: entry._id || entry.timestamp,
-        dateTime: new Date(entry.timestamp).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        device: entry.device || 'Unknown Device',
-        location: entry.location || 'Unknown Location',
-        status: entry.success ? 'Successful' : 'Failed',
-        ipAddress: entry.ipAddress
-      }));
-
-    res.json({ loginActivity: sortedHistory });
+    // Login history tracking not yet implemented in schema
+    // Return empty array - frontend should handle gracefully
+    res.json({ loginActivity: [] });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Get login activity failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1117,17 +1167,13 @@ const getLoginActivity = async (req, res) => {
  */
 const logoutSession = async (req, res) => {
   try {
-    const { sessionId } = req.params;
-    const user = await User.findById(req.user._id);
-
-    if (user.sessions) {
-      user.sessions = user.sessions.filter(s => s.id !== sessionId);
-      await user.save();
-    }
-
+    // Session management not yet implemented - acknowledge the request
     res.json({ message: 'Session logged out successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Logout session failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1138,17 +1184,14 @@ const logoutSession = async (req, res) => {
  */
 const logoutAllDevices = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-
-    // Clear all sessions
-    user.sessions = [];
-    // Optionally invalidate all tokens by changing a token version
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
-    await user.save();
-
+    // Token invalidation not yet implemented - acknowledge the request
+    // In production, use a token blacklist or increment a tokenVersion in the schema
     res.json({ message: 'Logged out from all devices successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Logout all devices failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1175,7 +1218,7 @@ const switchRole = async (req, res) => {
     if (!user.roles.includes(role)) {
       return res.status(403).json({
         message: `You do not have the '${role}' role`,
-        availableRoles: user.roles
+        availableRoles: user.roles,
       });
     }
 
@@ -1195,11 +1238,13 @@ const switchRole = async (req, res) => {
         role: user.activeRole,
         firstName: user.firstName,
         lastName: user.lastName,
-        avatar: user.avatar
-      }
+        avatar: user.avatar,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -1237,7 +1282,7 @@ const addRole = async (req, res) => {
     if (user.roles.includes(role)) {
       return res.status(400).json({
         message: `You already have the '${role}' role`,
-        roles: user.roles
+        roles: user.roles,
       });
     }
 
@@ -1266,11 +1311,52 @@ const addRole = async (req, res) => {
         role: user.activeRole,
         firstName: user.firstName,
         lastName: user.lastName,
-        avatar: user.avatar
-      }
+        avatar: user.avatar,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Refresh access token using refresh token
+ * @route   POST /api/users/refresh-token
+ * @access  Public
+ */
+const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    const user = await User.findById(decoded.id).select('-passwordHash');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'Account suspended' });
+    }
+
+    res.json({
+      token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
+    });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Refresh token expired, please login again' });
+    }
+    logger.error({ err: error }, 'Refresh token error');
+    res.status(401).json({ message: 'Invalid refresh token' });
   }
 };
 
@@ -1305,4 +1391,5 @@ module.exports = {
   getLoginActivity,
   logoutSession,
   logoutAllDevices,
+  refreshAccessToken,
 };

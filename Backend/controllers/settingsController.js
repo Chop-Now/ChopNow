@@ -1,4 +1,5 @@
 const PlatformSettings = require('../models/PlatformSettings');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Get platform settings (public - limited fields)
@@ -20,10 +21,13 @@ const getPublicSettings = async (req, res) => {
       allowGuestCheckout: settings.allowGuestCheckout,
       enableReviews: settings.enableReviews,
       enableNotifications: settings.enableNotifications,
-      maintenanceMode: settings.maintenanceMode
+      maintenanceMode: settings.maintenanceMode,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -37,7 +41,10 @@ const getAllSettings = async (req, res) => {
     const settings = await PlatformSettings.getSettings();
     res.json(settings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -52,10 +59,13 @@ const updateSettings = async (req, res) => {
 
     res.json({
       message: 'Settings updated successfully',
-      settings
+      settings,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -70,10 +80,13 @@ const getCommissionRate = async (req, res) => {
     res.json({
       platformFeePercent: settings.platformFeePercent,
       minimumWithdrawal: settings.minimumWithdrawal,
-      payoutSchedule: settings.payoutSchedule
+      payoutSchedule: settings.payoutSchedule,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -88,12 +101,12 @@ const checkFeature = async (req, res) => {
     const settings = await PlatformSettings.getSettings();
 
     const featureMap = {
-      'registration': settings.allowNewRegistrations,
-      'emailVerification': settings.requireEmailVerification,
-      'guestCheckout': settings.allowGuestCheckout,
-      'reviews': settings.enableReviews,
-      'notifications': settings.enableNotifications,
-      'maintenance': settings.maintenanceMode
+      registration: settings.allowNewRegistrations,
+      emailVerification: settings.requireEmailVerification,
+      guestCheckout: settings.allowGuestCheckout,
+      reviews: settings.enableReviews,
+      notifications: settings.enableNotifications,
+      maintenance: settings.maintenanceMode,
     };
 
     if (featureMap[featureName] === undefined) {
@@ -102,10 +115,13 @@ const checkFeature = async (req, res) => {
 
     res.json({
       feature: featureName,
-      enabled: featureMap[featureName]
+      enabled: featureMap[featureName],
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -119,10 +135,13 @@ const checkMaintenanceMode = async (req, res) => {
     const settings = await PlatformSettings.getSettings();
     res.json({
       maintenanceMode: settings.maintenanceMode,
-      platformName: settings.platformName
+      platformName: settings.platformName,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -154,10 +173,13 @@ const emergencyMaintenanceOff = async (req, res) => {
     res.json({
       success: true,
       message: 'Maintenance mode has been turned OFF',
-      maintenanceMode: false
+      maintenanceMode: false,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Settings error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -168,5 +190,5 @@ module.exports = {
   getCommissionRate,
   checkFeature,
   checkMaintenanceMode,
-  emergencyMaintenanceOff
+  emergencyMaintenanceOff,
 };

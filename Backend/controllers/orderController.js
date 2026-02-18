@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Listing = require('../models/Listing');
 const Business = require('../models/Business');
@@ -18,16 +20,9 @@ const {
  */
 const createOrder = async (req, res) => {
   try {
-    const {
-      listing,
-      items,
-      fulfillmentType,
-      deliveryDetails,
-      pickupDetails,
-      payment
-    } = req.body;
+    const { listing, items, fulfillmentType, deliveryDetails, pickupDetails, payment } = req.body;
 
-    // Validation
+    // Validation (before starting session)
     if (!listing || !items || !fulfillmentType) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
@@ -50,7 +45,7 @@ const createOrder = async (req, res) => {
 
     let deliveryFee = 0;
     if (fulfillmentType === 'delivery') {
-      if (listingDoc.fulfillment.type !== 'delivery') {
+      if (listingDoc.fulfillment !== 'delivery') {
         return res.status(400).json({ message: 'Delivery not available for this listing' });
       }
       if (!deliveryDetails || !deliveryDetails.address) {
@@ -66,54 +61,100 @@ const createOrder = async (req, res) => {
     const vendorAmount = subtotal - platformFee;
     const total = subtotal + deliveryFee;
 
-    // Reserve inventory
-    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-    await listingDoc.reserveQuantity(totalQuantity);
+    // --- Transaction: reserve inventory, create order, update stats atomically ---
+    const session = await mongoose.startSession();
+    let order;
+    try {
+      await session.withTransaction(async () => {
+        // Reserve inventory atomically
+        const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+        const updated = await Listing.findOneAndUpdate(
+          { _id: listingDoc._id, 'inventory.quantity': { $gte: totalQuantity } },
+          {
+            $inc: {
+              'inventory.quantity': -totalQuantity,
+              'inventory.reserved': totalQuantity,
+              'stats.orders': 1,
+            },
+          },
+          { session, new: true }
+        );
+        if (!updated) {
+          throw new Error('Not enough stock available');
+        }
+        if (updated.inventory.quantity === 0) {
+          updated.status = 'sold_out';
+          await updated.save({ session });
+        }
 
-    // Create order
-    const order = await Order.create({
-      customer: req.user._id,
-      business: listingDoc.business._id,
-      listing: listingDoc._id,
-      items,
-      pricing: {
-        subtotal,
-        deliveryFee,
-        platformFee,
-        platformFeePercent,
-        vendorAmount,
-        total,
-        currency: listingDoc.pricing.currency
-      },
-      fulfillmentType,
-      deliveryDetails,
-      pickupDetails: fulfillmentType === 'pickup' ? {
-        ...pickupDetails,
-        pickupCode: Math.random().toString(36).substring(2, 8).toUpperCase()
-      } : undefined,
-      payment
-    });
+        // Create order
+        [order] = await Order.create(
+          [
+            {
+              customer: req.user._id,
+              business: listingDoc.business._id,
+              listing: listingDoc._id,
+              items,
+              pricing: {
+                subtotal,
+                deliveryFee,
+                platformFee,
+                platformFeePercent,
+                vendorAmount,
+                total,
+                currency: listingDoc.pricing.currency,
+              },
+              fulfillmentType,
+              deliveryDetails,
+              pickupDetails:
+                fulfillmentType === 'pickup'
+                  ? {
+                      ...pickupDetails,
+                      pickupCode: crypto
+                        .randomBytes(4)
+                        .toString('hex')
+                        .substring(0, 6)
+                        .toUpperCase(),
+                    }
+                  : undefined,
+              payment,
+            },
+          ],
+          { session }
+        );
 
-    // Update user stats
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { 'stats.ordersCount': 1 }
-    });
+        // Update user stats
+        await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $inc: { 'stats.ordersCount': 1 },
+          },
+          { session }
+        );
 
-    // Update business stats
-    await Business.findByIdAndUpdate(listingDoc.business._id, {
-      $inc: { 'stats.totalOrders': 1 }
-    });
+        // Update business stats
+        await Business.findByIdAndUpdate(
+          listingDoc.business._id,
+          {
+            $inc: { 'stats.totalOrders': 1 },
+          },
+          { session }
+        );
+      });
+    } finally {
+      session.endSession();
+    }
 
-    // Update listing stats
-    listingDoc.stats.orders += 1;
-    await listingDoc.save();
+    // --- Post-transaction: notifications and emails (non-critical, outside transaction) ---
 
     // Get business info for notifications
     const businessForNotif = await Business.findById(listingDoc.business._id).populate('owner');
-    const customerName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Customer';
-    const deliveryAddr = fulfillmentType === 'delivery' && deliveryDetails?.address
-      ? `${deliveryDetails.address.street || ''}, ${deliveryDetails.address.city || ''}`.trim()
-      : null;
+    const customerName =
+      `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Customer';
+    const deliveryAddr =
+      fulfillmentType === 'delivery' && deliveryDetails?.address
+        ? `${deliveryDetails.address.street || ''}, ${deliveryDetails.address.city || ''}`.trim()
+        : null;
 
     // Create notification for customer with rich metadata
     await Notification.createNotification({
@@ -134,8 +175,8 @@ const createOrder = async (req, res) => {
         businessName: businessForNotif?.name || 'Vendor',
         businessLogo: businessForNotif?.media?.logo,
         listingTitle: listingDoc.title,
-        listingImage: listingDoc.photos?.[0]
-      }
+        listingImage: listingDoc.photos?.[0],
+      },
     });
 
     // Create notification for vendor with rich metadata
@@ -158,25 +199,25 @@ const createOrder = async (req, res) => {
           listingTitle: listingDoc.title,
           listingImage: listingDoc.photos?.[0],
           actionLabel: 'View Order',
-          actionUrl: '/dashboard'
-        }
+          actionUrl: '/dashboard',
+        },
       });
     }
 
     // EMAIL: Order confirmation is ESSENTIAL (serves as receipt)
     const customer = await User.findById(req.user._id);
     if (customer && customer.preferences?.notifications?.email) {
-      sendOrderConfirmationEmail(
-        customer.email,
-        customerName,
-        order
-      ).catch((err) => logger.error({ err }, 'Failed to send order confirmation email'));
+      sendOrderConfirmationEmail(customer.email, customerName, order).catch((err) =>
+        logger.error({ err }, 'Failed to send order confirmation email')
+      );
     }
     // NOTE: Vendor gets in-app notification only (they check dashboard regularly)
 
     res.status(201).json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Create order failed');
+    const statusCode = error.message === 'Not enough stock available' ? 400 : 500;
+    res.status(statusCode).json({ message: error.message });
   }
 };
 
@@ -198,8 +239,8 @@ const getOrders = async (req, res) => {
     if (req.user.role === 'consumer') {
       query.customer = req.user._id;
     } else if (req.user.role === 'business_owner') {
-      const businesses = await Business.find({ owner: req.user._id }).select('_id');
-      query.business = { $in: businesses.map(b => b._id) };
+      const businesses = await Business.find({ owner: req.user._id }).select('_id').lean();
+      query.business = { $in: businesses.map((b) => b._id) };
     }
     // Admin can see all orders
 
@@ -212,7 +253,8 @@ const getOrders = async (req, res) => {
       .populate('listing', 'title category photos')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Order.countDocuments(query);
 
@@ -220,10 +262,12 @@ const getOrders = async (req, res) => {
       orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -238,7 +282,8 @@ const getOrderById = async (req, res) => {
       .populate('customer', 'firstName lastName email phone')
       .populate('business', 'name type address contact media')
       .populate('listing', 'title category photos pricing')
-      .populate('delivery');
+      .populate('delivery')
+      .lean();
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -255,7 +300,9 @@ const getOrderById = async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -288,9 +335,10 @@ const updateOrderStatus = async (req, res) => {
 
     // Get related data for rich notifications
     const listing = await Listing.findById(order.listing);
-    const deliveryAddr = order.fulfillmentType === 'delivery' && order.deliveryDetails?.address
-      ? `${order.deliveryDetails.address.street || ''}, ${order.deliveryDetails.address.city || ''}`.trim()
-      : null;
+    const deliveryAddr =
+      order.fulfillmentType === 'delivery' && order.deliveryDetails?.address
+        ? `${order.deliveryDetails.address.street || ''}, ${order.deliveryDetails.address.city || ''}`.trim()
+        : null;
 
     // Create notifications with rich metadata based on status
     let notificationTitle = '';
@@ -320,7 +368,7 @@ const updateOrderStatus = async (req, res) => {
 
         // Update user stats
         await User.findByIdAndUpdate(order.customer, {
-          $inc: { 'stats.totalSpent': order.pricing.total }
+          $inc: { 'stats.totalSpent': order.pricing.total },
         });
         break;
     }
@@ -347,8 +395,8 @@ const updateOrderStatus = async (req, res) => {
           listingTitle: listing?.title,
           listingImage: listing?.photos?.[0],
           actionLabel: status === 'ready_for_pickup' ? 'View Pickup Code' : 'View Order',
-          actionUrl: '/my-orders'
-        }
+          actionUrl: '/my-orders',
+        },
       });
 
       // EMAIL STRATEGY: Only send emails for TIME-SENSITIVE actions
@@ -356,19 +404,23 @@ const updateOrderStatus = async (req, res) => {
       // Other statuses: In-app notification is sufficient
       const customer = await User.findById(order.customer);
       if (customer && customer.preferences?.notifications?.email) {
-        const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+        const customerName =
+          `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
 
         if (status === 'ready_for_pickup') {
           // ESSENTIAL EMAIL: User needs to act NOW
-          sendOrderReadyForPickupEmail(customer.email, customerName, order)
-            .catch((err) => logger.error({ err }, 'Failed to send pickup ready email'));
+          sendOrderReadyForPickupEmail(customer.email, customerName, order).catch((err) =>
+            logger.error({ err }, 'Failed to send pickup ready email')
+          );
         }
       }
     }
 
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -394,25 +446,35 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
     }
 
-    // Restore inventory
-    const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-    const listing = await Listing.findById(order.listing._id);
-    if (listing) {
-      listing.inventory.quantity += totalQuantity;
-      listing.inventory.reserved -= totalQuantity;
-      if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
-        listing.status = 'active';
-      }
-      await listing.save();
+    // --- Transaction: restore inventory + cancel order atomically ---
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+        const listing = await Listing.findById(order.listing._id).session(session);
+        if (listing) {
+          listing.inventory.quantity += totalQuantity;
+          listing.inventory.reserved -= totalQuantity;
+          if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
+            listing.status = 'active';
+          }
+          await listing.save({ session });
+        }
+
+        await order.updateStatus('cancelled');
+        await order.save({ session });
+      });
+    } finally {
+      session.endSession();
     }
 
-    await order.updateStatus('cancelled');
+    // --- Post-transaction: notifications (non-critical) ---
 
     // Get business and customer info for notifications
     const business = await Business.findById(order.business).populate('owner');
     const customer = await User.findById(order.customer);
     const customerName = customer
-      ? (`${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer')
+      ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer'
       : 'Customer';
 
     // Create notification for customer with rich metadata
@@ -433,8 +495,8 @@ const cancelOrder = async (req, res) => {
         listingTitle: listing?.title,
         listingImage: listing?.photos?.[0],
         actionLabel: 'View Details',
-        actionUrl: '/my-orders'
-      }
+        actionUrl: '/my-orders',
+      },
     });
 
     // Create notification for vendor with rich metadata
@@ -455,15 +517,18 @@ const cancelOrder = async (req, res) => {
           listingTitle: listing?.title,
           listingImage: listing?.photos?.[0],
           actionLabel: 'View Orders',
-          actionUrl: '/dashboard'
-        }
+          actionUrl: '/dashboard',
+        },
       });
     }
     // NOTE: No email for cancellation - in-app notification is sufficient
 
     res.json({ message: 'Order cancelled successfully', order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, 'Cancel order failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -501,7 +566,9 @@ const verifyPickupCode = async (req, res) => {
 
     res.json({ message: 'Pickup verified successfully', order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -530,7 +597,8 @@ const getAdminOrders = async (req, res) => {
       .populate('listing', 'title category photos')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Order.countDocuments(query);
 
@@ -538,10 +606,12 @@ const getAdminOrders = async (req, res) => {
       orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
   }
 };
 
@@ -552,5 +622,5 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   verifyPickupCode,
-  getAdminOrders
+  getAdminOrders,
 };

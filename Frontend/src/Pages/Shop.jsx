@@ -1,17 +1,23 @@
-import Categories from '../Components/Categories'
-import Footer from '../Components/Footer'
-import PageNavbar from '../Components/PageNavbar'
-import Products from '../Components/Products'
-import ShopSidebar from '../Components/ShopSidebar'
-import React, { useState, useRef } from 'react'
+import Categories from '../Components/Categories';
+import Footer from '../Components/Footer';
+import PageNavbar from '../Components/PageNavbar';
+import Products from '../Components/Products';
+import ShopSidebar from '../Components/ShopSidebar';
+import SEO from '../Components/SEO';
+import React, { useState, useRef } from 'react';
 
 const Shop = () => {
-  const [sortBy, setSortBy] = useState('Distance (Nearest First)')
-  const [priceRange, setPriceRange] = useState(50000)
-  const productsRef = useRef()
+  const [sortBy, setSortBy] = useState('Distance (Nearest First)');
+  const [priceRange, setPriceRange] = useState(50000);
+  const productsRef = useRef();
 
   return (
-    <div className='bg-white min-h-screen pt-20'>
+    <div className="bg-white min-h-screen pt-20">
+      <SEO
+        title="Shop"
+        description="Browse surplus food deals from local businesses near you. Save up to 70% on quality food while reducing waste."
+        keywords="surplus food, discount food, food deals, Kigali, food near me"
+      />
       <PageNavbar onMobileFilterClick={() => productsRef.current?.openMobileSort()} />
       <Categories />
 
@@ -40,7 +46,7 @@ const Shop = () => {
       </div>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default Shop
+export default Shop;

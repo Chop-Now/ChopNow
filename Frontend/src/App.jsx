@@ -1,30 +1,34 @@
-import React from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import Home from './Pages/Home'
-import Login from './Pages/Login'
-import SignUp from './Pages/SignUp'
-import Shop from './Pages/Shop'
-import CategoryPage from './Pages/CategoryPage'
-import { Toaster } from 'react-hot-toast'
-import ProductDetails from './Pages/ProductDetails'
-import Cart from './Pages/Cart'
-import MyOrders from './Pages/MyOrders'
-import MyImpact from './Pages/MyImpact'
-import Notification from './Pages/Notification'
-import MyProfile from './Pages/MyProfile'
-import BusinessVerification from './Pages/BusinessVerification'
-import PendingReview from './Pages/PendingReview'
-import FAQ from './Pages/FAQ'
-import ContactUs from './Pages/ContactUs'
-import TermsOfService from './Pages/TermsOfService'
-import PrivacyPolicy from './Pages/PrivacyPolicy'
-import Dashboard from './admin/Dashboard'
-import AdminDashboard from './admin/AdminDashboard'
-import AdminLogin from './Pages/AdminLogin'
-import NotFound from './Components/NotFound'
-import MaintenanceMode from './Components/MaintenanceMode'
-import { usePlatformSettings } from './context/PlatformSettingsContext'
-import { useAppContext } from './context/AppContext'
+import React, { Suspense, lazy } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import MaintenanceMode from './Components/MaintenanceMode';
+import { usePlatformSettings } from './context/PlatformSettingsContext';
+import { useAppContext } from './context/AppContext';
+import LoadingSpinner from './Components/ui/LoadingSpinner';
+import { ProtectedRoute, RoleRoute } from './components/ProtectedRoute';
+
+// Lazy-loaded page components for code splitting
+const Home = lazy(() => import('./Pages/Home'));
+const Login = lazy(() => import('./Pages/Login'));
+const SignUp = lazy(() => import('./Pages/SignUp'));
+const Shop = lazy(() => import('./Pages/Shop'));
+const CategoryPage = lazy(() => import('./Pages/CategoryPage'));
+const ProductDetails = lazy(() => import('./Pages/ProductDetails'));
+const Cart = lazy(() => import('./Pages/Cart'));
+const MyOrders = lazy(() => import('./Pages/MyOrders'));
+const MyImpact = lazy(() => import('./Pages/MyImpact'));
+const Notification = lazy(() => import('./Pages/Notification'));
+const MyProfile = lazy(() => import('./Pages/MyProfile'));
+const BusinessVerification = lazy(() => import('./Pages/BusinessVerification'));
+const PendingReview = lazy(() => import('./Pages/PendingReview'));
+const FAQ = lazy(() => import('./Pages/FAQ'));
+const ContactUs = lazy(() => import('./Pages/ContactUs'));
+const TermsOfService = lazy(() => import('./Pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./Pages/PrivacyPolicy'));
+const Dashboard = lazy(() => import('./admin/Dashboard'));
+const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
+const AdminLogin = lazy(() => import('./Pages/AdminLogin'));
+const NotFound = lazy(() => import('./Components/NotFound'));
 
 const App = () => {
   const { settings } = usePlatformSettings();
@@ -32,11 +36,11 @@ const App = () => {
   const location = useLocation();
 
   // Check if user is admin (check all possible fields)
-  const isAdmin = user && (
-    user.activeRole === 'admin' ||
-    user.role === 'admin' ||
-    (Array.isArray(user.roles) && user.roles.includes('admin'))
-  );
+  const isAdmin =
+    user &&
+    (user.activeRole === 'admin' ||
+      user.role === 'admin' ||
+      (Array.isArray(user.roles) && user.roles.includes('admin')));
 
   // Check if current path is admin-related (allow access during maintenance)
   const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname === '/login';
@@ -48,35 +52,128 @@ const App = () => {
   }
 
   return (
-    <main className='overflow-x-hidden text-textColor'>
+    <main className="overflow-x-hidden text-textColor">
+      {/* Skip to content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-green-600 focus:text-white focus:rounded-lg"
+      >
+        Skip to content
+      </a>
 
       <Toaster />
-     
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/signup' element={<SignUp />} />
-        <Route path='/business-verification' element={<BusinessVerification />} />
-        <Route path='/pending-review' element={<PendingReview />} />
-        <Route path='/shop' element={<Shop />} />
-        <Route path='/shop/:category' element={<CategoryPage />} />
-        <Route path='/shop/:category/:id' element={<ProductDetails />} />
-        <Route path='/cart' element={<Cart />} />
-        <Route path='/my-orders' element={<MyOrders />} />
-        <Route path='/my-impact' element={<MyImpact />} />
-        <Route path='/my-profile' element={<MyProfile />} />
-        <Route path='/notifications' element={<Notification />} />
-        <Route path='/faq' element={<FAQ />} />
-        <Route path='/contact-us' element={<ContactUs />} />
-        <Route path='/terms-of-service' element={<TermsOfService />} />
-        <Route path='/privacy-policy' element={<PrivacyPolicy />} />
-        <Route path='/dashboard' element={<Dashboard />} />
-        <Route path='/admin/login' element={<AdminLogin />} />
-        <Route path='/admin' element={<AdminDashboard />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </main>
-  )
-}
 
-export default App
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        }
+      >
+        <div id="main-content">
+          <Routes>
+            {/* ===== Public Routes ===== */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/shop/:category" element={<CategoryPage />} />
+            <Route path="/shop/:category/:id" element={<ProductDetails />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
+            {/* ===== Authenticated Routes ===== */}
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-orders"
+              element={
+                <ProtectedRoute>
+                  <MyOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-impact"
+              element={
+                <ProtectedRoute>
+                  <MyImpact />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-profile"
+              element={
+                <ProtectedRoute>
+                  <MyProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notification />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ===== Business Routes ===== */}
+            <Route
+              path="/business-verification"
+              element={
+                <ProtectedRoute>
+                  <BusinessVerification />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pending-review"
+              element={
+                <ProtectedRoute>
+                  <PendingReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute roles={['business_owner', 'admin']}>
+                    <Dashboard />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ===== Admin Routes ===== */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute roles="admin" fallback="/login">
+                    <AdminDashboard />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ===== Catch-all ===== */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </Suspense>
+    </main>
+  );
+};
+
+export default App;

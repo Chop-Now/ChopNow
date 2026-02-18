@@ -16,13 +16,14 @@ const {
   approveBusiness,
   rejectBusiness,
   requestMoreInfo,
-  rescindBusiness
+  rescindBusiness,
 } = require('../controllers/businessController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const uploadDocs = require('../middleware/uploadDocs');
 const { validateCreateBusiness } = require('../middleware/validation');
 const { cacheBusinesses, cacheBusiness, invalidateAfter } = require('../middleware/cache');
+const { checkOwnership } = require('../middleware/ownership');
 
 // Public routes
 
@@ -44,10 +45,34 @@ router.get('/my/list', protect, authorize('business_owner', 'admin'), getMyBusin
 
 // Admin-only: Business approval workflow
 router.get('/pending', protect, authorize('admin'), getPendingBusinesses);
-router.patch('/:id/approve', protect, authorize('admin'), invalidateAfter('business'), approveBusiness);
-router.patch('/:id/reject', protect, authorize('admin'), invalidateAfter('business'), rejectBusiness);
-router.patch('/:id/request-info', protect, authorize('admin'), invalidateAfter('business'), requestMoreInfo);
-router.patch('/:id/rescind', protect, authorize('admin'), invalidateAfter('business'), rescindBusiness);
+router.patch(
+  '/:id/approve',
+  protect,
+  authorize('admin'),
+  invalidateAfter('business'),
+  approveBusiness
+);
+router.patch(
+  '/:id/reject',
+  protect,
+  authorize('admin'),
+  invalidateAfter('business'),
+  rejectBusiness
+);
+router.patch(
+  '/:id/request-info',
+  protect,
+  authorize('admin'),
+  invalidateAfter('business'),
+  requestMoreInfo
+);
+router.patch(
+  '/:id/rescind',
+  protect,
+  authorize('admin'),
+  invalidateAfter('business'),
+  rescindBusiness
+);
 
 // Get by ID - comes after specific routes
 router.get('/:id', cacheBusiness, getBusinessById);
@@ -86,15 +111,63 @@ router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusin
  *       201:
  *         description: Business created
  */
-router.post('/', protect, authorize('business_owner', 'admin', 'consumer'), validateCreateBusiness, invalidateAfter('business', (req, body) => body?.business?._id), createBusiness);
-router.put('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('business'), updateBusiness);
-router.delete('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('business'), deleteBusiness);
+router.post(
+  '/',
+  protect,
+  authorize('business_owner', 'admin'),
+  validateCreateBusiness,
+  invalidateAfter('business', (req, body) => body?.business?._id),
+  createBusiness
+);
+router.put(
+  '/:id',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  invalidateAfter('business'),
+  updateBusiness
+);
+router.delete(
+  '/:id',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  invalidateAfter('business'),
+  deleteBusiness
+);
 
-// Image upload routes
-router.post('/:id/logo', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('logo'), uploadLogo);
-router.post('/:id/cover', protect, authorize('business_owner', 'admin', 'consumer'), upload.single('cover'), uploadCoverImage);
-router.post('/:id/photos', protect, authorize('business_owner', 'admin', 'consumer'), upload.array('photos', 10), uploadPhotos);
-router.post('/:id/kyc', protect, authorize('business_owner', 'admin', 'consumer'), uploadDocs.array('documents'), uploadKYC);
+// Image upload routes - business_owner and admin only, with ownership check
+router.post(
+  '/:id/logo',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  upload.single('logo'),
+  uploadLogo
+);
+router.post(
+  '/:id/cover',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  upload.single('cover'),
+  uploadCoverImage
+);
+router.post(
+  '/:id/photos',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  upload.array('photos', 10),
+  uploadPhotos
+);
+router.post(
+  '/:id/kyc',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkOwnership('Business'),
+  uploadDocs.array('documents'),
+  uploadKYC
+);
 
 module.exports = router;
-

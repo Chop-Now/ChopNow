@@ -8,12 +8,13 @@ const {
   updateListing,
   deleteListing,
   uploadPhotos,
-  getListingsByBusiness
+  getListingsByBusiness,
 } = require('../controllers/listingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { validateCreateListing } = require('../middleware/validation');
 const { cacheListings, cacheListing, invalidateAfter } = require('../middleware/cache');
+const { checkListingOwnership } = require('../middleware/ownership');
 
 // Public routes
 
@@ -67,11 +68,39 @@ router.get('/:id', optionalAuth, cacheListing, getListingById);
  *       201:
  *         description: Listing created
  */
-router.post('/', protect, authorize('business_owner', 'admin'), validateCreateListing, invalidateAfter('listing', (req, body) => body?.listing?._id), createListing);
-router.put('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('listing'), updateListing);
-router.delete('/:id', protect, authorize('business_owner', 'admin'), invalidateAfter('listing'), deleteListing);
+router.post(
+  '/',
+  protect,
+  authorize('business_owner', 'admin'),
+  validateCreateListing,
+  invalidateAfter('listing', (req, body) => body?.listing?._id),
+  createListing
+);
+router.put(
+  '/:id',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkListingOwnership(),
+  invalidateAfter('listing'),
+  updateListing
+);
+router.delete(
+  '/:id',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkListingOwnership(),
+  invalidateAfter('listing'),
+  deleteListing
+);
 
 // Image upload routes
-router.post('/:id/photos', protect, authorize('business_owner', 'admin'), upload.array('photos', 5), uploadPhotos);
+router.post(
+  '/:id/photos',
+  protect,
+  authorize('business_owner', 'admin'),
+  checkListingOwnership(),
+  upload.array('photos', 5),
+  uploadPhotos
+);
 
 module.exports = router;
