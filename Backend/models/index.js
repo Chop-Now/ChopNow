@@ -1,9 +1,9 @@
 /**
  * ChopNow Models Index
- * 
+ *
  * This file exports all Mongoose models for the ChopNow food rescue platform.
  * Import models individually or all at once from this file.
- * 
+ *
  * Usage:
  *   const { User, Business, Listing } = require('./models');
  *   // or
@@ -27,5 +27,5 @@ module.exports = {
   Delivery,
   Favorite,
   Review,
-  Notification
+  Notification,
 };

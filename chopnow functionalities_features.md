@@ -1,5 +1,3 @@
-
-
 ---
 
 ## **1\. User & Access Management**
@@ -18,198 +16,194 @@
 
 ## **2\. Business & Store Management**
 
-* Business onboarding: create business profile, upload registration/tax docs, submit for KYC.
+- Business onboarding: create business profile, upload registration/tax docs, submit for KYC.
 
-* Business profile: name, type (restaurant, bakery, supermarket, etc.), address, contact, logo.
+- Business profile: name, type (restaurant, bakery, supermarket, etc.), address, contact, logo.
 
-* Geolocation: store latitude/longitude for map and “nearby” search.
+- Geolocation: store latitude/longitude for map and “nearby” search.
 
-* Business team management: invite staff, assign roles (manager/staff).
+- Business team management: invite staff, assign roles (manager/staff).
 
-* Business status: active, suspended, verified; reasons and timestamps.
+- Business status: active, suspended, verified; reasons and timestamps.
 
 ---
 
 ## **3\. Listings & Inventory (Surplus Food)**
 
-* Create/edit/delete listings for surplus items or “rescue bags”.
+- Create/edit/delete listings for surplus items or “rescue bags”.
 
-* Live photo capture only (no gallery import), linked to listings.
+- Live photo capture only (no gallery import), linked to listings.
 
-* Listing attributes: title, description, category, allergens, dietary tags.
+- Listing attributes: title, description, category, allergens, dietary tags.
 
-* Pricing: original price, rescue price, currency, discounts.
+- Pricing: original price, rescue price, currency, discounts.
 
-* Inventory: quantity available, quantity reserved, quantity remaining.
+- Inventory: quantity available, quantity reserved, quantity remaining.
 
-* Time windows: pickup start/end time, expiry time.
+- Time windows: pickup start/end time, expiry time.
 
-* Options: pickup-only or delivery-enabled, delivery radius in km.
+- Options: pickup-only or delivery-enabled, delivery radius in km.
 
-* Listing states: draft, active, sold out, expired, paused, cancelled, archived.
+- Listing states: draft, active, sold out, expired, paused, cancelled, archived.
 
-* Visibility: featured listings, view counts, basic per-listing stats.
+- Visibility: featured listings, view counts, basic per-listing stats.
 
 ---
 
 ## **4\. Search, Discovery & Maps**
 
-* Location-based search: find deals within radius (e.g. 5–10 km).
+- Location-based search: find deals within radius (e.g. 5–10 km).
 
-* Filters: category, price range, distance, rating, open now, pickup/delivery.
+- Filters: category, price range, distance, rating, open now, pickup/delivery.
 
-* Map view with listing pins and list view with sorting (distance, time, price).
+- Map view with listing pins and list view with sorting (distance, time, price).
 
-* “New nearby deals” notifications based on user location and preferences.
+- “New nearby deals” notifications based on user location and preferences.
 
 ---
 
 ## **5\. Orders & Checkout**
 
-* Order creation from a listing with chosen quantity and pickup/delivery type.
+- Order creation from a listing with chosen quantity and pickup/delivery type.
 
-* Order state machine: pending payment → paid → confirmed → in preparation → ready for pickup / out for delivery → completed / cancelled / refunded.
+- Order state machine: pending payment → paid → confirmed → in preparation → ready for pickup / out for delivery → completed / cancelled / refunded.
 
-* Pickup code generation (numeric and/or QR) for verification at pickup.
+- Pickup code generation (numeric and/or QR) for verification at pickup.
 
-* Address capture for delivery orders (geo-coded).
+- Address capture for delivery orders (geo-coded).
 
-* Automatic inventory locking and adjustment on order creation/payment/cancellation.
+- Automatic inventory locking and adjustment on order creation/payment/cancellation.
 
-* Order history views for consumers and businesses.
+- Order history views for consumers and businesses.
 
 ---
 
 ## **6\. Payments & Payouts**
 
-* Multiple payment methods: cards (Stripe/Paystack/Flutterwave), mobile money (M‑Pesa, Airtel Money, MTN MoMo), optional cash on pickup.
+- Multiple payment methods: cards (Stripe/Paystack/Flutterwave), mobile money (M‑Pesa, Airtel Money, MTN MoMo), optional cash on pickup.
 
-* Payment flows: initiate → pending (3DS/STK/USSD) → success/failed via webhooks.
+- Payment flows: initiate → pending (3DS/STK/USSD) → success/failed via webhooks.
 
-* Payment records: provider, method, status, amount, fees, references.
+- Payment records: provider, method, status, amount, fees, references.
 
-* Refund handling (full/partial) linked to orders.
+- Refund handling (full/partial) linked to orders.
 
-* Commission calculation per order (platform fee, delivery fee, CSR allocation).
+- Commission calculation per order (platform fee, delivery fee, CSR allocation).
 
-* Payouts to businesses on schedule (weekly/monthly) with statements and statuses.
+- Payouts to businesses on schedule (weekly/monthly) with statements and statuses.
 
 ---
 
 ## **7\. Delivery & Logistics**
 
-* Two fulfillment modes: customer pickup or delivery via logistics partners.
+- Two fulfillment modes: customer pickup or delivery via logistics partners.
 
-* Logistics order creation for delivery type orders (pickup/dropoff locations).
+- Logistics order creation for delivery type orders (pickup/dropoff locations).
 
-* Integration with external logistics APIs (Sendy, Glovo, local couriers) for dispatch and tracking.
+- Integration with external logistics APIs (Sendy, Glovo, local couriers) for dispatch and tracking.
 
-* Logistics states: requested, assigned, at pickup, in transit, delivered, cancelled, failed.
+- Logistics states: requested, assigned, at pickup, in transit, delivered, cancelled, failed.
 
-* Rider view (internal or via partner) to update status and location.
+- Rider view (internal or via partner) to update status and location.
 
-* Live tracking for consumers (ETA, current rider position).
+- Live tracking for consumers (ETA, current rider position).
 
 ---
 
 ## **8\. Media & Live Photo Verification**
 
-* Media asset management for listing photos, business logos, KYC documents.
+- Media asset management for listing photos, business logos, KYC documents.
 
-* Live camera capture enforcement for food listings (no gallery uploads).
+- Live camera capture enforcement for food listings (no gallery uploads).
 
-* Storage of metadata: file size, mime type, dimensions, EXIF (timestamp, GPS).
+- Storage of metadata: file size, mime type, dimensions, EXIF (timestamp, GPS).
 
-* Flags for live capture, AI validation result, moderation status.
+- Flags for live capture, AI validation result, moderation status.
 
-* S3 (or equivalent) object storage with signed URLs and optional CDN.
+- S3 (or equivalent) object storage with signed URLs and optional CDN.
 
 ---
 
 ## **9\. Reviews, Ratings & Disputes**
 
-* Post-order reviews (only after completed orders).
+- Post-order reviews (only after completed orders).
 
-* Rating fields: overall rating; optional sub-ratings (food quality, freshness, value).
+- Rating fields: overall rating; optional sub-ratings (food quality, freshness, value).
 
-* Text feedback; verified purchase flag.
+- Text feedback; verified purchase flag.
 
-* Aggregation into business average rating and rating counts.
+- Aggregation into business average rating and rating counts.
 
-* Dispute/complaint creation for problematic orders (late, wrong item, bad quality, fraud).
+- Dispute/complaint creation for problematic orders (late, wrong item, bad quality, fraud).
 
-* Dispute states: open, in review, resolved, escalated, closed; resolution type and amount.
+- Dispute states: open, in review, resolved, escalated, closed; resolution type and amount.
 
 ---
 
 ## **10\. Notifications & Real-Time**
 
-* Notification types: order placed/confirmed/ready/out for delivery/completed, payment status, new nearby deals, listing expiring, promotions
+- Notification types: order placed/confirmed/ready/out for delivery/completed, payment status, new nearby deals, listing expiring, promotions
 
-* Channels: push (mobile), in-app, email, SMS (configurable per user).
+- Channels: push (mobile), in-app, email, SMS (configurable per user).
 
-* Real-time updates via WebSocket/Socket.io for:
+- Real-time updates via WebSocket/Socket.io for:
+  - New orders (to businesses).
 
-  * New orders (to businesses).
+  - Order status changes (to consumers).
 
-  * Order status changes (to consumers).
+  - Rider tracking updates for delivery.
 
-  * Rider tracking updates for delivery.
-
-* Notification preferences stored per user.
+- Notification preferences stored per user.
 
 ---
 
 ## **11\. Impact & CSR Features**
 
-* Per-order impact metrics:
+- Per-order impact metrics:
+  - Estimated food weight saved (kg).
 
-  * Estimated food weight saved (kg).
+  - Estimated meals rescued.
 
-  * Estimated meals rescued.
+  - CO₂ equivalent avoided (kg).
 
-  * CO₂ equivalent avoided (kg).
+- Per-user and per-business impact dashboards.
 
-* Per-user and per-business impact dashboards.
+- Automatic CSR allocation: % of platform commission reserved for donations.
 
-* Automatic CSR allocation: % of platform commission reserved for donations.
+- NGO/charity management: partner profiles, verification status, focus area.
 
-* NGO/charity management: partner profiles, verification status, focus area.
-
-* CSR disbursements: pooled amounts paid periodically to NGOs, with tracking and reporting
+- CSR disbursements: pooled amounts paid periodically to NGOs, with tracking and reporting
 
 ---
 
 ## **12\. Admin, Analytics & Compliance**
 
-* Admin console:
+- Admin console:
+  - Manage users, businesses, listings, NGOs.
 
-  * Manage users, businesses, listings, NGOs.
+  - Approve/reject KYC and NGO applications.
 
-  * Approve/reject KYC and NGO applications.
+  - View and handle disputes and support tickets.
 
-  * View and handle disputes and support tickets.
+- Analytics and reporting:
+  - Orders, revenue, active users, active businesses.
 
-* Analytics and reporting:
+  - Food waste reduction metrics (meals, weight, CO₂).
 
-  * Orders, revenue, active users, active businesses.
+  - CSR allocations and NGO disbursements.
 
-  * Food waste reduction metrics (meals, weight, CO₂).
+- Daily metrics aggregation table/view for fast dashboards.
 
-  * CSR allocations and NGO disbursements.
+- Audit logs for sensitive actions (KYC changes, suspensions, payouts).
 
-* Daily metrics aggregation table/view for fast dashboards.
-
-* Audit logs for sensitive actions (KYC changes, suspensions, payouts).
-
-* Logging and monitoring hooks (not in DB but required at architecture level).
+- Logging and monitoring hooks (not in DB but required at architecture level).
 
 ---
 
 This list can be used directly to derive:
 
-* **Core entities**: User, Business, Listing, Order, Payment, LogisticsOrder, MediaAsset, Review, Dispute, NGO, ImpactMetric, CSRDisbursement, Notification, AuditLog.
+- **Core entities**: User, Business, Listing, Order, Payment, LogisticsOrder, MediaAsset, Review, Dispute, NGO, ImpactMetric, CSRDisbursement, Notification, AuditLog.
 
-* **Key relationships**: e.g., User–Business (owner/team), Business–Listing, Listing–Order, Order–Payment, Order–LogisticsOrder, Order–ImpactMetric, Order–Review/Dispute, ImpactMetric–NGO, NGO–CSRDisbursement.
+- **Key relationships**: e.g., User–Business (owner/team), Business–Listing, Listing–Order, Order–Payment, Order–LogisticsOrder, Order–ImpactMetric, Order–Review/Dispute, ImpactMetric–NGO, NGO–CSRDisbursement.
 
-* **Service boundaries**: Auth, Business, Listing, Order, Payment, Logistics, Media, Review, Notification, Impact/CSR, Admin/Analytics.  
+- **Service boundaries**: Auth, Business, Listing, Order, Payment, Logistics, Media, Review, Notification, Impact/CSR, Admin/Analytics.

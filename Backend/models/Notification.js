@@ -2,108 +2,111 @@ const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 const Schema = mongoose.Schema;
 
-const notificationSchema = new Schema({
-  // User Reference
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'User reference is required']
-  },
+const notificationSchema = new Schema(
+  {
+    // User Reference
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User reference is required'],
+    },
 
-  // Notification Content
-  title: {
-    type: String,
-    required: [true, 'Title is required'],
-    trim: true
-  },
-  message: {
-    type: String,
-    required: [true, 'Message is required'],
-    trim: true
-  },
+    // Notification Content
+    title: {
+      type: String,
+      required: [true, 'Title is required'],
+      trim: true,
+    },
+    message: {
+      type: String,
+      required: [true, 'Message is required'],
+      trim: true,
+    },
 
-  // Notification Type
-  type: {
-    type: String,
-    enum: [
-      // Customer notifications
-      'order_confirmed',
-      'order_ready',
-      'order_out_for_delivery',
-      'order_completed',
-      'order_cancelled',
-      'new_listing_nearby',
-      'favorite_business_new_listing',
-      'payment_success',
-      'delivery_assigned',
-      // Vendor notifications
-      'new_order',
-      'order_status_changed',
-      // Review notifications
-      'new_review',
-      'review_response',
-      // System
-      'system',
-      'promotion',
-      'other'
-    ],
-    required: [true, 'Notification type is required']
-  },
+    // Notification Type
+    type: {
+      type: String,
+      enum: [
+        // Customer notifications
+        'order_confirmed',
+        'order_ready',
+        'order_out_for_delivery',
+        'order_completed',
+        'order_cancelled',
+        'new_listing_nearby',
+        'favorite_business_new_listing',
+        'payment_success',
+        'delivery_assigned',
+        // Vendor notifications
+        'new_order',
+        'order_status_changed',
+        // Review notifications
+        'new_review',
+        'review_response',
+        // System
+        'system',
+        'promotion',
+        'other',
+      ],
+      required: [true, 'Notification type is required'],
+    },
 
-  // Deep Link
-  link: {
-    type: String,
-    trim: true
-  },
+    // Deep Link
+    link: {
+      type: String,
+      trim: true,
+    },
 
-  // Related References
-  relatedOrder: {
-    type: Schema.Types.ObjectId,
-    ref: 'Order'
-  },
-  relatedListing: {
-    type: Schema.Types.ObjectId,
-    ref: 'Listing'
-  },
-  relatedBusiness: {
-    type: Schema.Types.ObjectId,
-    ref: 'Business'
-  },
+    // Related References
+    relatedOrder: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+    },
+    relatedListing: {
+      type: Schema.Types.ObjectId,
+      ref: 'Listing',
+    },
+    relatedBusiness: {
+      type: Schema.Types.ObjectId,
+      ref: 'Business',
+    },
 
-  // Rich metadata for notification details (flexible schema)
-  metadata: {
-    type: Schema.Types.Mixed,
-    default: {}
-  },
+    // Rich metadata for notification details (flexible schema)
+    metadata: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
 
-  // Read Status
-  read: {
-    type: Boolean,
-    default: false
-  },
-  readAt: {
-    type: Date
-  },
+    // Read Status
+    read: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: {
+      type: Date,
+    },
 
-  // Sent Status
-  sent: {
-    type: Boolean,
-    default: false
+    // Sent Status
+    sent: {
+      type: Boolean,
+      default: false,
+    },
+    sentAt: {
+      type: Date,
+    },
   },
-  sentAt: {
-    type: Date
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Indexes for query optimization
-notificationSchema.index({ user: 1, read: 1, createdAt: -1 });           // User unread notifications
-notificationSchema.index({ user: 1, type: 1, createdAt: -1 });           // User notifications by type
-notificationSchema.index({ relatedOrder: 1 }, { sparse: true });         // Order-related notifications
-notificationSchema.index({ relatedBusiness: 1 }, { sparse: true });      // Business notifications
-notificationSchema.index({ sent: 1, createdAt: -1 });                    // Batch sending queue
-notificationSchema.index({ read: 1, readAt: 1 });                        // For cleanup of old notifications
+notificationSchema.index({ user: 1, read: 1, createdAt: -1 }); // User unread notifications
+notificationSchema.index({ user: 1, type: 1, createdAt: -1 }); // User notifications by type
+notificationSchema.index({ relatedOrder: 1 }, { sparse: true }); // Order-related notifications
+notificationSchema.index({ relatedBusiness: 1 }, { sparse: true }); // Business notifications
+notificationSchema.index({ sent: 1, createdAt: -1 }); // Batch sending queue
+notificationSchema.index({ read: 1, readAt: 1 }); // For cleanup of old notifications
 
 // Method to mark notification as read
 notificationSchema.methods.markAsRead = function () {
@@ -169,7 +172,7 @@ notificationSchema.statics.cleanupOldNotifications = async function (daysOld = 3
 
   const result = await this.deleteMany({
     read: true,
-    readAt: { $lt: cutoffDate }
+    readAt: { $lt: cutoffDate },
   });
 
   return result.deletedCount;

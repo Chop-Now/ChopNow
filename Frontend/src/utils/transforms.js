@@ -18,7 +18,8 @@ export const transformListingToProduct = (listing) => {
     description: listing.description,
     price: listing.pricing?.price || listing.price || 0,
     originalPrice: listing.pricing?.originalPrice || listing.originalPrice || null,
-    discount: listing.pricing?.discountPercentage ||
+    discount:
+      listing.pricing?.discountPercentage ||
       (listing.pricing?.originalPrice && listing.pricing?.price
         ? Math.round((1 - listing.pricing.price / listing.pricing.originalPrice) * 100)
         : 0),
@@ -36,9 +37,10 @@ export const transformListingToProduct = (listing) => {
     status: listing.status || 'active',
     rating: listing.rating || 0,
     reviewCount: listing.reviewCount || 0,
-    isAvailable: listing.status === 'active' && (listing.inventory?.quantity > 0 || listing.quantity > 0),
+    isAvailable:
+      listing.status === 'active' && (listing.inventory?.quantity > 0 || listing.quantity > 0),
     createdAt: listing.createdAt,
-    updatedAt: listing.updatedAt
+    updatedAt: listing.updatedAt,
   };
 };
 
@@ -59,16 +61,20 @@ export const transformProductToListing = (product, businessId) => {
       originalPrice: parseFloat(product.originalPrice) || parseFloat(product.price),
       price: parseFloat(product.price),
       discountPercentage: product.discount || 0,
-      currency: 'RWF'
+      currency: 'RWF',
     },
     inventory: {
       quantity: parseInt(product.quantity) || 0,
-      unit: product.unit || 'item'
+      unit: product.unit || 'item',
     },
     timeWindow: {
-      availableFrom: product.pickupFrom ? new Date(product.pickupFrom).toISOString() : new Date().toISOString(),
-      availableUntil: product.pickupTo ? new Date(product.pickupTo).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    }
+      availableFrom: product.pickupFrom
+        ? new Date(product.pickupFrom).toISOString()
+        : new Date().toISOString(),
+      availableUntil: product.pickupTo
+        ? new Date(product.pickupTo).toISOString()
+        : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
   };
 };
 
@@ -85,13 +91,13 @@ export const transformOrderForConsumer = (order) => {
     orderNumber: order.orderNumber || `ORD-${order._id?.slice(-8)?.toUpperCase()}`,
     status: normalizeStatus(order.status),
     statusDisplay: getStatusDisplay(order.status),
-    items: (order.items || []).map(item => ({
+    items: (order.items || []).map((item) => ({
       id: item._id || item.listing?._id,
       name: item.listing?.title || item.name || 'Unknown Item',
       quantity: item.quantity,
       price: item.unitPrice || item.price,
       total: (item.quantity || 1) * (item.unitPrice || item.price || 0),
-      image: item.listing?.images?.[0] || item.image || '/placeholder-food.jpg'
+      image: item.listing?.images?.[0] || item.image || '/placeholder-food.jpg',
     })),
     subtotal: order.subtotal || order.payment?.subtotal || 0,
     deliveryFee: order.deliveryFee || order.payment?.deliveryFee || 0,
@@ -101,7 +107,7 @@ export const transformOrderForConsumer = (order) => {
       id: order.business?._id || order.business,
       name: order.business?.name || 'Unknown Business',
       image: order.business?.images?.[0] || order.business?.logo,
-      address: order.business?.address?.text || ''
+      address: order.business?.address?.text || '',
     },
     fulfillmentType: order.fulfillmentType || 'pickup',
     deliveryAddress: order.deliveryDetails?.address || '',
@@ -109,7 +115,7 @@ export const transformOrderForConsumer = (order) => {
     createdAt: order.createdAt,
     completedAt: order.completedAt,
     paymentMethod: order.payment?.paymentMethod || 'card',
-    paymentStatus: order.payment?.paymentStatus || 'pending'
+    paymentStatus: order.payment?.paymentStatus || 'pending',
   };
 };
 
@@ -127,25 +133,29 @@ export const transformOrderForAdmin = (order) => {
     ...consumerOrder,
     customer: {
       id: order.user?._id || order.user,
-      name: order.user?.firstName && order.user?.lastName
-        ? `${order.user.firstName} ${order.user.lastName}`
-        : order.user?.name || 'Unknown Customer',
+      name:
+        order.user?.firstName && order.user?.lastName
+          ? `${order.user.firstName} ${order.user.lastName}`
+          : order.user?.name || 'Unknown Customer',
       email: order.user?.email || '',
       phone: order.user?.phone || '',
-      avatar: order.user?.avatar
+      avatar: order.user?.avatar,
     },
-    rider: order.rider ? {
-      id: order.rider._id,
-      name: order.rider.firstName && order.rider.lastName
-        ? `${order.rider.firstName} ${order.rider.lastName}`
-        : order.rider.name || 'Unknown Rider',
-      phone: order.rider.phone,
-      vehicleNumber: order.rider.vehicleNumber
-    } : null,
+    rider: order.rider
+      ? {
+          id: order.rider._id,
+          name:
+            order.rider.firstName && order.rider.lastName
+              ? `${order.rider.firstName} ${order.rider.lastName}`
+              : order.rider.name || 'Unknown Rider',
+          phone: order.rider.phone,
+          vehicleNumber: order.rider.vehicleNumber,
+        }
+      : null,
     timeline: order.statusHistory || [],
     notes: order.notes || '',
     refundStatus: order.refund?.status,
-    refundAmount: order.refund?.amount
+    refundAmount: order.refund?.amount,
   };
 };
 
@@ -169,27 +179,29 @@ export const transformBusinessToVendor = (business) => {
     city: business.address?.city || '',
     location: {
       lat: business.address?.location?.coordinates?.[1],
-      lng: business.address?.location?.coordinates?.[0]
+      lng: business.address?.location?.coordinates?.[0],
     },
     images: business.images || [],
     logo: business.logo || business.images?.[0],
     status: business.status,
     isActive: business.status === 'active',
     verificationStatus: business.verification?.status || 'unverified',
-    isVerified: business.verification?.status === 'verified' || business.verification?.status === 'approved',
+    isVerified:
+      business.verification?.status === 'verified' || business.verification?.status === 'approved',
     owner: {
       id: business.owner?._id || business.owner,
-      name: business.owner?.firstName && business.owner?.lastName
-        ? `${business.owner.firstName} ${business.owner.lastName}`
-        : '',
+      name:
+        business.owner?.firstName && business.owner?.lastName
+          ? `${business.owner.firstName} ${business.owner.lastName}`
+          : '',
       email: business.owner?.email || '',
-      phone: business.owner?.phone || ''
+      phone: business.owner?.phone || '',
     },
     rating: business.rating || 0,
     reviewCount: business.reviewCount || 0,
     createdAt: business.createdAt,
     submittedAt: business.verification?.submittedAt,
-    approvedAt: business.verification?.reviewedAt
+    approvedAt: business.verification?.reviewedAt,
   };
 };
 
@@ -202,17 +214,17 @@ export const normalizeStatus = (status) => {
   if (!status) return 'pending';
 
   const statusMap = {
-    'pending': 'pending',
-    'confirmed': 'confirmed',
-    'preparing': 'preparing',
-    'ready': 'ready',
-    'ready_for_pickup': 'ready',
-    'out_for_delivery': 'delivering',
-    'in_transit': 'delivering',
-    'delivered': 'delivered',
-    'completed': 'completed',
-    'cancelled': 'cancelled',
-    'refunded': 'refunded'
+    pending: 'pending',
+    confirmed: 'confirmed',
+    preparing: 'preparing',
+    ready: 'ready',
+    ready_for_pickup: 'ready',
+    out_for_delivery: 'delivering',
+    in_transit: 'delivering',
+    delivered: 'delivered',
+    completed: 'completed',
+    cancelled: 'cancelled',
+    refunded: 'refunded',
   };
 
   return statusMap[status.toLowerCase()] || status.toLowerCase();
@@ -225,18 +237,18 @@ export const normalizeStatus = (status) => {
  */
 export const getStatusDisplay = (status) => {
   const displayMap = {
-    'pending': 'Pending',
-    'confirmed': 'Confirmed',
-    'preparing': 'Preparing',
-    'ready': 'Ready for Pickup',
-    'ready_for_pickup': 'Ready for Pickup',
-    'out_for_delivery': 'Out for Delivery',
-    'in_transit': 'In Transit',
-    'delivering': 'Out for Delivery',
-    'delivered': 'Delivered',
-    'completed': 'Completed',
-    'cancelled': 'Cancelled',
-    'refunded': 'Refunded'
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready for Pickup',
+    ready_for_pickup: 'Ready for Pickup',
+    out_for_delivery: 'Out for Delivery',
+    in_transit: 'In Transit',
+    delivering: 'Out for Delivery',
+    delivered: 'Delivered',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    refunded: 'Refunded',
   };
 
   return displayMap[status?.toLowerCase()] || status || 'Unknown';
@@ -251,12 +263,12 @@ export const getCategoryDisplay = (category) => {
   const categoryMap = {
     'fruit-veg': 'Fruits & Vegetables',
     'baked-goods': 'Baked Goods',
-    'meals': 'Ready Meals',
-    'dairy': 'Dairy Products',
-    'meat': 'Meat & Poultry',
-    'beverages': 'Beverages',
-    'pantry': 'Pantry Items',
-    'other': 'Other'
+    meals: 'Ready Meals',
+    dairy: 'Dairy Products',
+    meat: 'Meat & Poultry',
+    beverages: 'Beverages',
+    pantry: 'Pantry Items',
+    other: 'Other',
   };
 
   return categoryMap[category] || category || 'Other';
@@ -269,32 +281,32 @@ export const getCategoryDisplay = (category) => {
  */
 export const getCategoryBackend = (category) => {
   const categoryMap = {
-    'Vegetables': 'fruit-veg',
-    'Fruits': 'fruit-veg',
+    Vegetables: 'fruit-veg',
+    Fruits: 'fruit-veg',
     'Fruits & Vegetables': 'fruit-veg',
     'fruit-veg': 'fruit-veg',
-    'Bakery': 'baked-goods',
+    Bakery: 'baked-goods',
     'Baked Goods': 'baked-goods',
     'baked-goods': 'baked-goods',
-    'Meals': 'meals',
+    Meals: 'meals',
     'Ready Meals': 'meals',
-    'Instant': 'meals',
-    'meals': 'meals',
-    'Dairy': 'dairy',
+    Instant: 'meals',
+    meals: 'meals',
+    Dairy: 'dairy',
     'Dairy Products': 'dairy',
-    'dairy': 'dairy',
-    'Meat': 'meat',
+    dairy: 'dairy',
+    Meat: 'meat',
     'Meat & Poultry': 'meat',
-    'meat': 'meat',
-    'Drinks': 'beverages',
-    'Beverages': 'beverages',
-    'beverages': 'beverages',
-    'Grains': 'pantry',
-    'Pantry': 'pantry',
+    meat: 'meat',
+    Drinks: 'beverages',
+    Beverages: 'beverages',
+    beverages: 'beverages',
+    Grains: 'pantry',
+    Pantry: 'pantry',
     'Pantry Items': 'pantry',
-    'pantry': 'pantry',
-    'Other': 'other',
-    'other': 'other'
+    pantry: 'pantry',
+    Other: 'other',
+    other: 'other',
   };
 
   return categoryMap[category] || 'other';
@@ -307,13 +319,13 @@ export const getCategoryBackend = (category) => {
  */
 export const getBusinessTypeDisplay = (type) => {
   const typeMap = {
-    'farmer': 'Farm',
-    'restaurant': 'Restaurant',
-    'bakery': 'Bakery',
-    'supermarket': 'Supermarket',
-    'grocery': 'Grocery Store',
-    'cafe': 'Cafe',
-    'other': 'Other'
+    farmer: 'Farm',
+    restaurant: 'Restaurant',
+    bakery: 'Bakery',
+    supermarket: 'Supermarket',
+    grocery: 'Grocery Store',
+    cafe: 'Cafe',
+    other: 'Other',
   };
 
   return typeMap[type] || type || 'Business';
@@ -328,12 +340,7 @@ export const formatAddress = (address) => {
   if (!address) return '';
   if (typeof address === 'string') return address;
 
-  const parts = [
-    address.street,
-    address.city,
-    address.state,
-    address.country
-  ].filter(Boolean);
+  const parts = [address.street, address.city, address.state, address.country].filter(Boolean);
 
   return parts.join(', ');
 };
@@ -362,7 +369,7 @@ export const formatDate = (date, options = {}) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    ...options
+    ...options,
   };
 
   try {
@@ -383,7 +390,7 @@ export const formatTime = (date) => {
   try {
     return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   } catch {
     return '';
@@ -404,5 +411,5 @@ export default {
   formatAddress,
   formatCurrency,
   formatDate,
-  formatTime
+  formatTime,
 };

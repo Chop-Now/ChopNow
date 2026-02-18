@@ -1,6 +1,7 @@
 # ChopNow Frontend Documentation
 
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
 2. [Tech Stack](#tech-stack)
 3. [Project Structure](#project-structure)
@@ -19,6 +20,7 @@
 ChopNow is a sustainable food marketplace platform that connects consumers with local vendors selling surplus food at discounted prices. The platform helps reduce food waste while providing affordable options to consumers. The frontend is built with React and Vite, featuring both public-facing pages and a comprehensive admin dashboard with advanced analytics, search functionality, and dual admin modes.
 
 **Key Features:**
+
 - Public marketplace with product browsing and purchasing
 - Dual admin dashboard system (Shop Admin & Website Admin)
 - Dark mode support throughout the application
@@ -36,6 +38,7 @@ ChopNow is a sustainable food marketplace platform that connects consumers with 
 ## Tech Stack
 
 ### Core Technologies
+
 - **React 18+** - Frontend framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS 4.x** - Utility-first CSS framework
@@ -43,6 +46,7 @@ ChopNow is a sustainable food marketplace platform that connects consumers with 
 - **Recharts** - Data visualization library
 
 ### Key Dependencies
+
 ```json
 {
   "react": "^18.x",
@@ -177,28 +181,34 @@ Frontend/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 16+ and npm/yarn
 - Basic knowledge of React and Tailwind CSS
 
 ### Installation
 
 1. **Navigate to Frontend directory**
+
    ```bash
    cd Frontend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Run development server**
+
    ```bash
    npm run dev
    ```
+
    The app will be available at `http://localhost:5173`
 
 4. **Build for production**
+
    ```bash
    npm run build
    ```
@@ -215,9 +225,11 @@ Frontend/
 The admin dashboard is the core feature of this application, providing a comprehensive management interface for the ChopNow platform. It features a **dual admin system** with advanced search, analytics, and responsive design.
 
 ### Dashboard Entry Point
+
 **Location:** `src/admin/Dashboard.jsx`
 
 This is the main container for the entire admin dashboard. It handles:
+
 - Page routing logic via `renderPage()` switch statement
 - Admin mode context provider wrapper
 - Layout composition (Header + Sidebar + Content)
@@ -225,10 +237,11 @@ This is the main container for the entire admin dashboard. It handles:
 - Page change handling via `handlePageChange()`
 
 **Key State:**
+
 ```javascript
-const [sideBarCollapsed, setSideBarCollapsed] = useState(false)
-const [currentPage, setCurrentPage] = useState("dashboard")
-const [settingsTab, setSettingsTab] = useState('profile')
+const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
+const [currentPage, setCurrentPage] = useState('dashboard');
+const [settingsTab, setSettingsTab] = useState('profile');
 ```
 
 ### Dual Admin System
@@ -236,7 +249,9 @@ const [settingsTab, setSettingsTab] = useState('profile')
 The platform supports two types of admin accounts with distinct capabilities:
 
 #### 1. **Shop Admin** (Individual Vendor)
+
 **Access To:**
+
 - Dashboard (overview with stats, charts, recent orders, activity feed)
 - Analytics (Overview, Reports, Insights, Impact)
 - Orders (All, Pending, Completed, Deliveries)
@@ -246,13 +261,16 @@ The platform supports two types of admin accounts with distinct capabilities:
 - View Storefront button (opens public shop page)
 
 **Restricted From:**
+
 - Users management
 - Vendor management
 - Disputes management
 - Platform-wide statistics
 
 #### 2. **Website Admin** (Platform Administrator)
+
 **Access To:**
+
 - Dashboard (overview with platform stats, charts, disputes table, activity feed)
 - Analytics (Overview, Reports, Insights, Impact) - Platform-wide data
 - Users (All Users, Roles & Permissions, Activity)
@@ -266,9 +284,11 @@ The platform supports two types of admin accounts with distinct capabilities:
 **Key Difference:** Website Admin sees aggregated platform data and has vendor/dispute management capabilities
 
 ### Admin Mode Toggle
+
 **Location:** `src/admin/components/layout/Header.jsx`
 
 Located in the header's right section, users can switch between admin modes:
+
 - **Shop Admin Icon:** Store icon (Lucide `Store`)
 - **Website Admin Icon:** Building2 icon (Lucide `Building2`)
 - Toggle changes global state via `AdminModeContext`
@@ -276,9 +296,11 @@ Located in the header's right section, users can switch between admin modes:
 - Dashboard content, stats, and analytics adapt to mode
 
 ### Global Search System
+
 **Location:** `src/admin/components/layout/Header.jsx` (Search functionality)
 
 **Features:**
+
 - Press search icon or click search input to open modal
 - Dark overlay (`z-9998`) with centered search modal (`z-9999`)
 - Real-time search as you type
@@ -288,6 +310,7 @@ Located in the header's right section, users can switch between admin modes:
 - Supports both navigation and actions (dark mode, logout, etc.)
 
 **Search Items Include:**
+
 - All dashboard pages and sub-pages
 - Settings tabs (navigates to specific tab)
 - Analytics sections
@@ -296,6 +319,7 @@ Located in the header's right section, users can switch between admin modes:
 - Deep keywords like: "two factor authentication" → Security Settings, "bank account" → Payouts, etc.
 
 **Implementation:**
+
 - `shopAdminSearchItems` array with comprehensive keywords
 - `websiteAdminSearchItems` array (different from shop admin)
 - `handleSearchChange()` filters by label, path, and keywords
@@ -303,6 +327,7 @@ Located in the header's right section, users can switch between admin modes:
 - Uses `onNavigateToSettings()` for tab-specific navigation
 
 ### Admin Mode Context
+
 **Location:** `src/admin/context/AdminModeContext.jsx`
 
 ```javascript
@@ -317,6 +342,7 @@ const { adminMode, toggleAdminMode } = useAdminMode()
 ```
 
 **Consumed by:**
+
 - `Sidebar.jsx` - Different menu items and structure
 - `Header.jsx` - Toggle button and search items
 - `StatsGrid.jsx` - Different statistics based on mode
@@ -329,6 +355,7 @@ const { adminMode, toggleAdminMode } = useAdminMode()
 ## Admin Dashboard Pages
 
 ### 1. Dashboard Overview (Default Page)
+
 **Location:** `src/admin/components/Content/Content.jsx`  
 **Route:** Default page when entering admin dashboard  
 **Status:** ✅ Fully Implemented
@@ -378,6 +405,7 @@ const { adminMode, toggleAdminMode } = useAdminMode()
      - View Details button for each dispute
 
 **Layout:**
+
 - Full-width stats grid (4 columns on large screens)
 - Chart section (3 charts side by side)
 - Bottom grid: Table (2/3 width) + Activity Feed (1/3 width)
@@ -386,6 +414,7 @@ const { adminMode, toggleAdminMode } = useAdminMode()
 ---
 
 ### 2. Analytics System
+
 **Location:** `src/admin/pages/Analytics.jsx`  
 **Route:** Navigate to Analytics from sidebar  
 **Status:** ✅ Fully Implemented (4 sub-pages)
@@ -393,24 +422,29 @@ const { adminMode, toggleAdminMode } = useAdminMode()
 The Analytics page has internal navigation with 4 tabs:
 
 #### 2a. Analytics > Overview
+
 **Component:** `ShopAdminOverview` or `WebsiteAdminOverview`
 
 **Shop Admin View:**
+
 - **Stats Cards:** Revenue Today, Orders, Active Listings, Fulfillment Rate
 - **Revenue Chart:** Bar chart with 7-day data
 - **Sales Breakdown:** Pie chart by category (Meals, Produce, Bakery, etc.)
 - **Recent Orders Table:** Last 5 orders with quick view
 
 **Website Admin View:**
+
 - **Platform Stats:** Total Revenue, Total Orders, CO2 Saved, Active Vendors
 - **Vendor Leaderboard:** Top 5 performing vendors with rankings
 - **Revenue Chart:** Platform-wide revenue trends
 - **Environmental Impact:** Meals rescued, CO2e saved, Water saved metrics
 
 #### 2b. Analytics > Reports
+
 **Component:** `ShopAdminReports` or `WebsiteAdminReports`
 
 **Features:**
+
 - **Revenue Breakdown:** Detailed revenue by time period
 - **Cost Analysis:** Operational costs tracking
 - **Category Performance:** Best-selling categories
@@ -422,9 +456,11 @@ The Analytics page has internal navigation with 4 tabs:
 **Website Admin:** Platform-wide aggregated data
 
 #### 2c. Analytics > Insights
+
 **Component:** `ShopAdminInsights` or `WebsiteAdminInsights`
 
 **Features:**
+
 - **Customer Behavior Analysis:** Purchase patterns
 - **Conversion Rates:** Browse to purchase conversion
 - **Growth Opportunities:** Recommendations for improvement
@@ -435,9 +471,11 @@ The Analytics page has internal navigation with 4 tabs:
 **Website Admin Focus:** User growth, vendor metrics, regional analysis, demographics
 
 #### 2d. Analytics > Impact
+
 **Component:** `ShopAdminImpact` or `WebsiteAdminImpact`
 
 **Features:**
+
 - **Environmental Metrics:**
   - Total meals rescued from waste
   - CO2 emissions saved (kilograms)
@@ -450,6 +488,7 @@ The Analytics page has internal navigation with 4 tabs:
 **Website Admin:** Platform-wide environmental impact
 
 **Navigation:**
+
 - Tab navigation at top of page
 - Active tab highlighted with green background
 - Smooth transitions between tabs
@@ -458,12 +497,14 @@ The Analytics page has internal navigation with 4 tabs:
 ---
 
 ### 3. Users Management
+
 **Location:** `src/admin/pages/Users.jsx`  
 **Route:** Users menu in sidebar  
 **Access:** Website Admin Only  
 **Status:** 🚧 Placeholder (Coming Soon)
 
 **Intended Features:**
+
 - User list with pagination
 - Search and filter by role, status
 - View user details
@@ -471,11 +512,13 @@ The Analytics page has internal navigation with 4 tabs:
 - Export user list
 
 **Sub-menu Items (Website Admin):**
+
 - All Users
 - Roles & Permissions
 - User Activity
 
 **Backend Needs:**
+
 - `GET /api/admin/users`
 - `GET /api/admin/users/:id`
 - `PUT /api/admin/users/:id/status`
@@ -483,11 +526,13 @@ The Analytics page has internal navigation with 4 tabs:
 ---
 
 ### 4. Orders Management
+
 **Location:** `src/admin/pages/Orders.jsx`  
 **Route:** Orders menu in sidebar  
 **Status:** 🚧 Placeholder (Coming Soon)
 
 **Intended Features:**
+
 - Order list with search and filters
 - Order details sidebar
 - Status updates
@@ -495,6 +540,7 @@ The Analytics page has internal navigation with 4 tabs:
 - Export orders
 
 **Sub-menu Items:**
+
 - All Orders
 - Pending Orders
 - Completed Orders
@@ -504,6 +550,7 @@ The Analytics page has internal navigation with 4 tabs:
 **Website Admin:** All platform orders with vendor filter
 
 **Backend Needs:**
+
 - `GET /api/admin/orders`
 - `GET /api/admin/orders/:id`
 - `PUT /api/admin/orders/:id/status`
@@ -511,6 +558,7 @@ The Analytics page has internal navigation with 4 tabs:
 ---
 
 ### 5. Listings Management
+
 **Location:** `src/admin/pages/Listings.jsx`  
 **Route:** Listings menu in sidebar  
 **Status:** ✅ Fully Implemented
@@ -554,30 +602,35 @@ The Analytics page has internal navigation with 4 tabs:
    - Active page with green background
 
 **Data Flow:**
+
 - Uses `dummyProducts` from `assets/assets.js`
 - Adds status ('active', 'inactive', 'expired') and stock
 - Filters by search term and status
 - Client-side pagination
 
 **Backend Needs:**
+
 - `GET /api/admin/listings`
 - `PUT /api/admin/listings/:id/status`
 - `DELETE /api/admin/listings/:id`
 - `POST /api/admin/listings/bulk-action`
 
 **Sub-menu Items:**
+
 - All Listings (this page)
 - New Listing (placeholder)
 
 ---
 
 ### 6. Vendors Management
+
 **Location:** `src/admin/pages/Vendors.jsx`  
 **Route:** Vendors menu in sidebar  
 **Access:** Website Admin Only  
 **Status:** 🚧 Placeholder (Coming Soon)
 
 **Intended Features:**
+
 - Vendor list with search
 - Approve/reject applications
 - Suspend/activate vendors
@@ -585,10 +638,12 @@ The Analytics page has internal navigation with 4 tabs:
 - Vendor details sidebar
 
 **Sub-menu Items:**
+
 - All Vendors
 - Vendor Approval
 
 **Backend Needs:**
+
 - `GET /api/admin/vendors`
 - `GET /api/admin/vendors/:id`
 - `PUT /api/admin/vendors/:id/status`
@@ -596,6 +651,7 @@ The Analytics page has internal navigation with 4 tabs:
 ---
 
 ### 7. Disputes Management
+
 **Location:** `src/admin/pages/Disputes.jsx`  
 **Route:** Disputes menu in sidebar  
 **Access:** Website Admin Only  
@@ -635,6 +691,7 @@ The Analytics page has internal navigation with 4 tabs:
      - Click overlay or X to close
 
 **Issues Data Structure:**
+
 ```javascript
 {
   id, orderId, orderValue, priority: 'critical' | 'high' | 'medium',
@@ -646,12 +703,14 @@ The Analytics page has internal navigation with 4 tabs:
 ```
 
 **Sub-menu Items:**
+
 - Refund Requests (placeholder)
 - Customer Complaints (implemented)
 
 ---
 
 ### 8. Payouts Management
+
 **Location:** `src/admin/pages/Payouts.jsx`  
 **Route:** Payouts menu in sidebar (Finance section)  
 **Status:** ✅ Fully Implemented
@@ -659,12 +718,14 @@ The Analytics page has internal navigation with 4 tabs:
 **Shop Admin View** (`ShopAdminPayouts`):
 
 **Stats Cards:**
+
 - Available Balance
 - Pending Clearance
 - Total Earnings
 - Next Payout Date
 
 **Features:**
+
 - Payment Method Setup (MTN Mobile Money, Airtel Money, Bank Transfer)
 - Payout History Table:
   - Columns: Payout ID, Amount, Date, Method, Status
@@ -675,12 +736,14 @@ The Analytics page has internal navigation with 4 tabs:
 **Website Admin View** (`WebsiteAdminPayouts`):
 
 **Stats Cards:**
+
 - Total Payouts This Month
 - Pending Payouts
 - Completed Payouts
 - Failed Payouts
 
 **Features:**
+
 - Pending Payouts Table:
   - Shows vendors awaiting payout
   - Columns: Vendor Name, Amount, Request Date, Payment Method, Actions
@@ -690,6 +753,7 @@ The Analytics page has internal navigation with 4 tabs:
 - Export payout reports
 
 **Backend Needs:**
+
 - `GET /api/admin/payouts`
 - `POST /api/admin/payouts/request` (Shop Admin)
 - `POST /api/admin/payouts/release` (Website Admin)
@@ -697,11 +761,13 @@ The Analytics page has internal navigation with 4 tabs:
 ---
 
 ### 9. Settings System
+
 **Location:** `src/admin/pages/Settings.jsx`  
 **Route:** Settings menu in sidebar  
 **Status:** ✅ Fully Implemented
 
 **Layout:**
+
 - Left sidebar with tab navigation
 - Right content area (3/4 width)
 - Tab changes content dynamically
@@ -709,9 +775,11 @@ The Analytics page has internal navigation with 4 tabs:
 **Tabs:**
 
 #### 9a. Profile Settings
+
 **Both Admin Types**
 
 **Shop Admin Fields:**
+
 - Business Logo upload
 - Business Name
 - Business Tagline
@@ -721,17 +789,20 @@ The Analytics page has internal navigation with 4 tabs:
 - Phone Number
 
 **Website Admin Fields:**
+
 - Profile Picture upload
 - Name
 - Email
 - Phone Number
 
 **Features:**
+
 - Image upload with preview
 - Update Profile button
 - Form validation
 
 #### 9b. Business Details
+
 **Shop Admin Only**
 
 **Sections:**
@@ -757,11 +828,13 @@ The Analytics page has internal navigation with 4 tabs:
    - Upload date tracking
 
 **Features:**
+
 - Save/Cancel buttons
 - LocationPicker integration
 - Document management
 
 #### 9c. Security Settings
+
 **Both Admin Types**
 
 **Sections:**
@@ -791,11 +864,13 @@ The Analytics page has internal navigation with 4 tabs:
    - Shows last 10 logins
 
 **Features:**
+
 - Security alerts
 - Session management
 - Login monitoring
 
 **Settings Tab Navigation:**
+
 - Searchable via global search
 - Search "two factor authentication" → Goes to Security tab
 - Search "business hours" → Goes to Business tab
@@ -808,9 +883,11 @@ The Analytics page has internal navigation with 4 tabs:
 ### Layout Components
 
 #### Header
+
 **Location:** `src/admin/components/layout/Header.jsx`
 
 **Features:**
+
 - Left: Menu toggle button (mobile), Logo/Title
 - Center: Global search bar
   - Click to open search modal
@@ -820,12 +897,14 @@ The Analytics page has internal navigation with 4 tabs:
 - Right: Dark mode toggle, Notifications bell, Profile dropdown, Admin mode toggle
 
 **Search System:**
+
 - Comprehensive keyword matching
 - Navigates to pages or triggers actions
 - Supports deep keywords (e.g., "2fa", "bank account")
 - Modal overlay with z-index management
 
 **Profile Dropdown:**
+
 - Edit Profile
 - Account Settings
 - Support
@@ -833,15 +912,18 @@ The Analytics page has internal navigation with 4 tabs:
 - Includes confirmation modal for logout
 
 **Notifications Dropdown:**
+
 - Shows recent notifications
 - Color-coded by type (success, info, warning)
 - Mark as read functionality
 - Time elapsed display
 
 #### Sidebar
+
 **Location:** `src/admin/components/layout/Sidebar.jsx`
 
 **Features:**
+
 - Collapsible (toggle button in header)
 - Logo at top
 - Menu items with icons and labels
@@ -851,6 +933,7 @@ The Analytics page has internal navigation with 4 tabs:
 - "View Storefront" button at bottom (Shop Admin only)
 
 **Shop Admin Menu:**
+
 - Dashboard
 - Analytics (expandable: Overview, Reports, Insights, Impact)
 - Orders (expandable: All Orders, Pending, Completed, Deliveries)
@@ -859,6 +942,7 @@ The Analytics page has internal navigation with 4 tabs:
 - Settings
 
 **Website Admin Menu:**
+
 - Dashboard
 - Analytics (expandable: Overview, Reports, Insights, Impact)
 - Users (expandable: All Users, Roles, Activity)
@@ -870,9 +954,11 @@ The Analytics page has internal navigation with 4 tabs:
 - Settings
 
 #### Confirmation Modal
+
 **Location:** `src/admin/components/ConfirmationModal.jsx`
 
 **Features:**
+
 - Reusable modal for confirmations
 - Props: isOpen, onClose, onConfirm, title, message, confirmText, cancelText, type
 - Types: danger (red), warning (yellow), info (blue)
@@ -884,9 +970,11 @@ The Analytics page has internal navigation with 4 tabs:
 ### Dashboard Components
 
 #### StatsGrid
+
 **Location:** `src/admin/components/Content/StatsGrid.jsx`
 
 **Features:**
+
 - 4 statistics cards in grid layout
 - Each card shows: icon, value, label, trend percentage
 - Trend indicator with arrow and color (green up, red down)
@@ -894,23 +982,28 @@ The Analytics page has internal navigation with 4 tabs:
 - Responsive grid (1 col mobile, 2 col tablet, 4 col desktop)
 
 #### ChartSection
+
 **Location:** `src/admin/components/Content/ChartSection.jsx`
 
 **Features:**
+
 - Container for 3 charts
 - Grid layout (responsive)
 - Each chart in white card with title
 - Uses Recharts library
 
 **Charts:**
+
 - RevenueChart (Bar): Monthly revenue data
 - SalesChart (Line): Sales trends
 - OrderTrendsChart (Line): Order volume with period toggle
 
 #### ActivityFeed
+
 **Location:** `src/admin/components/Content/ActivityFeed.jsx`
 
 **Features:**
+
 - Timeline of recent activities
 - Scrollable list when content overflows
 - Each activity: icon (color-coded), title, description, timestamp
@@ -918,9 +1011,11 @@ The Analytics page has internal navigation with 4 tabs:
 - Matches height of adjacent table section
 
 #### TableSection
+
 **Location:** `src/admin/components/Content/TableSection.jsx`
 
 **Features:**
+
 - Recent orders table (last 5)
 - Columns: Order ID, Product (image+name), Category, Price, Status
 - Status badges with colors
@@ -929,9 +1024,11 @@ The Analytics page has internal navigation with 4 tabs:
 - Responsive table with scroll
 
 #### DisputesTable
+
 **Location:** `src/admin/components/Content/DisputesTable.jsx`
 
 **Features:**
+
 - Recent disputes table
 - Shows: Dispute ID, Customer, Vendor, Type, Reason, Amount, Date, Status
 - Status badges (Pending, Under Review, Resolved)
@@ -943,21 +1040,25 @@ The Analytics page has internal navigation with 4 tabs:
 ### Public Components
 
 #### Navbar
+
 **Location:** `src/Components/Navbar.jsx`
 
 Main navigation for public pages with links to Home, Shop, About, Contact
 
 #### Footer
+
 **Location:** `src/Components/Footer.jsx`
 
 Footer with company info, links, social media, newsletter signup
 
 #### ProductCard
+
 **Location:** `src/Components/ProductCard.jsx`
 
 Reusable product card showing image, name, price, discount, add to cart
 
 #### Other Components
+
 - Hero, HowItWorks, Testimonials, AboutUs, Categories, etc.
 - See file structure for complete list
 
@@ -966,16 +1067,18 @@ Reusable product card showing image, name, price, discount, add to cart
 ## Context & State Management
 
 ### AdminModeContext
+
 **Location:** `src/admin/context/AdminModeContext.jsx`
 
 ```javascript
-const { adminMode, toggleAdminMode } = useAdminMode()
+const { adminMode, toggleAdminMode } = useAdminMode();
 // adminMode: 'shop' | 'website'
 ```
 
 **Used By:** Sidebar, Header, StatsGrid, Content, Analytics, Settings
 
 ### AppContext
+
 **Location:** `src/context/AppContext.jsx`
 
 Global context for public pages (cart, user data, etc.)
@@ -987,12 +1090,14 @@ Global context for public pages (cart, user data, etc.)
 ### Design System
 
 **Colors:**
+
 - Primary (Green): `bg-solid`, `text-solid` (defined in index.css)
 - Background: Gradient from slate to blue to indigo
 - Dark mode: Slate shades (800, 900)
 - Status colors: Green (success), Yellow (warning), Red (danger), Blue (info)
 
 **Components:**
+
 - Cards: White with 80% opacity, backdrop blur
 - Borders: Slate with 50% opacity
 - Rounded corners: `rounded-2xl`, `rounded-lg`
@@ -1000,23 +1105,27 @@ Global context for public pages (cart, user data, etc.)
 - Transitions: Smooth color and hover effects
 
 **Dark Mode:**
+
 - Toggle in header
 - Uses Tailwind's `dark:` prefix
 - Persisted in localStorage
 - Affects all components
 
 **Responsive:**
+
 - Mobile-first approach
 - Breakpoints: sm, md, lg, xl, 2xl
 - Collapsible sidebar on mobile
 - Grid layouts adapt to screen size
 
 ### Tailwind Configuration
+
 **Location:** `tailwind.config.js`
 
 Custom colors, animations, and utilities defined
 
 ### Global Styles
+
 **Location:** `src/index.css`
 
 - Tailwind directives
@@ -1029,6 +1138,7 @@ Custom colors, animations, and utilities defined
 ## Key Features Summary
 
 ✅ **Implemented:**
+
 - Dual admin dashboard with mode switching
 - Complete analytics system (4 sub-pages)
 - Global search with deep keyword matching
@@ -1041,6 +1151,7 @@ Custom colors, animations, and utilities defined
 - Chart visualizations
 
 🚧 **Placeholder (Coming Soon):**
+
 - Users management
 - Orders management
 - Vendors management (Website Admin)
@@ -1054,55 +1165,58 @@ Custom colors, animations, and utilities defined
 
 ### Admin Pages
 
-| Page | Location | Route/Navigation |
-|------|----------|------------------|
-| Dashboard Overview | `src/admin/components/Content/Content.jsx` | Default page, Sidebar → Dashboard |
-| Analytics Overview | `src/admin/pages/Analytics.jsx` → ShopAdminOverview/WebsiteAdminOverview | Sidebar → Analytics → Overview |
-| Analytics Reports | `src/admin/pages/Analytics.jsx` → ShopAdminReports/WebsiteAdminReports | Sidebar → Analytics → Reports |
-| Analytics Insights | `src/admin/pages/Analytics.jsx` → ShopAdminInsights/WebsiteAdminInsights | Sidebar → Analytics → Insights |
-| Analytics Impact | `src/admin/pages/Analytics.jsx` → ShopAdminImpact/WebsiteAdminImpact | Sidebar → Analytics → Impact |
-| Users | `src/admin/pages/Users.jsx` | Sidebar → Users (Website Admin only) |
-| Orders | `src/admin/pages/Orders.jsx` | Sidebar → Orders |
-| All Listings | `src/admin/pages/Listings.jsx` | Sidebar → Listings → All Listings |
-| New Listing | `src/admin/pages/Listings.jsx` | Sidebar → Listings → New Listing |
-| Vendors | `src/admin/pages/Vendors.jsx` | Sidebar → Vendors (Website Admin only) |
-| Refund Requests | `src/admin/pages/Disputes.jsx` → RefundRequests | Sidebar → Disputes → Refund Requests (Website Admin only) |
-| Customer Complaints | `src/admin/pages/Disputes.jsx` → CustomerComplaints | Sidebar → Disputes → Complaints (Website Admin only) |
-| Payouts | `src/admin/pages/Payouts.jsx` | Sidebar → Payouts |
-| Settings - Profile | `src/admin/pages/Settings.jsx` | Sidebar → Settings → Profile tab |
-| Settings - Business | `src/admin/pages/Settings.jsx` | Sidebar → Settings → Business tab (Shop Admin only) |
-| Settings - Security | `src/admin/pages/Settings.jsx` | Sidebar → Settings → Security tab |
+| Page                | Location                                                                 | Route/Navigation                                          |
+| ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Dashboard Overview  | `src/admin/components/Content/Content.jsx`                               | Default page, Sidebar → Dashboard                         |
+| Analytics Overview  | `src/admin/pages/Analytics.jsx` → ShopAdminOverview/WebsiteAdminOverview | Sidebar → Analytics → Overview                            |
+| Analytics Reports   | `src/admin/pages/Analytics.jsx` → ShopAdminReports/WebsiteAdminReports   | Sidebar → Analytics → Reports                             |
+| Analytics Insights  | `src/admin/pages/Analytics.jsx` → ShopAdminInsights/WebsiteAdminInsights | Sidebar → Analytics → Insights                            |
+| Analytics Impact    | `src/admin/pages/Analytics.jsx` → ShopAdminImpact/WebsiteAdminImpact     | Sidebar → Analytics → Impact                              |
+| Users               | `src/admin/pages/Users.jsx`                                              | Sidebar → Users (Website Admin only)                      |
+| Orders              | `src/admin/pages/Orders.jsx`                                             | Sidebar → Orders                                          |
+| All Listings        | `src/admin/pages/Listings.jsx`                                           | Sidebar → Listings → All Listings                         |
+| New Listing         | `src/admin/pages/Listings.jsx`                                           | Sidebar → Listings → New Listing                          |
+| Vendors             | `src/admin/pages/Vendors.jsx`                                            | Sidebar → Vendors (Website Admin only)                    |
+| Refund Requests     | `src/admin/pages/Disputes.jsx` → RefundRequests                          | Sidebar → Disputes → Refund Requests (Website Admin only) |
+| Customer Complaints | `src/admin/pages/Disputes.jsx` → CustomerComplaints                      | Sidebar → Disputes → Complaints (Website Admin only)      |
+| Payouts             | `src/admin/pages/Payouts.jsx`                                            | Sidebar → Payouts                                         |
+| Settings - Profile  | `src/admin/pages/Settings.jsx`                                           | Sidebar → Settings → Profile tab                          |
+| Settings - Business | `src/admin/pages/Settings.jsx`                                           | Sidebar → Settings → Business tab (Shop Admin only)       |
+| Settings - Security | `src/admin/pages/Settings.jsx`                                           | Sidebar → Settings → Security tab                         |
 
 ### Public Pages
 
-| Page | Location | Route/URL |
-|------|----------|-----------|
-| Home | `src/Pages/Home.jsx` | `/` |
-| Shop | `src/Pages/Shop.jsx` | `/shop` |
-| Product Details | `src/Pages/ProductDetails.jsx` | `/product/:id` |
-| Cart | `src/Pages/Cart.jsx` | `/cart` |
-| Login | `src/Pages/Login.jsx` | `/login` |
-| Sign Up | `src/Pages/SignUp.jsx` | `/signup` |
-| My Profile | `src/Pages/MyProfile.jsx` | `/profile` |
-| My Orders | `src/Pages/MyOrders.jsx` | `/orders` |
-| My Impact | `src/Pages/MyImpact.jsx` | `/impact` |
-| Category Page | `src/Pages/CategoryPage.jsx` | `/category/:name` |
-| Contact Us | `src/Pages/ContactUs.jsx` | `/contact` |
-| FAQ | `src/Pages/FAQ.jsx` | `/faq` |
-| Business Verification | `src/Pages/BusinessVerification.jsx` | `/verify` |
-| Pending Review | `src/Pages/PendingReview.jsx` | `/pending` |
-| Notifications | `src/Pages/Notification.jsx` | `/notifications` |
+| Page                  | Location                             | Route/URL         |
+| --------------------- | ------------------------------------ | ----------------- |
+| Home                  | `src/Pages/Home.jsx`                 | `/`               |
+| Shop                  | `src/Pages/Shop.jsx`                 | `/shop`           |
+| Product Details       | `src/Pages/ProductDetails.jsx`       | `/product/:id`    |
+| Cart                  | `src/Pages/Cart.jsx`                 | `/cart`           |
+| Login                 | `src/Pages/Login.jsx`                | `/login`          |
+| Sign Up               | `src/Pages/SignUp.jsx`               | `/signup`         |
+| My Profile            | `src/Pages/MyProfile.jsx`            | `/profile`        |
+| My Orders             | `src/Pages/MyOrders.jsx`             | `/orders`         |
+| My Impact             | `src/Pages/MyImpact.jsx`             | `/impact`         |
+| Category Page         | `src/Pages/CategoryPage.jsx`         | `/category/:name` |
+| Contact Us            | `src/Pages/ContactUs.jsx`            | `/contact`        |
+| FAQ                   | `src/Pages/FAQ.jsx`                  | `/faq`            |
+| Business Verification | `src/Pages/BusinessVerification.jsx` | `/verify`         |
+| Pending Review        | `src/Pages/PendingReview.jsx`        | `/pending`        |
+| Notifications         | `src/Pages/Notification.jsx`         | `/notifications`  |
 
 ---
 
 ## Development Notes
 
 ### Current Data Source
+
 All admin pages currently use **dummy data** from:
+
 - `src/assets/assets.js` - Product data
 - Component files - Hardcoded sample data
 
 ### Next Steps for Backend Integration
+
 1. Replace dummy data with API calls
 2. Implement authentication and session management
 3. Add real-time updates with WebSocket
@@ -1111,6 +1225,7 @@ All admin pages currently use **dummy data** from:
 6. Create loading states and skeleton screens
 
 ### Design Patterns Used
+
 - Context API for global state
 - Component composition
 - Custom hooks (useGeolocation)

@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
-import { motion } from "motion/react";
+import { motion } from 'motion/react';
 
 const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
-  const [activeSection, setActiveSection] = useState("");
-  
+  const [activeSection, setActiveSection] = useState('');
+
   const navLinks = [
-    { path: "#howItWorks", title: "How It Works" },
-    { path: "#testimonials", title: "Testimonials" },
-    { path: "#advisors", title: "Advisors" },
-    { path: "#Milestones", title: "Milestones" },
-    { path: "#AboutUs", title: "About Us" },
+    { path: '#howItWorks', title: 'How It Works' },
+    { path: '#testimonials', title: 'Testimonials' },
+    { path: '#advisors', title: 'Advisors' },
+    { path: '#Milestones', title: 'Milestones' },
+    { path: '#AboutUs', title: 'About Us' },
   ];
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = navLinks.map(link => link.path.substring(1));
+      const sections = navLinks.map((link) => link.path.substring(1));
       const scrollPosition = window.scrollY + 100;
       let sectionFound = false;
 
@@ -31,23 +31,23 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           }
         }
       }
-      
+
       // Clear active section if not in any tracked section
       if (!sectionFound) {
-        setActiveSection("");
+        setActiveSection('');
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleClick = (path) => {
     setMenuOpened(false);
     const element = document.getElementById(path.substring(1));
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -65,10 +65,10 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
           whileHover={{ scale: 1.05 }}
-          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-solid after:absolute after:-bottom-0.5 after:right-3" : ""} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
+          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-solid after:absolute after:-bottom-0.5 after:right-3" : ''} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
           style={{ color: 'var(--color-textColor)' }}
         >
-            {link.title}
+          {link.title}
         </motion.a>
       ))}
       {menuOpened && (
@@ -77,7 +77,12 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Link to="/login" className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2">Get Started</Link>
+          <Link
+            to="/login"
+            className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2"
+          >
+            Get Started
+          </Link>
         </motion.div>
       )}
     </nav>

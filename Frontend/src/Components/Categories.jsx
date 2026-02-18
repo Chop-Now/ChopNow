@@ -1,9 +1,8 @@
-import { categories } from "../assets/assets";
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { categories } from '../assets/assets';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Categories = () => {
-
   const navigate = useNavigate();
 
   return (
@@ -49,7 +48,10 @@ const Categories = () => {
       `}</style>
 
       <div className="marquee-container overflow-hidden">
-        <div className="marquee-inner flex will-change-transform gap-4" style={{ animationDuration: "30s" }}>
+        <div
+          className="marquee-inner flex will-change-transform gap-4"
+          style={{ animationDuration: '30s' }}
+        >
           {/* Render categories multiple times for seamless loop */}
           {[...Array(4)].map((_, setIndex) => (
             <React.Fragment key={setIndex}>
@@ -57,10 +59,14 @@ const Categories = () => {
                 <div
                   key={`${setIndex}-${index}`}
                   className="group cursor-pointer py-2.5 px-2 gap-1.5 rounded-lg flex flex-col justify-center items-center shrink-0"
-                  style={{ backgroundColor: category.bgColor, minWidth: '105px', maxWidth: '105px' }}
+                  style={{
+                    backgroundColor: category.bgColor,
+                    minWidth: '105px',
+                    maxWidth: '105px',
+                  }}
                   onClick={() => {
                     navigate(`/shop/${category.path.toLowerCase()}`);
-                    scrollTo(0, 0)
+                    scrollTo(0, 0);
                   }}
                 >
                   <img

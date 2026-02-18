@@ -15,7 +15,7 @@ export const AdminModeProvider = ({ children, userRole }) => {
 
   const toggleAdminMode = () => {
     // Only allow toggling to 'website' mode if user is admin
-    setAdminMode(prev => {
+    setAdminMode((prev) => {
       if (prev === 'shop' && userRole === 'admin') {
         return 'website';
       } else if (prev === 'website') {
@@ -35,7 +35,14 @@ export const AdminModeProvider = ({ children, userRole }) => {
   };
 
   return (
-    <AdminModeContext.Provider value={{ adminMode, setAdminMode: safeSetAdminMode, toggleAdminMode, isAdmin: userRole === 'admin' }}>
+    <AdminModeContext.Provider
+      value={{
+        adminMode,
+        setAdminMode: safeSetAdminMode,
+        toggleAdminMode,
+        isAdmin: userRole === 'admin',
+      }}
+    >
       {children}
     </AdminModeContext.Provider>
   );

@@ -1,11 +1,11 @@
-import { assets } from '../assets/assets'
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from 'lucide-react'
-import React, { useState, useEffect } from 'react'
-import toast from 'react-hot-toast'
-import { useAppContext } from '../context/AppContext'
-import { useNavigate } from 'react-router-dom'
-import { useGoogleLogin } from '@react-oauth/google'
-import { userService } from '../services'
+import { assets } from '../assets/assets';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
+import { userService } from '../services';
 
 const AdminLogin = () => {
   const { login, googleAuth, user, isAuthenticated } = useAppContext();
@@ -39,7 +39,7 @@ const AdminLogin = () => {
 
         // Check if user has admin role
         if (!userRoles.includes('admin')) {
-          toast.error("Access denied. This Google account does not have admin privileges.");
+          toast.error('Access denied. This Google account does not have admin privileges.');
           // Clear the session since they're not an admin
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -56,12 +56,11 @@ const AdminLogin = () => {
           }
         }
 
-        toast.success("Admin login successful!");
+        toast.success('Admin login successful!');
         window.location.href = '/admin';
-
       } catch (err) {
-        console.error("Google Login error:", err);
-        toast.error(err.message || "Google login failed");
+        console.error('Google Login error:', err);
+        toast.error(err.message || 'Google login failed');
         setIsGoogleLoading(false);
       }
     },
@@ -76,7 +75,7 @@ const AdminLogin = () => {
     e.preventDefault();
 
     if (!email || !password) {
-      toast.error("Please enter email and password");
+      toast.error('Please enter email and password');
       return;
     }
 
@@ -91,7 +90,7 @@ const AdminLogin = () => {
 
       // Check if user has admin role
       if (!userRoles.includes('admin')) {
-        toast.error("Access denied. This account does not have admin privileges.");
+        toast.error('Access denied. This account does not have admin privileges.');
         // Clear the session since they're not an admin
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -99,12 +98,11 @@ const AdminLogin = () => {
         return;
       }
 
-      toast.success("Admin login successful!");
+      toast.success('Admin login successful!');
       window.location.href = '/admin';
-
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error.message || "Login failed. Please check your credentials.");
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Please check your credentials.');
       setIsLoading(false);
     }
   };
@@ -215,9 +213,7 @@ const AdminLogin = () => {
 
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
@@ -234,9 +230,7 @@ const AdminLogin = () => {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-slate-300">
-                  Password
-                </label>
+                <label className="block text-sm font-medium text-slate-300">Password</label>
                 <a href="#" className="text-sm text-solid hover:text-tertiary transition-colors">
                   Forgot password?
                 </a>
@@ -244,7 +238,7 @@ const AdminLogin = () => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-14 pl-12 pr-12 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
@@ -297,7 +291,8 @@ const AdminLogin = () => {
               <div>
                 <p className="text-sm font-medium text-amber-400">Restricted Access</p>
                 <p className="text-xs text-amber-500/80 mt-1">
-                  This portal is for authorized administrators only. All login attempts are monitored and logged for security purposes.
+                  This portal is for authorized administrators only. All login attempts are
+                  monitored and logged for security purposes.
                 </p>
               </div>
             </div>

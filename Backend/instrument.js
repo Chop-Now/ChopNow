@@ -7,9 +7,7 @@ if (process.env.SENTRY_DSN && String(process.env.SENTRY_DSN).trim() !== '') {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || 'development',
-    integrations: [
-      nodeProfilingIntegration(),
-    ],
+    integrations: [nodeProfilingIntegration()],
     // Tracing - capture transactions for performance monitoring
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     // Profiling - set sampling rate

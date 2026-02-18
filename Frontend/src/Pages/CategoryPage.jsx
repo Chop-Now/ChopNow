@@ -1,24 +1,24 @@
-import Breadcrumb from '../Components/Breadcrumb'
-import Footer from '../Components/Footer'
-import PageNavbar from '../Components/PageNavbar'
-import Products from '../Components/Products'
-import ShopSidebar from '../Components/ShopSidebar'
-import React, { useState, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import Breadcrumb from '../Components/Breadcrumb';
+import Footer from '../Components/Footer';
+import PageNavbar from '../Components/PageNavbar';
+import Products from '../Components/Products';
+import ShopSidebar from '../Components/ShopSidebar';
+import React, { useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 
 const CategoryPage = () => {
-  const { category } = useParams()
-  const [sortBy, setSortBy] = useState('Distance (Nearest First)')
-  const [priceRange, setPriceRange] = useState(50000)
-  const productsRef = useRef()
+  const { category } = useParams();
+  const [sortBy, setSortBy] = useState('Distance (Nearest First)');
+  const [priceRange, setPriceRange] = useState(50000);
+  const productsRef = useRef();
 
   // Capitalize first letter of category for display (with fallback)
   const displayCategory = category
     ? category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')
-    : 'All Products'
+    : 'All Products';
 
   return (
-    <div className='bg-white min-h-screen pt-20'>
+    <div className="bg-white min-h-screen pt-20">
       <PageNavbar onMobileFilterClick={() => productsRef.current?.openMobileSort()} />
 
       <div className="px-6 md:px-8 lg:px-12 xl:px-16 py-6">
@@ -49,7 +49,7 @@ const CategoryPage = () => {
       </div>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default CategoryPage
+export default CategoryPage;

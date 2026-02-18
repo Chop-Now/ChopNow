@@ -1,9 +1,9 @@
-"use client";;
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+'use client';
+import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from 'motion/react';
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 // Pre-generate random rotations outside the component for stability
 const generateRotations = (count) => {
@@ -14,10 +14,7 @@ const generateRotations = (count) => {
   return rotations;
 };
 
-export const AnimatedTestimonials = ({
-  testimonials,
-  autoplay = false
-}) => {
+export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
   const [active, setActive] = useState(0);
   // Store pre-generated random rotations in a ref
   const rotationsRef = useRef(generateRotations(testimonials.length));
@@ -50,8 +47,7 @@ export const AnimatedTestimonials = ({
 
   const getRotation = (index) => rotationsRef.current?.[index] || 0;
   return (
-    <div
-      className="mx-auto max-w-sm px-4 py-20 font-sans antialiased md:max-w-4xl md:px-8 lg:px-12">
+    <div className="mx-auto max-w-sm px-4 py-20 font-sans antialiased md:max-w-4xl md:px-8 lg:px-12">
       <div className="relative grid grid-cols-1 gap-20 md:grid-cols-2">
         <div>
           <div className="relative h-80 w-full">
@@ -70,9 +66,7 @@ export const AnimatedTestimonials = ({
                     scale: isActive(index) ? 1 : 0.95,
                     z: isActive(index) ? 0 : -100,
                     rotate: isActive(index) ? 0 : getRotation(index),
-                    zIndex: isActive(index)
-                      ? 40
-                      : testimonials.length + 2 - index,
+                    zIndex: isActive(index) ? 40 : testimonials.length + 2 - index,
                     y: isActive(index) ? [0, -80, 0] : 0,
                   }}
                   exit={{
@@ -83,16 +77,18 @@ export const AnimatedTestimonials = ({
                   }}
                   transition={{
                     duration: 0.4,
-                    ease: "easeInOut",
+                    ease: 'easeInOut',
                   }}
-                  className="absolute inset-0 origin-bottom">
+                  className="absolute inset-0 origin-bottom"
+                >
                   <img
                     src={testimonial.src}
                     alt={testimonial.name}
                     width={500}
                     height={500}
                     draggable={false}
-                    className="h-full w-full rounded-3xl object-cover object-center" />
+                    className="h-full w-full rounded-3xl object-cover object-center"
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -115,8 +111,9 @@ export const AnimatedTestimonials = ({
             }}
             transition={{
               duration: 0.2,
-              ease: "easeInOut",
-            }}>
+              ease: 'easeInOut',
+            }}
+          >
             <h3 className="text-2xl font-bold" style={{ color: 'var(--color-textColor)' }}>
               {testimonials[active].name}
             </h3>
@@ -124,25 +121,26 @@ export const AnimatedTestimonials = ({
               {testimonials[active].designation}
             </p>
             <motion.p className="mt-8 text-lg" style={{ color: 'var(--color-gray-50)' }}>
-              {testimonials[active].quote.split(" ").map((word, index) => (
+              {testimonials[active].quote.split(' ').map((word, index) => (
                 <motion.span
                   key={index}
                   initial={{
-                    filter: "blur(10px)",
+                    filter: 'blur(10px)',
                     opacity: 0,
                     y: 5,
                   }}
                   animate={{
-                    filter: "blur(0px)",
+                    filter: 'blur(0px)',
                     opacity: 1,
                     y: 0,
                   }}
                   transition={{
                     duration: 0.2,
-                    ease: "easeInOut",
+                    ease: 'easeInOut',
                     delay: 0.02 * index,
                   }}
-                  className="inline-block">
+                  className="inline-block"
+                >
                   {word}&nbsp;
                 </motion.span>
               ))}
@@ -152,16 +150,16 @@ export const AnimatedTestimonials = ({
             <button
               onClick={handlePrev}
               className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110"
-              style={{ backgroundColor: 'var(--color-solid)' }}>
-              <IconArrowLeft
-                className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:rotate-12" />
+              style={{ backgroundColor: 'var(--color-solid)' }}
+            >
+              <IconArrowLeft className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:rotate-12" />
             </button>
             <button
               onClick={handleNext}
               className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110"
-              style={{ backgroundColor: 'var(--color-solid)' }}>
-              <IconArrowRight
-                className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:-rotate-12" />
+              style={{ backgroundColor: 'var(--color-solid)' }}
+            >
+              <IconArrowRight className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:-rotate-12" />
             </button>
           </div>
         </div>

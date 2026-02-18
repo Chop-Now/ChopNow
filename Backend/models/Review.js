@@ -2,71 +2,74 @@ const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 const Schema = mongoose.Schema;
 
-const reviewSchema = new Schema({
-  // Order Reference
-  order: {
-    type: Schema.Types.ObjectId,
-    ref: 'Order',
-    required: [true, 'Order reference is required'],
-    unique: true
-  },
+const reviewSchema = new Schema(
+  {
+    // Order Reference
+    order: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+      required: [true, 'Order reference is required'],
+      unique: true,
+    },
 
-  // Customer Reference
-  customer: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Customer reference is required']
-  },
+    // Customer Reference
+    customer: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Customer reference is required'],
+    },
 
-  // Business Reference
-  business: {
-    type: Schema.Types.ObjectId,
-    ref: 'Business',
-    required: [true, 'Business reference is required']
-  },
+    // Business Reference
+    business: {
+      type: Schema.Types.ObjectId,
+      ref: 'Business',
+      required: [true, 'Business reference is required'],
+    },
 
-  // Rating
-  rating: {
-    type: Number,
-    required: [true, 'Rating is required'],
-    min: [1, 'Rating must be at least 1'],
-    max: [5, 'Rating cannot exceed 5']
-  },
+    // Rating
+    rating: {
+      type: Number,
+      required: [true, 'Rating is required'],
+      min: [1, 'Rating must be at least 1'],
+      max: [5, 'Rating cannot exceed 5'],
+    },
 
-  // Comment
-  comment: {
-    type: String,
-    trim: true,
-    maxlength: [500, 'Comment cannot exceed 500 characters']
-  },
-
-  // Business Response
-  businessResponse: {
+    // Comment
     comment: {
       type: String,
       trim: true,
-      maxlength: [500, 'Response cannot exceed 500 characters']
+      maxlength: [500, 'Comment cannot exceed 500 characters'],
     },
-    respondedAt: {
-      type: Date
-    }
-  },
 
-  // Status
-  status: {
-    type: String,
-    enum: ['active', 'hidden'],
-    default: 'active'
+    // Business Response
+    businessResponse: {
+      comment: {
+        type: String,
+        trim: true,
+        maxlength: [500, 'Response cannot exceed 500 characters'],
+      },
+      respondedAt: {
+        type: Date,
+      },
+    },
+
+    // Status
+    status: {
+      type: String,
+      enum: ['active', 'hidden'],
+      default: 'active',
+    },
+  },
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Indexes for query optimization
-reviewSchema.index({ business: 1, status: 1, createdAt: -1 });           // Business reviews sorted by date
-reviewSchema.index({ customer: 1, createdAt: -1 });                      // Customer's reviews
-reviewSchema.index({ business: 1, rating: -1, status: 1 });              // Top-rated reviews for business
-reviewSchema.index({ rating: -1, status: 1, createdAt: -1 });            // Reviews by rating
+reviewSchema.index({ business: 1, status: 1, createdAt: -1 }); // Business reviews sorted by date
+reviewSchema.index({ customer: 1, createdAt: -1 }); // Customer's reviews
+reviewSchema.index({ business: 1, rating: -1, status: 1 }); // Top-rated reviews for business
+reviewSchema.index({ rating: -1, status: 1, createdAt: -1 }); // Reviews by rating
 reviewSchema.index({ 'businessResponse.respondedAt': -1 }, { sparse: true }); // Reviews with responses
 
 // Ensure rating is an integer
@@ -83,28 +86,28 @@ reviewSchema.statics.calculateAverageRating = async function (businessId) {
     {
       $match: {
         business: businessId,
-        status: 'active'
-      }
+        status: 'active',
+      },
     },
     {
       $group: {
         _id: '$business',
         averageRating: { $avg: '$rating' },
-        reviewCount: { $sum: 1 }
-      }
-    }
+        reviewCount: { $sum: 1 },
+      },
+    },
   ]);
 
   if (result.length > 0) {
     return {
       averageRating: Math.round(result[0].averageRating * 10) / 10, // Round to 1 decimal
-      reviewCount: result[0].reviewCount
+      reviewCount: result[0].reviewCount,
     };
   }
 
   return {
     averageRating: 0,
-    reviewCount: 0
+    reviewCount: 0,
   };
 };
 
@@ -112,7 +115,7 @@ reviewSchema.statics.calculateAverageRating = async function (businessId) {
 reviewSchema.methods.addBusinessResponse = function (responseComment) {
   this.businessResponse = {
     comment: responseComment,
-    respondedAt: new Date()
+    respondedAt: new Date(),
   };
   return this.save();
 };
@@ -128,7 +131,7 @@ reviewSchema.post('save', async function (doc) {
       'stats.averageRating': stats.averageRating,
       'stats.reviewCount': stats.reviewCount,
       'rating.average': stats.averageRating,
-      'rating.count': stats.reviewCount
+      'rating.count': stats.reviewCount,
     });
   } catch (error) {
     logger.error({ err: error }, 'Error updating business stats');
@@ -146,7 +149,7 @@ reviewSchema.post('deleteOne', { document: true, query: false }, async function 
       'stats.averageRating': stats.averageRating,
       'stats.reviewCount': stats.reviewCount,
       'rating.average': stats.averageRating,
-      'rating.count': stats.reviewCount
+      'rating.count': stats.reviewCount,
     });
   } catch (error) {
     logger.error({ err: error }, 'Error updating business stats');

@@ -27,7 +27,7 @@ const checkMaintenanceMode = async (req, res, next) => {
       return res.status(503).json({
         message: 'Platform is currently under maintenance. Please try again later.',
         maintenanceMode: true,
-        platformName: settings.platformName
+        platformName: settings.platformName,
       });
     }
 
@@ -48,7 +48,7 @@ const checkRegistrationAllowed = async (req, res, next) => {
     if (!settings.allowNewRegistrations) {
       return res.status(403).json({
         message: 'New registrations are currently disabled. Please try again later.',
-        registrationDisabled: true
+        registrationDisabled: true,
       });
     }
 
@@ -71,7 +71,7 @@ const checkReviewsEnabled = async (req, res, next) => {
     if (!settings.enableReviews) {
       return res.status(403).json({
         message: 'Reviews are currently disabled.',
-        reviewsDisabled: true
+        reviewsDisabled: true,
       });
     }
 
@@ -98,7 +98,7 @@ const checkGuestCheckout = async (req, res, next) => {
     if (!settings.allowGuestCheckout) {
       return res.status(401).json({
         message: 'Please login to place an order. Guest checkout is not available.',
-        guestCheckoutDisabled: true
+        guestCheckoutDisabled: true,
       });
     }
 
@@ -142,12 +142,12 @@ const getPayoutSettings = async () => {
     const settings = await PlatformSettings.getSettings();
     return {
       minimumWithdrawal: settings.minimumWithdrawal,
-      payoutSchedule: settings.payoutSchedule
+      payoutSchedule: settings.payoutSchedule,
     };
   } catch (error) {
     return {
       minimumWithdrawal: 5000,
-      payoutSchedule: 'biweekly'
+      payoutSchedule: 'biweekly',
     };
   }
 };
@@ -159,5 +159,5 @@ module.exports = {
   checkGuestCheckout,
   attachPlatformSettings,
   getPlatformFee,
-  getPayoutSettings
+  getPayoutSettings,
 };

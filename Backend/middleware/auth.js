@@ -64,22 +64,22 @@ const authorize = (...roles) => {
     // Check if user's activeRole is in the allowed roles
     if (!roles.includes(userActiveRole)) {
       // Check if user HAS one of the required roles but it's not active
-      const hasRequiredRole = roles.some(role => userRoles.includes(role));
+      const hasRequiredRole = roles.some((role) => userRoles.includes(role));
 
       if (hasRequiredRole) {
         // User has the role but needs to switch to it
-        const availableRole = roles.find(role => userRoles.includes(role));
+        const availableRole = roles.find((role) => userRoles.includes(role));
         return res.status(403).json({
           message: `Please switch to your '${availableRole}' role to access this resource`,
           code: 'WRONG_ACTIVE_ROLE',
           requiredRole: availableRole,
           currentActiveRole: userActiveRole,
-          availableRoles: userRoles
+          availableRoles: userRoles,
         });
       }
 
       return res.status(403).json({
-        message: `User role '${userActiveRole}' is not authorized to access this route`
+        message: `User role '${userActiveRole}' is not authorized to access this route`,
       });
     }
 

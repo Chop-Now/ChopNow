@@ -1,35 +1,31 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-primary: #F6FFF9;        /* Soft green-tinted background */
-  --color-solid: #00A86B;          /* Main green (brand) */
-  --color-solidOne: #FF7A00;       /* Main orange (brand accent) */
-  --color-solidTwo: #FFB366;       /* Soft orange variant */
-  --color-tertiary: #007A4B;       /* Darker green for hover/buttons */
-  --color-textColor: #2E2E2E;      /* Dark neutral text */
-  --color-gray-50: #8A8A8A;      /* Muted gray for secondary text */   
+  --color-primary: #f6fff9; /* Soft green-tinted background */
+  --color-solid: #00a86b; /* Main green (brand) */
+  --color-solidOne: #ff7a00; /* Main orange (brand accent) */
+  --color-solidTwo: #ffb366; /* Soft orange variant */
+  --color-tertiary: #007a4b; /* Darker green for hover/buttons */
+  --color-textColor: #2e2e2e; /* Dark neutral text */
+  --color-gray-50: #8a8a8a; /* Muted gray for secondary text */
 }
 
-html, body{
-    background-color: var(--color-primary);
-    scroll-behavior: smooth;
-    font-family:
-    ui-sans-serif,
-    system-ui,
-    sans-serif,
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
+html,
+body {
+  background-color: var(--color-primary);
+  scroll-behavior: smooth;
+  font-family:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
 }
 
 ::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 @theme inline {
@@ -144,7 +140,7 @@ html, body{
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: #F6FFF9 !important;
-    color: #2E2E2E !important;
+    background-color: #f6fff9 !important;
+    color: #2e2e2e !important;
   }
 }

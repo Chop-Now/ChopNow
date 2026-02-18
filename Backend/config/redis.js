@@ -10,10 +10,10 @@ let isConnected = false;
 
 // Default TTL values (in seconds)
 const TTL = {
-  SHORT: 60,           // 1 minute - for frequently changing data
-  MEDIUM: 300,         // 5 minutes - for moderately changing data
-  LONG: 3600,          // 1 hour - for rarely changing data
-  VERY_LONG: 86400,    // 24 hours - for static data
+  SHORT: 60, // 1 minute - for frequently changing data
+  MEDIUM: 300, // 5 minutes - for moderately changing data
+  LONG: 3600, // 1 hour - for rarely changing data
+  VERY_LONG: 86400, // 24 hours - for static data
 };
 
 /**
@@ -40,7 +40,7 @@ const initRedis = async () => {
       enableReadyCheck: true,
       reconnectOnError: (err) => {
         const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT'];
-        return targetErrors.some(e => err.message.includes(e));
+        return targetErrors.some((e) => err.message.includes(e));
       },
     });
 

@@ -17,10 +17,10 @@ const sendEmail = async (to, subject, html) => {
       to,
       from: {
         email: FROM_EMAIL,
-        name: FROM_NAME
+        name: FROM_NAME,
       },
       subject,
-      html
+      html,
     };
 
     await sgMail.send(msg);
@@ -74,7 +74,11 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't create an account, you can safely ignore this email.</p>
   `;
 
-  return sendEmail(email, 'Verify your ChopNow account', emailTemplate('Welcome to ChopNow!', content));
+  return sendEmail(
+    email,
+    'Verify your ChopNow account',
+    emailTemplate('Welcome to ChopNow!', content)
+  );
 };
 
 /**
@@ -95,7 +99,11 @@ const sendPasswordResetEmail = async (email, name, resetToken) => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
   `;
 
-  return sendEmail(email, 'Reset your ChopNow password', emailTemplate('Password Reset Request', content));
+  return sendEmail(
+    email,
+    'Reset your ChopNow password',
+    emailTemplate('Password Reset Request', content)
+  );
 };
 
 /**
@@ -133,7 +141,11 @@ const sendPasswordChangeOTP = async (email, name, otpCode) => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't request to change your password, please secure your account immediately.</p>
   `;
 
-  return sendEmail(email, 'Password Change Verification - ChopNow', emailTemplate('Password Change Verification', content));
+  return sendEmail(
+    email,
+    'Password Change Verification - ChopNow',
+    emailTemplate('Password Change Verification', content)
+  );
 };
 
 /**
@@ -152,7 +164,11 @@ const sendSensitiveChangeOTP = async (email, name, otpCode, changeType) => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't make this request, please contact support immediately.</p>
   `;
 
-  return sendEmail(email, `Verify ${changeType} Update - ChopNow`, emailTemplate('Security Verification', content));
+  return sendEmail(
+    email,
+    `Verify ${changeType} Update - ChopNow`,
+    emailTemplate('Security Verification', content)
+  );
 };
 
 /**
@@ -166,13 +182,20 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
       <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
-      ${order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode ?
-        `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00A86B;">${order.pickupDetails.pickupCode}</span></p>` : ''}
+      ${
+        order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode
+          ? `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00A86B;">${order.pickupDetails.pickupCode}</span></p>`
+          : ''
+      }
     </div>
     <p style="color: #6b7280; font-size: 14px;">You can track your order in the app.</p>
   `;
 
-  return sendEmail(email, `Order Confirmed - #${order.orderNumber}`, emailTemplate('Order Confirmed!', content));
+  return sendEmail(
+    email,
+    `Order Confirmed - #${order.orderNumber}`,
+    emailTemplate('Order Confirmed!', content)
+  );
 };
 
 /**
@@ -197,7 +220,11 @@ const sendOrderStatusUpdateEmail = async (email, name, order, status) => {
     <p style="color: #6b7280; font-size: 14px;">View your order in the app for more details.</p>
   `;
 
-  return sendEmail(email, `Order Update - #${order.orderNumber}`, emailTemplate('Order Update', content));
+  return sendEmail(
+    email,
+    `Order Update - #${order.orderNumber}`,
+    emailTemplate('Order Update', content)
+  );
 };
 
 /**
@@ -215,7 +242,11 @@ const sendVendorOrderNotification = async (email, businessName, order) => {
     <p style="color: #6b7280; font-size: 14px;">Log in to your vendor dashboard to manage this order.</p>
   `;
 
-  return sendEmail(email, `New Order - #${order.orderNumber}`, emailTemplate('New Order Received', content));
+  return sendEmail(
+    email,
+    `New Order - #${order.orderNumber}`,
+    emailTemplate('New Order Received', content)
+  );
 };
 
 /**
@@ -227,7 +258,11 @@ const sendAdminNotification = async (email, name, subject, message) => {
     <p>${message}</p>
   `;
 
-  return sendEmail(email, subject || 'ChopNow Admin Notification', emailTemplate(subject || 'Notification', content));
+  return sendEmail(
+    email,
+    subject || 'ChopNow Admin Notification',
+    emailTemplate(subject || 'Notification', content)
+  );
 };
 
 /**
@@ -240,7 +275,11 @@ const sendPasswordChangedConfirmation = async (email, name) => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;"><strong>Important:</strong> If you didn't make this change, please contact our support team immediately and reset your password.</p>
   `;
 
-  return sendEmail(email, 'Password Changed - ChopNow', emailTemplate('Password Changed Successfully', content));
+  return sendEmail(
+    email,
+    'Password Changed - ChopNow',
+    emailTemplate('Password Changed Successfully', content)
+  );
 };
 
 /**
@@ -263,7 +302,11 @@ const sendOrderReadyForPickupEmail = async (email, name, order) => {
     <p style="color: #6b7280; font-size: 14px;">Please pick up your order as soon as possible to ensure freshness.</p>
   `;
 
-  return sendEmail(email, `Your Order is Ready for Pickup - #${order.orderNumber}`, emailTemplate('Order Ready for Pickup!', content));
+  return sendEmail(
+    email,
+    `Your Order is Ready for Pickup - #${order.orderNumber}`,
+    emailTemplate('Order Ready for Pickup!', content)
+  );
 };
 
 /**
@@ -281,7 +324,11 @@ const sendOrderOutForDeliveryEmail = async (email, name, order) => {
     <p style="color: #6b7280; font-size: 14px;">Your rider is on the way. Please be ready to receive your order.</p>
   `;
 
-  return sendEmail(email, `Your Order is On The Way - #${order.orderNumber}`, emailTemplate('Order Out for Delivery!', content));
+  return sendEmail(
+    email,
+    `Your Order is On The Way - #${order.orderNumber}`,
+    emailTemplate('Order Out for Delivery!', content)
+  );
 };
 
 /**
@@ -300,7 +347,11 @@ const sendOrderCancelledEmail = async (email, name, order, reason = '') => {
     <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">We apologize for any inconvenience. Please feel free to place a new order.</p>
   `;
 
-  return sendEmail(email, `Order Cancelled - #${order.orderNumber}`, emailTemplate('Order Cancelled', content));
+  return sendEmail(
+    email,
+    `Order Cancelled - #${order.orderNumber}`,
+    emailTemplate('Order Cancelled', content)
+  );
 };
 
 /**
@@ -318,7 +369,11 @@ const sendVendorOrderCancelledEmail = async (email, businessName, order, custome
     <p style="color: #6b7280; font-size: 14px;">Please update your inventory accordingly.</p>
   `;
 
-  return sendEmail(email, `Order Cancelled - #${order.orderNumber}`, emailTemplate('Order Cancelled', content));
+  return sendEmail(
+    email,
+    `Order Cancelled - #${order.orderNumber}`,
+    emailTemplate('Order Cancelled', content)
+  );
 };
 
 /**
@@ -338,7 +393,11 @@ const sendOrderCompletedEmail = async (email, name, order) => {
     <p style="color: #6b7280; font-size: 14px;">We'd love to hear your feedback. Please leave a review for the vendor.</p>
   `;
 
-  return sendEmail(email, `Order Completed - #${order.orderNumber}`, emailTemplate('Order Completed!', content));
+  return sendEmail(
+    email,
+    `Order Completed - #${order.orderNumber}`,
+    emailTemplate('Order Completed!', content)
+  );
 };
 
 /**
@@ -347,12 +406,14 @@ const sendOrderCompletedEmail = async (email, name, order) => {
 const sendBusinessApprovedEmail = async (email, businessName, ownerName, adminMessage = '') => {
   const dashboardUrl = `${APP_URL}/dashboard`;
 
-  const messageSection = adminMessage ? `
+  const messageSection = adminMessage
+    ? `
     <div style="background: #f0fdf4; border-left: 4px solid #00A86B; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
       <p style="margin: 0 0 5px 0; font-weight: bold; color: #166534;">Message from ChopNow Admin:</p>
       <p style="margin: 0; color: #15803d;">${adminMessage}</p>
     </div>
-  ` : '';
+  `
+    : '';
 
   const content = `
     <p>Hello ${ownerName},</p>
@@ -373,7 +434,11 @@ const sendBusinessApprovedEmail = async (email, businessName, ownerName, adminMe
     <p style="color: #6b7280; font-size: 14px;">Thank you for joining ChopNow in our mission to reduce food waste across Africa!</p>
   `;
 
-  return sendEmail(email, `Congratulations! ${businessName} is Now Approved on ChopNow`, emailTemplate('Business Approved!', content));
+  return sendEmail(
+    email,
+    `Congratulations! ${businessName} is Now Approved on ChopNow`,
+    emailTemplate('Business Approved!', content)
+  );
 };
 
 /**
@@ -384,12 +449,16 @@ const sendBusinessRejectedEmail = async (email, businessName, ownerName, reason 
     <p>Hello ${ownerName},</p>
     <p>We have reviewed your business verification application for <strong>${businessName}</strong>.</p>
     <p>Unfortunately, we were unable to approve your application at this time.</p>
-    ${reason ? `
+    ${
+      reason
+        ? `
     <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
       <p style="margin: 0 0 5px 0; font-weight: bold; color: #991b1b;">Reason:</p>
       <p style="margin: 0; color: #b91c1c;">${reason}</p>
     </div>
-    ` : ''}
+    `
+        : ''
+    }
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <h3 style="margin: 0 0 15px 0; color: #1f2937;">What You Can Do:</h3>
       <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
@@ -402,7 +471,11 @@ const sendBusinessRejectedEmail = async (email, businessName, ownerName, reason 
     <p style="color: #6b7280; font-size: 14px;">If you believe this decision was made in error, please contact our support team at support@chopnow.app.</p>
   `;
 
-  return sendEmail(email, `Business Verification Update - ${businessName}`, emailTemplate('Business Verification Update', content));
+  return sendEmail(
+    email,
+    `Business Verification Update - ${businessName}`,
+    emailTemplate('Business Verification Update', content)
+  );
 };
 
 /**
@@ -415,19 +488,27 @@ const sendBusinessInfoRequestedEmail = async (email, businessName, ownerName, me
     <p>Hello ${ownerName},</p>
     <p>We are reviewing your business verification application for <strong>${businessName}</strong>.</p>
     <p>To complete the verification process, we need some additional information from you.</p>
-    ${message ? `
+    ${
+      message
+        ? `
     <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
       <p style="margin: 0 0 5px 0; font-weight: bold; color: #1e40af;">Information Requested:</p>
       <p style="margin: 0; color: #1d4ed8;">${message}</p>
     </div>
-    ` : ''}
+    `
+        : ''
+    }
     <div style="text-align: center; margin: 30px 0;">
       <a href="${dashboardUrl}" style="background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Update Your Application</a>
     </div>
     <p style="color: #6b7280; font-size: 14px;">Please provide the requested information as soon as possible so we can complete your verification.</p>
   `;
 
-  return sendEmail(email, `Action Required: Additional Information Needed - ${businessName}`, emailTemplate('Additional Information Needed', content));
+  return sendEmail(
+    email,
+    `Action Required: Additional Information Needed - ${businessName}`,
+    emailTemplate('Additional Information Needed', content)
+  );
 };
 
 /**
@@ -439,12 +520,16 @@ const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason
   const content = `
     <p>Hello ${ownerName},</p>
     <p>We are writing to inform you that the verification status for <strong>${businessName}</strong> has been rescinded and your account has been moved back to pending review.</p>
-    ${reason ? `
+    ${
+      reason
+        ? `
     <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
       <p style="margin: 0 0 5px 0; font-weight: bold; color: #92400e;">Reason:</p>
       <p style="margin: 0; color: #b45309;">${reason}</p>
     </div>
-    ` : ''}
+    `
+        : ''
+    }
     <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0; font-weight: bold; color: #374151;">What This Means:</p>
       <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
@@ -460,7 +545,11 @@ const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason
     <p style="color: #6b7280; font-size: 14px;">If you have questions about this decision, please contact our support team at support@chopnow.app.</p>
   `;
 
-  return sendEmail(email, `Important: Business Verification Status Update - ${businessName}`, emailTemplate('Verification Status Update', content));
+  return sendEmail(
+    email,
+    `Important: Business Verification Status Update - ${businessName}`,
+    emailTemplate('Verification Status Update', content)
+  );
 };
 
 module.exports = {

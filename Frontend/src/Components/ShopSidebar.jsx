@@ -1,27 +1,22 @@
-import React, { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
-  const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-  const sortOptions = [
-    'Distance (Nearest First)',
-    'Date Posted',
-    'A to Z',
-    'Vendor Rating'
-  ]
+  const sortOptions = ['Distance (Nearest First)', 'Date Posted', 'A to Z', 'Vendor Rating'];
 
   return (
-    <div 
+    <div
       className="w-full flex flex-col rounded-2xl p-5 h-full"
-      style={{ 
+      style={{
         backgroundColor: 'white',
-        border: '1px solid #E5E5E5'
+        border: '1px solid #E5E5E5',
       }}
     >
       {/* Sort By Section */}
       <div className="mb-6">
-        <label 
+        <label
           className="block mb-2 text-xs font-semibold"
           style={{ color: 'var(--color-textColor)' }}
         >
@@ -31,37 +26,37 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
           <button
             onClick={() => setShowSortDropdown(!showSortDropdown)}
             className="w-full px-3 py-2 rounded-lg flex items-center justify-between text-xs transition-all hover:border-opacity-70"
-            style={{ 
+            style={{
               border: '1px solid var(--color-gray-50)',
-              color: 'var(--color-textColor)'
+              color: 'var(--color-textColor)',
             }}
           >
             <span>{sortBy}</span>
-            <ChevronDown 
+            <ChevronDown
               className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`}
               style={{ color: 'var(--color-gray-50)' }}
             />
           </button>
-          
+
           {showSortDropdown && (
-            <div 
+            <div
               className="absolute top-full left-0 right-0 mt-2 rounded-lg shadow-lg py-2 z-50"
-              style={{ 
+              style={{
                 backgroundColor: 'white',
-                border: '1px solid #E5E5E5'
+                border: '1px solid #E5E5E5',
               }}
             >
               {sortOptions.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => {
-                    setSortBy(option)
-                    setShowSortDropdown(false)
+                    setSortBy(option);
+                    setShowSortDropdown(false);
                   }}
                   className="w-full px-3 py-2 text-left text-xs hover:bg-gray-50 transition-colors"
-                  style={{ 
+                  style={{
                     color: sortBy === option ? 'var(--color-solid)' : 'var(--color-textColor)',
-                    fontWeight: sortBy === option ? '600' : '400'
+                    fontWeight: sortBy === option ? '600' : '400',
                   }}
                 >
                   {option}
@@ -74,17 +69,17 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
 
       {/* Price Range Section */}
       <div className="flex-1">
-        <label 
+        <label
           className="block mb-2 text-xs font-semibold"
           style={{ color: 'var(--color-textColor)' }}
         >
           Price Range
         </label>
-        
+
         <div className="mb-4">
-          <input 
-            id="price-range" 
-            type="range" 
+          <input
+            id="price-range"
+            type="range"
             min="0"
             max="100000"
             step="1000"
@@ -92,7 +87,7 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
             onChange={(e) => setPriceRange(Number(e.target.value))}
             className="w-full h-2 rounded-full appearance-none cursor-pointer"
             style={{
-              background: `linear-gradient(to right, var(--color-solid) 0%, var(--color-solid) ${(priceRange / 100000) * 100}%, #E5E5E5 ${(priceRange / 100000) * 100}%, #E5E5E5 100%)`
+              background: `linear-gradient(to right, var(--color-solid) 0%, var(--color-solid) ${(priceRange / 100000) * 100}%, #E5E5E5 ${(priceRange / 100000) * 100}%, #E5E5E5 100%)`,
             }}
           />
           <style>{`
@@ -120,50 +115,42 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
         </div>
 
         <div className="flex items-center justify-between text-xs">
-          <span 
-            className="font-medium"
-            style={{ color: 'var(--color-textColor)' }}
-          >
+          <span className="font-medium" style={{ color: 'var(--color-textColor)' }}>
             RWF 0
           </span>
-          <span 
-            className="font-semibold"
-            style={{ color: 'var(--color-solid)' }}
-          >
+          <span className="font-semibold" style={{ color: 'var(--color-solid)' }}>
             RWF {priceRange.toLocaleString()}
           </span>
-          <span 
-            className="font-medium"
-            style={{ color: 'var(--color-textColor)' }}
-          >
+          <span className="font-medium" style={{ color: 'var(--color-textColor)' }}>
             RWF 100,000
           </span>
         </div>
       </div>
 
       {/* Your Impact Section */}
-      <div 
+      <div
         className="mt-auto pt-4 rounded-xl p-4"
-        style={{ 
+        style={{
           backgroundColor: 'var(--color-primary)',
-          border: '1px solid #E5E5E5'
+          border: '1px solid #E5E5E5',
         }}
       >
-        <h3 
+        <h3
           className="text-xs font-semibold mb-2 text-center"
           style={{ color: 'var(--color-solid)' }}
         >
           Your Impact
         </h3>
-        <p 
+        <p
           className="text-xs leading-relaxed text-center"
           style={{ color: 'var(--color-gray-50)' }}
         >
-          You've saved <strong style={{ color: 'var(--color-textColor)' }}>5kg</strong> of CO<sub>2</sub> so far. Keep it up!
+          You've saved <strong style={{ color: 'var(--color-textColor)' }}>5kg</strong> of CO
+          <sub>2</sub> so far. Keep it up!
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ShopSidebar
+export default ShopSidebar;

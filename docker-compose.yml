@@ -4,7 +4,7 @@ services:
     build: ./Backend
     container_name: chopnow-backend
     ports:
-      - "5000:5000"
+      - '5000:5000'
     environment:
       - NODE_ENV=production
       - PORT=5000
@@ -23,12 +23,12 @@ services:
     build:
       context: ./Frontend
       args:
-        # Bake in the API URL for the build. 
+        # Bake in the API URL for the build.
         # For local Docker testing, browser accesses localhost:5000
         - VITE_API_URL=http://localhost:5000
     container_name: chopnow-frontend
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
       - backend
     networks:
@@ -40,7 +40,7 @@ services:
     image: mongo:6.0
     container_name: chopnow-mongo
     ports:
-      - "27017:27017" # Exposed for local debugging tools (Compass, etc.)
+      - '27017:27017' # Exposed for local debugging tools (Compass, etc.)
     volumes:
       - mongo-data:/data/db
     networks:

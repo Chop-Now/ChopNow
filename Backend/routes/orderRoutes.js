@@ -7,7 +7,7 @@ const {
   updateOrderStatus,
   cancelOrder,
   verifyPickupCode,
-  getAdminOrders
+  getAdminOrders,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateCreateOrder, validateUpdateOrderStatus } = require('../middleware/validation');
@@ -61,7 +61,13 @@ router.get('/admin', protect, authorize('admin'), getAdminOrders);
 router.get('/:id', protect, getOrderById);
 
 // Business owner and admin routes
-router.put('/:id/status', protect, authorize('business_owner', 'admin'), validateUpdateOrderStatus, updateOrderStatus);
+router.put(
+  '/:id/status',
+  protect,
+  authorize('business_owner', 'admin'),
+  validateUpdateOrderStatus,
+  updateOrderStatus
+);
 router.post('/:id/verify-pickup', protect, authorize('business_owner', 'admin'), verifyPickupCode);
 
 // Customer can cancel

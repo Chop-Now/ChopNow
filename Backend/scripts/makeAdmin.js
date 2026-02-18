@@ -19,13 +19,17 @@ const makeAdmin = async () => {
       console.log('\nUsage: node scripts/makeAdmin.js <email>');
       console.log('Example: node scripts/makeAdmin.js admin@chopnow.app');
       console.log('\nAvailable users to promote:');
-      const users = await User.find({}).select('email firstName lastName roles activeRole').limit(15);
+      const users = await User.find({})
+        .select('email firstName lastName roles activeRole')
+        .limit(15);
       if (users.length === 0) {
         console.log('  No users found. Please register a user first via the app.');
       } else {
-        users.forEach(u => {
+        users.forEach((u) => {
           const isAdmin = u.roles?.includes('admin') || u.activeRole === 'admin';
-          console.log(`  - ${u.email} (${u.firstName || ''} ${u.lastName || ''}) ${isAdmin ? '[ADMIN]' : ''}`);
+          console.log(
+            `  - ${u.email} (${u.firstName || ''} ${u.lastName || ''}) ${isAdmin ? '[ADMIN]' : ''}`
+          );
         });
       }
       await mongoose.disconnect();
@@ -38,8 +42,10 @@ const makeAdmin = async () => {
       console.log(`User with email "${email}" not found.`);
       console.log('\nAvailable users:');
       const users = await User.find({}).select('email firstName lastName roles').limit(10);
-      users.forEach(u => {
-        console.log(`  - ${u.email} (${u.firstName} ${u.lastName}) - Roles: ${u.roles?.join(', ') || u.role}`);
+      users.forEach((u) => {
+        console.log(
+          `  - ${u.email} (${u.firstName} ${u.lastName}) - Roles: ${u.roles?.join(', ') || u.role}`
+        );
       });
       process.exit(1);
     }
@@ -63,7 +69,6 @@ const makeAdmin = async () => {
     console.log(`   Roles: ${user.roles.join(', ')}`);
     console.log(`   Active Role: ${user.activeRole}`);
     console.log('\nYou can now login and access the admin dashboard.');
-
   } catch (error) {
     console.error('Error:', error.message);
   } finally {

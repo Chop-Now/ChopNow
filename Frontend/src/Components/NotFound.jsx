@@ -1,7 +1,7 @@
-import { assets } from '../assets/assets'
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Home, Mail } from 'lucide-react'
+import { assets } from '../assets/assets';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Home, Mail } from 'lucide-react';
 
 const NotFound = () => {
   return (
@@ -42,7 +42,8 @@ const NotFound = () => {
 
         {/* Description */}
         <p className="text-sm md:text-base text-slate-300 max-w-lg text-center mb-10 leading-relaxed">
-          We couldn't find the page you're looking for. Don't worry though, even the best explorers get a little lost sometimes. Let's get you back on track!
+          We couldn't find the page you're looking for. Don't worry though, even the best explorers
+          get a little lost sometimes. Let's get you back on track!
         </p>
 
         {/* Action Buttons */}
@@ -53,8 +54,21 @@ const NotFound = () => {
           >
             <Home className="w-4 h-4" />
             <span>Back to Home</span>
-            <svg className="group-hover:translate-x-1 transition-transform" width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4.583 11h12.833m0 0L11 4.584M17.416 11 11 17.417" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              className="group-hover:translate-x-1 transition-transform"
+              width="18"
+              height="18"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4.583 11h12.833m0 0L11 4.584M17.416 11 11 17.417"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Link>
 
@@ -76,7 +90,8 @@ const NotFound = () => {
       {/* Floating Animation Keyframes */}
       <style jsx>{`
         @keyframes float {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0px);
           }
           50% {
@@ -88,7 +103,7 @@ const NotFound = () => {
         }
       `}</style>
     </div>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

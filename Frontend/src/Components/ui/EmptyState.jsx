@@ -9,7 +9,7 @@ import {
   Heart,
   Bell,
   MessageSquare,
-  Inbox
+  Inbox,
 } from 'lucide-react';
 
 /**
@@ -28,64 +28,66 @@ const EmptyState = ({
   type = 'generic',
   action,
   icon: CustomIcon,
-  className = ''
+  className = '',
 }) => {
   const config = {
     products: {
       icon: Package,
       defaultTitle: 'No Products Found',
-      defaultMessage: 'There are no products to display at the moment.'
+      defaultMessage: 'There are no products to display at the moment.',
     },
     orders: {
       icon: ShoppingBag,
       defaultTitle: 'No Orders Yet',
-      defaultMessage: 'You haven\'t placed any orders yet. Start shopping to see your orders here.'
+      defaultMessage: "You haven't placed any orders yet. Start shopping to see your orders here.",
     },
     users: {
       icon: Users,
       defaultTitle: 'No Users Found',
-      defaultMessage: 'There are no users matching your criteria.'
+      defaultMessage: 'There are no users matching your criteria.',
     },
     vendors: {
       icon: Store,
       defaultTitle: 'No Vendors Found',
-      defaultMessage: 'There are no vendors to display at the moment.'
+      defaultMessage: 'There are no vendors to display at the moment.',
     },
     listings: {
       icon: FileText,
       defaultTitle: 'No Listings',
-      defaultMessage: 'You haven\'t created any listings yet. Add your first product to start selling.'
+      defaultMessage:
+        "You haven't created any listings yet. Add your first product to start selling.",
     },
     search: {
       icon: Search,
       defaultTitle: 'No Results Found',
-      defaultMessage: 'We couldn\'t find anything matching your search. Try different keywords.'
+      defaultMessage: "We couldn't find anything matching your search. Try different keywords.",
     },
     favorites: {
       icon: Heart,
       defaultTitle: 'No Favorites Yet',
-      defaultMessage: 'You haven\'t added any favorites yet. Browse products and tap the heart to save them.'
+      defaultMessage:
+        "You haven't added any favorites yet. Browse products and tap the heart to save them.",
     },
     notifications: {
       icon: Bell,
       defaultTitle: 'No Notifications',
-      defaultMessage: 'You\'re all caught up! Check back later for updates.'
+      defaultMessage: "You're all caught up! Check back later for updates.",
     },
     messages: {
       icon: MessageSquare,
       defaultTitle: 'No Messages',
-      defaultMessage: 'Your inbox is empty. Messages from vendors and support will appear here.'
+      defaultMessage: 'Your inbox is empty. Messages from vendors and support will appear here.',
     },
     disputes: {
       icon: Inbox,
       defaultTitle: 'No Active Issues',
-      defaultMessage: 'All disputes have been resolved. Great job!'
+      defaultMessage: 'All disputes have been resolved. Great job!',
     },
     generic: {
       icon: Inbox,
       defaultTitle: 'Nothing Here',
-      defaultMessage: 'There\'s nothing to display at the moment.'
-    }
+      defaultMessage: "There's nothing to display at the moment.",
+    },
   };
 
   const typeConfig = config[type] || config.generic;
@@ -102,11 +104,7 @@ const EmptyState = ({
       <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-sm mx-auto">
         {message || typeConfig.defaultMessage}
       </p>
-      {action && (
-        <div className="flex justify-center">
-          {action}
-        </div>
-      )}
+      {action && <div className="flex justify-center">{action}</div>}
     </div>
   );
 };
@@ -137,9 +135,7 @@ export const TableEmptyState = ({ message, colSpan = 1 }) => (
   <tr>
     <td colSpan={colSpan} className="px-6 py-12 text-center">
       <Inbox className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        {message || 'No data available'}
-      </p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{message || 'No data available'}</p>
     </td>
   </tr>
 );

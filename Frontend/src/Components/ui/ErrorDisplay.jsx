@@ -17,39 +17,39 @@ const ErrorDisplay = ({
   onRetry,
   type = 'generic',
   fullPage = false,
-  className = ''
+  className = '',
 }) => {
   const errorConfig = {
     generic: {
       icon: AlertCircle,
       defaultTitle: 'Something went wrong',
       defaultMessage: 'An unexpected error occurred. Please try again.',
-      iconColor: 'text-red-500'
+      iconColor: 'text-red-500',
     },
     network: {
       icon: WifiOff,
       defaultTitle: 'Connection Error',
       defaultMessage: 'Unable to connect to the server. Please check your internet connection.',
-      iconColor: 'text-orange-500'
+      iconColor: 'text-orange-500',
     },
     server: {
       icon: ServerCrash,
       defaultTitle: 'Server Error',
       defaultMessage: 'The server is temporarily unavailable. Please try again later.',
-      iconColor: 'text-red-500'
+      iconColor: 'text-red-500',
     },
     auth: {
       icon: ShieldAlert,
       defaultTitle: 'Authentication Error',
       defaultMessage: 'Your session has expired. Please log in again.',
-      iconColor: 'text-yellow-500'
+      iconColor: 'text-yellow-500',
     },
     notFound: {
       icon: AlertCircle,
       defaultTitle: 'Not Found',
       defaultMessage: 'The requested resource could not be found.',
-      iconColor: 'text-slate-500'
-    }
+      iconColor: 'text-slate-500',
+    },
   };
 
   const config = errorConfig[type] || errorConfig.generic;
@@ -57,7 +57,9 @@ const ErrorDisplay = ({
 
   const content = (
     <div className={`text-center ${className}`}>
-      <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center`}>
+      <div
+        className={`w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center`}
+      >
         <Icon className={`w-8 h-8 ${config.iconColor}`} />
       </div>
       <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
