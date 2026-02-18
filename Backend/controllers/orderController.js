@@ -4,7 +4,7 @@ const Order = require('../models/Order');
 const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const User = require('../models/User');
-const Delivery = require('../models/Delivery');
+const _Delivery = require('../models/Delivery');
 const Notification = require('../models/Notification');
 const PlatformSettings = require('../models/PlatformSettings');
 const logger = require('../utils/logger');
@@ -233,7 +233,7 @@ const getOrders = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let query = {};
+    const query = {};
 
     // Role-based filtering
     if (req.user.role === 'consumer') {
@@ -447,11 +447,12 @@ const cancelOrder = async (req, res) => {
     }
 
     // --- Transaction: restore inventory + cancel order atomically ---
+    let listing;
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
         const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-        const listing = await Listing.findById(order.listing._id).session(session);
+        listing = await Listing.findById(order.listing._id).session(session);
         if (listing) {
           listing.inventory.quantity += totalQuantity;
           listing.inventory.reserved -= totalQuantity;
@@ -584,7 +585,7 @@ const getAdminOrders = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let query = {};
+    const query = {};
 
     if (status) query.status = status;
     if (fulfillmentType) query.fulfillmentType = fulfillmentType;

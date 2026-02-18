@@ -3,7 +3,7 @@ const Order = require('../models/Order');
 const Business = require('../models/Business');
 const logger = require('../utils/logger');
 const Notification = require('../models/Notification');
-const User = require('../models/User');
+const _User = require('../models/User');
 
 /**
  * @desc    Create a review

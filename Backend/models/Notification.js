@@ -148,7 +148,7 @@ notificationSchema.statics.createNotification = async function (data) {
     const user = await User.findById(notification.user);
 
     if (user && user.preferences && user.preferences.notifications) {
-      const { push, email } = user.preferences.notifications;
+      const { push: _push, email: _email } = user.preferences.notifications;
 
       // Add your notification sending logic here
       // For example:

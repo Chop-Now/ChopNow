@@ -275,7 +275,7 @@ const setupGracefulShutdown = () => {
   });
 
   // Handle unhandled promise rejections - exit to prevent undefined state
-  process.on('unhandledRejection', async (reason, promise) => {
+  process.on('unhandledRejection', async (reason, _promise) => {
     logger.error({ reason }, 'Unhandled promise rejection - shutting down');
     await closeDB();
     process.exit(1);

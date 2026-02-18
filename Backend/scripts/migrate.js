@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 /**
  * MongoDB Migration Runner
@@ -17,8 +18,6 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
-const logger = require('../utils/logger');
-
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
 // Migration tracking schema

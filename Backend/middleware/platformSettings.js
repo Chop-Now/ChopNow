@@ -32,7 +32,7 @@ const checkMaintenanceMode = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
+  } catch (_error) {
     // If settings can't be loaded, allow request to proceed
     next();
   }
@@ -55,7 +55,7 @@ const checkRegistrationAllowed = async (req, res, next) => {
     // Attach settings to request for use in controller
     req.platformSettings = settings;
     next();
-  } catch (error) {
+  } catch (_error) {
     // If settings can't be loaded, allow registration
     next();
   }
@@ -76,7 +76,7 @@ const checkReviewsEnabled = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
+  } catch (_error) {
     next();
   }
 };
@@ -104,7 +104,7 @@ const checkGuestCheckout = async (req, res, next) => {
 
     req.platformSettings = settings;
     next();
-  } catch (error) {
+  } catch (_error) {
     next();
   }
 };
@@ -117,7 +117,7 @@ const attachPlatformSettings = async (req, res, next) => {
     const settings = await PlatformSettings.getSettings();
     req.platformSettings = settings;
     next();
-  } catch (error) {
+  } catch (_error) {
     next();
   }
 };
@@ -129,7 +129,7 @@ const getPlatformFee = async () => {
   try {
     const settings = await PlatformSettings.getSettings();
     return settings.platformFeePercent;
-  } catch (error) {
+  } catch (_error) {
     return 10; // Default 10%
   }
 };
@@ -144,7 +144,7 @@ const getPayoutSettings = async () => {
       minimumWithdrawal: settings.minimumWithdrawal,
       payoutSchedule: settings.payoutSchedule,
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       minimumWithdrawal: 5000,
       payoutSchedule: 'biweekly',

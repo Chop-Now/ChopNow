@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Migration: Create all production indexes
  * Created: 2026-02-18

@@ -78,7 +78,7 @@ const getListings = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    let query = {};
+    const query = {};
 
     // Filter by category
     if (category) query.category = category;
@@ -165,7 +165,7 @@ const getNearbyListings = async (req, res) => {
     const businessIds = nearbyBusinesses.map((b) => b._id);
 
     // Then find active listings from those businesses
-    let query = {
+    const query = {
       business: { $in: businessIds },
       status: 'active',
     };
@@ -376,7 +376,7 @@ const getListingsByBusiness = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    let query = { business: req.params.businessId };
+    const query = { business: req.params.businessId };
 
     if (status) {
       query.status = status;
