@@ -5,7 +5,7 @@ import MaintenanceMode from './Components/MaintenanceMode';
 import { usePlatformSettings } from './context/PlatformSettingsContext';
 import { useAppContext } from './context/AppContext';
 import LoadingSpinner from './Components/ui/LoadingSpinner';
-import { ProtectedRoute, RoleRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, RoleRoute } from './Components/ProtectedRoute';
 
 // Lazy-loaded page components for code splitting
 const Home = lazy(() => import('./Pages/Home'));
