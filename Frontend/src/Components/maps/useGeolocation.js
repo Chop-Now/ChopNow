@@ -1,7 +1,7 @@
 export function useGeolocation() {
   const getCurrentLocation = (onSuccess, onError) => {
     if (!navigator.geolocation) {
-      onError("Geolocation not supported");
+      onError('Geolocation not supported');
       return;
     }
 
@@ -11,7 +11,7 @@ export function useGeolocation() {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         }),
-      () => onError("Location permission denied")
+      () => onError('Location permission denied')
     );
   };
 

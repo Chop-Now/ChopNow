@@ -1,6 +1,7 @@
 # ChopNow Deployment Guide
 
 This guide covers deploying ChopNow with:
+
 - **Frontend**: Vercel (free tier)
 - **Backend**: Railway (free tier)
 
@@ -30,23 +31,23 @@ This guide covers deploying ChopNow with:
 
 In Railway dashboard → Your Project → **Variables** tab, add all variables from your local `Backend/.env` file:
 
-| Variable | Description |
-|----------|-------------|
-| `MONGO_URI` | Your MongoDB connection string |
-| `JWT_SECRET` | Your JWT secret key |
-| `JWT_EXPIRE` | `30d` |
-| `PORT` | `5000` |
-| `NODE_ENV` | `production` |
-| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name |
-| `CLOUDINARY_API_KEY` | Your Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | Your Cloudinary API secret |
-| `SENDGRID_API_KEY` | Your SendGrid API key |
-| `FROM_EMAIL` | Your sender email |
-| `FROM_NAME` | `ChopNow` |
-| `GOOGLE_CLIENT_ID` | Your Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Your Google OAuth client secret |
-| `FRONTEND_URL` | (Add after frontend deploy) |
-| `ALLOWED_ORIGINS` | (Add after frontend deploy) |
+| Variable                | Description                     |
+| ----------------------- | ------------------------------- |
+| `MONGO_URI`             | Your MongoDB connection string  |
+| `JWT_SECRET`            | Your JWT secret key             |
+| `JWT_EXPIRE`            | `30d`                           |
+| `PORT`                  | `5000`                          |
+| `NODE_ENV`              | `production`                    |
+| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name      |
+| `CLOUDINARY_API_KEY`    | Your Cloudinary API key         |
+| `CLOUDINARY_API_SECRET` | Your Cloudinary API secret      |
+| `SENDGRID_API_KEY`      | Your SendGrid API key           |
+| `FROM_EMAIL`            | Your sender email               |
+| `FROM_NAME`             | `ChopNow`                       |
+| `GOOGLE_CLIENT_ID`      | Your Google OAuth client ID     |
+| `GOOGLE_CLIENT_SECRET`  | Your Google OAuth client secret |
+| `FRONTEND_URL`          | (Add after frontend deploy)     |
+| `ALLOWED_ORIGINS`       | (Add after frontend deploy)     |
 
 > **TIP**: Copy values directly from your local `Backend/.env` file
 
@@ -83,10 +84,10 @@ You should see: `{"status":"ok"}`
 
 In Vercel dashboard → Project Settings → **Environment Variables**, add:
 
-| Variable | Value |
-|----------|-------|
-| `VITE_API_URL` | Your Railway backend URL (e.g., `https://chopnow-backend.up.railway.app`) |
-| `VITE_GOOGLE_CLIENT_ID` | Same Google Client ID from your `.env` |
+| Variable                | Value                                                                     |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `VITE_API_URL`          | Your Railway backend URL (e.g., `https://chopnow-backend.up.railway.app`) |
+| `VITE_GOOGLE_CLIENT_ID` | Same Google Client ID from your `.env`                                    |
 
 ### 2.3 Deploy
 
@@ -100,9 +101,9 @@ In Vercel dashboard → Project Settings → **Environment Variables**, add:
 
 Go back to Railway and add/update these environment variables:
 
-| Variable | Value |
-|----------|-------|
-| `FRONTEND_URL` | Your Vercel frontend URL |
+| Variable          | Value                    |
+| ----------------- | ------------------------ |
+| `FRONTEND_URL`    | Your Vercel frontend URL |
 | `ALLOWED_ORIGINS` | Your Vercel frontend URL |
 
 Redeploy the backend for changes to take effect.
@@ -139,18 +140,22 @@ Redeploy the backend for changes to take effect.
 ## Troubleshooting
 
 ### CORS Errors
+
 - Ensure `ALLOWED_ORIGINS` on backend matches your Vercel URL exactly
 - No trailing slash in the URL
 
 ### Google Login Fails
+
 - Verify redirect URIs in Google Cloud Console
 - Check `VITE_GOOGLE_CLIENT_ID` matches backend's `GOOGLE_CLIENT_ID`
 
 ### API Connection Failed
+
 - Verify `VITE_API_URL` points to correct Railway URL
 - Check backend logs in Railway dashboard
 
 ### Build Failures
+
 - Check build logs in Vercel/Railway dashboards
 - Ensure all dependencies are in `package.json`
 
@@ -159,16 +164,19 @@ Redeploy the backend for changes to take effect.
 ## Custom Domain (Optional)
 
 ### Vercel (Frontend)
+
 1. Project Settings → Domains
 2. Add your domain
 3. Update DNS records as instructed
 
 ### Railway (Backend)
+
 1. Project Settings → Domains
 2. Add custom domain
 3. Update DNS records
 
 Remember to update:
+
 - `ALLOWED_ORIGINS` on backend
 - `VITE_API_URL` on frontend
 - Google OAuth redirect URIs
@@ -178,6 +186,7 @@ Remember to update:
 ## Security Reminder
 
 **NEVER commit your `.env` files or share credentials in:**
+
 - Git commits
 - Public documentation
 - Chat messages
@@ -190,5 +199,6 @@ Always use the platform's secure environment variable settings.
 ## Support
 
 For deployment issues:
+
 - Railway docs: https://docs.railway.app
 - Vercel docs: https://vercel.com/docs

@@ -12,7 +12,7 @@ const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') 
   return new Promise((resolve, reject) => {
     const uploadOptions = {
       folder: folder,
-      resource_type: resourceType === 'pdf' ? 'auto' : resourceType
+      resource_type: resourceType === 'pdf' ? 'auto' : resourceType,
     };
 
     // Only apply image transformations if it's an image
@@ -20,20 +20,17 @@ const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') 
       uploadOptions.transformation = [
         { width: 1000, height: 1000, crop: 'limit' },
         { quality: 'auto' },
-        { fetch_format: 'auto' }
+        { fetch_format: 'auto' },
       ];
     }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      uploadOptions,
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
+    const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
       }
-    );
+    });
 
     streamifier.createReadStream(buffer).pipe(uploadStream);
   });
@@ -47,9 +44,9 @@ const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') 
  */
 const uploadMultipleToCloudinary = async (files, folder = 'chopnow') => {
   try {
-    const uploadPromises = files.map(file => uploadToCloudinary(file.buffer, folder));
+    const uploadPromises = files.map((file) => uploadToCloudinary(file.buffer, folder));
     const results = await Promise.all(uploadPromises);
-    return results.map(result => result.secure_url);
+    return results.map((result) => result.secure_url);
   } catch (error) {
     throw new Error('Failed to upload images: ' + error.message);
   }
@@ -87,5 +84,5 @@ module.exports = {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
   deleteFromCloudinary,
-  extractPublicId
+  extractPublicId,
 };

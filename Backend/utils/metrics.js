@@ -147,21 +147,21 @@ const getMetrics = () => {
     p50: percentile(metrics.http.latency, 50),
     p95: percentile(metrics.http.latency, 95),
     p99: percentile(metrics.http.latency, 99),
-    avg: metrics.http.latency.length > 0
-      ? Math.round(metrics.http.latency.reduce((a, b) => a + b, 0) / metrics.http.latency.length)
-      : 0,
+    avg:
+      metrics.http.latency.length > 0
+        ? Math.round(metrics.http.latency.reduce((a, b) => a + b, 0) / metrics.http.latency.length)
+        : 0,
   };
 
   // Calculate cache hit rate
   const cacheTotal = metrics.cache.hits + metrics.cache.misses;
-  const cacheHitRate = cacheTotal > 0
-    ? Math.round((metrics.cache.hits / cacheTotal) * 100)
-    : 0;
+  const cacheHitRate = cacheTotal > 0 ? Math.round((metrics.cache.hits / cacheTotal) * 100) : 0;
 
   // Calculate error rate
-  const errorRate = metrics.http.requests > 0
-    ? Math.round((metrics.http.errors / metrics.http.requests) * 100 * 100) / 100
-    : 0;
+  const errorRate =
+    metrics.http.requests > 0
+      ? Math.round((metrics.http.errors / metrics.http.requests) * 100 * 100) / 100
+      : 0;
 
   return {
     uptime: {
@@ -172,9 +172,10 @@ const getMetrics = () => {
       total: metrics.queries.total,
       slow: metrics.queries.slow,
       errors: metrics.queries.errors,
-      slowPercent: metrics.queries.total > 0
-        ? Math.round((metrics.queries.slow / metrics.queries.total) * 100 * 100) / 100
-        : 0,
+      slowPercent:
+        metrics.queries.total > 0
+          ? Math.round((metrics.queries.slow / metrics.queries.total) * 100 * 100) / 100
+          : 0,
     },
     connections: {
       current: metrics.connections.current,

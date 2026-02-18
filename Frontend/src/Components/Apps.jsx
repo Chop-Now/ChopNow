@@ -1,7 +1,7 @@
-import React from 'react'
-import { assets } from '../assets/assets'
+import React from 'react';
+import { assets } from '../assets/assets';
 // eslint-disable-next-line no-unused-vars
-import { motion } from "motion/react";
+import { motion } from 'motion/react';
 
 const Apps = () => {
   return (
@@ -10,17 +10,17 @@ const Apps = () => {
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }} 
+        transition={{ duration: 0.6, ease: 'easeOut' }}
         className="flex flex-col md:flex-row items-center justify-around text-sm rounded-2xl max-w-5xl w-full relative overflow-hidden"
-        style={{ 
+        style={{
           backgroundColor: 'var(--color-primary)',
           border: '2px solid var(--color-solid)',
-          boxShadow: '0 0 40px rgba(0, 168, 107, 0.15), 0 10px 30px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 0 40px rgba(0, 168, 107, 0.15), 0 10px 30px rgba(0, 0, 0, 0.1)',
         }}
       >
         <div className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 relative z-10">
-          <motion.div 
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3" 
+          <motion.div
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3"
             style={{ backgroundColor: 'var(--color-solidOne)', color: 'white' }}
             initial={{ y: -20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
@@ -29,8 +29,8 @@ const Apps = () => {
           >
             Coming Soon
           </motion.div>
-          <motion.h2 
-            className="md:text-4xl text-2xl font-semibold" 
+          <motion.h2
+            className="md:text-4xl text-2xl font-semibold"
             style={{ color: 'var(--color-textColor)' }}
             initial={{ x: -30, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
@@ -39,41 +39,43 @@ const Apps = () => {
           >
             Download Mobile App
           </motion.h2>
-          <motion.p 
-            className="mt-2 w-3/4" 
+          <motion.p
+            className="mt-2 w-3/4"
             style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}
             initial={{ x: -30, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Mobile app for iOS & Android to get a personalized feed of nearby surplus meals, exclusive drops, and smart pick-up reminders, all inside an intuitive experience built for busy urban explorers.
+            Mobile app for iOS & Android to get a personalized feed of nearby surplus meals,
+            exclusive drops, and smart pick-up reminders, all inside an intuitive experience built
+            for busy urban explorers.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             className="flex items-center gap-4 mt-6"
             initial={{ y: 30, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <button 
-              aria-label="googlePlayBtn" 
-              className="transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl" 
+            <button
+              aria-label="googlePlayBtn"
+              className="transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl"
               type="button"
             >
-              <img 
+              <img
                 className="md:w-44 w-28 rounded-2xl cursor-pointer"
                 src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/appDownload/googlePlayBtn.svg"
                 alt="googlePlayBtn"
               />
             </button>
-            <button 
-              aria-label="appleStoreBtn" 
-              className="transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl" 
+            <button
+              aria-label="appleStoreBtn"
+              className="transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl"
               type="button"
             >
-              <img 
+              <img
                 className="md:w-44 w-28 rounded-2xl cursor-pointer"
                 src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/appDownload/appleStoreBtn.svg"
                 alt="appleStoreBtn"
@@ -86,14 +88,14 @@ const Apps = () => {
           initial={{ x: 100, opacity: 0 }}
           whileInView={{ x: 0, opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.4 }} 
+          transition={{ duration: 0.7, delay: 0.4 }}
           className="max-w-[375px] pt-10 md:p-0"
           src={assets.pointing}
-          alt="Man pointing left" 
+          alt="Man pointing left"
         />
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default Apps
+export default Apps;

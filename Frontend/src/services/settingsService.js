@@ -35,7 +35,7 @@ const settingsService = {
   checkMaintenanceMode: async () => {
     const response = await api.get('/api/settings/maintenance');
     return response.data;
-  }
+  },
 };
 
 export default settingsService;

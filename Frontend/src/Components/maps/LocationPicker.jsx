@@ -1,21 +1,28 @@
-import { MapContainer, TileLayer, Marker, useMapEvents, LayersControl, useMap } from "react-leaflet";
-import { useState, useEffect } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { Pin } from "lucide-react";
-import L from "leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  LayersControl,
+  useMap,
+} from 'react-leaflet';
+import { useState, useEffect } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Pin } from 'lucide-react';
+import L from 'leaflet';
 
 // Create custom red pin icon
 const customIcon = L.divIcon({
   html: renderToStaticMarkup(
-    <Pin 
-      size={28} 
+    <Pin
+      size={28}
       strokeWidth={2}
-      color="#ef4444" 
+      color="#ef4444"
       fill="#ef4444"
       style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
     />
   ),
-  className: "custom-pin-icon",
+  className: 'custom-pin-icon',
   iconSize: [28, 28],
   iconAnchor: [14, 28],
   popupAnchor: [0, -28],
@@ -44,13 +51,13 @@ function LocationMarker({ onSelect, selectedPosition }) {
 
 function MapUpdater({ center }) {
   const map = useMap();
-  
+
   useEffect(() => {
     if (center) {
       map.setView([center.lat, center.lng], 15);
     }
   }, [center, map]);
-  
+
   return null;
 }
 
@@ -65,14 +72,14 @@ export default function LocationPicker({ onLocationSelect, selectedLocation }) {
       <LayersControl position="topright">
         <LayersControl.BaseLayer checked name="Street Map">
           <TileLayer
-            attribution='© OpenStreetMap contributors'
+            attribution="© OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
           />
         </LayersControl.BaseLayer>
         <LayersControl.BaseLayer name="Satellite">
           <TileLayer
-            attribution='© Esri'
+            attribution="© Esri"
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             maxZoom={20}
           />

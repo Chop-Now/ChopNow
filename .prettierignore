@@ -5,3 +5,6 @@ coverage
 backups
 *.min.js
 package-lock.json
+.vite
+Frontend/.vite
+**/.vite

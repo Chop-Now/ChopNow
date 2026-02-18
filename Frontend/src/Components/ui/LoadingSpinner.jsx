@@ -9,27 +9,18 @@ import { Loader2 } from 'lucide-react';
  * @param {boolean} props.fullScreen - Whether to display full screen
  * @param {string} props.className - Additional CSS classes
  */
-const LoadingSpinner = ({
-  size = 'md',
-  message = '',
-  fullScreen = false,
-  className = ''
-}) => {
+const LoadingSpinner = ({ size = 'md', message = '', fullScreen = false, className = '' }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-8 h-8',
     lg: 'w-12 h-12',
-    xl: 'w-16 h-16'
+    xl: 'w-16 h-16',
   };
 
   const spinner = (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <Loader2 className={`${sizeClasses[size]} text-solid animate-spin`} />
-      {message && (
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          {message}
-        </p>
-      )}
+      {message && <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{message}</p>}
     </div>
   );
 
@@ -75,12 +66,10 @@ export const Skeleton = ({ className = '', variant = 'text' }) => {
     avatar: 'h-10 w-10 rounded-full',
     thumbnail: 'h-24 w-24 rounded-lg',
     card: 'h-48 w-full rounded-xl',
-    button: 'h-10 w-24 rounded-lg'
+    button: 'h-10 w-24 rounded-lg',
   };
 
-  return (
-    <div className={`${baseClasses} ${variantClasses[variant]} ${className}`} />
-  );
+  return <div className={`${baseClasses} ${variantClasses[variant]} ${className}`} />;
 };
 
 /**

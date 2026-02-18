@@ -1,6 +1,14 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Hourglass, Clock, FileSearch, MailCheck, LayoutDashboard, MessageCircleQuestion, Mail } from 'lucide-react'
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Hourglass,
+  Clock,
+  FileSearch,
+  MailCheck,
+  LayoutDashboard,
+  MessageCircleQuestion,
+  Mail,
+} from 'lucide-react';
 
 const PendingReview = () => {
   const navigate = useNavigate();
@@ -17,13 +25,17 @@ const PendingReview = () => {
           </div>
 
           {/* Title */}
-          <h1 className="text-xl font-semibold text-center mb-2" style={{ color: 'var(--color-textColor)' }}>
+          <h1
+            className="text-xl font-semibold text-center mb-2"
+            style={{ color: 'var(--color-textColor)' }}
+          >
             We're reviewing your details
           </h1>
 
           {/* Description */}
           <p className="text-xs text-center mb-5" style={{ color: 'var(--color-gray-50)' }}>
-            Thank you for submitting your details. Your application is now under manual review by our team to ensure everything is in order.
+            Thank you for submitting your details. Your application is now under manual review by
+            our team to ensure everything is in order.
           </p>
 
           {/* Estimated Review Time */}
@@ -52,7 +64,10 @@ const PendingReview = () => {
 
           {/* What's Next Section */}
           <div className="mb-6">
-            <h2 className="text-base font-semibold mb-5" style={{ color: 'var(--color-textColor)' }}>
+            <h2
+              className="text-base font-semibold mb-5"
+              style={{ color: 'var(--color-textColor)' }}
+            >
               What's next?
             </h2>
 
@@ -63,7 +78,10 @@ const PendingReview = () => {
                   <FileSearch className="w-5 h-5 text-black" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold mb-1" style={{ color: 'var(--color-textColor)' }}>
+                  <h3
+                    className="text-xs font-semibold mb-1"
+                    style={{ color: 'var(--color-textColor)' }}
+                  >
                     1. Admin review
                   </h3>
                   <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
@@ -78,7 +96,10 @@ const PendingReview = () => {
                   <MailCheck className="w-5 h-5 text-black" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold mb-1" style={{ color: 'var(--color-textColor)' }}>
+                  <h3
+                    className="text-xs font-semibold mb-1"
+                    style={{ color: 'var(--color-textColor)' }}
+                  >
                     2. Approval email
                   </h3>
                   <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
@@ -93,7 +114,10 @@ const PendingReview = () => {
                   <LayoutDashboard className="w-5 h-5 text-black" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold mb-1" style={{ color: 'var(--color-textColor)' }}>
+                  <h3
+                    className="text-xs font-semibold mb-1"
+                    style={{ color: 'var(--color-textColor)' }}
+                  >
                     3. Full dashboard access
                   </h3>
                   <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
@@ -109,7 +133,10 @@ const PendingReview = () => {
 
           {/* Have Questions Section */}
           <div>
-            <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--color-textColor)' }}>
+            <h2
+              className="text-base font-semibold mb-2"
+              style={{ color: 'var(--color-textColor)' }}
+            >
               Have Questions?
             </h2>
             <p className="text-[10px] mb-3" style={{ color: 'var(--color-gray-50)' }}>
@@ -137,7 +164,7 @@ const PendingReview = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PendingReview
+export default PendingReview;

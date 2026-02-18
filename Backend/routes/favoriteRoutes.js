@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   toggleFavorite,
   getFavorites,
-  checkFavorite
+  checkFavorite,
 } = require('../controllers/favoriteController');
 const { protect } = require('../middleware/auth');
 
