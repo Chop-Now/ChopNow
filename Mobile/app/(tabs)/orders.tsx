@@ -1,12 +1,13 @@
 /**
  * My Orders Screen
- * UX: Order history builds trust and drives repeat purchase.
- * - Status colour coding (pending=yellow, confirmed=blue, ready=green, done=gray)
+ * - Status filter tabs (All | Processing | Completed | Cancelled)
+ * - Tap order card → full order detail screen
  * - Pickup code prominently displayed when ready
- * - Pull to refresh
+ * - Pull-to-refresh
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,21 +17,31 @@ import { ListingCardSkeleton } from '../../components/ui/SkeletonLoader';
 import { Colors } from '../../constants/colors';
 import type { Order, OrderStatus } from '../../types';
 
+const STATUS_TABS: Array<{ key: string; label: string }> = [
+  { key: 'all',       label: 'All'       },
+  { key: 'pending',   label: 'Processing' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
+];
+
 const statusMap: Record<OrderStatus, { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' | 'error' }> = {
-  pending:   { label: 'Pending',   variant: 'warning' },
-  confirmed: { label: 'Confirmed', variant: 'info'    },
-  ready:     { label: 'Ready!',    variant: 'success' },
-  completed: { label: 'Collected', variant: 'neutral' },
-  cancelled: { label: 'Cancelled', variant: 'error'   },
+  pending:   { label: 'Processing', variant: 'warning' },
+  confirmed: { label: 'Confirmed',  variant: 'info'    },
+  ready:     { label: 'Ready!',     variant: 'success' },
+  completed: { label: 'Collected',  variant: 'neutral' },
+  cancelled: { label: 'Cancelled',  variant: 'error'   },
 };
 
-function OrderCard({ order }: { order: Order }) {
-  const status = statusMap[order.status];
-  const dateStr = new Date(order.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
+  const status  = statusMap[order.status] ?? { label: order.status, variant: 'neutral' };
+  const dateStr = new Date(order.createdAt).toLocaleDateString(undefined, {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
 
   return (
-    <View
-      className="bg-white rounded-2xl p-4 mb-3 border border-gray-100"
+    <Pressable
+      onPress={onPress}
+      className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 active:opacity-80"
       style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8 }}
     >
       {/* Header row */}
@@ -46,7 +57,7 @@ function OrderCard({ order }: { order: Order }) {
 
       {/* Items summary */}
       <Text className="text-gray-500 text-sm mb-3" numberOfLines={2}>
-        {order.items?.map((i) => `${i.listing?.name} ×${i.quantity}`).join(', ')}
+        {order.items?.map((i) => `${i.listing?.name ?? i.name} ×${i.quantity}`).join(', ')}
       </Text>
 
       {/* Pickup code highlight */}
@@ -64,31 +75,67 @@ function OrderCard({ order }: { order: Order }) {
 
       {/* Footer */}
       <View className="flex-row justify-between items-center pt-3 border-t border-gray-100">
-        <Text className="text-gray-400 text-sm">{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</Text>
-        <Text style={{ fontFamily: 'Inter_700Bold' }} className="text-gray-900">
-          RWF {order.totalAmount?.toLocaleString()}
+        <Text className="text-gray-400 text-sm">
+          {order.items?.length ?? 0} item{order.items?.length !== 1 ? 's' : ''}
         </Text>
+        <View className="flex-row items-center gap-2">
+          <Text style={{ fontFamily: 'Inter_700Bold' }} className="text-gray-900">
+            RWF {(order.totalAmount ?? (order as any).pricing?.total ?? 0).toLocaleString()}
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.gray[300]} />
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function OrdersScreen() {
-  const insets = useSafeAreaInsets();
+  const insets   = useSafeAreaInsets();
+  const router   = useRouter();
+  const [activeTab, setActiveTab] = useState('all');
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['orders'],
+    queryKey: ['my-orders', activeTab],
     queryFn:  () => orderService.getMyOrders(),
   });
 
-  const orders = data?.orders ?? [];
+  const allOrders: Order[] = data?.orders ?? [];
+
+  // Client-side filter — backend returns all, we filter locally for instant tab switching
+  const orders = activeTab === 'all'
+    ? allOrders
+    : allOrders.filter((o) => {
+        if (activeTab === 'pending')   return o.status === 'pending' || o.status === 'confirmed' || o.status === 'ready';
+        if (activeTab === 'completed') return o.status === 'completed';
+        if (activeTab === 'cancelled') return o.status === 'cancelled';
+        return true;
+      });
 
   return (
     <View className="flex-1 bg-gray-50">
-      <View style={{ paddingTop: insets.top + 8 }} className="bg-white px-4 pb-4 border-b border-gray-100">
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20 }} className="text-gray-900">
+      {/* Header */}
+      <View style={{ paddingTop: insets.top + 8 }} className="bg-white px-4 pb-3 border-b border-gray-100">
+        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20 }} className="text-gray-900 mb-3">
           My Orders
         </Text>
+
+        {/* Status filter tabs */}
+        <View className="flex-row gap-2">
+          {STATUS_TABS.map((tab) => (
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              className={`px-3 py-2 rounded-full border ${activeTab === tab.key ? 'bg-primary-600 border-primary-600' : 'bg-white border-gray-200'}`}
+            >
+              <Text
+                style={{ fontSize: 12, fontFamily: 'Inter_500Medium' }}
+                className={activeTab === tab.key ? 'text-white' : 'text-gray-600'}
+              >
+                {tab.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       {isLoading ? (
@@ -99,10 +146,12 @@ export default function OrdersScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <Text style={{ fontSize: 56 }}>📋</Text>
           <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20 }} className="text-gray-900 mt-4 text-center">
-            No orders yet
+            {activeTab === 'all' ? 'No orders yet' : `No ${STATUS_TABS.find(t => t.key === activeTab)?.label.toLowerCase()} orders`}
           </Text>
           <Text className="text-gray-400 text-base text-center mt-2">
-            Your food rescue history will appear here
+            {activeTab === 'all'
+              ? 'Your food rescue history will appear here'
+              : 'Try a different filter'}
           </Text>
         </View>
       ) : (
@@ -114,7 +163,12 @@ export default function OrdersScreen() {
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary[600]} />
           }
-          renderItem={({ item }) => <OrderCard order={item} />}
+          renderItem={({ item }) => (
+            <OrderCard
+              order={item}
+              onPress={() => router.push(`/order/${item._id}`)}
+            />
+          )}
         />
       )}
     </View>

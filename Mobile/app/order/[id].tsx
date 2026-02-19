@@ -84,19 +84,48 @@ export default function OrderDetailScreen() {
               )}
               <View className="flex-1">
                 <Text style={{ fontFamily: 'Inter_500Medium' }} className="text-gray-800 text-sm" numberOfLines={1}>
-                  {item.listing?.name}
+                  {item.listing?.name ?? item.name}
                 </Text>
                 <Text className="text-gray-400 text-xs mt-0.5">Qty: {item.quantity}</Text>
               </View>
               <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-gray-900 text-sm">
-                RWF {(item.price * item.quantity).toLocaleString()}
+                RWF {((item.price ?? item.unitPrice ?? 0) * item.quantity).toLocaleString()}
               </Text>
             </View>
           ))}
           <View className="border-t border-gray-100 mt-3 pt-3 flex-row justify-between">
             <Text style={{ fontFamily: 'Inter_700Bold' }} className="text-gray-900">Total</Text>
             <Text style={{ fontFamily: 'Inter_700Bold' }} className="text-primary-600 text-base">
-              RWF {order.totalAmount?.toLocaleString()}
+              RWF {(order.totalAmount ?? (order as any).pricing?.total ?? 0).toLocaleString()}
+            </Text>
+          </View>
+        </View>
+
+        {/* Payment info */}
+        <View className="bg-white rounded-2xl p-4 mb-4 border border-gray-100">
+          <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-gray-900 mb-3">Payment</Text>
+          <View className="flex-row justify-between mb-2">
+            <Text className="text-gray-400 text-sm">Method</Text>
+            <Text style={{ fontFamily: 'Inter_500Medium' }} className="text-gray-800 text-sm capitalize">
+              {(order as any).payment?.method ?? (order as any).paymentMethod ?? 'Cash on delivery'}
+            </Text>
+          </View>
+          <View className="flex-row justify-between mb-2">
+            <Text className="text-gray-400 text-sm">Status</Text>
+            <View className={`px-2 py-0.5 rounded-full ${
+              (order as any).payment?.status === 'paid' ? 'bg-green-100' : 'bg-gray-100'
+            }`}>
+              <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold' }} className={
+                (order as any).payment?.status === 'paid' ? 'text-green-700' : 'text-gray-500'
+              }>
+                {(order as any).payment?.status === 'paid' ? 'Paid' : 'Unpaid'}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row justify-between">
+            <Text className="text-gray-400 text-sm">Order Type</Text>
+            <Text style={{ fontFamily: 'Inter_500Medium' }} className="text-gray-800 text-sm capitalize">
+              {(order as any).fulfillmentType ?? 'Pickup'}
             </Text>
           </View>
         </View>
