@@ -107,20 +107,35 @@ export default function ProfileScreen() {
           <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-gray-400 text-xs uppercase px-4 pt-4 pb-2 tracking-wider">
             Account
           </Text>
-          <SettingsRow icon="person-outline"        label="Edit Profile"     onPress={() => {}} />
+          <SettingsRow icon="person-outline"        label="Edit Profile"     onPress={() => router.push('/edit-profile')} />
           <SettingsRow icon="notifications-outline" label="Notifications"    onPress={() => router.push('/notifications')} />
-          <SettingsRow icon="card-outline"          label="Payment Methods"  onPress={() => {}} />
-          <SettingsRow icon="location-outline"      label="Saved Addresses"  onPress={() => {}} />
+          <SettingsRow icon="heart-outline"         label="Favorites"        onPress={() => router.push('/favorites')} />
+          <SettingsRow icon="receipt-outline"       label="My Orders"        onPress={() => router.push('/(tabs)/orders' as any)} />
         </View>
 
-        {/* Business */}
+        {/* Business Owner */}
         {user?.roles?.includes('business_owner') && (
           <View className="bg-white mx-4 mt-4 rounded-2xl overflow-hidden border border-gray-100">
             <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-gray-400 text-xs uppercase px-4 pt-4 pb-2 tracking-wider">
               Business
             </Text>
-            <SettingsRow icon="storefront-outline"  label="My Business"     onPress={() => {}} />
-            <SettingsRow icon="bar-chart-outline"   label="Analytics"        onPress={() => {}} />
+            <SettingsRow icon="storefront-outline" label="Vendor Dashboard"  onPress={() => router.push('/vendor')} />
+            <SettingsRow icon="list-outline"       label="My Listings"       onPress={() => router.push('/vendor/listings')} />
+            <SettingsRow icon="bar-chart-outline"  label="Analytics"         onPress={() => router.push('/vendor/analytics')} />
+            <SettingsRow icon="wallet-outline"     label="Payouts"           onPress={() => router.push('/vendor/payouts')} />
+          </View>
+        )}
+
+        {/* Admin Panel */}
+        {user?.roles?.includes('admin') && (
+          <View className="bg-white mx-4 mt-4 rounded-2xl overflow-hidden border border-gray-100">
+            <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-gray-400 text-xs uppercase px-4 pt-4 pb-2 tracking-wider">
+              Admin
+            </Text>
+            <SettingsRow icon="shield-checkmark-outline" label="Admin Dashboard" onPress={() => router.push('/admin')} />
+            <SettingsRow icon="people-outline"           label="Users"           onPress={() => router.push('/admin/users')} />
+            <SettingsRow icon="storefront-outline"       label="Vendors"         onPress={() => router.push('/admin/vendors')} />
+            <SettingsRow icon="settings-outline"         label="Platform Settings" onPress={() => router.push('/admin/settings')} />
           </View>
         )}
 

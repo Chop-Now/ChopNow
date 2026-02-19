@@ -47,7 +47,7 @@ export default function ImpactScreen() {
 
   const { data, isLoading } = useQuery<ImpactStats>({
     queryKey: ['impact'],
-    queryFn:  () => api.get('/api/users/impact').then(r => r.data),
+    queryFn:  () => api.get('/api/analytics/impact/my').then(r => r.data),
   });
 
   const treeEquivalent  = data ? (data.co2Saved / 21).toFixed(1) : '0';

@@ -33,7 +33,7 @@ const persist = (items: CartItems) => {
 const syncToBackend = (items: CartItems) => {
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
-    api.put('/api/cart', { cart: items }).catch(() => {});
+    api.put('/api/cart/set', { cart: items }).catch(() => {});
   }, 1200);
 };
 
@@ -42,12 +42,19 @@ export const useCartStore = create<CartState>((set, get) => ({
   listings: {},
 
   hydrate: async () => {
+    // Try local cache first for instant load
     const raw = await storage.get(storage.KEYS.CART);
     if (raw) {
-      try {
-        set({ items: JSON.parse(raw) });
-      } catch {}
+      try { set({ items: JSON.parse(raw) }); } catch {}
     }
+    // Then sync with server (authoritative source)
+    try {
+      const { data } = await api.get('/api/cart');
+      if (data?.cart) {
+        set({ items: data.cart });
+        persist(data.cart);
+      }
+    } catch {}
   },
 
   add: (listingId) => {
@@ -88,7 +95,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   clear: () => {
     set({ items: {} });
     storage.remove(storage.KEYS.CART);
-    api.delete('/api/cart').catch(() => {});
+    api.delete('/api/cart/clear').catch(() => {});
   },
 
   cacheListing: (listing) => {
