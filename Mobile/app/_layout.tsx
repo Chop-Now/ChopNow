@@ -63,13 +63,21 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="onboarding"        options={{ animation: 'fade' }} />
-          <Stack.Screen name="(auth)"            options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="(tabs)"            options={{ animation: 'fade' }} />
-          <Stack.Screen name="listing/[id]"      options={{ animation: 'slide_from_right', headerShown: false }} />
-          <Stack.Screen name="cart"              options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-          <Stack.Screen name="checkout"          options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-          <Stack.Screen name="notifications"     options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="onboarding"           options={{ animation: 'fade' }} />
+          <Stack.Screen name="(auth)"               options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="(tabs)"               options={{ animation: 'fade' }} />
+          <Stack.Screen name="listing/[id]"         options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="cart"                 options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+          <Stack.Screen name="checkout"             options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+          <Stack.Screen name="notifications"        options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="favorites"            options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="edit-profile"         options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="forgot-password"      options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="order/[id]"           options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="dispute/[orderId]"    options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="review/[orderId]"     options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="vendor"               options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="admin"                options={{ animation: 'slide_from_right' }} />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
