@@ -17,7 +17,7 @@ const getPlatformOverview = async (req, res) => {
       await Promise.all([
         Order.countDocuments(),
         Business.countDocuments(),
-        User.countDocuments({ role: 'consumer' }),
+        User.countDocuments({ roles: { $in: ['consumer'] } }),
         Order.aggregate([
           { $match: { status: 'delivered' } },
           { $group: { _id: null, total: { $sum: '$pricing.total' } } },
@@ -104,17 +104,19 @@ const getBusinessOverview = async (req, res) => {
       ]),
     ]);
 
-    // Populate top product names
+    // Populate top product names — filter out any listings deleted since the order was placed
     const topProducts = await Listing.populate(topProductsIds, { path: '_id', select: 'title' });
 
     res.json({
       stats: business.stats,
       weeklyTrend: weeklySales,
-      topProducts: topProducts.map((p) => ({
-        name: p._id.title,
-        sold: p.count,
-        revenue: p.revenue,
-      })),
+      topProducts: topProducts
+        .filter((p) => p._id != null && p._id.title != null)
+        .map((p) => ({
+          name: p._id.title,
+          sold: p.count,
+          revenue: p.revenue,
+        })),
     });
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');
