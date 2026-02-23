@@ -2,9 +2,20 @@ import { useAppContext } from '../context/AppContext';
 import PageNavbar from '../Components/PageNavbar';
 import Footer from '../Components/Footer';
 import LocationPicker from '../Components/maps/LocationPicker';
-import { MoveLeft, X, MapPin, ExternalLink, Leaf, Calendar, Trash2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import {
+  MoveLeft,
+  X,
+  MapPin,
+  ExternalLink,
+  Leaf,
+  Calendar,
+  Trash2,
+  Clock,
+  AlertTriangle,
+} from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -53,6 +64,15 @@ const Cart = () => {
       setCartArray(tempArray);
     }
   }, [products, cartItems]);
+
+  // Items expiring within 1 hour
+  const urgentItems = useMemo(
+    () =>
+      cartArray.filter(
+        (p) => p.availableUntil && new Date(p.availableUntil) - Date.now() < 60 * 60 * 1000
+      ),
+    [cartArray]
+  );
 
   const calculateSubtotal = () => {
     return cartArray.reduce(
@@ -112,7 +132,7 @@ const Cart = () => {
             {/* Left Side - Cart Items */}
             <div className="flex-1">
               <h1
-                className="text-xl md:text-2xl font-semibold mb-6"
+                className="text-xl md:text-2xl font-semibold mb-4"
                 style={{ color: 'var(--color-textColor)' }}
               >
                 Shopping Cart{' '}
@@ -120,6 +140,29 @@ const Cart = () => {
                   ({getTotalCartItems()} Items)
                 </span>
               </h1>
+
+              {/* Urgent expiry warning banner */}
+              {urgentItems.length > 0 && (
+                <div
+                  className="flex items-start gap-3 p-4 rounded-xl mb-5 border"
+                  style={{ backgroundColor: '#fff3e0', borderColor: '#ffb74d' }}
+                >
+                  <AlertTriangle
+                    className="w-5 h-5 shrink-0 mt-0.5"
+                    style={{ color: 'var(--color-solidOne)' }}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#b45309' }}>
+                      {urgentItems.length === 1
+                        ? `"${urgentItems[0].name}" is expiring soon!`
+                        : `${urgentItems.length} items in your cart are expiring soon!`}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: '#92400e' }}>
+                      Complete your order before these time-sensitive deals are gone.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {cartArray.map((product, index) => (
@@ -171,10 +214,17 @@ const Cart = () => {
                           <Trash2 className="w-5 h-5 group-hover:stroke-solidOne transition" />
                         </button>
                       </div>
+                      {/* Per-item expiry countdown */}
+                      {product.availableUntil && (
+                        <div className="mb-2">
+                          <ExpiryCountdown until={product.availableUntil} variant="inline" />
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => removeFromCart(product._id)}
-                          className="w-7 h-7 rounded flex items-center justify-center font-semibold cursor-pointer"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center font-semibold cursor-pointer hover:opacity-80 transition"
                           style={{
                             backgroundColor: 'var(--color-primary)',
                             color: 'var(--color-solid)',
@@ -183,7 +233,7 @@ const Cart = () => {
                           -
                         </button>
                         <span
-                          className="font-medium text-sm"
+                          className="font-semibold text-sm"
                           style={{ color: 'var(--color-textColor)' }}
                         >
                           {product.cartQuantity}
@@ -191,7 +241,7 @@ const Cart = () => {
                         <button
                           onClick={() => addToCart(product._id)}
                           disabled={product.cartQuantity >= product.quantity}
-                          className="w-7 h-7 rounded flex items-center justify-center font-semibold disabled:opacity-50 cursor-pointer"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center font-semibold disabled:opacity-50 cursor-pointer hover:opacity-80 transition"
                           style={{
                             backgroundColor: 'var(--color-primary)',
                             color: 'var(--color-solid)',

@@ -34,11 +34,16 @@ export const transformListingToProduct = (listing) => {
     businessName: listing.business?.name || '',
     pickupFrom: listing.timeWindow?.availableFrom,
     pickupTo: listing.timeWindow?.availableUntil,
+    availableUntil: listing.timeWindow?.availableUntil || null,
     status: listing.status || 'active',
     rating: listing.rating || 0,
     reviewCount: listing.reviewCount || 0,
     isAvailable:
       listing.status === 'active' && (listing.inventory?.quantity > 0 || listing.quantity > 0),
+    // Urgency signals
+    cartCount: listing.stats?.cartCount || 0,
+    soldCount: listing.inventory?.reserved || 0,
+    totalQuantity: (listing.inventory?.quantity || 0) + (listing.inventory?.reserved || 0),
     createdAt: listing.createdAt,
     updatedAt: listing.updatedAt,
   };

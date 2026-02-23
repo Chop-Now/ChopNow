@@ -220,6 +220,19 @@ const removeFromCart = async (req, res) => {
 const clearCart = async (req, res) => {
   try {
     const cart = await Cart.getOrCreateCart(req.user._id);
+
+    // Decrement cartCount for all items before clearing
+    if (cart.items.length > 0) {
+      await Promise.all(
+        cart.items.map((item) =>
+          Listing.findOneAndUpdate(
+            { _id: item.listing, 'stats.cartCount': { $gt: 0 } },
+            { $inc: { 'stats.cartCount': -1 } }
+          )
+        )
+      );
+    }
+
     await cart.clearCart();
 
     res.json({
@@ -318,13 +331,18 @@ const setCart = async (req, res) => {
   try {
     const { cartItems } = req.body;
 
-    const cart = await Cart.getOrCreateCart(req.user._id);
+    // Capture old listing IDs BEFORE modifying the cart
+    const existingCart = await Cart.findOne({ user: req.user._id });
+    const oldListingIds = new Set(
+      (existingCart?.items || []).map((item) => item.listing.toString())
+    );
 
-    // Clear existing items
+    const cart = await Cart.getOrCreateCart(req.user._id);
     cart.items = [];
 
+    const newListingIds = new Set();
+
     if (cartItems && Object.keys(cartItems).length > 0) {
-      // Verify all listings exist and are active
       const listingIds = Object.keys(cartItems);
       const validListings = await Listing.find({
         _id: { $in: listingIds },
@@ -333,15 +351,29 @@ const setCart = async (req, res) => {
 
       const validIds = new Set(validListings.map((l) => l._id.toString()));
 
-      // Add only valid items
       for (const [listingId, quantity] of Object.entries(cartItems)) {
         if (validIds.has(listingId) && quantity > 0) {
           cart.items.push({ listing: listingId, quantity });
+          newListingIds.add(listingId);
         }
       }
     }
 
     await cart.save();
+
+    // Diff: increment cartCount for newly added listings, decrement for removed
+    const added = [...newListingIds].filter((id) => !oldListingIds.has(id));
+    const removed = [...oldListingIds].filter((id) => !newListingIds.has(id));
+
+    await Promise.all([
+      ...added.map((id) => Listing.findByIdAndUpdate(id, { $inc: { 'stats.cartCount': 1 } })),
+      ...removed.map((id) =>
+        Listing.findOneAndUpdate(
+          { _id: id, 'stats.cartCount': { $gt: 0 } },
+          { $inc: { 'stats.cartCount': -1 } }
+        )
+      ),
+    ]);
 
     // Return updated cart
     const resultCart = {};
