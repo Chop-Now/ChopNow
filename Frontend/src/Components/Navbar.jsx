@@ -18,24 +18,19 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
     const handleScroll = () => {
       const sections = navLinks.map((link) => link.path.substring(1));
       const scrollPosition = window.scrollY + 100;
-      let sectionFound = false;
-
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
           const { offsetTop, offsetHeight } = element;
           if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
             setActiveSection(`#${section}`);
-            sectionFound = true;
             return;
           }
         }
       }
 
       // Clear active section if not in any tracked section
-      if (!sectionFound) {
-        setActiveSection('');
-      }
+      setActiveSection('');
     };
 
     window.addEventListener('scroll', handleScroll);
