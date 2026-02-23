@@ -303,6 +303,7 @@ app.use(errorHandler);
 // Database connection and server start
 const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');
 const redis = require('./config/redis');
+const { startExpiryJob } = require('./services/listingExpiryJob');
 
 // Enhanced health check endpoint with database stats
 app.get('/health/db', async (req, res) => {
@@ -400,6 +401,9 @@ const startServer = async () => {
 
     // Initialize Redis (optional - won't fail if unavailable)
     await redis.initRedis();
+
+    // Start listing expiry background job (marks expired listings every 5 min)
+    startExpiryJob();
 
     const port = process.env.PORT || 5000;
     const server = app.listen(port, () => {

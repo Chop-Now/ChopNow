@@ -93,6 +93,7 @@ const listingSchema = new mongoose.Schema(
     stats: {
       views: { type: Number, default: 0 },
       orders: { type: Number, default: 0 },
+      cartCount: { type: Number, default: 0 }, // How many active carts currently contain this listing
     },
   },
   {

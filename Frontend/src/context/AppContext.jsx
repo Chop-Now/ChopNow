@@ -440,6 +440,10 @@ const AppContextProvider = ({ children }) => {
             dietary: [],
             rating: transformed.rating || 0,
             reviews: transformed.reviewCount || 0,
+            availableUntil: transformed.availableUntil || null,
+            cartCount: transformed.cartCount || 0,
+            soldCount: transformed.soldCount || 0,
+            totalQuantity: transformed.totalQuantity || 0,
             createdAt: transformed.createdAt,
           };
         })

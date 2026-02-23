@@ -7,6 +7,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Home, Star, ShoppingCart, Send, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
 import { reviewService, favoriteService } from '../services';
 import toast from 'react-hot-toast';
+import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
+import { Flame, Users } from 'lucide-react';
 
 const ProductDetails = () => {
   const { products, addToCart, cartItems, removeAllFromCart, isAuthenticated } = useAppContext();
@@ -210,6 +212,14 @@ const ProductDetails = () => {
     productPrice > 0 ? Math.round(((productPrice - productOfferPrice) / productPrice) * 100) : 0;
   const currentCartQuantity = cartItems[product._id] || 0;
 
+  // Urgency signals
+  const qty = product?.quantity || 0;
+  const isLowStock = qty > 0 && qty <= 3;
+  const totalQty = product?.totalQuantity || qty;
+  const soldPct = totalQty > 0 ? (product?.soldCount || 0) / totalQty : 0;
+  const isSellingFast = soldPct >= 0.5 && qty > 0;
+  const cartCount = product?.cartCount || 0;
+
   return (
     <div className="bg-white min-h-screen pt-20">
       <PageNavbar />
@@ -407,15 +417,54 @@ const ProductDetails = () => {
               )}
             </div>
 
+            {/* Expiry countdown banner */}
+            {product.availableUntil && (
+              <div className="mb-4">
+                <ExpiryCountdown until={product.availableUntil} variant="banner" />
+              </div>
+            )}
+
             {/* Pickup Time */}
             <div
-              className="mb-6 p-3 rounded-lg"
+              className="mb-4 p-3 rounded-lg"
               style={{ backgroundColor: 'var(--color-primary)' }}
             >
               <p className="text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
                 🕐 Pickup: {product.pickupTime}
               </p>
             </div>
+
+            {/* Social proof + urgency signals */}
+            {(isSellingFast || isLowStock || cartCount >= 2) && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {isSellingFast && (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: '#fff3e0', color: 'var(--color-solidOne)' }}
+                  >
+                    <Flame className="w-3.5 h-3.5" />
+                    Selling fast
+                  </div>
+                )}
+                {isLowStock && (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}
+                  >
+                    ⚠ Only {qty} left
+                  </div>
+                )}
+                {cartCount >= 2 && (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: '#fff7ed', color: '#b45309' }}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    {cartCount} {cartCount === 1 ? 'person has' : 'people have'} this in their cart
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Dietary Information */}
             {product.dietary_information && product.dietary_information.length > 0 && (
