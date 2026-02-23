@@ -111,7 +111,13 @@ const getBusinessOverview = async (req, res) => {
       stats: business.stats,
       weeklyTrend: weeklySales,
       topProducts: topProducts
-        .filter((p) => p._id != null && p._id.title != null)
+        .filter(
+          (p) =>
+            p._id !== null &&
+            p._id !== undefined &&
+            p._id.title !== null &&
+            p._id.title !== undefined
+        )
         .map((p) => ({
           name: p._id.title,
           sold: p.count,

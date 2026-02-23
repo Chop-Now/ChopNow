@@ -302,7 +302,8 @@ app.get('/health/db', async (req, res) => {
     const dbHealth = await healthCheck();
     const statusCode = dbHealth.healthy ? 200 : 503;
     res.status(statusCode).json(dbHealth);
-  } catch (err) {
+  } catch (healthErr) {
+    logger.error({ err: healthErr }, 'DB health check failed');
     res.status(503).json({ healthy: false, error: 'Health check failed' });
   }
 });
@@ -313,7 +314,8 @@ app.get('/health/cache', async (req, res) => {
     const cacheStats = await redis.getStats();
     const statusCode = cacheStats.available ? 200 : 503;
     res.status(statusCode).json(cacheStats);
-  } catch (err) {
+  } catch (healthErr) {
+    logger.error({ err: healthErr }, 'Cache health check failed');
     res.status(503).json({ available: false, error: 'Cache check failed' });
   }
 });
@@ -332,7 +334,8 @@ app.get('/health/all', async (req, res) => {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (err) {
+  } catch (healthErr) {
+    logger.error({ err: healthErr }, 'Combined health check failed');
     res.status(503).json({ status: 'error', error: 'Health check failed' });
   }
 });
@@ -346,7 +349,8 @@ app.get('/metrics', async (req, res) => {
       application: appMetrics,
       mongodb: mongoMetrics,
     });
-  } catch (err) {
+  } catch (metricsErr) {
+    logger.error({ err: metricsErr }, 'Metrics collection failed');
     res.status(500).json({ error: 'Metrics unavailable' });
   }
 });
@@ -390,7 +394,8 @@ app.get('/metrics/prometheus', async (req, res) => {
     ];
     res.set('Content-Type', 'text/plain');
     res.send(lines.join('\n'));
-  } catch (err) {
+  } catch (metricsErr) {
+    logger.error({ err: metricsErr }, 'Prometheus metrics collection failed');
     res.status(500).send('# Metrics unavailable\n');
   }
 });
