@@ -2,14 +2,15 @@ import api from './api';
 
 const listingService = {
   // Get all listings (public with filters)
-  getListings: async (filters = {}) => {
+  // options: axios config passthrough e.g. { silent: true } to suppress error toasts
+  getListings: async (filters = {}, options = {}) => {
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/api/listings?${params.toString()}`);
+      const response = await api.get(`/api/listings?${params.toString()}`, options);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

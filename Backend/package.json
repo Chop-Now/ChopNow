@@ -53,5 +53,16 @@
     "nodemon": "^3.1.11",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2"
+  },
+  "overrides": {
+    "test-exclude": "^8.0.0",
+    "rimraf": ">=6.0.0",
+    "minimatch": ">=10.2.1",
+    "@sentry/node": {
+      "minimatch": ">=10.2.1"
+    },
+    "@sentry/profiling-node": {
+      "minimatch": ">=10.2.1"
+    }
   }
 }
