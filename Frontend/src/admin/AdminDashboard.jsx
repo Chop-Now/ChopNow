@@ -96,7 +96,7 @@ const AdminDashboard = () => {
               localStorage.setItem('user', JSON.stringify(storedUser));
               setIsAdminRole(true);
             } else {
-              throw new Error('Fallback role switch failed');
+              throw new Error('Fallback role switch failed', { cause: error });
             }
           } catch (fallbackError) {
             console.error('Fallback role switch failed:', fallbackError);

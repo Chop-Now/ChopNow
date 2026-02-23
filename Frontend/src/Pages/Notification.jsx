@@ -16,6 +16,7 @@ import {
   Package,
   Clock,
   ChevronRight,
+  Star,
 } from 'lucide-react';
 import { notificationService } from '../services';
 import toast from 'react-hot-toast';
