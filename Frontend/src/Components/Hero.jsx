@@ -86,7 +86,7 @@ const Hero = () => {
         </motion.div>
 
         {/*Container with Flex Layout*/}
-        <div className="mx-auto max-w-[1440px] px-4 h-full flex flex-col lg:flex-row items-center md:items-center lg:items-start justify-between pt-44 md:pt-40 lg:pt-32 gap-2 md:gap-4 lg:gap-8">
+        <div className="mx-auto max-w-[1440px] px-4 h-full flex flex-col lg:flex-row items-center md:items-center lg:items-start justify-start lg:justify-between pt-44 md:pt-40 lg:pt-32 gap-2 md:gap-4 lg:gap-8">
           {/* Left Side - Content */}
           <div className="flex-1 max-w-[650px] relative z-10 w-full lg:mt-24 text-center lg:text-left">
             <motion.h2
@@ -198,7 +198,7 @@ const Hero = () => {
 
           {/* Right Side - Background Image */}
           <motion.div
-            className="flex-1 w-full h-[420px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-60 md:-mt-60 lg:-mt-72"
+            className="flex-1 w-full h-[280px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-20 md:-mt-44 lg:-mt-72"
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
@@ -206,7 +206,7 @@ const Hero = () => {
             <img
               src={assets.bg}
               alt="ChopNow"
-              className="w-full md:w-[120%] h-[120%] object-cover"
+              className="w-full md:w-[120%] h-full md:h-[120%] object-cover"
             />
           </motion.div>
         </div>

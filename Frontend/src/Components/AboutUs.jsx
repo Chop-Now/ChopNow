@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
+import { assets } from '@/assets/assets';
 
 const AboutUs = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -8,37 +9,37 @@ const AboutUs = () => {
   const sections = [
     {
       image:
-        'https://images.unsplash.com/photo-1719368472026-dc26f70a9b76?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.mission,
       title: 'Our Mission',
       description: 'Transforming food surplus into community support across Africa.',
     },
     {
       image:
-        'https://images.unsplash.com/photo-1649265825072-f7dd6942baed?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.vision,
       title: 'Our Vision',
       description: 'A hunger-free Africa where no food goes to waste.',
     },
     {
       image:
-        'https://images.unsplash.com/photo-1555212697-194d092e3b8f?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.community,
       title: 'Community First',
       description: 'Connecting vendors, consumers, and NGOs for maximum impact.',
     },
     {
       image:
-        'https://images.unsplash.com/photo-1729086046027-09979ade13fd?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.sustainability,
       title: 'Sustainability',
       description: 'Reducing food waste while fighting hunger and protecting our planet.',
     },
     {
       image:
-        'https://images.unsplash.com/photo-1601568494843-772eb04aca5d?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.innovation,
       title: 'Innovation',
       description: 'Real-time technology connecting surplus food with those who need it.',
     },
     {
       image:
-        'https://images.unsplash.com/photo-1585687501004-615dfdfde7f1?q=80&h=800&w=800&auto=format&fit=crop',
+        assets.impact,
       title: 'Our Impact',
       description: 'Building a circular food economy across African cities.',
     },

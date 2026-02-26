@@ -9,7 +9,7 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
   const navLinks = [
     { path: '#howItWorks', title: 'How It Works' },
     { path: '#testimonials', title: 'Testimonials' },
-    { path: '#advisors', title: 'Advisors' },
+    // { path: '#advisors', title: 'Advisors' },
     { path: '#Milestones', title: 'Milestones' },
     { path: '#AboutUs', title: 'About Us' },
   ];
