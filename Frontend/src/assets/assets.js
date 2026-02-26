@@ -32,6 +32,12 @@ import mastercard from './mastercard.png';
 import momo from './momo.png';
 import visa from './visa.png';
 import lost from './lost.svg';
+import mission from './mission.jpeg';
+import vision from './vision.jpeg';
+import community from './community.jpeg';
+import sustainability from './sustainability.jpeg';
+import innovation from './innovation.jpg';
+import impact from './impact.jpg';
 
 export const assets = {
   ChopNowLogo,
@@ -47,6 +53,12 @@ export const assets = {
   momo,
   visa,
   lost,
+  mission,
+  vision,
+  community,
+  sustainability,
+  innovation,
+  impact,
 };
 
 export const categories = [
