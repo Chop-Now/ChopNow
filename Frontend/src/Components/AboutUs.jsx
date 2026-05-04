@@ -8,38 +8,32 @@ const AboutUs = () => {
 
   const sections = [
     {
-      image:
-        assets.mission,
+      image: assets.mission,
       title: 'Our Mission',
       description: 'Transforming food surplus into community support across Africa.',
     },
     {
-      image:
-        assets.vision,
+      image: assets.vision,
       title: 'Our Vision',
       description: 'A hunger-free Africa where no food goes to waste.',
     },
     {
-      image:
-        assets.community,
+      image: assets.community,
       title: 'Community First',
       description: 'Connecting vendors, consumers, and NGOs for maximum impact.',
     },
     {
-      image:
-        assets.sustainability,
+      image: assets.sustainability,
       title: 'Sustainability',
       description: 'Reducing food waste while fighting hunger and protecting our planet.',
     },
     {
-      image:
-        assets.innovation,
+      image: assets.innovation,
       title: 'Innovation',
       description: 'Real-time technology connecting surplus food with those who need it.',
     },
     {
-      image:
-        assets.impact,
+      image: assets.impact,
       title: 'Our Impact',
       description: 'Building a circular food economy across African cities.',
     },
