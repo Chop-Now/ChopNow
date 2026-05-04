@@ -15,7 +15,7 @@ const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 const emitSafe = (room, event, data) => {
   try {
     socketManager.getIO().to(room).emit(event, data);
-  } catch (_err) {
+  } catch {
     // Socket.io not initialised (tests / CLI) — silently skip
   }
 };
@@ -274,8 +274,9 @@ const assignRider = async (req, res) => {
     let assignedRiderId;
     if (req.user.roles.includes('admin')) {
       // Admin assigns a specific rider
-      if (!riderId)
+      if (!riderId) {
         return res.status(400).json({ message: 'riderId is required for admin assignment' });
+      }
       assignedRiderId = riderId;
     } else if (req.user.roles.includes('rider')) {
       // Rider self-assigns

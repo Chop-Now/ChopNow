@@ -34,7 +34,7 @@ module.exports = {
         }
         socket.user = { id: decoded.id, role: user.activeRole, roles: user.roles };
         next();
-      } catch (err) {
+      } catch {
         return next(new Error('Authentication error: Invalid token'));
       }
     });
