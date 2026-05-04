@@ -1,0 +1,86 @@
+import 'package:dio/dio.dart';
+import '../utils/constants.dart';
+import '../services/auth_service.dart';
+import 'api_endpoints.dart';
+
+class ApiClient {
+  ApiClient._();
+  static Dio? _instance;
+
+  static Dio get instance {
+    _instance ??= _createDio();
+    return _instance!;
+  }
+
+  static Dio _createDio() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: AppConstants.apiBaseUrl,
+        connectTimeout: AppConstants.connectTimeout,
+        receiveTimeout: AppConstants.receiveTimeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // JWT interceptor
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await AuthService.getAccessToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          // 401 → try refresh token → retry
+          if (error.response?.statusCode == 401) {
+            try {
+              final refreshToken = await AuthService.getRefreshToken();
+              if (refreshToken != null) {
+                final refreshDio = Dio(
+                  BaseOptions(baseUrl: AppConstants.apiBaseUrl),
+                );
+                final response = await refreshDio.post(
+                  AppEndpoints.refreshToken,
+                  data: {'refreshToken': refreshToken},
+                );
+                final newToken = response.data['token'] as String?;
+                if (newToken != null) {
+                  await AuthService.saveAccessToken(newToken);
+                  // Retry original request with new token
+                  error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+                  final retryResponse = await dio.fetch(error.requestOptions);
+                  return handler.resolve(retryResponse);
+                }
+              }
+            } catch (_) {
+              // Refresh failed → clear auth and let error propagate
+              await AuthService.clearAll();
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+
+    return dio;
+  }
+}
+
+// Convenience typed wrapper for API calls
+class ApiResponse<T> {
+  final T? data;
+  final String? error;
+  final bool success;
+
+  const ApiResponse.success(this.data)
+    : error = null,
+      success = true;
+  const ApiResponse.failure(this.error)
+    : data = null,
+      success = false;
+}
