@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth_provider.dart';
+
+// Screen imports
+import '../../features/onboarding/splash_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
+import '../../features/auth/otp_screen.dart';
+import '../../features/auth/forgot_password_screen.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/listings/listing_detail_screen.dart';
+import '../../features/cart/cart_screen.dart';
+import '../../features/cart/checkout_screen.dart';
+import '../../features/orders/order_confirmation_screen.dart';
+import '../../features/orders/order_tracking_screen.dart';
+import '../../features/orders/order_history_screen.dart';
+import '../../features/orders/order_detail_screen.dart';
+import '../../features/orders/review_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
+import '../../features/profile/profile_screen.dart';
+import '../../features/profile/edit_profile_screen.dart';
+import '../../features/profile/addresses_screen.dart';
+import '../../features/impact/impact_dashboard_screen.dart';
+import '../../features/business/business_shell.dart';
+import '../../features/business/business_dashboard_screen.dart';
+import '../../features/business/my_listings_screen.dart';
+import '../../features/business/create_listing_camera_screen.dart';
+import '../../features/business/create_listing_details_screen.dart';
+import '../../features/business/business_orders_screen.dart';
+import '../../features/business/analytics_screen.dart';
+import '../../features/business/create_business_screen.dart';
+import '../../features/rider/rider_shell.dart';
+import '../../features/rider/rider_dashboard_screen.dart';
+import '../../features/rider/active_delivery_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
+import '../../features/home/browse_screen.dart';
+import '../../features/profile/settings_screen.dart';
+import '../../features/profile/favorites_screen.dart';
+import '../../features/listings/business_profile_screen.dart';
+import '../../shared/widgets/layout/consumer_shell.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authNotifier = ref.read(authProvider.notifier);
+
+  return GoRouter(
+    initialLocation: '/splash',
+    refreshListenable: GoRouterRefreshStream(ref.watch(authProvider.notifier).stream),
+    redirect: (context, state) async {
+      final auth = ref.read(authProvider);
+      final path = state.uri.path;
+
+      // Always allow splash and auth routes when loading/unauthenticated
+      if (auth is AuthInitial || auth is AuthLoading) {
+        return path == '/splash' ? null : '/splash';
+      }
+
+      if (auth is AuthUnauthenticated) {
+        final publicPaths = ['/splash', '/onboarding', '/auth/login', '/auth/register',
+          '/auth/otp', '/auth/forgot-password', '/auth/reset-password'];
+        if (publicPaths.any((p) => path.startsWith(p))) return null;
+        return '/auth/login';
+      }
+
+      if (auth is AuthAuthenticated) {
+        // Already on auth screen → redirect to home by role
+        if (path == '/splash' || path == '/onboarding' || path.startsWith('/auth')) {
+          return _homeForRole(auth.user.activeRole);
+        }
+
+        // Wrong role shell → redirect
+        if (path.startsWith('/business') && auth.user.activeRole != 'business_owner') {
+          return '/home';
+        }
+        if (path.startsWith('/rider') && auth.user.activeRole != 'rider') {
+          return '/home';
+        }
+      }
+      return null;
+    },
+    routes: [
+      // ── System ──
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+
+      // ── Auth ──
+      GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/auth/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/auth/otp',
+        builder: (_, state) {
+          final phone = state.uri.queryParameters['phone'] ?? '';
+          return OtpScreen(phone: phone);
+        },
+      ),
+      GoRoute(path: '/auth/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
+      GoRoute(path: '/auth/reset-password', builder: (_, __) => const ResetPasswordScreen()),
+
+      // ── Consumer Shell ──
+      ShellRoute(
+        builder: (context, state, child) => ConsumerShell(child: child),
+        routes: [
+          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+          GoRoute(
+            path: '/listings/:id',
+            builder: (_, state) => ListingDetailScreen(listingId: state.pathParameters['id']!),
+          ),
+          GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
+          GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
+          GoRoute(
+            path: '/orders/:id/confirmation',
+            builder: (_, state) => OrderConfirmationScreen(orderId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/orders/:id/tracking',
+            builder: (_, state) => OrderTrackingScreen(orderId: state.pathParameters['id']!),
+          ),
+          GoRoute(path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
+          GoRoute(
+            path: '/orders/:id',
+            builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/orders/:id/review',
+            builder: (_, state) => ReviewScreen(orderId: state.pathParameters['id']!),
+          ),
+          GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(path: '/browse', builder: (_, __) => const BrowseScreen()),
+          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
+          GoRoute(path: '/profile/addresses', builder: (_, __) => const AddressesScreen()),
+          GoRoute(path: '/profile/favorites', builder: (_, __) => const FavoritesScreen()),
+          GoRoute(path: '/profile/settings', builder: (_, __) => const SettingsScreen()),
+          GoRoute(path: '/impact', builder: (_, __) => const ImpactDashboardScreen()),
+          GoRoute(
+            path: '/business/:id/profile',
+            builder: (_, state) => BusinessProfileScreen(businessId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+
+      // ── Business Shell ──
+      ShellRoute(
+        builder: (context, state, child) => BusinessShell(child: child),
+        routes: [
+          GoRoute(path: '/business/dashboard', builder: (_, __) => const BusinessDashboardScreen()),
+          GoRoute(path: '/business/create', builder: (_, __) => const CreateBusinessScreen()),
+          GoRoute(path: '/business/listings', builder: (_, __) => const MyListingsScreen()),
+          GoRoute(path: '/business/listings/camera', builder: (_, __) => const CreateListingCameraScreen()),
+          GoRoute(path: '/business/listings/create', builder: (_, __) => const CreateListingDetailsScreen()),
+          GoRoute(path: '/business/orders', builder: (_, __) => const BusinessOrdersScreen()),
+          GoRoute(path: '/business/analytics', builder: (_, __) => const AnalyticsScreen()),
+        ],
+      ),
+
+      // ── Rider Shell ──
+      ShellRoute(
+        builder: (context, state, child) => RiderShell(child: child),
+        routes: [
+          GoRoute(path: '/rider/dashboard', builder: (_, __) => const RiderDashboardScreen()),
+          GoRoute(
+            path: '/rider/deliveries/:id',
+            builder: (_, state) => ActiveDeliveryScreen(orderId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+    ],
+  );
+});
+
+String _homeForRole(String role) {
+  return switch (role) {
+    'business_owner' => '/business/dashboard',
+    'rider' => '/rider/dashboard',
+    _ => '/home',
+  };
+}
+
+/// Adapter to make Riverpod stream compatible with GoRouter's refreshListenable
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    stream.listen((_) => notifyListeners());
+  }
+}

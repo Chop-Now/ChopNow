@@ -11,7 +11,19 @@ const logger = require('../utils/logger');
 const {
   sendOrderConfirmationEmail,
   sendOrderReadyForPickupEmail,
+  sendOrderOutForDeliveryEmail,
+  sendOrderCompletedEmail,
+  sendOrderCancelledEmail,
+  sendVendorOrderNotification,
+  sendVendorOrderCancelledEmail,
 } = require('../utils/emailService');
+
+// Impact constants (must match analyticsController.js)
+const IMPACT_FACTORS = {
+  CO2_PER_MEAL: 2.5, // kg CO2e saved per meal rescued
+  WATER_PER_MEAL: 1000, // litres of water saved per meal
+};
+const socketManager = require('../socket');
 
 /**
  * @desc    Create a new order
@@ -204,14 +216,35 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // EMAIL: Order confirmation is ESSENTIAL (serves as receipt)
+    // EMAIL: Order confirmation to customer (serves as receipt + pickup code)
     const customer = await User.findById(req.user._id);
     if (customer && customer.preferences?.notifications?.email) {
       sendOrderConfirmationEmail(customer.email, customerName, order).catch((err) =>
         logger.error({ err }, 'Failed to send order confirmation email')
       );
     }
-    // NOTE: Vendor gets in-app notification only (they check dashboard regularly)
+
+    // EMAIL: Vendor notification — they may not be watching the dashboard
+    if (businessForNotif && businessForNotif.owner) {
+      const vendorUser = await User.findById(businessForNotif.owner._id)
+        .select('email preferences')
+        .lean();
+      if (vendorUser && vendorUser.preferences?.notifications?.email !== false) {
+        sendVendorOrderNotification(vendorUser.email, businessForNotif.name, order).catch((err) =>
+          logger.error({ err }, 'Failed to send vendor order notification email')
+        );
+      }
+    }
+
+    // --- WebSockets: Emit new order to vendor ---
+    try {
+      const io = socketManager.getIO();
+      if (businessForNotif) {
+        io.to(`business_${businessForNotif._id.toString()}`).emit('new_order', order);
+      }
+    } catch (socketErr) {
+      logger.error({ err: socketErr }, 'Failed to emit socket new_order event');
+    }
 
     res.status(201).json(order);
   } catch (error) {
@@ -361,7 +394,7 @@ const updateOrderStatus = async (req, res) => {
         notificationMessage = `Your order #${order.orderNumber} is on its way to you`;
         notificationType = 'order_out_for_delivery';
         break;
-      case 'completed':
+      case 'completed': {
         notificationTitle = 'Order Completed';
         notificationMessage = `Thank you! Your order #${order.orderNumber} has been completed`;
         notificationType = 'order_completed';
@@ -370,7 +403,25 @@ const updateOrderStatus = async (req, res) => {
         await User.findByIdAndUpdate(order.customer, {
           $inc: { 'stats.totalSpent': order.pricing.total },
         });
+
+        // Update impact metrics on business — increment based on items quantity
+        const totalMealsCompleted = order.items.reduce(
+          (sum, item) => sum + (item.quantity || 1),
+          0
+        );
+        const co2Increment = totalMealsCompleted * IMPACT_FACTORS.CO2_PER_MEAL;
+        const waterIncrement = totalMealsCompleted * IMPACT_FACTORS.WATER_PER_MEAL;
+        await Business.findByIdAndUpdate(order.business._id || order.business, {
+          $inc: {
+            'stats.impact.mealsRescued': totalMealsCompleted,
+            'stats.impact.co2Saved': co2Increment,
+            'stats.impact.waterSaved': waterIncrement,
+            'metrics.mealsSaved': totalMealsCompleted,
+            'metrics.co2Saved': co2Increment,
+          },
+        });
         break;
+      }
     }
 
     if (notificationTitle) {
@@ -408,12 +459,33 @@ const updateOrderStatus = async (req, res) => {
           `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
 
         if (status === 'ready_for_pickup') {
-          // ESSENTIAL EMAIL: User needs to act NOW
+          // ESSENTIAL EMAIL: User needs to act NOW (food is ready, may spoil)
           sendOrderReadyForPickupEmail(customer.email, customerName, order).catch((err) =>
             logger.error({ err }, 'Failed to send pickup ready email')
           );
+        } else if (status === 'out_for_delivery') {
+          // ESSENTIAL EMAIL: Rider is on the way, customer should be home
+          sendOrderOutForDeliveryEmail(customer.email, customerName, order).catch((err) =>
+            logger.error({ err }, 'Failed to send out for delivery email')
+          );
+        } else if (status === 'completed') {
+          // NICE-TO-HAVE: Completion + review prompt
+          sendOrderCompletedEmail(customer.email, customerName, order).catch((err) =>
+            logger.error({ err }, 'Failed to send order completed email')
+          );
         }
       }
+    }
+
+    // --- WebSockets: Emit status update to customer and vendor ---
+    try {
+      const io = socketManager.getIO();
+      // Inform customer
+      io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
+      // Inform vendor
+      io.to(`business_${order.business._id.toString()}`).emit('order_status_updated', order);
+    } catch (socketErr) {
+      logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
     }
 
     res.json(order);
@@ -522,7 +594,22 @@ const cancelOrder = async (req, res) => {
         },
       });
     }
-    // NOTE: No email for cancellation - in-app notification is sufficient
+    // EMAIL: Cancellation emails to both customer and vendor
+    if (customer && customer.preferences?.notifications?.email !== false) {
+      sendOrderCancelledEmail(customer.email, customerName, order).catch((err) =>
+        logger.error({ err }, 'Failed to send order cancelled email to customer')
+      );
+    }
+    if (business && business.owner) {
+      const vendorOwner = await User.findById(business.owner._id)
+        .select('email preferences')
+        .lean();
+      if (vendorOwner && vendorOwner.preferences?.notifications?.email !== false) {
+        sendVendorOrderCancelledEmail(vendorOwner.email, business.name, order, customerName).catch(
+          (err) => logger.error({ err }, 'Failed to send order cancelled email to vendor')
+        );
+      }
+    }
 
     res.json({ message: 'Order cancelled successfully', order });
   } catch (error) {
@@ -564,6 +651,37 @@ const verifyPickupCode = async (req, res) => {
 
     order.pickupDetails.pickedUpAt = new Date();
     await order.updateStatus('completed');
+
+    // Impact metrics update on pickup completion
+    const totalMealsPickup = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const co2IncrementPickup = totalMealsPickup * IMPACT_FACTORS.CO2_PER_MEAL;
+    const waterIncrementPickup = totalMealsPickup * IMPACT_FACTORS.WATER_PER_MEAL;
+    Business.findByIdAndUpdate(order.business._id || order.business, {
+      $inc: {
+        'stats.impact.mealsRescued': totalMealsPickup,
+        'stats.impact.co2Saved': co2IncrementPickup,
+        'stats.impact.waterSaved': waterIncrementPickup,
+        'metrics.mealsSaved': totalMealsPickup,
+        'metrics.co2Saved': co2IncrementPickup,
+      },
+    }).catch((err) => logger.error({ err }, 'Failed to update impact metrics on pickup'));
+
+    // Email customer their completion summary + review prompt
+    const customer = await User.findById(order.customer)
+      .select('email firstName lastName preferences')
+      .lean();
+    if (customer && customer.preferences?.notifications?.email !== false) {
+      const customerName =
+        `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+      sendOrderCompletedEmail(customer.email, customerName, order).catch((err) =>
+        logger.error({ err }, 'Failed to send order completed email on pickup verify')
+      );
+    }
+
+    // Update user total spent stats
+    await User.findByIdAndUpdate(order.customer, {
+      $inc: { 'stats.totalSpent': order.pricing.total },
+    });
 
     res.json({ message: 'Pickup verified successfully', order });
   } catch (error) {

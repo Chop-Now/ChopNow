@@ -7,6 +7,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const pinoHttp = require('pino-http');
+const { createServer } = require('http');
+const socketManager = require('./socket');
 
 // Import routes
 const swaggerUi = require('swagger-ui-express');
@@ -24,6 +26,7 @@ const disputeRoutes = require('./routes/disputeRoutes');
 const payoutRoutes = require('./routes/payoutRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const deliveryRoutes = require('./routes/deliveryRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -275,6 +278,7 @@ app.use('/api/v1/disputes', disputeRoutes);
 app.use('/api/v1/payouts', payoutRoutes);
 app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/deliveries', deliveryRoutes);
 
 // Backward compatibility: redirect /api/* to /api/v1/*
 app.use('/api/users', userRoutes);
@@ -289,6 +293,7 @@ app.use('/api/disputes', disputeRoutes);
 app.use('/api/payouts', payoutRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/deliveries', deliveryRoutes);
 
 // Database connection and server start
 const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');
@@ -426,7 +431,12 @@ const startServer = async () => {
     startExpiryJob();
 
     const port = process.env.PORT || 5000;
-    const server = app.listen(port, () => {
+    const httpServer = createServer(app);
+
+    // Initialize Socket.io
+    socketManager.init(httpServer, allowedOrigins);
+
+    const server = httpServer.listen(port, () => {
       logger.info(
         { port, env: process.env.NODE_ENV || 'development' },
         `Server running on port ${port}`
