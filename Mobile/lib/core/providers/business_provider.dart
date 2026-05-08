@@ -99,13 +99,45 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
 
   Future<List<String>> uploadPhotos(String businessId, List<String> filePaths) async {
     try {
-      final files = await Future.wait(filePaths.asMap().entries.map((e) async {
-        return MapEntry('photos', await MultipartFile.fromFile(e.value, filename: 'photo_${e.key}.jpg'));
-      }));
-      final formData = FormData.fromMap(Map.fromEntries(files));
+      final formData = FormData();
+      for (int i = 0; i < filePaths.length; i++) {
+        formData.files.add(MapEntry(
+          'photos',
+          await MultipartFile.fromFile(filePaths[i], filename: 'photo_$i.jpg'),
+        ));
+      }
       final res = await ApiClient.instance.post(
           AppEndpoints.businessPhotos(businessId), data: formData);
       return (res.data['photos'] as List?)?.map((p) => p.toString()).toList() ?? [];
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<String> uploadCover(String businessId, String filePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'cover': await MultipartFile.fromFile(filePath, filename: 'cover.jpg'),
+      });
+      final res = await ApiClient.instance.post(
+          AppEndpoints.businessCover(businessId), data: formData);
+      return res.data['coverImage']?.toString() ?? '';
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<void> uploadKycDocuments(String businessId, List<String> filePaths) async {
+    try {
+      final formData = FormData();
+      for (int i = 0; i < filePaths.length; i++) {
+        formData.files.add(MapEntry(
+          'documents',
+          await MultipartFile.fromFile(filePaths[i], filename: 'kyc_doc_$i.jpg'),
+        ));
+      }
+      await ApiClient.instance.post(
+          AppEndpoints.businessKyc(businessId), data: formData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -115,4 +147,67 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
 final businessNotifierProvider =
     StateNotifierProvider<BusinessNotifier, AsyncValue<Business?>>(
   (ref) => BusinessNotifier(),
+);
+
+// ── Listing Notifier (create/update listings) ─────────────────────────────────
+class ListingNotifier extends StateNotifier<AsyncValue<void>> {
+  ListingNotifier() : super(const AsyncValue.data(null));
+
+  Future<Map<String, dynamic>> createListing(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final res = await ApiClient.instance.post(AppEndpoints.listings, data: data);
+      final raw = res.data;
+      final json = raw is Map<String, dynamic>
+          ? (raw['listing'] ?? raw['data'] ?? raw) as Map<String, dynamic>
+          : raw as Map<String, dynamic>;
+      state = const AsyncValue.data(null);
+      return json;
+    } on DioException catch (e) {
+      final err = ApiException.fromDioError(e);
+      state = AsyncValue.error(err, StackTrace.current);
+      throw err;
+    }
+  }
+
+  Future<List<String>> uploadListingPhotos(String listingId, List<String> filePaths) async {
+    try {
+      final formData = FormData();
+      for (int i = 0; i < filePaths.length; i++) {
+        formData.files.add(MapEntry(
+          'photos',
+          await MultipartFile.fromFile(filePaths[i], filename: 'listing_$i.jpg'),
+        ));
+      }
+      final res = await ApiClient.instance.post(
+          AppEndpoints.listingPhotos(listingId), data: formData);
+      return (res.data['photos'] as List?)?.map((p) => p.toString()).toList() ?? [];
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+}
+
+final listingNotifierProvider =
+    StateNotifierProvider<ListingNotifier, AsyncValue<void>>(
+  (ref) => ListingNotifier(),
+);
+
+// ── Business listings provider ────────────────────────────────────────────────
+final businessListingsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
+  (ref, businessId) async {
+    final res = await ApiClient.instance.get(AppEndpoints.listingsByBusiness(businessId));
+    final data = res.data;
+    final List items;
+    if (data is List) {
+      items = data;
+    } else if (data is Map && data['listings'] != null) {
+      items = data['listings'] as List;
+    } else if (data is Map && data['data'] != null) {
+      items = data['data'] as List;
+    } else {
+      items = [];
+    }
+    return items.cast<Map<String, dynamic>>();
+  },
 );

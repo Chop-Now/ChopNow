@@ -28,17 +28,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthInitial()) { _checkExistingAuth(); }
 
   Future<void> _checkExistingAuth() async {
-    if (!await AuthService.hasToken()) { state = const AuthUnauthenticated(); return; }
     try {
-      final response = await ApiClient.instance.get(AppEndpoints.profile);
+      // 1. Quick check for token
+      final hasToken = await AuthService.hasToken().timeout(const Duration(seconds: 2));
+      if (!hasToken) {
+        state = const AuthUnauthenticated();
+        return;
+      }
+
+      // 2. Fetch profile with 3-second timeout
+      final response = await ApiClient.instance.get(AppEndpoints.profile)
+          .timeout(const Duration(seconds: 3));
+      
       final user = AppUser.fromJson(_extractUser(response.data));
       final token = await AuthService.getAccessToken();
       state = AuthAuthenticated(user: user, token: token!);
       SocketService().connect(token);
     } catch (_) {
-      await AuthService.clearAll();
-      SocketService().disconnect();
-      state = const AuthUnauthenticated();
+      // Fallback for timeout or error
+      if (state is AuthInitial) {
+        state = const AuthUnauthenticated();
+      }
     }
   }
 
