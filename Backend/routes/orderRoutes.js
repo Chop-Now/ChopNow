@@ -11,6 +11,7 @@ const {
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateCreateOrder, validateUpdateOrderStatus } = require('../middleware/validation');
+const idempotency = require('../middleware/idempotency');
 
 // Protected routes
 
@@ -40,7 +41,7 @@ const { validateCreateOrder, validateUpdateOrderStatus } = require('../middlewar
  *       201:
  *         description: Order created
  */
-router.post('/', protect, validateCreateOrder, createOrder);
+router.post('/', protect, idempotency(), validateCreateOrder, createOrder);
 /**
  * @swagger
  * /orders:
