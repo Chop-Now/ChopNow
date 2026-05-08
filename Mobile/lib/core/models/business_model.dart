@@ -80,7 +80,7 @@ class Business {
       reviewCount: ratingJson != null
           ? (ratingJson['count'] as num?)?.toInt()
           : (json['reviewCount'] as num?)?.toInt(),
-      owner: json['owner'] as Map<String, dynamic>?,
+      owner: json['owner'] is Map<String, dynamic> ? json['owner'] as Map<String, dynamic> : null,
       verification: BusinessVerification.fromJson(verif),
       deliverySettings: BusinessDeliverySettings.fromJson(delivery),
       stats: BusinessStats.fromJson(statsJson),
