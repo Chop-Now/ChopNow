@@ -181,8 +181,10 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
         'type': _selectedType,
         'description': _descCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
-        if (_phoneCtrl.text.isNotEmpty) 'phone': _phoneCtrl.text.trim(),
-        if (_emailCtrl.text.isNotEmpty) 'email': _emailCtrl.text.trim(),
+        'contact': {
+          if (_phoneCtrl.text.isNotEmpty) 'phone': _phoneCtrl.text.trim(),
+          if (_emailCtrl.text.isNotEmpty) 'email': _emailCtrl.text.trim(),
+        },
       });
 
       // Upload logo if selected
