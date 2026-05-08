@@ -13,6 +13,9 @@ export default {
         'text-primary': tokens.colors.text.primary,
         'text-secondary': tokens.colors.text.secondary,
       },
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'sans-serif'],
+      },
       spacing: {
         xs: `${tokens.spacing.xs}px`,
         sm: `${tokens.spacing.sm}px`,
