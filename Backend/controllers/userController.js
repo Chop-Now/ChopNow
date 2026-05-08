@@ -17,10 +17,10 @@ const axios = require('axios');
 
 const _client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Generate JWT Access Token (short-lived)
+// Generate JWT Access Token (short-lived or per env)
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '1h',
+    expiresIn: process.env.JWT_EXPIRE || '30d',
   });
 };
 
