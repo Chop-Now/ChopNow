@@ -80,21 +80,16 @@ const validateCreateBusiness = [
     .isIn(['farmer', 'restaurant', 'bakery', 'supermarket', 'grocery', 'cafe', 'other'])
     .withMessage('Invalid business type'),
   body('contact.email')
+    .optional({ checkFalsy: true })
     .isEmail()
     .withMessage('Please provide a valid contact email')
     .normalizeEmail(),
   body('contact.phone')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty()
-    .withMessage('Contact phone is required')
     .matches(/^\+?[1-9]\d{1,14}$/)
     .withMessage('Please provide a valid phone number'),
-  body('address.street').trim().notEmpty().withMessage('Street address is required'),
-  body('address.city').trim().notEmpty().withMessage('City is required'),
-  body('address.location.coordinates')
-    .isArray({ min: 2, max: 2 })
-    .withMessage('Location coordinates must be an array of [longitude, latitude]'),
-  body('address.location.coordinates.*').isFloat().withMessage('Coordinates must be valid numbers'),
+  body('address').notEmpty().withMessage('Address is required'),
   handleValidationErrors,
 ];
 
