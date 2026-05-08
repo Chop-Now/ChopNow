@@ -119,7 +119,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                         color: active ? AppColors.primary : AppColors.surface,
                         borderRadius: BorderRadius.circular(100),
                         border: Border.all(color: active ? AppColors.primary : AppColors.border),
-                        boxShadow: active ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 6)] : null,
+                        boxShadow: active ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 6)] : null,
                       ),
                       child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textSecondary)),
                     ),

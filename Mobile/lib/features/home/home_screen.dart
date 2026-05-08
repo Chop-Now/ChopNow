@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
@@ -40,7 +41,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
 
-  static const _categories = ['All', '🍔 Food', '🛒 Grocery', '🥗 Salads', '🥐 Bakery', '🍱 Asian', '🥩 Meat'];
+  static const _categories = [
+    {'name': 'All', 'icon': '🥘'},
+    {'name': 'Food', 'icon': '🍔'},
+    {'name': 'Grocery', 'icon': '🛒'},
+    {'name': 'Salads', 'icon': '🥗'},
+    {'name': 'Bakery', 'icon': '🥐'},
+    {'name': 'Asian', 'icon': '🍱'},
+    {'name': 'Meat', 'icon': '🥩'},
+  ];
 
   @override
   void dispose() {
@@ -60,148 +69,170 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
-              // ── Premium Vibe Header (Web Parity) ──
+              // ── Modern Animated Header ──
               SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 380, // Taller header to fit blobs
+                child: Container(
+                  height: 380,
                   child: Stack(
                     children: [
-                      // Organic Blob 1: Primary Green
+                      // Animated Background Blobs
                       Positioned(
-                        top: -50,
-                        right: -80,
-                        child: Container(
-                          width: 300,
-                          height: 300,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 100,
-                                spreadRadius: 50,
-                              ),
-                            ],
+                        top: -60,
+                        right: -100,
+                        child: FadeInDown(
+                          duration: const Duration(seconds: 3),
+                          child: Container(
+                            width: 320,
+                            height: 320,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary.withOpacity(0.12),
+                            ),
                           ),
                         ),
                       ),
-                      // Organic Blob 2: Orange Accent
                       Positioned(
-                        top: 150,
-                        left: -100,
-                        child: Container(
-                          width: 250,
-                          height: 250,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.accent.withValues(alpha: 0.10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.15),
-                                blurRadius: 80,
-                                spreadRadius: 40,
-                              ),
-                            ],
+                        top: 140,
+                        left: -80,
+                        child: FadeInLeft(
+                          duration: const Duration(seconds: 3),
+                          child: Container(
+                            width: 240,
+                            height: 240,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.accent.withOpacity(0.08),
+                            ),
                           ),
                         ),
                       ),
                       
-                      // Foreground Content
                       SafeArea(
-                        bottom: false,
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Top row: greeting + notification bell
                               Row(
                                 children: [
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          _greeting(),
-                                          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                        FadeInLeft(
+                                          child: Text(
+                                            _greeting(),
+                                            style: TextStyle(
+                                              fontSize: 14, 
+                                              color: AppColors.textSecondary.withOpacity(0.6), 
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
                                         ),
-                                        Text(
-                                          user != null ? '${user.firstName} 👋' : 'Food Rescuer 👋',
-                                          style: const TextStyle(
-                                            fontSize: 28, // Bigger
-                                            fontWeight: FontWeight.w900, // Heavier
-                                            color: AppColors.textPrimary,
-                                            letterSpacing: -0.5,
+                                        FadeInLeft(
+                                          delay: const Duration(milliseconds: 200),
+                                          child: Text(
+                                            user != null ? '${user.firstName} 👋' : 'Food Rescuer 👋',
+                                            style: const TextStyle(
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.textPrimary,
+                                              letterSpacing: -1,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  ScaleTap(
-                                    onTap: () => context.push('/notifications'),
-                                    child: Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: AppColors.border, width: 1.5),
-                                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
-                                      ),
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          const Icon(Icons.notifications_rounded, size: 22, color: AppColors.textPrimary),
-                                          Positioned(
-                                            top: 10, right: 10,
-                                            child: Container(
-                                              width: 10, height: 10,
-                                              decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle, border: Border.all(color: AppColors.surface, width: 2)),
+                                  FadeInRight(
+                                    child: ScaleTap(
+                                      onTap: () => context.push('/notifications'),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.8),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.05),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
+                                        child: const Badge(
+                                          label: Text('3'),
+                                          child: Icon(Icons.notifications_outlined, size: 24, color: AppColors.textPrimary),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 32),
         
-                              // Search bar
-                              CnSearchBar(
-                                hint: 'Search deals near you…',
-                                onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
-                                onFilterTap: () {},
+                              FadeInDown(
+                                delay: const Duration(milliseconds: 400),
+                                child: CnSearchBar(
+                                  hint: 'Search delicious deals...',
+                                  onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
+                                  onFilterTap: () {},
+                                ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 32),
         
-                              // Impact strip
-                              ScaleTap(
-                                onTap: () => context.go('/impact'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
-                                      const SizedBox(width: 16),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('You\'ve rescued 12 meals', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-                                            SizedBox(height: 2),
-                                            Text('Saving 8.4 kg CO₂ — keep going!', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                                          ],
+                              // Impact Strip (Glassmorphic)
+                              FadeInUp(
+                                delay: const Duration(milliseconds: 600),
+                                child: ScaleTap(
+                                  onTap: () => context.go('/impact'),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.primaryGradient,
+                                      borderRadius: BorderRadius.circular(28),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primary.withOpacity(0.3),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 10),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: const Text('🌍', style: TextStyle(fontSize: 28)),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        const Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Rescue impact summary', 
+                                                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                '12 meals rescued • 8.4kg CO₂ saved', 
+                                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 16),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -214,73 +245,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
 
-              // ── Category filter chips ──
+              // ── Category Selector ──
               SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 38,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final cat = _categories[i];
-                      final active = cat == selectedCat;
-                      return ScaleTap(
-                        onTap: () => ref.read(selectedCategoryProvider.notifier).state = cat,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: active ? AppColors.primary : AppColors.surface,
-                            borderRadius: BorderRadius.circular(100),
-                            border: Border.all(color: active ? AppColors.primary : AppColors.border),
-                            boxShadow: active ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 2))] : null,
-                          ),
-                          child: Text(
-                            cat,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: active ? Colors.white : AppColors.textSecondary,
+                child: FadeInUp(
+                  delay: const Duration(milliseconds: 800),
+                  child: Container(
+                    height: 50,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) {
+                        final cat = _categories[i];
+                        final name = cat['name']!;
+                        final icon = cat['icon']!;
+                        final active = name == selectedCat;
+                        return ScaleTap(
+                          onTap: () => ref.read(selectedCategoryProvider.notifier).state = name,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: active ? AppColors.primary : AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: active ? AppColors.primary : AppColors.border.withOpacity(0.5),
+                                width: 1.5,
+                              ),
+                              boxShadow: active ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ] : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(icon, style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  name,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                                    color: active ? Colors.white : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-              // ── Flash Deals header ──
+              // ── Section Header ──
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      const Text('⚡ Flash Deals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                      const Spacer(),
-                      ScaleTap(
-                        onTap: () {},
-                        child: const Text('See all', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
-                      ),
-                    ],
+                child: FadeInUp(
+                  delay: const Duration(milliseconds: 900),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '⚡ Flash Deals Nearby', 
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.5),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('View all', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── Listings grid ──
+              // ── Listings Grid with Staggered Animations ──
               listingsAsync.when(
                 loading: () => SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverGrid.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.78,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.72,
                     ),
                     itemCount: 6,
                     itemBuilder: (_, __) => const ListingCardSkeleton(),
@@ -288,32 +345,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 error: (e, _) => SliverFillRemaining(
                   child: CnErrorState(
-                    message: e.toString(),
+                    message: 'Couldn\'t load deals. Tap to retry.',
                     onRetry: () => ref.refresh(listingsProvider),
                   ),
                 ),
                 data: (listings) => listings.isEmpty
                     ? const SliverFillRemaining(
                         child: CnEmptyState(
-                          title: 'No deals near you yet',
-                          subtitle: 'We\'re expanding across Africa — check back soon!',
-                          icon: Icons.fastfood_outlined,
+                          title: 'Nothing here yet',
+                          subtitle: 'New deals arrive every hour. Check back soon!',
+                          icon: Icons.search_off_rounded,
                         ),
                       )
                     : SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                         sliver: SliverGrid.builder(
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.78,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.72,
                           ),
                           itemCount: listings.length,
-                          itemBuilder: (_, i) => ListingCard(
-                            listing: listings[i],
-                            onTap: () => context.push('/listings/${listings[i]['_id']}'),
-                            onAddToCart: () {},
+                          itemBuilder: (_, i) => FadeInUp(
+                            delay: Duration(milliseconds: 100 * (i % 6)),
+                            child: ListingCard(
+                              listing: listings[i],
+                              onTap: () => context.push('/listings/${listings[i]['_id']}'),
+                              onAddToCart: () {
+                                HapticFeedback.lightImpact();
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -326,8 +388,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _greeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning,';
-    if (hour < 17) return 'Good afternoon,';
-    return 'Good evening,';
+    if (hour < 12) return 'GOOD MORNING';
+    if (hour < 17) return 'GOOD AFTERNOON';
+    return 'GOOD EVENING';
   }
 }
