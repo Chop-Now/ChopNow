@@ -67,7 +67,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))],
+                    boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6))],
                   ),
                   child: Column(children: [
                     Text(_statusEmoji(status), style: const TextStyle(fontSize: 48)),
@@ -106,7 +106,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.successSurface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                      border: Border.all(color: AppColors.success.withOpacity(0.3)),
                     ),
                     child: Column(children: [
                       const Text('Your Pickup Code', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.success)),
