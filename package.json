@@ -7,7 +7,9 @@
     "lint": "cd Backend && npm run lint && cd ../Frontend && npx eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "sync:tokens": "node scripts/sync-tokens.js",
+    "sync:api": "cd Backend && npm run swagger:export"
   },
   "devDependencies": {
     "husky": "^9.0.0",
