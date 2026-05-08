@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/constants.dart';
@@ -18,6 +20,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
   late final Animation<double> _fade;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -34,32 +37,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
     _ctrl.forward();
 
-    // Wait for auth check after animation
-    Future.delayed(const Duration(milliseconds: 1800), _navigate);
+    // Safety fallback: force navigate after 3 seconds no matter what
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!_navigated && mounted) {
+        debugPrint('[SplashScreen] Safety timeout triggered — forcing navigation');
+        _doNavigate(const AuthUnauthenticated());
+      }
+    });
   }
 
-  Future<void> _navigate() async {
-    if (!mounted) return;
-    final auth = ref.read(authProvider);
+  void _doNavigate(AuthState auth) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
 
-    // Check if onboarding has been seen
-    const storage = FlutterSecureStorage();
-    final onboardingDone = await storage.read(key: AppConstants.onboardingCompletedKey);
-
+    String destination;
     if (auth is AuthAuthenticated) {
       final role = auth.activeRole;
-      if (role == 'business_owner') {
-        context.go('/business/dashboard');
-      } else if (role == 'rider') {
-        context.go('/rider/dashboard');
-      } else {
-        context.go('/home');
-      }
-    } else if (onboardingDone != 'true') {
-      context.go('/onboarding');
+      destination = role == 'business_owner'
+          ? '/business/dashboard'
+          : (role == 'rider' ? '/rider/dashboard' : '/home');
     } else {
-      context.go('/auth/login');
+      // Check onboarding status from localStorage (web only, instant)
+      String? onboardingDone;
+      if (kIsWeb) {
+        onboardingDone = html.window.localStorage[AppConstants.onboardingCompletedKey];
+      }
+      destination = (onboardingDone == 'true') ? '/auth/login' : '/onboarding';
     }
+
+    debugPrint('[SplashScreen] Navigating to: $destination');
+    context.go(destination);
   }
 
   @override
@@ -70,10 +77,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    debugPrint('[SplashScreen] build() called, authState = ${authState.runtimeType}');
+
+    // Schedule navigation after this frame if auth is resolved
+    if (authState is! AuthInitial && authState is! AuthLoading && !_navigated) {
+      Future.microtask(() => _doNavigate(authState));
+    }
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient, // A deep, stunning Premium green background
+          gradient: AppColors.heroGradient,
         ),
         child: Center(
           child: AnimatedBuilder(
@@ -85,7 +100,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ChopNow logo circle
                 Container(
                   width: 100,
                   height: 100,
@@ -94,7 +108,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -127,7 +141,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   'Rescue food. Save money. Sustain tomorrow.',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withOpacity(0.8),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
