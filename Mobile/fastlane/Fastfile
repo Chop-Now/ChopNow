@@ -1,0 +1,30 @@
+# This file contains the fastlane configuration for the ChopNow mobile app.
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    increment_build_number(xcodeproj: "ios/Runner.xcodeproj")
+    build_app(workspace: "ios/Runner.xcworkspace", scheme: "Runner")
+    upload_to_testflight
+  end
+
+  desc "Push a new release build to the App Store"
+  lane :release do
+    capture_screenshots
+    build_app(workspace: "ios/Runner.xcworkspace", scheme: "Runner")
+    upload_to_app_store(submit_for_review: true)
+  end
+end
+
+platform :android do
+  desc "Submit a new Beta Build to Google Play Internal Track"
+  lane :beta do
+    upload_to_play_store(track: 'internal', apk: 'build/app/outputs/flutter-apk/app-release.apk')
+  end
+
+  desc "Deploy a new version to the Google Play Store"
+  lane :deploy do
+    gradle(task: "bundle", build_type: "Release")
+    upload_to_play_store(track: 'production')
+  end
+end
