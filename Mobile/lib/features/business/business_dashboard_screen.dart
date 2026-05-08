@@ -86,7 +86,7 @@ class _BusinessCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +110,7 @@ class _BusinessCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
                       width: 52, height: 52,
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       child: business.logo != null
                           ? Image.network(business.logo!, fit: BoxFit.cover)
                           : const Center(child: Text('🏪', style: TextStyle(fontSize: 24))),
@@ -148,7 +148,26 @@ class _BusinessCard extends StatelessWidget {
                       Expanded(child: Text('Awaiting admin approval (24-48 hrs)', style: TextStyle(fontSize: 12, color: AppColors.warning))),
                     ]),
                   )
-                else if (business.isApproved) ...[
+                else if (business.needsKyc) ...[
+                  // Needs KYC — show upload button
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
+                    child: const Row(children: [
+                      Icon(Icons.upload_file_outlined, size: 16, color: AppColors.error),
+                      SizedBox(width: 6),
+                      Expanded(child: Text('Upload KYC documents to get verified', style: TextStyle(fontSize: 12, color: AppColors.error))),
+                    ]),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Expanded(child: _ActionBtn(icon: Icons.upload_file_rounded, label: 'Upload KYC',
+                        onTap: () => context.push('/business/${business.id}/kyc'))),
+                    const SizedBox(width: 10),
+                    Expanded(child: _ActionBtn(icon: Icons.edit_outlined, label: 'Edit Profile',
+                        onTap: () => context.push('/business/${business.id}/edit'))),
+                  ]),
+                ] else if (business.isApproved) ...[
                   Row(children: [
                     Expanded(child: _ActionBtn(icon: Icons.list_alt_rounded, label: 'Listings',
                         onTap: () => context.push('/business/listings'))),
@@ -158,11 +177,19 @@ class _BusinessCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: 10),
                   Row(children: [
+                    Expanded(child: _ActionBtn(icon: Icons.add_circle_outline_rounded, label: 'Add Listing',
+                        onTap: () => context.push('/business/listings/create'))),
+                    const SizedBox(width: 10),
+                    Expanded(child: _ActionBtn(icon: Icons.edit_outlined, label: 'Edit Profile',
+                        onTap: () => context.push('/business/${business.id}/edit'))),
+                  ]),
+                  const SizedBox(height: 10),
+                  Row(children: [
                     Expanded(child: _ActionBtn(icon: Icons.analytics_outlined, label: 'Analytics',
                         onTap: () => context.push('/business/analytics'))),
                     const SizedBox(width: 10),
-                    Expanded(child: _ActionBtn(icon: Icons.add_circle_outline_rounded, label: 'Add Listing',
-                        onTap: () => context.push('/business/listings/create'))),
+                    Expanded(child: _ActionBtn(icon: Icons.verified_outlined, label: 'KYC Status',
+                        onTap: () => context.push('/business/${business.id}/kyc'))),
                   ]),
                 ],
               ],
@@ -194,7 +221,7 @@ class _StatusChip extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(100)),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(100)),
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
@@ -215,7 +242,7 @@ class _ActionBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primarySurface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         ),
         child: Column(children: [
           Icon(icon, color: AppColors.primary, size: 20),
