@@ -48,7 +48,7 @@ class CnPrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: disabled ? null : [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.35),
+                color: AppColors.primary.withOpacity(0.35),
                 blurRadius: 18,
                 spreadRadius: -4,
                 offset: const Offset(0, 8),
@@ -174,7 +174,7 @@ class CnGoogleButton extends StatelessWidget {
           border: Border.all(color: AppColors.border, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: Colors.black.withOpacity(0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
