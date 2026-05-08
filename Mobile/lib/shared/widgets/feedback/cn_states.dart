@@ -22,7 +22,7 @@ class CnEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -65,7 +65,7 @@ class CnEmptyState extends StatelessWidget {
                     borderRadius: BorderRadius.circular(100),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.25),
+                        color: AppColors.primary.withOpacity(0.25),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -207,7 +207,7 @@ class CnStatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bgColor ?? color.withValues(alpha: 0.12),
+        color: bgColor ?? color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
