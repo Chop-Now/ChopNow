@@ -152,7 +152,14 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      // In production, block requests with no origin (except health checks handled before CORS)
+      // In development, allow all localhost origins and requests with no origin (mobile)
+      if (!isProduction) {
+        if (!origin || origin.startsWith('http://localhost:')) {
+          return callback(null, true);
+        }
+      }
+
+      // In production, block requests with no origin
       if (!origin) {
         if (isProduction) {
           return callback(new Error('Not allowed by CORS'));
@@ -218,6 +225,37 @@ app.get('/.well-known/security.txt', (req, res) => {
         `Canonical: https://api.chopnow.app/.well-known/security.txt\n` +
         `Policy: https://chopnow.app/security-policy\n`
     );
+});
+
+// iOS App Site Association
+app.get('/.well-known/apple-app-site-association', (req, res) => {
+  res.json({
+    applinks: {
+      apps: [],
+      details: [
+        {
+          appID: 'TEAMID.com.chopnow.app', // Replace TEAMID with actual Apple Team ID
+          paths: ['/listings/*', '/orders/*', '/profile/*'],
+        },
+      ],
+    },
+  });
+});
+
+// Android Asset Links
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  res.json([
+    {
+      relation: ['delegate_permission/common.handle_all_urls'],
+      target: {
+        namespace: 'android_app',
+        package_name: 'com.chopnow.app',
+        sha256_cert_fingerprints: [
+          '00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00', // Replace with actual fingerprint
+        ],
+      },
+    },
+  ]);
 });
 
 // --- Health checks ---
