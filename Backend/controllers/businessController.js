@@ -27,24 +27,17 @@ const createBusiness = async (req, res) => {
       ? { type: 'Point', coordinates: address.location.coordinates }
       : undefined;
 
-    // Determine if business type requires verification documents
-    // Restaurants and cafes need health/food preparation certificates
-    // Farmers, supermarkets, and bakeries can sell without document verification
-    const requiresVerification = ['restaurant', 'cafe'].includes(type);
+    // NOTE: Auto-verification enabled for all types to bypass KYC step completely
+    const requiresVerification = false;
 
     // Set initial verification and status based on business type
-    const verificationData = requiresVerification
-      ? {
-          status: 'unverified',
-          documents: [],
-        }
-      : {
-          status: 'verified',
-          verifiedAt: new Date(),
-          notes: 'Auto-verified - business type does not require document verification',
-        };
+    const verificationData = {
+      status: 'verified',
+      verifiedAt: new Date(),
+      notes: 'Auto-verified - KYC bypassed by default',
+    };
 
-    const businessStatus = requiresVerification ? 'inactive' : 'active';
+    const businessStatus = 'active';
 
     const business = await Business.create({
       name,
