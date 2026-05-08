@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -8,9 +9,6 @@ import '../../animations/scale_tap.dart';
 
 enum CardVariant { grid, list }
 
-/// ListingCard — core card matching the web's ProductCard
-/// Shows: livephoto, business name, discount badge, selling-fast badge,
-/// price, countdown timer, distance, and add-to-cart button.
 class ListingCard extends StatelessWidget {
   final Map<String, dynamic> listing;
   final CardVariant variant;
@@ -37,22 +35,27 @@ class ListingCard extends StatelessWidget {
     final distance = listing['distance'];
     final img = (listing['photos'] as List?)?.firstOrNull ?? listing['image']?[0];
 
-    return ScaleTap(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return FadeInUp(
+      duration: const Duration(milliseconds: 400),
+      child: ScaleTap(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: variant == CardVariant.grid 
+            ? _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) 
+            : _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance),
         ),
-        child: variant == CardVariant.grid ? _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) : _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance),
       ),
     );
   }
@@ -62,13 +65,14 @@ class ListingCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Image with badges
-        ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          child: Stack(
-            children: [
-              AspectRatio(
-                aspectRatio: 1.4,
-                child: img != null
+        Expanded(
+          flex: 5,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                img != null
                     ? CachedNetworkImage(
                         imageUrl: img,
                         fit: BoxFit.cover,
@@ -76,102 +80,175 @@ class ListingCard extends StatelessWidget {
                         errorWidget: (_, __, ___) => _placeholder(),
                       )
                     : _placeholder(),
-              ),
-              if (discount > 0)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _DiscountBadge(discount: discount),
+                // Gradient Overlay
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.05),
+                          Colors.black.withOpacity(0.3),
+                        ],
+                        stops: const [0.6, 0.8, 1.0],
+                      ),
+                    ),
+                  ),
                 ),
-            ],
+                if (discount > 0)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: _GlassBadge(
+                      child: Text(
+                        '-$discount%',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (distance != null)
+                  Positioned(
+                    bottom: 12,
+                    left: 12,
+                    child: _GlassBadge(
+                      blur: 4,
+                      opacity: 0.6,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on_rounded, size: 12, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${distance}km',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         // Body
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Text(
-                    business,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                  if (distance != null) ...[
-                    const Text(' • ', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+        Expanded(
+          flex: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      '${distance}km',
-                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      business,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
-                ],
-              ),
-              if (isLowStock) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '⚠ Only $qty left',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent),
                 ),
-              ],
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'RWF ${offerPrice.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      if (price > offerPrice)
+                if (isLowStock)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.bolt_rounded, size: 12, color: AppColors.error),
+                        const SizedBox(width: 4),
                         Text(
-                          'RWF ${price.toStringAsFixed(0)}',
+                          '$qty left',
                           style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            decoration: TextDecoration.lineThrough,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.error,
                           ),
                         ),
-                    ],
-                  ),
-                  const Spacer(),
-                  ScaleTap(
-                    onTap: onAddToCart,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Add',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RWF ${offerPrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          if (price > offerPrice)
+                            Text(
+                              'RWF ${price.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary.withOpacity(0.5),
+                                decoration: TextDecoration.lineThrough,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    ScaleTap(
+                      onTap: onAddToCart,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -179,51 +256,102 @@ class ListingCard extends StatelessWidget {
   }
 
   Widget _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-          child: SizedBox(
-            width: 90,
-            height: 90,
-            child: img != null
-                ? CachedNetworkImage(
-                    imageUrl: img,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => _shimmerBox(),
-                    errorWidget: (_, __, ___) => _placeholder(),
-                  )
-                : _placeholder(),
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              width: 100,
+              height: 100,
+              child: img != null
+                  ? CachedNetworkImage(
+                      imageUrl: img,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => _shimmerBox(),
+                      errorWidget: (_, __, ___) => _placeholder(),
+                    )
+                  : _placeholder(),
+            ),
           ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(children: [
-                  Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
-                  if (discount > 0) _DiscountBadge(discount: discount),
-                ]),
-                const SizedBox(height: 2),
-                Text(business, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                const SizedBox(height: 4),
-                Row(children: [
-                  Text('RWF ${offerPrice.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                  if (price > offerPrice) ...[
-                    const SizedBox(width: 6),
-                    Text('RWF ${price.toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (discount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '-$discount%',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ),
                   ],
-                ]),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  business,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      'RWF ${offerPrice.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    if (price > offerPrice) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        'RWF ${price.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary.withOpacity(0.5),
+                          decoration: TextDecoration.lineThrough,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -245,27 +373,30 @@ class ListingCard extends StatelessWidget {
   }
 }
 
-class _DiscountBadge extends StatelessWidget {
-  final int discount;
-  const _DiscountBadge({required this.discount});
+class _GlassBadge extends StatelessWidget {
+  final Widget child;
+  final double blur;
+  final double opacity;
+
+  const _GlassBadge({
+    required this.child,
+    this.blur = 8,
+    this.opacity = 0.2,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        '-$discount%',
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        color: Colors.white.withOpacity(opacity),
+        child: child,
       ),
     );
   }
 }
 
-/// ListingCardSkeleton — shimmer placeholder while loading
 class ListingCardSkeleton extends StatelessWidget {
   const ListingCardSkeleton({super.key});
 
@@ -277,7 +408,7 @@ class ListingCardSkeleton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(
@@ -287,19 +418,19 @@ class ListingCardSkeleton extends StatelessWidget {
               height: 120,
               decoration: const BoxDecoration(
                 color: AppColors.shimmerBase,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 12, width: double.infinity, color: AppColors.shimmerBase),
-                  const SizedBox(height: 6),
-                  Container(height: 10, width: 100, color: AppColors.shimmerBase),
-                  const SizedBox(height: 10),
-                  Container(height: 12, width: 80, color: AppColors.shimmerBase),
+                  Container(height: 14, width: double.infinity, color: AppColors.shimmerBase),
+                  const SizedBox(height: 8),
+                  Container(height: 12, width: 100, color: AppColors.shimmerBase),
+                  const SizedBox(height: 12),
+                  Container(height: 16, width: 80, color: AppColors.shimmerBase),
                 ],
               ),
             ),
