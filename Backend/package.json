@@ -16,7 +16,8 @@
     "migrate:down": "node scripts/migrate.js down",
     "migrate:status": "node scripts/migrate.js status",
     "migrate:create": "node scripts/migrate.js create",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "swagger:export": "node scripts/export-swagger.js"
   },
   "author": "Tresor",
   "license": "ISC",
