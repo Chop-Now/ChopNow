@@ -1,12 +1,16 @@
+import 'package:flutter/foundation.dart';
+
 class AppConstants {
   AppConstants._();
 
   // API base URL — update this to your deployed backend URL
   // Development: http://10.0.2.2:5000  (Android emulator localhost)
+  // Web:         http://localhost:5000 (Chrome/Web localhost)
   // Production:  https://api.chopnow.app
-  // Production backend on Render (shared MongoDB Atlas DB with the web app)
+  static const String _defaultUrl = kIsWeb ? 'http://localhost:5000/api/v1' : 'http://10.0.2.2:5000/api/v1';
+
   static const String apiBaseUrl =
-      String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:5000/api/v1');
+      String.fromEnvironment('API_BASE_URL', defaultValue: _defaultUrl);
 
   // Token keys for secure storage
   static const String accessTokenKey = 'chopnow_access_token';
