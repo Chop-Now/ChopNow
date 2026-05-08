@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../api/api_exception.dart';
 import '../models/business_model.dart';
+import 'package:image_picker/image_picker.dart';
 
 // ── My businesses ─────────────────────────────────────────────────────────────
 final myBusinessesProvider = FutureProvider<List<Business>>((ref) async {
@@ -86,8 +87,9 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
 
   Future<String> uploadLogo(String businessId, String filePath) async {
     try {
+      final bytes = await XFile(filePath).readAsBytes();
       final formData = FormData.fromMap({
-        'logo': await MultipartFile.fromFile(filePath, filename: 'logo.jpg'),
+        'logo': MultipartFile.fromBytes(bytes, filename: 'logo.jpg'),
       });
       final res = await ApiClient.instance.post(
           AppEndpoints.businessLogo(businessId), data: formData);
@@ -101,9 +103,10 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
     try {
       final formData = FormData();
       for (int i = 0; i < filePaths.length; i++) {
+        final bytes = await XFile(filePaths[i]).readAsBytes();
         formData.files.add(MapEntry(
           'photos',
-          await MultipartFile.fromFile(filePaths[i], filename: 'photo_$i.jpg'),
+          MultipartFile.fromBytes(bytes, filename: 'photo_$i.jpg'),
         ));
       }
       final res = await ApiClient.instance.post(
@@ -116,8 +119,9 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
 
   Future<String> uploadCover(String businessId, String filePath) async {
     try {
+      final bytes = await XFile(filePath).readAsBytes();
       final formData = FormData.fromMap({
-        'cover': await MultipartFile.fromFile(filePath, filename: 'cover.jpg'),
+        'cover': MultipartFile.fromBytes(bytes, filename: 'cover.jpg'),
       });
       final res = await ApiClient.instance.post(
           AppEndpoints.businessCover(businessId), data: formData);
@@ -131,9 +135,10 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
     try {
       final formData = FormData();
       for (int i = 0; i < filePaths.length; i++) {
+        final bytes = await XFile(filePaths[i]).readAsBytes();
         formData.files.add(MapEntry(
           'documents',
-          await MultipartFile.fromFile(filePaths[i], filename: 'kyc_doc_$i.jpg'),
+          MultipartFile.fromBytes(bytes, filename: 'kyc_doc_$i.jpg'),
         ));
       }
       await ApiClient.instance.post(
