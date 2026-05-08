@@ -32,6 +32,8 @@ import '../../features/business/create_listing_details_screen.dart';
 import '../../features/business/business_orders_screen.dart';
 import '../../features/business/analytics_screen.dart';
 import '../../features/business/create_business_screen.dart';
+import '../../features/business/edit_business_screen.dart';
+import '../../features/business/kyc_upload_screen.dart';
 import '../../features/rider/rider_shell.dart';
 import '../../features/rider/rider_dashboard_screen.dart';
 import '../../features/rider/active_delivery_screen.dart';
@@ -52,9 +54,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authProvider);
       final path = state.uri.path;
 
-      // Always allow splash and auth routes when loading/unauthenticated
+      // Always allow splash and auth routes when loading
       if (auth is AuthInitial || auth is AuthLoading) {
-        return path == '/splash' ? null : '/splash';
+        final authPaths = ['/splash', '/onboarding', '/auth/login', '/auth/register', '/auth/otp', '/auth/forgot-password', '/auth/reset-password'];
+        if (authPaths.any((p) => path.startsWith(p))) return null;
+        return '/splash';
       }
 
       if (auth is AuthUnauthenticated) {
@@ -147,6 +151,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/business/dashboard', builder: (_, __) => const BusinessDashboardScreen()),
           GoRoute(path: '/business/create', builder: (_, __) => const CreateBusinessScreen()),
+          GoRoute(
+            path: '/business/:id/edit',
+            builder: (_, state) => EditBusinessScreen(businessId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/business/:id/kyc',
+            builder: (_, state) => KycUploadScreen(businessId: state.pathParameters['id']!),
+          ),
           GoRoute(path: '/business/listings', builder: (_, __) => const MyListingsScreen()),
           GoRoute(path: '/business/listings/camera', builder: (_, __) => const CreateListingCameraScreen()),
           GoRoute(path: '/business/listings/create', builder: (_, __) => const CreateListingDetailsScreen()),
