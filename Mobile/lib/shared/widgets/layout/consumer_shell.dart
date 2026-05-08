@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../animations/scale_tap.dart';
 
 /// ConsumerShell — bottom navigation shell for the Consumer role.
 /// 5 tabs: Home, Browse, Orders, Impact, Profile
@@ -12,7 +15,7 @@ class ConsumerShell extends StatelessWidget {
 
   static const _tabs = [
     _TabItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home_rounded, path: '/home'),
-    _TabItem(label: 'Browse', icon: Icons.search_outlined, activeIcon: Icons.search_rounded, path: '/home'), // browse within home
+    _TabItem(label: 'Browse', icon: Icons.explore_outlined, activeIcon: Icons.explore_rounded, path: '/home'),
     _TabItem(label: 'Orders', icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, path: '/orders'),
     _TabItem(label: 'Impact', icon: Icons.eco_outlined, activeIcon: Icons.eco_rounded, path: '/impact'),
     _TabItem(label: 'Profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, path: '/profile'),
@@ -29,69 +32,88 @@ class ConsumerShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = _currentIndex(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       extendBody: true,
       body: Stack(
         children: [
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: child,
-            ),
+            child: child,
           ),
+          
+          // ── Floating Glass Nav Bar ──
           Positioned(
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
-                ],
-              ),
+            left: 24,
+            right: 24,
+            bottom: bottomPadding + 20,
+            child: FadeInUp(
+              duration: const Duration(milliseconds: 800),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(32),
                 child: BackdropFilter(
-                  filter: _blurFilter(),
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
-                    height: 64,
+                    height: 72,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                      color: Colors.white.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: List.generate(_tabs.length, (i) {
                         final tab = _tabs[i];
                         final isActive = i == current;
+                        
                         return Expanded(
-                          child: GestureDetector(
-                            onTap: () => context.go(tab.path),
-                            behavior: HitTestBehavior.opaque,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: isActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    child: Icon(
-                                      isActive ? tab.activeIcon : tab.icon,
-                                      key: ValueKey(isActive),
-                                      color: isActive ? AppColors.primary : AppColors.textSecondary,
-                                      size: 22,
+                          child: ScaleTap(
+                            onTap: () {
+                              if (!isActive) {
+                                HapticFeedback.lightImpact();
+                                context.go(tab.path);
+                              }
+                            },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.elasticOut,
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: isActive ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isActive ? tab.activeIcon : tab.icon,
+                                    color: isActive ? AppColors.primary : AppColors.textSecondary.withOpacity(0.6),
+                                    size: 26,
+                                  ),
+                                ),
+                                if (isActive)
+                                  FadeInUp(
+                                    duration: const Duration(milliseconds: 400),
+                                    from: 4,
+                                    child: Container(
+                                      width: 4,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(top: 2),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
+                              ],
                             ),
                           ),
                         );
@@ -105,11 +127,6 @@ class ConsumerShell extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // Workaround for backdrop filter
-  static dynamic _blurFilter() {
-    return ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0);
   }
 }
 
