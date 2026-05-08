@@ -63,9 +63,9 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
             ),
             child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20),
           ),
@@ -81,9 +81,9 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Colors.white.withOpacity(0.9),
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)],
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
               ),
               child: const Padding(
                 padding: EdgeInsets.all(8),
@@ -210,7 +210,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: const Border(top: BorderSide(color: AppColors.border)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -4))],
         ),
         child: listing.isSoldOut
             ? const CnErrorState(message: 'Sorry, this item is sold out')
@@ -328,7 +328,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(100)),
+      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(100)),
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }

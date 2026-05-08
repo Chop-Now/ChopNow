@@ -111,7 +111,7 @@ class _NotifCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: notification.isRead ? AppColors.surface : AppColors.primarySurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: notification.isRead ? AppColors.border : AppColors.primary.withValues(alpha: 0.3)),
+            border: Border.all(color: notification.isRead ? AppColors.border : AppColors.primary.withOpacity(0.3)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
