@@ -6,13 +6,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-primary: #f6fff9; /* Soft green-tinted background */
-  --color-solid: #00a86b; /* Main green (brand) */
-  --color-solidOne: #ff7a00; /* Main orange (brand accent) */
-  --color-solidTwo: #ffb366; /* Soft orange variant */
-  --color-tertiary: #007a4b; /* Darker green for hover/buttons */
-  --color-textColor: #2e2e2e; /* Dark neutral text */
-  --color-gray-50: #8a8a8a; /* Muted gray for secondary text */
+  --color-primary: #FDFDFD; /* Clean background */
+  --color-solid: #0C513F; /* Chowdeck Forest Green */
+  --color-solidOne: #FF9B3D; /* Chowdeck Orange */
+  --color-solidTwo: #FFEDB3; /* Chowdeck Cream */
+  --color-tertiary: #083B2D; /* Darker green */
+  --color-textColor: #111827; /* Dark text */
+  --color-gray-50: #4B5563; /* Secondary text */
 }
 
 html,
@@ -140,7 +140,8 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: #f6fff9 !important;
-    color: #2e2e2e !important;
+    background-color: #FDFDFD !important;
+    color: #111827 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 }
