@@ -4,17 +4,17 @@ import 'tokens.dart';
 class AppColors {
   AppColors._();
 
-  // ── Brand Primary: ChopNow Green ──
+  // ── Brand Primary: Chowdeck Forest Green ──
   static const Color primary = AppTokens.primary;
   static const Color primaryDark = AppTokens.primaryDark;
-  static const Color primaryLight = Color(0xFF1DD38F);
-  static const Color primarySurface = Color(0xFFE8FDF3); // subtle green tint
+  static const Color primaryLight = Color(0xFF13775B);
+  static const Color primarySurface = Color(0xFFE6F3EE); // subtle green tint
 
-  // ── Brand Accent: ChopNow Orange ──
+  // ── Brand Accent: Chowdeck Cream / Orange ──
   static const Color accent = AppTokens.accent;
-  static const Color accentDark = Color(0xFFD66600);
-  static const Color accentLight = Color(0xFFFF9B3D);
-  static const Color accentSurface = Color(0xFFFFF6ED);
+  static const Color accentDark = Color(0xFFE67E22);
+  static const Color accentLight = Color(0xFFFFB266);
+  static const Color accentSurface = Color(0xFFFFFDF5); // Cream tint
 
   // ── Backgrounds ──
   static const Color background = AppTokens.background;
