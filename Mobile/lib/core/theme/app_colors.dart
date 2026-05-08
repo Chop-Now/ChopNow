@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'tokens.dart';
 
 class AppColors {
   AppColors._();
 
   // ── Brand Primary: ChopNow Green ──
-  static const Color primary = Color(0xFF00A86B);
-  static const Color primaryDark = Color(0xFF007A4B);
+  static const Color primary = AppTokens.primary;
+  static const Color primaryDark = AppTokens.primaryDark;
   static const Color primaryLight = Color(0xFF1DD38F);
   static const Color primarySurface = Color(0xFFE8FDF3); // subtle green tint
 
   // ── Brand Accent: ChopNow Orange ──
-  static const Color accent = Color(0xFFFF7A00);
+  static const Color accent = AppTokens.accent;
   static const Color accentDark = Color(0xFFD66600);
   static const Color accentLight = Color(0xFFFF9B3D);
   static const Color accentSurface = Color(0xFFFFF6ED);
 
   // ── Backgrounds ──
-  static const Color background = Color(0xFFF6FFF9); // exact web hex
-  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = AppTokens.background;
+  static const Color surface = AppTokens.surface;
   static const Color surfaceVariant = Color(0xFFE8F8EE);
 
   // ── Dark Theme (Deep premium greens) ──
@@ -31,9 +32,9 @@ class AppColors {
   static const Color borderFocus = Color(0xFF00A86B);
 
   // ── Text ──
-  static const Color textPrimary = Color(0xFF1E2923);
-  static const Color textSecondary = Color(0xFF75857C);
-  static const Color textTertiary = Color(0xFFB0BDB5);
+  static const Color textPrimary = AppTokens.textPrimary;
+  static const Color textSecondary = AppTokens.textSecondary;
+  static const Color textTertiary = AppTokens.textTertiary;
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   static const Color textOnAccent = Color(0xFFFFFFFF);
 
