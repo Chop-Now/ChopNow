@@ -29,7 +29,7 @@ class GlassBox extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
           decoration: BoxDecoration(
-            color: tintColor.withValues(alpha: opacity),
+            color: tintColor.withOpacity(opacity),
             borderRadius: borderRadius,
             border: border,
           ),
