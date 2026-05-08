@@ -10,6 +10,14 @@ const streamifier = require('streamifier');
  */
 const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') => {
   return new Promise((resolve, reject) => {
+    // If Cloudinary is not configured, return a mock image URL to allow testing
+    if (!process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY === 'your_api_key') {
+      return resolve({
+        secure_url: 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg',
+        public_id: `mock_${Date.now()}`
+      });
+    }
+
     const uploadOptions = {
       folder: folder,
       resource_type: resourceType === 'pdf' ? 'auto' : resourceType,
