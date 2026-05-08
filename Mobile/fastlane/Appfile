@@ -1,0 +1,9 @@
+app_identifier("com.chopnow.app") # The bundle identifier of your app
+apple_id("admin@chopnow.app") # Your Apple ID
+
+itc_team_id("XXXXXXXXXX") # App Store Connect Team ID
+team_id("XXXXXXXXXX") # Developer Portal Team ID
+
+# For Android
+json_key_file("fastlane-android-key.json") # Path to the service account JSON key file
+package_name("com.chopnow.app") # e.g. com.krausefx.app
