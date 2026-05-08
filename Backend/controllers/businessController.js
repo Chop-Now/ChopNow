@@ -454,13 +454,17 @@ const uploadKYC = async (req, res) => {
 
     // Add new documents to existing documents array
     business.verification.documents.push(...uploadedDocuments);
-    business.verification.status = 'pending';
-    business.verification.submittedAt = new Date();
+    
+    // Auto-verify business upon KYC upload
+    business.verification.status = 'approved';
+    business.verification.verifiedAt = new Date();
+    business.verification.notes = 'Auto-approved upon KYC upload';
+    business.status = 'active';
 
     await business.save();
 
     res.json({
-      message: 'KYC documents uploaded successfully. Verification is pending.',
+      message: 'KYC documents uploaded successfully. Business is now verified and active!',
       verification: business.verification,
       documentsUploaded: uploadedDocuments.length,
     });
