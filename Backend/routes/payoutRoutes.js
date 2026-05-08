@@ -8,8 +8,9 @@ const {
 } = require('../controllers/payoutController');
 const { protect, authorize } = require('../middleware/auth');
 const { validatePayoutRequest, validatePayoutStatus } = require('../middleware/validation');
+const idempotency = require('../middleware/idempotency');
 
-router.post('/request', protect, authorize('business_owner'), validatePayoutRequest, requestPayout);
+router.post('/request', protect, authorize('business_owner'), idempotency(), validatePayoutRequest, requestPayout);
 router.get('/me', protect, authorize('business_owner'), getMyPayouts);
 router.get('/admin', protect, authorize('admin'), getAdminPayouts);
 router.patch('/:id/status', protect, authorize('admin'), validatePayoutStatus, updatePayoutStatus);
