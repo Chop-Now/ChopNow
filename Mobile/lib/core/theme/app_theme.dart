@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
+import 'tokens.dart';
 
 class AppTheme {
   AppTheme._();
@@ -41,11 +42,11 @@ class AppTheme {
     ),
 
     // Card
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
         side: const BorderSide(color: AppColors.border, width: 1),
       ),
       margin: EdgeInsets.zero,
@@ -55,9 +56,12 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spacingMd, 
+        vertical: AppTokens.spacingSm
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
@@ -162,14 +166,14 @@ class AppTheme {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surface,
       indicatorColor: AppColors.primarySurface,
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      iconTheme: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return const IconThemeData(color: AppColors.primary, size: 22);
         }
         return const IconThemeData(color: AppColors.textSecondary, size: 22);
       }),
-      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      labelTextStyle: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return AppTypography.textTheme.labelSmall?.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -212,7 +216,7 @@ class AppTheme {
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: AppColors.darkSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -223,8 +227,8 @@ class AppTheme {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.darkSurface,
       indicatorColor: const Color(0xFF1A3D2A),
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      iconTheme: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return const IconThemeData(color: AppColors.primaryLight, size: 22);
         }
         return const IconThemeData(color: Colors.white54, size: 22);

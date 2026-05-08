@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'tokens.dart';
 
 class AppTypography {
   AppTypography._();
@@ -8,7 +9,7 @@ class AppTypography {
   // Plus Jakarta Sans — premium, modern font matching web design
   static TextTheme get textTheme => TextTheme(
     displayLarge: GoogleFonts.plusJakartaSans(
-      fontSize: 32,
+      fontSize: AppTokens.fontHuge,
       fontWeight: FontWeight.w800,
       letterSpacing: -0.5,
       color: AppColors.textPrimary,
@@ -20,7 +21,7 @@ class AppTypography {
       color: AppColors.textPrimary,
     ),
     displaySmall: GoogleFonts.plusJakartaSans(
-      fontSize: 24,
+      fontSize: AppTokens.fontXxl,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.2,
       color: AppColors.textPrimary,
@@ -62,7 +63,7 @@ class AppTypography {
       color: AppColors.textPrimary,
     ),
     bodyMedium: GoogleFonts.plusJakartaSans(
-      fontSize: 14,
+      fontSize: AppTokens.fontSm,
       fontWeight: FontWeight.w400,
       color: AppColors.textPrimary,
     ),
