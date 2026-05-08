@@ -365,6 +365,52 @@ const uploadPhotos = async (req, res) => {
 };
 
 /**
+ * @desc    Get my listings (from all businesses owned by the user)
+ * @route   GET /api/listings/my
+ * @access  Private (business owner)
+ */
+const getMyListings = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Find businesses owned by the user
+    const businesses = await Business.find({ owner: req.user._id }).select('_id');
+    const businessIds = businesses.map(b => b._id);
+
+    const query = { business: { $in: businessIds } };
+
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const [listings, total] = await Promise.all([
+      Listing.find(query)
+        .populate('business', 'name type address media')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Listing.countDocuments(query),
+    ]);
+
+    res.json({
+      listings,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Listing error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
  * @desc    Get listings by business
  * @route   GET /api/listings/business/:businessId
  * @access  Public
@@ -410,4 +456,5 @@ module.exports = {
   deleteListing,
   uploadPhotos,
   getListingsByBusiness,
+  getMyListings,
 };

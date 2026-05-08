@@ -9,6 +9,7 @@ const {
   deleteListing,
   uploadPhotos,
   getListingsByBusiness,
+  getMyListings,
 } = require('../controllers/listingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -37,6 +38,7 @@ const { checkListingOwnership } = require('../middleware/ownership');
 router.get('/', optionalAuth, cacheListings, getListings);
 router.get('/nearby', optionalAuth, getNearbyListings);
 router.get('/business/:businessId', getListingsByBusiness);
+router.get('/my', protect, authorize('business_owner', 'admin'), getMyListings);
 router.get('/:id', optionalAuth, cacheListing, getListingById);
 
 // Protected routes - business owner or admin
