@@ -1,0 +1,45 @@
+{
+  "colors": {
+    "primary": "#0C513F",
+    "primaryDark": "#083B2D",
+    "secondary": "#FFEDB3",
+    "accent": "#FF9B3D",
+    "background": "#FDFDFD",
+    "surface": "#FFFFFF",
+    "error": "#E74C3C",
+    "success": "#0C513F",
+    "warning": "#F1C40F",
+    "text": {
+      "primary": "#111827",
+      "secondary": "#4B5563",
+      "tertiary": "#9CA3AF"
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+  "borderRadius": {
+    "sm": 6,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "full": 9999
+  },
+  "typography": {
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "sizes": {
+      "xs": 12,
+      "sm": 14,
+      "base": 16,
+      "lg": 18,
+      "xl": 20,
+      "xxl": 24,
+      "huge": 32
+    }
+  }
+}
