@@ -78,75 +78,69 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    debugPrint('[SplashScreen] build() called, authState = ${authState.runtimeType}');
 
-    // Schedule navigation after this frame if auth is resolved
     if (authState is! AuthInitial && authState is! AuthLoading && !_navigated) {
       Future.microtask(() => _doNavigate(authState));
     }
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _ctrl,
-            builder: (_, child) => Opacity(
-              opacity: _fade.value,
-              child: Transform.scale(scale: _scale.value, child: child),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'CN',
-                      style: TextStyle(
-                        color: AppColors.primaryDark,
-                        fontSize: 38,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                      ),
+      backgroundColor: AppColors.primarySurface, // primary-container
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (_, child) => Opacity(
+            opacity: _fade.value,
+            child: Transform.scale(scale: _scale.value, child: child),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceIvory,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.shopping_bag,
+                    color: AppColors.primary,
+                    size: 48,
                   ),
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'ChopNow',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                  ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'ChopNow',
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 40,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onPrimaryContainer,
+                  letterSpacing: -0.8,
+                  height: 1.2,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Rescue food. Save money. Sustain tomorrow.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Rescue Food. Save Money.',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 18,
+                  color: AppColors.onPrimaryContainer.withOpacity(0.9),
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
