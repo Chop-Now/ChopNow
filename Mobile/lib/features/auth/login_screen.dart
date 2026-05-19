@@ -68,333 +68,283 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Background Decorative Elements
-          Positioned(
-            top: -100,
-            right: -100,
-            child: FadeInDown(
-              duration: const Duration(seconds: 2),
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.08),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: FadeInUp(
-              duration: const Duration(seconds: 2),
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accent.withOpacity(0.08),
-                ),
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  FadeInLeft(
-                    child: GestureDetector(
-                      onTap: () => context.pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                        ),
-                        child: const Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.textPrimary),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  FadeInDown(
-                    delay: const Duration(milliseconds: 200),
-                    child: Hero(
-                      tag: 'app_logo',
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: const Center(child: Text('🥗', style: TextStyle(fontSize: 36))),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 400),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome back!',
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sign in to rescue food and save the planet 🌍',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textSecondary.withOpacity(0.8),
-                            height: 1.5,
-                          ),
+      backgroundColor: AppColors.surfaceIvory,
+      appBar: AppBar(
+        backgroundColor: AppColors.surfaceIvory,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              
+              FadeInDown(
+                delay: const Duration(milliseconds: 200),
+                child: Hero(
+                  tag: 'app_logo',
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.15),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
+                    child: const Center(
+                      child: Icon(Icons.shopping_bag_outlined, color: AppColors.onPrimaryContainer, size: 28),
+                    ),
                   ),
-                  const SizedBox(height: 32),
-
-                  // Modern Glassmorphic Tab Bar
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 600),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              FadeInUp(
+                delay: const Duration(milliseconds: 300),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Welcome back',
+                      style: TextStyle(
+                        fontFamily: 'Hanken Grotesk',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -1,
                       ),
-                      child: TabBar(
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Sign in to rescue food and support locals.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        color: AppColors.textSecondary.withOpacity(0.8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              FadeInUp(
+                delay: const Duration(milliseconds: 400),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: AppColors.surfaceIvory,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    dividerColor: Colors.transparent,
+                    labelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 14),
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.textSecondary,
+                    tabs: const [
+                      Tab(text: 'Email'),
+                      Tab(text: 'Phone'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Content Area
+              FadeInUp(
+                delay: const Duration(milliseconds: 500),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 180,
+                      child: TabBarView(
                         controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        dividerColor: Colors.transparent,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                        labelColor: AppColors.primary,
-                        unselectedLabelColor: AppColors.textSecondary,
-                        tabs: const [
-                          Tab(text: '📧 Email'),
-                          Tab(text: '📱 Phone'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Content Area
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 800),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
+                        physics: const NeverScrollableScrollPhysics(),
                         children: [
-                          SizedBox(
-                            height: 170,
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                _EmailForm(
-                                  emailCtrl: _emailCtrl,
-                                  passwordCtrl: _passwordCtrl,
-                                  obscurePassword: _obscurePassword,
-                                  onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
-                                ),
-                                _OtpForm(
-                                  phoneCtrl: _phoneCtrl,
-                                  otpCtrl: _otpCtrl,
-                                  otpSent: _otpSent,
-                                  sendingOtp: _sendingOtp,
-                                  onSendOtp: _sendOtp,
-                                ),
-                              ],
-                            ),
+                          _EmailForm(
+                            emailCtrl: _emailCtrl,
+                            passwordCtrl: _passwordCtrl,
+                            obscurePassword: _obscurePassword,
+                            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
-                          if (_tabController.index == 0)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => context.push('/auth/forgot-password'),
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                                child: const Text(
-                                  'Forgot password?',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if (error != null) ...[
-                            const SizedBox(height: 12),
-                            ShakeX(
-                              duration: const Duration(milliseconds: 500),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.error.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.error.withOpacity(0.2)),
-                                ),
-                                child: Row(children: [
-                                  const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      error,
-                                      style: const TextStyle(
-                                        color: AppColors.error,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ]),
-                              ),
-                            ),
-                          ],
+                          _OtpForm(
+                            phoneCtrl: _phoneCtrl,
+                            otpCtrl: _otpCtrl,
+                            otpSent: _otpSent,
+                            sendingOtp: _sendingOtp,
+                            onSendOtp: _sendOtp,
+                          ),
                         ],
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 32),
-                  
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 1000),
-                    child: CnPrimaryButton(
-                      label: isLoading ? 'Signing in...' : 'Sign In',
-                      isLoading: isLoading,
-                      onTap: isLoading ? null : _submit,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 1100),
-                    child: Row(children: [
-                      const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR CONTINUE WITH',
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
+                    if (_tabController.index == 0)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => context.push('/auth/forgot-password'),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                        ),
-                      ),
-                      const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
-                    ]),
-                  ),
-                  
-                  const SizedBox(height: 24),
-
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 1200),
-                    child: CnSecondaryButton(
-                      label: 'Google Account',
-                      icon: null, // You can add a Google SVG icon here if available
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Google Sign-In is coming soon!'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            backgroundColor: AppColors.textPrimary,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 40),
-
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 1300),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Don\'t have an account? ',
-                          style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            context.go('/auth/register');
-                          },
                           child: const Text(
-                            'Create one',
+                            'Forgot password?',
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Inter',
                               color: AppColors.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                    if (error != null) ...[
+                      const SizedBox(height: 16),
+                      ShakeX(
+                        duration: const Duration(milliseconds: 500),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                          ),
+                          child: Row(children: [
+                            const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                error,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: AppColors.error,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+              
+              FadeInUp(
+                delay: const Duration(milliseconds: 600),
+                child: CnPrimaryButton(
+                  label: isLoading ? 'Signing in...' : 'Sign In',
+                  isLoading: isLoading,
+                  onTap: isLoading ? null : _submit,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+
+              FadeInUp(
+                delay: const Duration(milliseconds: 700),
+                child: Row(children: [
+                  const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'OR CONTINUE WITH',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        color: AppColors.textTertiary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 40),
-                ],
+                  const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+                ]),
               ),
-            ),
+              
+              const SizedBox(height: 24),
+
+              FadeInUp(
+                delay: const Duration(milliseconds: 800),
+                child: CnSecondaryButton(
+                  label: 'Google Account',
+                  icon: null, 
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Google Sign-In is coming soon!'),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: AppColors.textPrimary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: 40),
+
+              FadeInUp(
+                delay: const Duration(milliseconds: 900),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Don\'t have an account? ',
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.textSecondary),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        context.go('/auth/register');
+                      },
+                      child: const Text(
+                        'Create one',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -456,7 +406,7 @@ class _EmailForm extends StatelessWidget {
           keyboardType: TextInputType.emailAddress,
           prefixIcon: Icons.alternate_email_rounded,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         CnTextField(
           label: 'Password',
           controller: passwordCtrl,
@@ -496,7 +446,7 @@ class _OtpForm extends StatelessWidget {
           keyboardType: TextInputType.phone,
           prefixIcon: Icons.phone_android_rounded,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         if (otpSent)
           FadeInUp(
             child: CnTextField(
