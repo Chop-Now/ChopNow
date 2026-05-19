@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/api/api_exception.dart';
@@ -39,10 +38,10 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen> wit
     final asyncOrders = ref.watch(_businessOrdersProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surfaceIvory,
       appBar: AppBar(
-        title: const Text('Orders', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        backgroundColor: AppColors.surface,
+        title: const Text('Orders', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surfaceIvory,
         automaticallyImplyLeading: false,
         elevation: 0,
         bottom: TabBar(
@@ -50,7 +49,8 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen> wit
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          labelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 14),
+          unselectedLabelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 14),
           tabs: const [Tab(text: '🔥 New'), Tab(text: '⏳ Active'), Tab(text: '✅ Done')],
         ),
         actions: [
@@ -136,44 +136,47 @@ class _BusinessOrderCard extends StatelessWidget {
         : 'Customer';
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: status == 'pending' ? AppColors.primary.withOpacity(0.3) : AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: status == 'pending' ? AppColors.primary.withOpacity(0.3) : AppColors.border.withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Order #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textPrimary)),
-            Text(customerName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary)),
+            Text(customerName, style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary)),
           ])),
           _StatusBadge(status: status),
         ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         // Items summary
         if (order['items'] != null)
           ...(order['items'] as List).take(2).map((item) {
             final listing = item['listing'] ?? {};
-            return Text('${item['quantity']}x ${listing['title'] ?? 'Item'}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary));
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('${item['quantity']}x ${listing['title'] ?? 'Item'}',
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary)),
+            );
           }),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('RWF ${order['total'] ?? order['totalAmount'] ?? 0}',
-              style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 15)),
+              style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, color: AppColors.primary, fontSize: 16)),
           Text(order['deliveryType'] == 'delivery' ? '🚚 Delivery' : '🏃 Pickup',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary)),
         ]),
 
         if (showActions) ...[
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.border, height: 1),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
+          const Divider(color: AppColors.surfaceVariant, height: 1),
+          const SizedBox(height: 16),
           _actionButtons(status, orderId),
         ],
       ]),
@@ -211,9 +214,9 @@ class _StatusBadge extends StatelessWidget {
       _ => (AppColors.textSecondary, AppColors.surfaceVariant, status),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
@@ -226,9 +229,9 @@ class _FilledBtn extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-      child: Center(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
+      child: Center(child: Text(label, style: const TextStyle(fontFamily: 'Inter', color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
     ),
   );
 }
@@ -242,9 +245,9 @@ class _OutlineBtn extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: color)),
-      child: Center(child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13))),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: color)),
+      child: Center(child: Text(label, style: TextStyle(fontFamily: 'Inter', color: color, fontWeight: FontWeight.w600, fontSize: 14))),
     ),
   );
 }
