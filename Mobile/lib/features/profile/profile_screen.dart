@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../shared/animations/scale_tap.dart';
+
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -15,248 +15,83 @@ class ProfileScreen extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final user = auth is AuthAuthenticated ? auth.user : null;
     final name = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
-    final email = user?.email ?? '';
     final avatarUrl = user?.avatar;
-    final role = auth is AuthAuthenticated ? auth.user.activeRole : 'consumer';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
+      backgroundColor: AppColors.surfaceIvory,
+      appBar: AppBar(
+        backgroundColor: AppColors.surfaceIvory,
+        elevation: 0,
+        title: const Text('Impact Profile', style: TextStyle(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w700, fontSize: 24, color: AppColors.textPrimary)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
+            onPressed: () => _showSettingsMenu(context, ref),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ── Premium Profile Header ──
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            stretch: true,
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Gradient Background
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topRight,
-                        end: Alignment.bottomLeft,
-                        colors: [AppColors.primary, Color(0xFF005936)],
-                      ),
-                    ),
-                  ),
-                  // Background Pattern (Optional blobs)
-                  Positioned(
-                    top: -40,
-                    left: -40,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.05),
-                      ),
-                    ),
-                  ),
-                  // Content
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      FadeInDown(
-                        child: _Avatar(url: avatarUrl, name: name, size: 90),
-                      ),
-                      const SizedBox(height: 16),
-                      FadeInUp(
-                        child: Text(
-                          name.isEmpty ? 'ChopNow User' : name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 200),
-                        child: Text(
-                          email,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 400),
-                        child: _RoleBadge(role: role, isDark: true),
-                      ),
-                    ],
-                  ),
-                ],
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          children: [
+            FadeInUp(child: _ProfileHeader(name: name.isEmpty ? 'ChopNow Hero' : name, avatarUrl: avatarUrl)),
+            const SizedBox(height: 16),
+            FadeInUp(delay: const Duration(milliseconds: 100), child: const _StatsGrid()),
+            const SizedBox(height: 16),
+            FadeInUp(delay: const Duration(milliseconds: 200), child: const _BadgesSection()),
+            const SizedBox(height: 16),
+            FadeInUp(delay: const Duration(milliseconds: 300), child: const _RecentRescuesSection()),
+            const SizedBox(height: 16),
+            FadeInUp(delay: const Duration(milliseconds: 400), child: const _ReferralCard()),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSettingsMenu(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Settings', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.person_outline, color: AppColors.textPrimary),
+                title: const Text('Account Details', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                onTap: () { Navigator.pop(context); context.push('/profile/edit'); },
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                onPressed: () => context.push('/profile/edit'),
+              ListTile(
+                leading: const Icon(Icons.location_on_outlined, color: AppColors.textPrimary),
+                title: const Text('Delivery Addresses', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                onTap: () { Navigator.pop(context); context.push('/profile/addresses'); },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt_long_outlined, color: AppColors.textPrimary),
+                title: const Text('My Orders', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                onTap: () { Navigator.pop(context); context.go('/orders'); },
+              ),
+              const Divider(color: AppColors.surfaceVariant),
+              ListTile(
+                leading: const Icon(Icons.logout, color: AppColors.error),
+                title: const Text('Sign Out', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _handleLogout(context, ref);
+                },
               ),
             ],
           ),
-
-          // ── Profile Content ──
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                // ── Impact Stats Card ──
-                Transform.translate(
-                  offset: const Offset(0, -30),
-                  child: FadeInUp(
-                    delay: const Duration(milliseconds: 600),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _StatItem(label: 'Rescued', value: '12', unit: 'meals', icon: '🥘', color: AppColors.primary),
-                          _StatItem(label: 'Saved', value: '8.4', unit: 'kg CO₂', icon: '🌍', color: AppColors.info),
-                          _StatItem(label: 'Earned', value: '450', unit: 'points', icon: '💎', color: AppColors.accent),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ── Settings Sections ──
-                _Section(
-                  title: 'Account Management',
-                  tiles: [
-                    _Tile(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Personal Information',
-                      onTap: () => context.push('/profile/edit'),
-                    ),
-                    _Tile(
-                      icon: Icons.location_on_outlined,
-                      label: 'Delivery Addresses',
-                      onTap: () => context.push('/profile/addresses'),
-                    ),
-                    _Tile(
-                      icon: Icons.payment_rounded,
-                      label: 'Payment Methods',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-
-                _Section(
-                  title: 'Orders & Activity',
-                  tiles: [
-                    _Tile(
-                      icon: Icons.receipt_long_outlined,
-                      label: 'My Orders',
-                      onTap: () => context.go('/orders'),
-                    ),
-                    _Tile(
-                      icon: Icons.favorite_border_rounded,
-                      label: 'Favorite Restaurants',
-                      onTap: () {},
-                    ),
-                    _Tile(
-                      icon: Icons.star_outline_rounded,
-                      label: 'Reviews & Feedback',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-
-                _Section(
-                  title: 'Help & Support',
-                  tiles: [
-                    _Tile(
-                      icon: Icons.help_outline_rounded,
-                      label: 'Help Center',
-                      onTap: () {},
-                    ),
-                    _Tile(
-                      icon: Icons.info_outline_rounded,
-                      label: 'About ChopNow',
-                      onTap: () {},
-                    ),
-                    _Tile(
-                      icon: Icons.privacy_tip_outlined,
-                      label: 'Privacy & Security',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-
-                // ── Logout Button ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: FadeInUp(
-                    delay: const Duration(milliseconds: 1000),
-                    child: ScaleTap(
-                      onTap: () => _handleLogout(context, ref),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.error.withOpacity(0.2)),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Sign Out Account',
-                              style: TextStyle(
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-                const Center(
-                  child: Text(
-                    'ChopNow v1.0.0 (Stable)\nSustainability starts with you.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.textTertiary, height: 1.5),
-                  ),
-                ),
-                const SizedBox(height: 60),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -267,19 +102,19 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Text('Are you sure you want to end your session?'),
+        title: const Text('Sign Out', style: TextStyle(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w700)),
+        content: const Text('Are you sure you want to end your session?', style: TextStyle(fontFamily: 'Inter')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Stay Logged In', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'Inter', color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           ),
           TextButton(
             onPressed: () {
               ref.read(authProvider.notifier).logout();
               Navigator.pop(context);
             },
-            child: const Text('Sign Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)),
+            child: const Text('Sign Out', style: TextStyle(fontFamily: 'Inter', color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -287,166 +122,409 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  final String? url;
+class _ProfileHeader extends StatelessWidget {
   final String name;
-  final double size;
-  const _Avatar({this.url, required this.name, required this.size});
+  final String? avatarUrl;
+
+  const _ProfileHeader({required this.name, this.avatarUrl});
 
   @override
   Widget build(BuildContext context) {
-    final initials = name.isNotEmpty
-        ? name.split(' ').take(2).map((w) => w.isEmpty ? '' : w[0].toUpperCase()).join()
-        : '?';
     return Container(
-      width: size,
-      height: size,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.surfaceIvory, width: 4),
+                  image: avatarUrl != null
+                      ? DecorationImage(image: NetworkImage(avatarUrl!), fit: BoxFit.cover)
+                      : null,
+                  color: AppColors.surfaceVariant,
+                ),
+                child: avatarUrl == null
+                    ? const Center(child: Icon(Icons.person, size: 40, color: AppColors.textSecondary))
+                    : null,
+              ),
+              Positioned(
+                bottom: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department, size: 14, color: Colors.white),
+                      SizedBox(width: 2),
+                      Text('Hero', style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(name, style: const TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 4),
+          const Text('Impact Level: Green Hero', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.accent)),
+          const SizedBox(height: 8),
+          const Text(
+            "Leading the charge in Kigali's food rescue mission. Every meal saved counts.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),
-      child: CircleAvatar(
-        backgroundColor: Colors.white.withOpacity(0.2),
-        backgroundImage: url != null && url!.isNotEmpty ? NetworkImage(url!) : null,
-        child: url == null || url!.isEmpty
-            ? Text(initials, style: TextStyle(fontSize: size * 0.35, fontWeight: FontWeight.w900, color: Colors.white))
-            : null,
-      ),
     );
   }
 }
 
-class _RoleBadge extends StatelessWidget {
-  final String role;
-  final bool isDark;
-  const _RoleBadge({required this.role, this.isDark = false});
+class _StatsGrid extends StatelessWidget {
+  const _StatsGrid();
 
   @override
   Widget build(BuildContext context) {
-    final label = switch (role) {
-      'business_owner' => '🏪 Business Owner',
-      'rider' => '🚴 Rider',
-      _ => '🛍 Consumer Member',
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.15) : AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.3) : AppColors.primary.withOpacity(0.2)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: isDark ? Colors.white : AppColors.primary,
-          letterSpacing: 0.5,
-        ),
-      ),
+    return Row(
+      children: [
+        Expanded(child: _StatCard(icon: Icons.scale_rounded, value: '45 KG', label: 'Food Saved', iconBg: const Color(0xFFE6F6F0), iconColor: AppColors.accent)),
+        const SizedBox(width: 12),
+        Expanded(child: _StatCard(icon: Icons.co2_rounded, value: '112 KG', label: 'CO2 Offset', iconBg: const Color(0xFFE6EEFF), iconColor: const Color(0xFF34BDD7))),
+        const SizedBox(width: 12),
+        Expanded(child: _StatCard(icon: Icons.savings_rounded, value: '125k', label: 'RWF Saved', iconBg: const Color(0xFFFEF3E7), iconColor: AppColors.primary)),
+      ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
-  final String label;
+class _StatCard extends StatelessWidget {
+  final IconData icon;
   final String value;
-  final String unit;
-  final String icon;
-  final Color color;
+  final String label;
+  final Color iconBg;
+  final Color iconColor;
 
-  const _StatItem({required this.label, required this.value, required this.unit, required this.icon, required this.color});
+  const _StatCard({required this.icon, required this.value, required this.label, required this.iconBg, required this.iconColor});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          child: Text(icon, style: const TextStyle(fontSize: 20)),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
-        ),
-        Text(
-          unit,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary.withOpacity(0.6), letterSpacing: 0.2),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textSecondary), textAlign: TextAlign.center),
+        ],
+      ),
     );
   }
 }
 
-class _Section extends StatelessWidget {
-  final String title;
-  final List<Widget> tiles;
-  const _Section({required this.title, required this.tiles});
+class _BadgesSection extends StatelessWidget {
+  const _BadgesSection();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textTertiary, letterSpacing: 1.2),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('My Badges', style: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                child: const Text('View All', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              ),
+            ],
           ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _Badge(icon: Icons.verified_rounded, label: 'First Rescue', bg: const Color(0xFFF2994A), color: Colors.white),
+              _Badge(icon: Icons.recycling_rounded, label: 'Zero Waste', bg: const Color(0xFF75F8B3), color: const Color(0xFF005232)),
+              _Badge(icon: Icons.location_city_rounded, label: 'Kigali Local', bg: const Color(0xFF34BDD7), color: const Color(0xFF004854)),
+              _Badge(icon: Icons.workspace_premium_rounded, label: '100 Rescues', bg: AppColors.surfaceVariant, color: AppColors.textSecondary, isLocked: true),
+            ],
           ),
-          child: Column(
-            children: tiles,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _Tile extends StatelessWidget {
+class _Badge extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
-  const _Tile({required this.icon, required this.label, required this.onTap});
+  final Color bg;
+  final Color color;
+  final bool isLocked;
+
+  const _Badge({required this.icon, required this.label, required this.bg, required this.color, this.isLocked = false});
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(10),
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 32),
         ),
-        child: Icon(icon, color: AppColors.textPrimary, size: 20),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 70,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500, color: isLocked ? AppColors.textSecondary : AppColors.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentRescuesSection extends StatelessWidget {
+  const _RecentRescuesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
       ),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Recent Rescues', style: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+          const SizedBox(height: 24),
+          _TimelineItem(
+            title: 'Kigali Bakery - Mix Box',
+            subtitle: 'Saved 1.5kg • Yesterday',
+            impact: '+3.5kg CO2',
+            isLast: false,
+            color: AppColors.accent,
+          ),
+          _TimelineItem(
+            title: 'Nyarutarama Market',
+            subtitle: 'Saved 3.0kg • Oct 12',
+            impact: '+7.2kg CO2',
+            isLast: true,
+            color: AppColors.surfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(color: AppColors.border.withOpacity(0.5)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Load More History', style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            ),
+          ),
+        ],
       ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
-      onTap: onTap,
+    );
+  }
+}
+
+class _TimelineItem extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String impact;
+  final bool isLast;
+  final Color color;
+
+  const _TimelineItem({required this.title, required this.subtitle, required this.impact, required this.isLast, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 32,
+            child: Column(
+              children: [
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: AppColors.surfaceIvory, width: 4)),
+                ),
+                if (!isLast) Expanded(child: Container(width: 2, color: AppColors.surfaceVariant)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceIvory,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.fastfood_rounded, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: const TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          const SizedBox(height: 4),
+                          Text(subtitle, style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary)),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: const Color(0xFFE6F6F0), borderRadius: BorderRadius.circular(100)),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.eco_rounded, size: 14, color: AppColors.accent),
+                                const SizedBox(width: 4),
+                                Text(impact, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReferralCard extends StatelessWidget {
+  const _ReferralCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Grow the Movement', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white)),
+                    const SizedBox(height: 8),
+                    Text('Invite friends to ChopNow and earn a free rescue meal.', style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: Colors.white.withOpacity(0.8))),
+                  ],
+                ),
+              ),
+              const Icon(Icons.diversity_3_rounded, size: 64, color: Color(0xFFF2994A)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('CHOP-AMINA-24', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 1.5)),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  ),
+                  child: const Text('Copy', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
