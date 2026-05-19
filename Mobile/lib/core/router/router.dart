@@ -39,6 +39,7 @@ import '../../features/rider/rider_dashboard_screen.dart';
 import '../../features/rider/active_delivery_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/home/browse_screen.dart';
+import '../../features/home/discover_map_screen.dart';
 import '../../features/profile/settings_screen.dart';
 import '../../features/profile/favorites_screen.dart';
 import '../../features/listings/business_profile_screen.dart';
@@ -132,6 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
           GoRoute(path: '/browse', builder: (_, __) => const BrowseScreen()),
+          GoRoute(path: '/discover-map', builder: (_, __) => const DiscoverMapScreen()),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
           GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
           GoRoute(path: '/profile/addresses', builder: (_, __) => const AddressesScreen()),
