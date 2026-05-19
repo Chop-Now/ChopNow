@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../core/models/listing_model.dart';
 import '../../core/providers/listings_provider.dart';
 import '../../core/providers/cart_provider.dart';
@@ -20,12 +21,12 @@ class ListingDetailScreen extends ConsumerWidget {
 
     return asyncListing.when(
       loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surfaceIvory,
         body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(foregroundColor: AppColors.textPrimary, backgroundColor: AppColors.surface, elevation: 0),
+        backgroundColor: AppColors.surfaceIvory,
+        appBar: AppBar(foregroundColor: AppColors.textPrimary, backgroundColor: AppColors.surfaceIvory, elevation: 0),
         body: CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(listingDetailProvider(listingId))),
       ),
       data: (listing) => _ListingDetailView(listing: listing),
@@ -53,41 +54,34 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     final maxQty = listing.quantity - cartQty;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surfaceIvory,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => context.pop(),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: AppColors.surfaceIvory.withOpacity(0.8),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20),
+              onPressed: () => context.pop(),
             ),
-            child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20),
           ),
         ),
         actions: [
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to favorites!')),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.favorite_border_rounded, color: AppColors.textPrimary, size: 20),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundColor: AppColors.surfaceIvory.withOpacity(0.8),
+              child: IconButton(
+                icon: const Icon(Icons.favorite_border_rounded, color: AppColors.textPrimary, size: 20),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Added to favorites!')),
+                  );
+                },
               ),
             ),
           ),
@@ -97,6 +91,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -104,97 +99,175 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                   _buildGallery(listing),
                   // Content
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // badges row
-                        Row(
-                          children: [
-                            if (listing.discountPercent > 0)
-                              _Badge(
-                                label: '-${listing.discountPercent}% OFF',
-                                color: AppColors.accent,
-                              ),
-                            if (listing.isLowStock) ...[
-                              const SizedBox(width: 8),
-                              _Badge(
-                                label: '⚠ Only ${listing.quantity} left',
-                                color: AppColors.warning,
-                              ),
+                        FadeInUp(
+                          child: Row(
+                            children: [
+                              if (listing.discountPercent > 0)
+                                _Badge(
+                                  label: '-${listing.discountPercent}% OFF',
+                                  color: AppColors.accent,
+                                ),
+                              if (listing.isLowStock) ...[
+                                const SizedBox(width: 8),
+                                _Badge(
+                                  label: '⚠ Only ${listing.quantity} left',
+                                  color: AppColors.warning,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(listing.title,
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 12),
+                        FadeInUp(
+                          delay: const Duration(milliseconds: 100),
+                          child: Text(
+                            listing.title,
+                            style: const TextStyle(
+                              fontFamily: 'Hanken Grotesk',
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         if (listing.businessName.isNotEmpty)
-                          Text('🏪 ${listing.businessName}',
-                              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                        const SizedBox(height: 14),
-                        // Price row
-                        Row(
-                          children: [
-                            Text('RWF ${listing.offerPrice.toStringAsFixed(0)}',
-                                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                            if (listing.price > listing.offerPrice) ...[
-                              const SizedBox(width: 10),
-                              Text('RWF ${listing.price.toStringAsFixed(0)}',
-                                  style: const TextStyle(fontSize: 16, color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
-                            ],
-                          ],
-                        ),
+                          FadeInUp(
+                            delay: const Duration(milliseconds: 150),
+                            child: GestureDetector(
+                              onTap: () {
+                                if (listing.businessId.isNotEmpty) {
+                                  context.push('/business/${listing.businessId}');
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.storefront_rounded, size: 16, color: AppColors.textSecondary),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    listing.businessName,
+                                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 16),
+                        // Price row
+                        FadeInUp(
+                          delay: const Duration(milliseconds: 200),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'RWF ${listing.offerPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(fontFamily: 'Inter', fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.primary),
+                              ),
+                              if (listing.price > listing.offerPrice) ...[
+                                const SizedBox(width: 10),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    'RWF ${listing.price.toStringAsFixed(0)}',
+                                    style: const TextStyle(fontFamily: 'Inter', fontSize: 16, color: AppColors.textSecondary, decoration: TextDecoration.lineThrough),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         // CO2 impact pill
                         if ((listing.co2Saved ?? 0) > 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.impactGradient,
-                              borderRadius: BorderRadius.circular(100),
+                          FadeInUp(
+                            delay: const Duration(milliseconds: 250),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE6F6F0), // Forest Light
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.secondary.withOpacity(0.1)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
+                                    child: const Icon(Icons.eco_rounded, color: Colors.white, size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Eco Impact', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Saves ${listing.co2Saved}g CO₂ from landfill',
+                                          style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                          ),
+                        const SizedBox(height: 24),
+                        const Divider(color: AppColors.border),
+                        const SizedBox(height: 24),
+                        // Description
+                        FadeInUp(
+                          delay: const Duration(milliseconds: 300),
+                          child: const Text('About this meal', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                        ),
+                        const SizedBox(height: 12),
+                        FadeInUp(
+                          delay: const Duration(milliseconds: 350),
+                          child: Text(
+                            listing.description,
+                            style: const TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.textSecondary, height: 1.6),
+                          ),
+                        ),
+                        // Allergens
+                        if ((listing.allergens ?? []).isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          FadeInUp(
+                            delay: const Duration(milliseconds: 400),
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('🌿', style: TextStyle(fontSize: 14)),
+                                const Icon(Icons.warning_amber_rounded, size: 20, color: AppColors.warning),
                                 const SizedBox(width: 6),
-                                Text(
-                                  'Saves ${listing.co2Saved}g CO₂ from landfill',
-                                  style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
-                                ),
+                                const Text('Allergens', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.warning)),
                               ],
                             ),
                           ),
-                        const SizedBox(height: 20),
-                        const Divider(color: AppColors.border),
-                        const SizedBox(height: 16),
-                        // Description
-                        const Text('About this meal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                        const SizedBox(height: 6),
-                        Text(listing.description,
-                            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
-                        // Allergens
-                        if ((listing.allergens ?? []).isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          const Text('⚠ Allergens', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.warning)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: listing.allergens!
-                                .map((a) => Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warningSurface,
-                                        borderRadius: BorderRadius.circular(100),
-                                      ),
-                                      child: Text(a, style: const TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w500)),
-                                    ))
-                                .toList(),
+                          const SizedBox(height: 12),
+                          FadeInUp(
+                            delay: const Duration(milliseconds: 450),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: listing.allergens!
+                                  .map((a) => Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warning.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(100),
+                                        ),
+                                        child: Text(a, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.warning, fontWeight: FontWeight.w600)),
+                                      ))
+                                  .toList(),
+                            ),
                           ),
                         ],
-                        const SizedBox(height: 100), // space for bottom bar
+                        const SizedBox(height: 40), // space for bottom bar
                       ],
                     ),
                   ),
@@ -206,11 +279,11 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
       ),
       // Bottom add-to-cart bar
       bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+        padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceIvory,
           border: const Border(top: BorderSide(color: AppColors.border)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -4))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, -5))],
         ),
         child: listing.isSoldOut
             ? const CnErrorState(message: 'Sorry, this item is sold out')
@@ -219,8 +292,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                   // Quantity stepper
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.surfaceVariant.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       children: [
@@ -231,7 +304,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                         SizedBox(
                           width: 32,
                           child: Text('$_qty', textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              style: const TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                         ),
                         _StepperButton(
                           icon: Icons.add_rounded,
@@ -240,7 +313,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: CnPrimaryButton(
                       label: 'Add to Cart  ·  RWF ${(listing.offerPrice * _qty).toStringAsFixed(0)}',
@@ -254,6 +327,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                             content: Text('$_qty × ${listing.title} added to cart 🛒'),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             duration: const Duration(seconds: 2),
                           ),
                         );
@@ -271,7 +345,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     final photos = listing.photos;
     if (photos.isEmpty) {
       return Container(
-        height: 280,
+        height: 320,
         color: AppColors.surfaceVariant,
         child: const Center(child: Icon(Icons.fastfood_rounded, size: 60, color: AppColors.border)),
       );
@@ -279,37 +353,54 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     return Stack(
       children: [
         SizedBox(
-          height: 300,
+          height: 320,
           child: PageView.builder(
             itemCount: photos.length,
+            physics: const BouncingScrollPhysics(),
             onPageChanged: (i) => setState(() => _imageIndex = i),
-            itemBuilder: (_, i) => CachedNetworkImage(
-              imageUrl: photos[i],
-              fit: BoxFit.cover,
-              width: double.infinity,
-              placeholder: (_, __) => Container(color: AppColors.surfaceVariant),
-              errorWidget: (_, __, ___) => Container(
-                color: AppColors.surfaceVariant,
-                child: const Icon(Icons.broken_image_rounded, color: AppColors.border, size: 48),
-              ),
+            itemBuilder: (_, i) => Stack(
+              fit: StackFit.expand,
+              children: [
+                CachedNetworkImage(
+                  imageUrl: photos[i],
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(color: AppColors.surfaceVariant),
+                  errorWidget: (_, __, ___) => Container(
+                    color: AppColors.surfaceVariant,
+                    child: const Icon(Icons.broken_image_rounded, color: AppColors.border, size: 48),
+                  ),
+                ),
+                // Bottom gradient for smooth transition
+                Positioned(
+                  bottom: 0, left: 0, right: 0, height: 80,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter, end: Alignment.topCenter,
+                        colors: [AppColors.surfaceIvory, Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         if (photos.length > 1)
           Positioned(
-            bottom: 12,
+            bottom: 24,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(photos.length, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: i == _imageIndex ? 20 : 6,
-                height: 6,
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: i == _imageIndex ? 24 : 8,
+                height: 8,
                 decoration: BoxDecoration(
-                  color: i == _imageIndex ? Colors.white : Colors.white54,
-                  borderRadius: BorderRadius.circular(3),
+                  color: i == _imageIndex ? AppColors.primary : AppColors.primary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               )),
             ),
@@ -329,7 +420,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(100)),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
@@ -342,10 +433,14 @@ class _StepperButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (onTap != null) HapticFeedback.lightImpact();
+        onTap?.call();
+      },
       child: Container(
-        padding: const EdgeInsets.all(10),
-        child: Icon(icon, size: 18, color: onTap == null ? AppColors.border : AppColors.primary),
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(shape: BoxShape.circle),
+        child: Icon(icon, size: 18, color: onTap == null ? AppColors.textTertiary : AppColors.primary),
       ),
     );
   }

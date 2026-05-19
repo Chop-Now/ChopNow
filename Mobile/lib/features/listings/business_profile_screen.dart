@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
-import '../../shared/widgets/buttons/cn_buttons.dart';
 
 final _businessProfileProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.businessById(id));
@@ -32,113 +32,435 @@ class BusinessProfileScreen extends ConsumerWidget {
     final asyncListings = ref.watch(_businessListingsForProfileProvider(businessId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surfaceIvory,
       body: asyncBiz.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => Scaffold(
-          appBar: AppBar(foregroundColor: AppColors.textPrimary, backgroundColor: AppColors.surface, elevation: 0),
+          appBar: AppBar(foregroundColor: AppColors.textPrimary, backgroundColor: AppColors.surfaceIvory, elevation: 0),
           body: CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(_businessProfileProvider(businessId))),
         ),
         data: (biz) => CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             // Cover / Hero
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 250,
               pinned: true,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.surfaceIvory,
+              foregroundColor: AppColors.textPrimary,
+              elevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: AppColors.surfaceIvory.withOpacity(0.8),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20),
+                    onPressed: () => context.pop(),
+                  ),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: AppColors.surfaceIvory.withOpacity(0.8),
+                    child: IconButton(
+                      icon: const Icon(Icons.favorite_border_rounded, color: AppColors.textPrimary, size: 20),
+                      onPressed: () {},
+                    ),
+                  ),
+                ),
+              ],
               flexibleSpace: FlexibleSpaceBar(
-                background: Stack(children: [
-                  if (biz['coverImage'] != null)
-                    Image.network(biz['coverImage'], width: double.infinity, height: 220, fit: BoxFit.cover)
-                  else
-                    Container(decoration: BoxDecoration(gradient: AppColors.heroGradient)),
-                  Container(color: Colors.black.withOpacity(0.3)),
-                ]),
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (biz['coverImage'] != null)
+                      Image.network(biz['coverImage'], fit: BoxFit.cover)
+                    else
+                      Container(
+                        decoration: BoxDecoration(gradient: AppColors.heroGradient),
+                        child: const Icon(Icons.storefront_rounded, size: 80, color: Colors.white54),
+                      ),
+                    // Gradient overlay at bottom
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      height: 80,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, AppColors.surfaceIvory],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
             SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Business info card
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)]),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        // Logo
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(width: 56, height: 56, color: AppColors.surfaceVariant,
-                              child: biz['logo'] != null
-                                  ? Image.network(biz['logo'], fit: BoxFit.cover)
-                                  : const Center(child: Text('🏪', style: TextStyle(fontSize: 28)))),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(biz['name'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                          if (biz['type'] != null) Text(biz['type'], style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                          if (biz['rating'] != null)
-                            Row(children: [
-                              const Icon(Icons.star_rounded, color: AppColors.accent, size: 14),
-                              const SizedBox(width: 2),
-                              Text('${biz['rating']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                              Text(' (${biz['reviewCount'] ?? 0} reviews)', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                            ]),
-                        ])),
-                      ]),
-                      if (biz['description'] != null) ...[
-                        const SizedBox(height: 12),
-                        Text(biz['description'], style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
-                      ],
-                      if (biz['address'] != null) ...[
-                        const SizedBox(height: 8),
-                        Row(children: [
-                          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FadeInUp(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              biz['name'] ?? 'Vendor Name',
+                              style: const TextStyle(
+                                fontFamily: 'Hanken Grotesk',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.star_rounded, color: AppColors.primary, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${biz['rating'] ?? '4.8'}',
+                                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 100),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
                           const SizedBox(width: 4),
-                          Expanded(child: Text(biz['address'], style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-                        ]),
-                      ],
-                    ]),
-                  ),
+                          Text(
+                            biz['address'] != null ? '${biz['address']} • 1.2 km away' : '1.2 km away • Kigali',
+                            style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Impact Summary
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 200),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6F6F0), // Forest Light
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48, height: 48,
+                              decoration: const BoxDecoration(
+                                color: AppColors.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.eco_rounded, color: Colors.white),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Vendor Impact Score', style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  const SizedBox(height: 2),
+                                  Text('Saved 50kg of food this week', style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary.withOpacity(0.9))),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
-                  // Listings from this business
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text('Available Deals', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+                    const Divider(color: AppColors.border),
+                    const SizedBox(height: 24),
+
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 300),
+                      child: const Text(
+                        'Available Rescue Packs',
+                        style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
 
             asyncListings.when(
-              loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+              loading: () => const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator(color: AppColors.primary)))),
               error: (e, _) => SliverToBoxAdapter(child: CnErrorState(message: e.toString())),
               data: (listings) => listings.isEmpty
-                  ? const SliverToBoxAdapter(child: CnEmptyState(title: 'No deals available', subtitle: 'Check back soon!', icon: Icons.fastfood_outlined))
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (ctx, i) {
-                          final l = listings[i];
-                          return ListTile(
-                            leading: ClipRRect(borderRadius: BorderRadius.circular(8),
-                              child: Container(width: 48, height: 48, color: AppColors.surfaceVariant,
-                                child: l['photos'] != null && (l['photos'] as List).isNotEmpty
-                                    ? Image.network(l['photos'][0], fit: BoxFit.cover) : const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary))),
-                            title: Text(l['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-                            subtitle: Text('RWF ${l['offerPrice'] ?? l['price'] ?? 0}', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
-                            onTap: () => context.push('/listings/${l['_id']}'),
-                          );
-                        },
-                        childCount: listings.length,
+                  ? const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(24), child: CnEmptyState(title: 'No deals right now', subtitle: 'Check back later for fresh surplus.', icon: Icons.shopping_basket_outlined)))
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.72, // Taller cards for image + text
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final l = listings[index];
+                            final imageUrl = (l['photos'] != null && (l['photos'] as List).isNotEmpty) ? l['photos'][0] : null;
+                            final isSoldOut = false; // Could be derived from l['status']
+
+                            return FadeInUp(
+                              delay: Duration(milliseconds: 300 + (index * 100)),
+                              child: GestureDetector(
+                                onTap: () => context.push('/listings/${l['_id']}'),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6)),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Image Stack
+                                      Expanded(
+                                        flex: 4,
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            if (imageUrl != null)
+                                              Image.network(imageUrl, fit: BoxFit.cover)
+                                            else
+                                              Container(
+                                                color: AppColors.surfaceVariant,
+                                                child: const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary, size: 32),
+                                              ),
+                                            
+                                            // Badges
+                                            Positioned(
+                                              top: 12, right: 12,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: isSoldOut ? AppColors.surfaceVariant : AppColors.secondary,
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    if (!isSoldOut) const Icon(Icons.bolt_rounded, color: Colors.white, size: 14),
+                                                    if (!isSoldOut) const SizedBox(width: 4),
+                                                    Text(
+                                                      isSoldOut ? 'Sold Out' : '3 Left',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: isSoldOut ? AppColors.textSecondary : Colors.white,
+                                                        letterSpacing: 0.5,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+
+                                            // Timer Gradient
+                                            if (!isSoldOut)
+                                              Positioned(
+                                                bottom: 0, left: 0, right: 0,
+                                                height: 50,
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.bottomCenter,
+                                                      end: Alignment.topCenter,
+                                                      colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                                                    ),
+                                                  ),
+                                                  padding: const EdgeInsets.all(8),
+                                                  alignment: Alignment.bottomLeft,
+                                                  child: Row(
+                                                    children: const [
+                                                      Icon(Icons.timer_outlined, color: Colors.white, size: 12),
+                                                      SizedBox(width: 4),
+                                                      Text('Rescue within 45m', style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      // Content
+                                      Expanded(
+                                        flex: 5,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                l['title'] ?? 'Surplus Pastry Box',
+                                                style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  l['description'] ?? 'A delicious assortment of today\'s unsold items. Perfectly good.',
+                                                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textSecondary),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'RWF ${l['price'] ?? '15000'}',
+                                                        style: const TextStyle(fontFamily: 'Inter', fontSize: 10, decoration: TextDecoration.lineThrough, color: AppColors.textSecondary),
+                                                      ),
+                                                      Text(
+                                                        'RWF ${l['offerPrice'] ?? '4500'}',
+                                                        style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (!isSoldOut)
+                                                    Container(
+                                                      padding: const EdgeInsets.all(6),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.primaryContainer,
+                                                        shape: BoxShape.circle,
+                                                        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))],
+                                                      ),
+                                                      child: const Icon(Icons.add_shopping_cart_rounded, color: AppColors.onPrimaryContainer, size: 16),
+                                                    ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: listings.length,
+                        ),
                       ),
                     ),
+            ),
+            
+            // Bottom Info Sections
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Divider(color: AppColors.border),
+                    const SizedBox(height: 24),
+                    
+                    FadeInUp(
+                      child: const Text('Vendor Story', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    ),
+                    const SizedBox(height: 12),
+                    FadeInUp(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3E7), // Amber Muted
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                        ),
+                        child: Text(
+                          biz['description'] ?? 'Simba Bakery has been a staple in Kigali, known for combining traditional Rwandan flavors with modern baking techniques. Committed to sustainability, we partner with ChopNow to ensure zero waste.',
+                          style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary, height: 1.6),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    const Divider(color: AppColors.border),
+                    const SizedBox(height: 24),
+
+                    FadeInUp(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.verified_user_outlined, color: AppColors.secondary, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text('Food Safety Note', style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'All items are perfectly safe to eat and adhere to strict local health standards. Best consumed within 24 hours of rescue.',
+                                    style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
