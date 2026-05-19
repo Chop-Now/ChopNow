@@ -40,10 +40,10 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
     final asyncListings = ref.watch(_myListingsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surfaceIvory,
       appBar: AppBar(
-        title: const Text('My Listings', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        backgroundColor: AppColors.surface,
+        title: const Text('My Listings', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surfaceIvory,
         automaticallyImplyLeading: false,
         elevation: 0,
         actions: [
@@ -54,7 +54,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(100)),
-                child: const Text('+ Add Deal', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                child: const Text('+ Add Deal', style: TextStyle(fontFamily: 'Inter', color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -64,7 +64,8 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          labelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 14),
+          unselectedLabelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 14),
           tabs: const [Tab(text: '🟢 Active'), Tab(text: '🔴 Expired'), Tab(text: '📝 Draft')],
         ),
       ),
@@ -113,9 +114,11 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
         await ApiClient.instance.delete(AppEndpoints.listingById(id));
         ref.invalidate(_myListingsProvider);
         HapticFeedback.heavyImpact();
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Listing deleted'), backgroundColor: AppColors.error),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Listing deleted'), backgroundColor: AppColors.error),
+          );
+        }
       } catch (_) {}
     }
   }
@@ -135,9 +138,9 @@ class _ListingTabView extends StatelessWidget {
       return CnEmptyState(title: emptyLabel, icon: Icons.restaurant_menu_outlined);
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       itemCount: listings.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, i) => _ListingCard(listing: listings[i], onEdit: onEdit, onDelete: onDelete),
     );
   }
@@ -156,37 +159,37 @@ class _ListingCard extends StatelessWidget {
     final stock = listing['quantity'] ?? listing['stock'] ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           // Thumbnail
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              width: 64, height: 64, color: AppColors.surfaceVariant,
+              width: 72, height: 72, color: AppColors.surfaceVariant,
               child: photos.isNotEmpty
                   ? Image.network(photos[0], fit: BoxFit.cover)
                   : const Center(child: Icon(Icons.fastfood_outlined, color: AppColors.textSecondary, size: 28)),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(listing['title'] ?? 'Untitled', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
-              const SizedBox(height: 2),
+              Text(listing['title'] ?? 'Untitled', style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary)),
+              const SizedBox(height: 4),
               Row(children: [
                 Text('RWF ${listing['offerPrice'] ?? listing['price'] ?? 0}',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 13)),
+                    style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, color: AppColors.primary, fontSize: 14)),
                 const SizedBox(width: 8),
-                Text('$stock left', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text('$stock left', style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textSecondary)),
               ]),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               _StatusPill(status: status),
             ]),
           ),
@@ -218,9 +221,9 @@ class _StatusPill extends StatelessWidget {
       _ => (AppColors.textSecondary, AppColors.surfaceVariant, '📝 Draft'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
