@@ -42,15 +42,20 @@ class BusinessShell extends StatelessWidget {
                 final tab = _tabs[i];
                 final active = i == current;
                 return Expanded(
-                  child: InkWell(
-                    onTap: () => context.go(tab.path),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(active ? tab.activeIcon : tab.icon, color: active ? AppColors.primary : AppColors.textSecondary, size: 22),
-                        const SizedBox(height: 3),
-                        Text(tab.label, style: TextStyle(fontSize: 10, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textSecondary)),
-                      ],
+                  child: Semantics(
+                    label: tab.label,
+                    selected: active,
+                    button: true,
+                    child: InkWell(
+                      onTap: () => context.go(tab.path),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(active ? tab.activeIcon : tab.icon, color: active ? AppColors.primary : AppColors.textSecondary, size: 22),
+                          const SizedBox(height: 3),
+                          Text(tab.label, style: TextStyle(fontSize: 10, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textSecondary)),
+                        ],
+                      ),
                     ),
                   ),
                 );

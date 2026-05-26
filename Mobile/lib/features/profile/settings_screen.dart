@@ -31,7 +31,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         children: [
           // Notifications Section
-          _SectionHeader('Notifications'),
+          const _SectionHeader('Notifications'),
           _SwitchTile(
             icon: Icons.notifications_active_outlined,
             label: 'Push Notifications',
@@ -63,7 +63,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 8),
           // Account Section
-          _SectionHeader('Account'),
+          const _SectionHeader('Account'),
           _NavTile(icon: Icons.person_outline_rounded, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
           _NavTile(icon: Icons.lock_outline_rounded, label: 'Change Password',
               onTap: () => context.push('/profile/edit')),
@@ -75,7 +75,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             final user = ref.watch(currentUserProvider);
             if (user?.isBusinessOwner != true) return const SizedBox.shrink();
             return Column(children: [
-              _SectionHeader('Business'),
+              const _SectionHeader('Business'),
               _NavTile(icon: Icons.storefront_outlined, label: 'My Businesses', onTap: () => context.go('/business/dashboard')),
               _NavTile(icon: Icons.payments_outlined, label: 'Payouts & Earnings', onTap: () {}),
             ]);
@@ -83,7 +83,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 8),
           // App section
-          _SectionHeader('App'),
+          const _SectionHeader('App'),
           _NavTile(icon: Icons.info_outline_rounded, label: 'About ChopNow', onTap: () => _showAbout(context)),
           _NavTile(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () {}),
           _NavTile(icon: Icons.assignment_outlined, label: 'Terms of Service', onTap: () {}),
@@ -91,7 +91,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 8),
           // Danger zone
-          _SectionHeader('Danger Zone'),
+          const _SectionHeader('Danger Zone'),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(children: [
@@ -194,7 +194,8 @@ class _SwitchTile extends StatelessWidget {
       subtitle: subtitle != null ? Text(subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)) : null,
       value: value,
       onChanged: onChanged,
-      activeColor: AppColors.primary,
+      activeThumbColor: AppColors.primary,
+      activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.4),
     ),
   );
 }

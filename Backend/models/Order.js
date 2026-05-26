@@ -259,8 +259,8 @@ orderSchema.index({ business: 1, createdAt: -1 }); // All business orders
 orderSchema.index({ 'statusTimestamps.completedAt': -1 }, { sparse: true }); // Completed orders
 orderSchema.index({ 'pricing.total': -1, status: 1 }); // Revenue analytics
 
-// Generate order number before saving
-orderSchema.pre('save', function () {
+// Generate order number before validating
+orderSchema.pre('validate', function () {
   if (this.isNew && !this.orderNumber) {
     // Generate order number: ORD-YYYYMMDD-RANDOM
     const date = new Date();
@@ -270,7 +270,11 @@ orderSchema.pre('save', function () {
   }
 
   // Calculate total
-  if (this.pricing.subtotal !== undefined && this.pricing.deliveryFee !== undefined) {
+  if (
+    this.pricing &&
+    this.pricing.subtotal !== undefined &&
+    this.pricing.deliveryFee !== undefined
+  ) {
     this.pricing.total = this.pricing.subtotal + this.pricing.deliveryFee;
   }
 });

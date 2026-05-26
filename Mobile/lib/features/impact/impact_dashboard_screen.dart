@@ -10,7 +10,7 @@ final userImpactProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final response = await ApiClient.instance.get(AppEndpoints.userImpact);
   final data = response.data;
   return data is Map<String, dynamic>
-      ? (data['data'] ?? data['impact'] ?? data)
+      ? (data['data'] ?? data['impact'] ?? data) as Map<String, dynamic>
       : {};
 });
 
@@ -23,166 +23,279 @@ class ImpactDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('My Impact', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: () async => ref.invalidate(userImpactProvider),
-        child: asyncImpact.when(
-          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => CnErrorState(
-            message: 'Could not load your impact data',
-            onRetry: () => ref.invalidate(userImpactProvider),
+      body: CustomScrollView(
+        slivers: [
+          // ── Animated Gradient AppBar ──
+          SliverAppBar(
+            expandedHeight: 220,
+            pinned: true,
+            backgroundColor: AppColors.primary,
+            automaticallyImplyLeading: false,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF00C97F), Color(0xFF00A86B), Color(0xFF005936)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    // Decorative blobs
+                    Positioned(
+                      top: -40, right: -40,
+                      child: Container(
+                        width: 180, height: 180,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.07),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -30, left: -30,
+                      child: Container(
+                        width: 140, height: 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
+                      ),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('🌍 My Impact', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            const Text('Your Food Rescue Journey',
+                                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
+                            const Spacer(),
+                            const Text('Every meal you rescue makes a difference for our planet! 🌿',
+                                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              titlePadding: EdgeInsets.zero,
+            ),
           ),
-          data: (impact) => _ImpactContent(impact: impact),
-        ),
+
+          // ── Content ──
+          SliverToBoxAdapter(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async => ref.invalidate(userImpactProvider),
+              child: asyncImpact.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.only(top: 60),
+                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                ),
+                error: (e, _) => Padding(
+                  padding: const EdgeInsets.only(top: 60),
+                  child: CnErrorState(
+                    message: 'Could not load your impact data',
+                    onRetry: () => ref.invalidate(userImpactProvider),
+                  ),
+                ),
+                data: (impact) => _ImpactContent(impact: impact),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ImpactContent extends StatelessWidget {
+class _ImpactContent extends StatefulWidget {
   final Map<String, dynamic> impact;
   const _ImpactContent({required this.impact});
 
   @override
-  Widget build(BuildContext context) {
-    final mealsRescued = impact['mealsRescued'] ?? impact['totalMeals'] ?? 0;
-    final co2Saved = impact['co2Saved'] ?? impact['totalCo2'] ?? 0;
-    final moneySaved = impact['moneySaved'] ?? impact['totalSavings'] ?? 0;
-    final streak = impact['currentStreak'] ?? 0;
-    final totalOrders = impact['totalOrders'] ?? 0;
+  State<_ImpactContent> createState() => _ImpactContentState();
+}
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Hero impact card
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: AppColors.impactGradient,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00897B).withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+class _ImpactContentState extends State<_ImpactContent> with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mealsRescued = widget.impact['mealsRescued'] ?? widget.impact['totalMeals'] ?? 0;
+    final co2Saved = widget.impact['co2Saved'] ?? widget.impact['totalCo2'] ?? 0;
+    final moneySaved = widget.impact['moneySaved'] ?? widget.impact['totalSavings'] ?? 0;
+    final streak = widget.impact['currentStreak'] ?? 0;
+    final totalOrders = widget.impact['totalOrders'] ?? 0;
+
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Big 3 Stats ──
+            Row(
+              children: [
+                Expanded(child: _BigStatCard(emoji: '🍱', value: '$mealsRescued', label: 'Meals Rescued', color: AppColors.primary)),
+                const SizedBox(width: 10),
+                Expanded(child: _BigStatCard(emoji: '🌿', value: '${co2Saved}g', label: 'CO₂ Saved', color: AppColors.success)),
+                const SizedBox(width: 10),
+                Expanded(child: _BigStatCard(emoji: '💰', value: 'RWF\n${_fmt(moneySaved as num)}', label: 'Money Saved', color: AppColors.accent)),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── Streak & Orders ──
+            Row(
+              children: [
+                Expanded(
+                  child: _StreakCard(streak: streak as int),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('📦', style: TextStyle(fontSize: 28)),
+                        const SizedBox(height: 6),
+                        Text('$totalOrders',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary)),
+                        const SizedBox(height: 2),
+                        const Text('Total Orders', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── Progress Bar for next badge ──
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('🌍 Your Planet Impact', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ImpactStat(emoji: '🍱', value: '$mealsRescued', label: 'Meals\nRescued'),
-                  Container(width: 1, height: 50, color: Colors.white24),
-                  _ImpactStat(emoji: '🌿', value: '${co2Saved}g', label: 'CO₂\nSaved'),
-                  Container(width: 1, height: 50, color: Colors.white24),
-                  _ImpactStat(emoji: '💰', value: 'RWF\n${_formatNum(moneySaved as num)}', label: 'Money\nSaved'),
+                  const Row(
+                    children: [
+                      Text('🎯', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text('Next Goal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _GoalProgress(mealsRescued: mealsRescued as int),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 14),
 
-        // Streak & Orders Row
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                emoji: '🔥',
-                value: '$streak',
-                label: 'Day Streak',
-                color: const Color(0xFFFF7043),
+            // ── Badges ──
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Text('🏆', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text('Badges', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _badgesForCount(mealsRescued)
+                        .map((b) => _BadgePill(label: b['label'] as String, earned: b['earned'] as bool))
+                        .toList(),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                emoji: '📦',
-                value: '$totalOrders',
-                label: 'Total Orders',
-                color: AppColors.primary,
+            const SizedBox(height: 14),
+
+            // ── Did you know ──
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.success.withValues(alpha: 0.08)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('💡 Did you know?',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  const SizedBox(height: 8),
+                  Text(
+                    _contextMessage(co2Saved as num),
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.6),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // Badges section
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('🏆 Badges', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _badgesForCount(mealsRescued as int)
-                    .map((b) => _BadgePill(label: b['label'] as String, earned: b['earned'] as bool))
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Keep rescuing meals to unlock more badges!',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Environmental context
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.primarySurface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Did you know?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
-              const SizedBox(height: 8),
-              Text(
-                _contextMessage(co2Saved as num),
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  String _formatNum(num n) {
+  static String _fmt(num n) {
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return n.toStringAsFixed(0);
   }
 
-  String _contextMessage(num co2) {
+  static String _contextMessage(num co2) {
     if (co2 <= 0) return 'Every meal you rescue keeps food out of landfill and CO₂ out of the atmosphere. Start ordering to see your impact!';
     if (co2 < 500) return 'You\'ve saved ${co2}g of CO₂ — that\'s like not driving a car for ${(co2 / 120).toStringAsFixed(1)} km!';
     return 'Amazing! You\'ve saved ${(co2 / 1000).toStringAsFixed(2)}kg of CO₂ — equivalent to planting ${(co2 / 600).round()} trees!';
   }
 
-  List<Map<String, dynamic>> _badgesForCount(int count) => [
+  static List<Map<String, dynamic>> _badgesForCount(int count) => [
     {'label': '🌱 First Rescue', 'earned': count >= 1},
     {'label': '🥗 5 Meals', 'earned': count >= 5},
     {'label': '🌍 Food Hero', 'earned': count >= 10},
@@ -191,56 +304,120 @@ class _ImpactContent extends StatelessWidget {
   ];
 }
 
-class _ImpactStat extends StatelessWidget {
-  final String emoji;
-  final String value;
-  final String label;
-  const _ImpactStat({required this.emoji, required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 28)),
-        const SizedBox(height: 6),
-        Text(value, textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, height: 1.2)),
-        Text(label, textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 10, height: 1.3)),
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
+class _BigStatCard extends StatelessWidget {
   final String emoji;
   final String value;
   final String label;
   final Color color;
-  const _StatCard({required this.emoji, required this.value, required this.label, required this.color});
+  const _BigStatCard({required this.emoji, required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 26)),
+          const SizedBox(height: 6),
+          Text(value,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, height: 1.2)),
+          const SizedBox(height: 3),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, height: 1.2)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakCard extends StatelessWidget {
+  final int streak;
+  const _StreakCard({required this.streak});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        gradient: streak > 0
+            ? const LinearGradient(colors: [Color(0xFFFF7043), Color(0xFFFF5722)])
+            : null,
+        color: streak == 0 ? AppColors.surface : null,
+        borderRadius: BorderRadius.circular(16),
+        border: streak == 0 ? Border.all(color: AppColors.border) : null,
+        boxShadow: streak > 0
+            ? [BoxShadow(color: const Color(0xFFFF5722).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]
+            : null,
       ),
-      child: Row(
+      child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
-              Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
-          ),
+          const Text('🔥', style: TextStyle(fontSize: 28)),
+          const SizedBox(height: 6),
+          Text('$streak',
+              style: TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.w900,
+                  color: streak > 0 ? Colors.white : AppColors.textSecondary)),
+          const SizedBox(height: 2),
+          Text('Day Streak',
+              style: TextStyle(fontSize: 12, color: streak > 0 ? Colors.white70 : AppColors.textSecondary)),
         ],
       ),
+    );
+  }
+}
+
+class _GoalProgress extends StatelessWidget {
+  final int mealsRescued;
+  const _GoalProgress({required this.mealsRescued});
+
+  static const _milestones = [1, 5, 10, 25, 50, 100];
+  static const _labels = ['First Rescue', '5 Meals', 'Food Hero', 'Champion', 'Legend', 'Master'];
+
+  @override
+  Widget build(BuildContext context) {
+    int nextIdx = _milestones.indexWhere((m) => m > mealsRescued);
+    if (nextIdx == -1) nextIdx = _milestones.length - 1;
+    final nextGoal = _milestones[nextIdx];
+    final prevGoal = nextIdx > 0 ? _milestones[nextIdx - 1] : 0;
+    final progress = nextGoal > prevGoal
+        ? ((mealsRescued - prevGoal) / (nextGoal - prevGoal)).clamp(0.0, 1.0)
+        : 1.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('$mealsRescued meals rescued',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text('Goal: $nextGoal (${_labels[nextIdx]})',
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 10,
+            backgroundColor: AppColors.surfaceVariant,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${nextGoal - mealsRescued} more to reach ${_labels[nextIdx]}!',
+          style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 }
@@ -260,7 +437,7 @@ class _BadgePill extends StatelessWidget {
         border: Border.all(color: earned ? AppColors.primary : AppColors.border),
       ),
       child: Text(
-        label,
+        earned ? label : '🔒 ${label.split(' ').skip(1).join(' ')}',
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

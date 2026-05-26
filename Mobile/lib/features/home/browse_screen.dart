@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/feedback/cn_states.dart';

@@ -63,6 +63,16 @@ class AuthService {
     await _storage.deleteAll();
   }
 
+  // ── Onboarding Status ──
+  static Future<bool> hasCompletedOnboarding() async {
+    final status = await _storage.read(key: AppConstants.onboardingCompletedKey);
+    return status == 'true';
+  }
+
+  static Future<void> setOnboardingCompleted() async {
+    await _storage.write(key: AppConstants.onboardingCompletedKey, value: 'true');
+  }
+
   // ── Is there a stored token? ──
   static Future<bool> hasToken() async {
     final token = await getAccessToken();

@@ -113,9 +113,11 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
         await ApiClient.instance.delete(AppEndpoints.listingById(id));
         ref.invalidate(_myListingsProvider);
         HapticFeedback.heavyImpact();
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Listing deleted'), backgroundColor: AppColors.error),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Listing deleted'), backgroundColor: AppColors.error),
+          );
+        }
       } catch (_) {}
     }
   }

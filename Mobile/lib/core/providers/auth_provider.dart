@@ -27,6 +27,13 @@ class AuthError extends AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthInitial()) { _checkExistingAuth(); }
 
+  /// Clear error state (e.g., when user starts retyping)
+  void clearError() {
+    if (state is AuthError) {
+      state = const AuthUnauthenticated();
+    }
+  }
+
   Future<void> _checkExistingAuth() async {
     if (!await AuthService.hasToken()) { state = const AuthUnauthenticated(); return; }
     try {

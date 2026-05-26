@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_spacing.dart';
 import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
@@ -187,11 +185,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     borderRadius: BorderRadius.circular(24),
                                     boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     children: [
-                                      const DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
-                                      const SizedBox(width: 16),
-                                      const Expanded(
+                                      DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
+                                      SizedBox(width: 16),
+                                      Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
