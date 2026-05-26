@@ -124,16 +124,34 @@ async function runE2ETest() {
     const businessId = bizRes.data._id;
     console.log(`✅ Business created. ID: ${businessId}`);
 
-    // Set business status to active in DB directly to bypass admin approval queue
-    console.log('Bypassing admin queue: Approving business in MongoDB...');
-    const Business =
-      mongoose.model('Business') ||
-      mongoose.model('Business', new mongoose.Schema({}, { strict: false }));
-    await Business.findByIdAndUpdate(businessId, {
-      status: 'active',
-      'verification.status': 'approved',
+    // Promotes the user to Admin in DB, then switches roles to verify the business through the admin verification API
+    console.log('Granting admin privileges to test user in MongoDB...');
+    const AdminUser =
+      mongoose.model('User') || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
+    await AdminUser.findByIdAndUpdate(userId, {
+      $addToSet: { roles: 'admin' },
     });
-    console.log('✅ Business approved.');
+    console.log('✅ Admin role granted.');
+
+    console.log('Switching active role to admin...');
+    await client.post('/users/switch-role', { role: 'admin' });
+
+    console.log('Approving the business via Admin Verification API...');
+    const approveRes = await client.patch(`/businesses/${businessId}/approve`, {
+      message: 'Verified by ChopNow automated E2E system',
+    });
+
+    const approvedBusiness = approveRes.data.business;
+    if (
+      approvedBusiness.status !== 'active' ||
+      approvedBusiness.verification?.status !== 'approved'
+    ) {
+      throw new Error('Business approval via Admin API failed to set active/approved status!');
+    }
+    console.log(`✅ Business approved via Admin API. Status: ${approvedBusiness.status}`);
+
+    console.log('Switching active role back to business_owner...');
+    await client.post('/users/switch-role', { role: 'business_owner' });
 
     // ──────── STEP 6: CREATE SURPLUS FOOD LISTING ────────
     console.log('\n[Step 6] Creating a surplus food listing...');
