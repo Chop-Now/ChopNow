@@ -138,7 +138,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       )
                     : ScaleTap(
                         onTap: () {
-                          for (final c in _controllers) c.clear();
+                          for (final c in _controllers) { c.clear(); }
                           _focusNodes[0].requestFocus();
                           _startTimer();
                         },

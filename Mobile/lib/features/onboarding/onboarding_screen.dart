@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../core/services/auth_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/utils/constants.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 
@@ -49,8 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool get _isLast => _page == _slides.length - 1;
 
   Future<void> _complete() async {
-    const storage = FlutterSecureStorage();
-    await storage.write(key: AppConstants.onboardingCompletedKey, value: 'true');
+    await AuthService.setOnboardingCompleted();
     if (mounted) context.go('/auth/login');
   }
 
@@ -117,7 +115,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SmoothPageIndicator(
                       controller: _ctrl,
                       count: _slides.length,
-                      effect: ExpandingDotsEffect(
+                      effect: const ExpandingDotsEffect(
                         activeDotColor: AppColors.primary,
                         dotColor: AppColors.border,
                         dotHeight: 8,

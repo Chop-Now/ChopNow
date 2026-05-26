@@ -25,6 +25,8 @@ class CnTextField extends StatefulWidget {
   final TextInputAction textInputAction;
   final FocusNode? focusNode;
   final bool autofocus;
+  final Iterable<String>? autofillHints;
+  final int? maxLength;
 
   const CnTextField({
     super.key,
@@ -45,6 +47,8 @@ class CnTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.next,
     this.focusNode,
     this.autofocus = false,
+    this.autofillHints,
+    this.maxLength,
   });
 
   @override
@@ -76,6 +80,8 @@ class _CnTextFieldState extends State<CnTextField> {
           readOnly: widget.readOnly,
           autofocus: widget.autofocus,
           textInputAction: widget.textInputAction,
+          autofillHints: widget.autofillHints,
+          maxLength: widget.maxLength,
           onChanged: (v) {
             widget.onChanged?.call(v);
             if (_errorText != null) setState(() => _errorText = null);
@@ -95,6 +101,7 @@ class _CnTextFieldState extends State<CnTextField> {
           decoration: InputDecoration(
             labelText: widget.label,
             hintText: widget.hint,
+            counterText: '',
             labelStyle: TextStyle(
               fontSize: 14,
               color: _errorText != null ? AppColors.error : AppColors.textSecondary,

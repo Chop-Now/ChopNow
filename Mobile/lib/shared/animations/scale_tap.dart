@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// ScaleTap: wraps any widget in a scale-down animation on press.
 /// Used on ALL tappable elements for a premium feel.
@@ -42,7 +41,7 @@ class _ScaleTapState extends State<ScaleTap> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final gesture = GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) async {
         await _ctrl.reverse();
@@ -55,6 +54,15 @@ class _ScaleTapState extends State<ScaleTap> with SingleTickerProviderStateMixin
         child: widget.child,
       ),
     );
+
+    if (widget.onTap != null) {
+      return Semantics(
+        button: true,
+        enabled: true,
+        child: gesture,
+      );
+    }
+    return gesture;
   }
 }
 

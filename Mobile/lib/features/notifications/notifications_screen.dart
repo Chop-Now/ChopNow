@@ -20,8 +20,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     // Load notifications into the notifier when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        final async = await ref.read(notificationsProvider.future);
-        ref.read(notificationsNotifierProvider.notifier).state = async;
+        final data = await ref.read(notificationsProvider.future);
+        ref.read(notificationsNotifierProvider.notifier).loadNotifications(data);
       } catch (_) {}
     });
   }
@@ -56,7 +56,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         onRefresh: () async {
           try {
             final fresh = await ref.refresh(notificationsProvider.future);
-            ref.read(notificationsNotifierProvider.notifier).state = fresh;
+            ref.read(notificationsNotifierProvider.notifier).loadNotifications(fresh);
           } catch (_) {}
         },
         child: notifications.isEmpty

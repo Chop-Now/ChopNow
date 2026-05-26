@@ -13,7 +13,16 @@ class ApiException implements Exception {
     try {
       final data = error.response?.data;
       if (data is Map) {
-        final msg = data['message'] ?? data['error'];
+        var msg = data['message'] ?? data['error'];
+        
+        // Append specific validation error if present
+        if (data['errors'] is List && (data['errors'] as List).isNotEmpty) {
+          final firstError = data['errors'][0];
+          if (firstError is Map && firstError['msg'] != null) {
+            msg = msg != null ? '$msg: ${firstError['msg']}' : firstError['msg'];
+          }
+        }
+
         if (msg is String && msg.isNotEmpty) {
           return ApiException(msg, statusCode: error.response?.statusCode);
         }

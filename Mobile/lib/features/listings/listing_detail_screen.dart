@@ -9,6 +9,7 @@ import '../../core/providers/cart_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
+import '../../shared/animations/scale_tap.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   final String listingId;
@@ -58,7 +59,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: GestureDetector(
+        leading: ScaleTap(
           onTap: () => context.pop(),
           child: Container(
             margin: const EdgeInsets.all(8),
@@ -71,7 +72,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
           ),
         ),
         actions: [
-          GestureDetector(
+          ScaleTap(
             onTap: () {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -341,11 +342,13 @@ class _StepperButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return ScaleTap(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
-        child: Icon(icon, size: 18, color: onTap == null ? AppColors.border : AppColors.primary),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Center(
+          child: Icon(icon, size: 18, color: onTap == null ? AppColors.border : AppColors.primary),
+        ),
       ),
     );
   }

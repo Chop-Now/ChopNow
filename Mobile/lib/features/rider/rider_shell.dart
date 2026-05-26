@@ -11,9 +11,9 @@ class RiderShell extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surface,
-          border: const Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
         ),
         child: SafeArea(
           top: false,
@@ -22,15 +22,20 @@ class RiderShell extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: InkWell(
-                    onTap: () => context.go('/rider/dashboard'),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.delivery_dining_rounded, color: AppColors.primary, size: 24),
-                        SizedBox(height: 3),
-                        Text('Deliveries', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700)),
-                      ],
+                  child: Semantics(
+                    label: 'Deliveries',
+                    selected: true,
+                    button: true,
+                    child: InkWell(
+                      onTap: () => context.go('/rider/dashboard'),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.delivery_dining_rounded, color: AppColors.primary, size: 24),
+                          SizedBox(height: 3),
+                          Text('Deliveries', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                        ],
+                      ),
                     ),
                   ),
                 ),

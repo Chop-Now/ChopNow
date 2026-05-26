@@ -31,15 +31,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   bool _otpSent = false;
   bool _sendingOtp = false;
 
+  // Local validation error (shown instead of / alongside auth error)
+  String? _localError;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
+
+    // Clear errors whenever user types
+    _emailCtrl.addListener(_clearErrors);
+    _passwordCtrl.addListener(_clearErrors);
+    _phoneCtrl.addListener(_clearErrors);
+    _otpCtrl.addListener(_clearErrors);
+  }
+
+  void _clearErrors() {
+    // Clear local validation error
+    if (_localError != null) {
+      setState(() => _localError = null);
+    }
+    // Clear auth error state so the red banner disappears when user re-types
+    final authState = ref.read(authProvider);
+    if (authState is AuthError) {
+      ref.read(authProvider.notifier).clearError();
+    }
   }
 
   @override
   void dispose() {
+    _emailCtrl.removeListener(_clearErrors);
+    _passwordCtrl.removeListener(_clearErrors);
+    _phoneCtrl.removeListener(_clearErrors);
+    _otpCtrl.removeListener(_clearErrors);
     _tabController.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -48,11 +73,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     super.dispose();
   }
 
+  /// Simple email format validation
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        .hasMatch(email);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState is AuthLoading;
-    final error = authState is AuthError ? authState.message : null;
+    final authError = authState is AuthError ? authState.message : null;
+    // Show local error first, then auth error
+    final error = _localError ?? authError;
 
     ref.listen(authProvider, (_, next) {
       if (next is AuthAuthenticated) {
@@ -169,13 +202,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               const SizedBox(height: 16),
 
               // Divider
-              Row(children: [
-                const Expanded(child: Divider(color: AppColors.border)),
+              const Row(children: [
+                Expanded(child: Divider(color: AppColors.border)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Text('or', style: TextStyle(color: AppColors.textTertiary, fontSize: 13)),
                 ),
-                const Expanded(child: Divider(color: AppColors.border)),
+                Expanded(child: Divider(color: AppColors.border)),
               ]),
               const SizedBox(height: 16),
 
@@ -215,9 +248,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     try {
       await ApiClient.instance.post(AppEndpoints.sendOtp, data: {'phone': _phoneCtrl.text.trim()});
       setState(() { _otpSent = true; _sendingOtp = false; });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP sent! Check your phone.'), backgroundColor: AppColors.primary),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP sent! Check your phone.'), backgroundColor: AppColors.primary),
+        );
+      }
     } catch (_) {
       setState(() => _sendingOtp = false);
     }
@@ -228,13 +263,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (_tabController.index == 0) {
       final email = _emailCtrl.text.trim();
       final pass = _passwordCtrl.text;
-      if (email.isEmpty || pass.isEmpty) return;
+
+      // Client-side validation with specific error messages
+      if (email.isEmpty) {
+        setState(() => _localError = 'Please enter your email address.');
+        return;
+      }
+      if (!_isValidEmail(email)) {
+        setState(() => _localError = 'Please enter a valid email (e.g. you@example.com).');
+        return;
+      }
+      if (pass.isEmpty) {
+        setState(() => _localError = 'Please enter your password.');
+        return;
+      }
+
       ref.read(authProvider.notifier).login(email: email, password: pass);
     } else {
       if (!_otpSent) { _sendOtp(); return; }
       final phone = _phoneCtrl.text.trim();
       final otp = _otpCtrl.text.trim();
-      if (phone.isEmpty || otp.length < 6) return;
+      if (phone.isEmpty) {
+        setState(() => _localError = 'Please enter your phone number.');
+        return;
+      }
+      if (otp.length < 6) {
+        setState(() => _localError = 'Please enter the full 6-digit OTP code.');
+        return;
+      }
       ref.read(authProvider.notifier).loginWithOtp(phone: phone, otp: otp);
     }
   }

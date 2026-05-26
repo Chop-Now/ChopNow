@@ -73,11 +73,10 @@ reviewSchema.index({ rating: -1, status: 1, createdAt: -1 }); // Reviews by rati
 reviewSchema.index({ 'businessResponse.respondedAt': -1 }, { sparse: true }); // Reviews with responses
 
 // Ensure rating is an integer
-reviewSchema.pre('save', function (next) {
+reviewSchema.pre('save', function () {
   if (this.rating) {
     this.rating = Math.round(this.rating);
   }
-  next();
 });
 
 // Static method to calculate average rating for a business

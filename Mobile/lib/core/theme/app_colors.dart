@@ -32,7 +32,8 @@ class AppColors {
 
   // ── Text ──
   static const Color textPrimary = Color(0xFF1E2923);
-  static const Color textSecondary = Color(0xFF75857C);
+  static const Color textSecondary = Color(0xFF526359); // Slate Green (~5.1:1 on white, WCAG AA compliant)
+  static const Color primaryTextLink = Color(0xFF007A4B); // Dark Green (~5.5:1 on white, WCAG AA compliant)
   static const Color textTertiary = Color(0xFFB0BDB5);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   static const Color textOnAccent = Color(0xFFFFFFFF);

@@ -35,7 +35,12 @@ final unreadCountProvider = FutureProvider<int>((ref) async {
 
 // ── Notifications Notifier ─────────────────────────────────────────────────────
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
-  NotificationsNotifier(List<AppNotification> notifications) : super(notifications);
+  NotificationsNotifier(super.notifications);
+
+  /// Load / replace the entire notifications list (safe public setter)
+  void loadNotifications(List<AppNotification> notifications) {
+    state = notifications;
+  }
 
   void markRead(String id) {
     state = state
@@ -46,7 +51,7 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
                 createdAt: n.createdAt, metadata: n.metadata)
             : n)
         .toList();
-    ApiClient.instance.put(AppEndpoints.markNotificationRead(id)).catchError((_) {});
+    _fireAndForget(ApiClient.instance.put(AppEndpoints.markNotificationRead(id)));
   }
 
   void markAllRead() {
@@ -56,12 +61,16 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
             type: n.type, isRead: true,
             createdAt: n.createdAt, metadata: n.metadata))
         .toList();
-    ApiClient.instance.put(AppEndpoints.notificationsMarkAllRead).catchError((_) {});
+    _fireAndForget(ApiClient.instance.put(AppEndpoints.notificationsMarkAllRead));
   }
 
   void delete(String id) {
     state = state.where((n) => n.id != id).toList();
-    ApiClient.instance.delete(AppEndpoints.deleteNotification(id)).catchError((_) {});
+    _fireAndForget(ApiClient.instance.delete(AppEndpoints.deleteNotification(id)));
+  }
+
+  static void _fireAndForget(Future<dynamic> future) {
+    future.then((_) {}).catchError((_) {});  // intentionally ignored
   }
 
   int get unreadCount => state.where((n) => !n.isRead).length;

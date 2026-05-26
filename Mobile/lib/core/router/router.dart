@@ -43,8 +43,6 @@ import '../../features/listings/business_profile_screen.dart';
 import '../../shared/widgets/layout/consumer_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authNotifier = ref.read(authProvider.notifier);
-
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(ref.watch(authProvider.notifier).stream),

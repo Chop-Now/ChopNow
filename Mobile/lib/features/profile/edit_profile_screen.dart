@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
@@ -142,10 +142,55 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _pickAvatar() async {
-    // Using image_picker to pick avatar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Avatar upload coming — use Cloudinary URL for now')),
-    );
+    final picker = ImagePicker();
+    try {
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              const Text('Choose Avatar Source', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                title: const Text('Photo Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                title: const Text('Camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null) return;
+
+      final file = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (file == null) return;
+
+      setState(() { _isLoading = true; _error = null; _success = null; });
+      await ref.read(authProvider.notifier).uploadAvatar(file.path);
+      
+      HapticFeedback.heavyImpact();
+      setState(() => _success = 'Avatar updated successfully!');
+    } catch (e) {
+      setState(() => _error = 'Failed to upload avatar: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _save() async {

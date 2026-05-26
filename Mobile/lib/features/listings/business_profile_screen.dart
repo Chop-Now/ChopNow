@@ -5,7 +5,6 @@ import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
-import '../../shared/widgets/buttons/cn_buttons.dart';
 
 final _businessProfileProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.businessById(id));
@@ -52,7 +51,7 @@ class BusinessProfileScreen extends ConsumerWidget {
                   if (biz['coverImage'] != null)
                     Image.network(biz['coverImage'], width: double.infinity, height: 220, fit: BoxFit.cover)
                   else
-                    Container(decoration: BoxDecoration(gradient: AppColors.heroGradient)),
+                    Container(decoration: const BoxDecoration(gradient: AppColors.heroGradient)),
                   Container(color: Colors.black.withValues(alpha: 0.3)),
                 ]),
               ),
@@ -108,9 +107,9 @@ class BusinessProfileScreen extends ConsumerWidget {
                   ),
 
                   // Listings from this business
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text('Available Deals', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text('Available Deals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                   ),
                 ],
               ),

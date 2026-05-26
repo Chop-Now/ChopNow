@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/utils/constants.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -18,6 +17,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
   late final Animation<double> _fade;
+
+  bool _animationDone = false;
 
   @override
   void initState() {
@@ -34,17 +35,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
     _ctrl.forward();
 
-    // Wait for auth check after animation
-    Future.delayed(const Duration(milliseconds: 1800), _navigate);
+    // Wait for minimum splash duration
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) {
+        _animationDone = true;
+        _tryNavigate();
+      }
+    });
   }
 
-  Future<void> _navigate() async {
-    if (!mounted) return;
+  Future<void> _tryNavigate() async {
+    if (!mounted || !_animationDone) return;
+    
     final auth = ref.read(authProvider);
+    // If auth is still loading (e.g. backend offline or slow), we must wait!
+    // The ref.listen in build() will call this again once auth resolves.
+    if (auth is AuthInitial || auth is AuthLoading) return;
 
     // Check if onboarding has been seen
-    const storage = FlutterSecureStorage();
-    final onboardingDone = await storage.read(key: AppConstants.onboardingCompletedKey);
+    final onboardingDone = await AuthService.hasCompletedOnboarding();
+
+    if (!mounted) return; // Guard after await
 
     if (auth is AuthAuthenticated) {
       final role = auth.activeRole;
@@ -55,7 +66,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       } else {
         context.go('/home');
       }
-    } else if (onboardingDone != 'true') {
+    } else if (!onboardingDone) {
       context.go('/onboarding');
     } else {
       context.go('/auth/login');
@@ -70,6 +81,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth state changes so we navigate as soon as it resolves
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next is! AuthInitial && next is! AuthLoading) {
+        _tryNavigate();
+      }
+    });
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

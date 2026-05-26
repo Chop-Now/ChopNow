@@ -102,7 +102,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
           Container(
             color: AppColors.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(children: [
+            child: const Row(children: [
               _StatCard(emoji: '✅', label: 'Delivered', value: '24'),
               _StatCard(emoji: '💰', label: 'Today', value: 'RWF 4,200'),
               _StatCard(emoji: '⭐', label: 'Rating', value: '4.8'),
@@ -168,13 +168,17 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
       await ApiClient.instance.put(AppEndpoints.orderStatus(orderId), data: {'status': 'delivering'});
       ref.invalidate(_riderAvailableOrdersProvider);
       ref.invalidate(_riderMyDeliveriesProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order accepted! Go pick it up 🚴'), backgroundColor: AppColors.primary),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order accepted! Go pick it up 🚴'), backgroundColor: AppColors.primary),
+        );
+      }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not accept order'), backgroundColor: AppColors.error),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not accept order'), backgroundColor: AppColors.error),
+        );
+      }
     }
   }
 }

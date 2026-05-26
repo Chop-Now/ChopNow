@@ -58,12 +58,12 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
 
   int quantityOf(String listingId) =>
       state.firstWhere((i) => i.listing.id == listingId,
-          orElse: () => CartItem(
+          orElse: () => const CartItem(
               listing: _dummyListing, quantity: 0)).quantity;
 }
 
 // placeholder to satisfy orElse
-final _dummyListing = Listing(
+const _dummyListing = Listing(
   id: '', title: '', description: '', price: 0, offerPrice: 0,
   quantity: 0, photos: [],
 );
