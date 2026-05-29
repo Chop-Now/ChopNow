@@ -124,17 +124,6 @@ const setupConnectionListeners = () => {
   db.on('disconnected', () => {
     isConnected = false;
     logger.warn('MongoDB disconnected');
-
-    // Attempt to reconnect if not intentionally closed
-    if (!db._closeCalled) {
-      logger.info('Attempting to reconnect to MongoDB...');
-      setTimeout(() => {
-        connectionRetries = 0;
-        connectDB().catch((err) => {
-          logger.error({ err }, 'Reconnection failed');
-        });
-      }, RETRY_DELAY_MS);
-    }
   });
 
   db.on('error', (error) => {
