@@ -3,7 +3,6 @@ const logger = require('./logger');
 const fs = require('fs');
 const path = require('path');
 
-let firebaseApp = null;
 let isDryRun = true;
 
 try {
@@ -42,7 +41,7 @@ try {
 
   // 2. Initialize Firebase Admin SDK
   if (serviceAccount) {
-    firebaseApp = admin.initializeApp({
+    admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
     isDryRun = false;
