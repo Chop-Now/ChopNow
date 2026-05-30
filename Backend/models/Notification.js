@@ -155,11 +155,15 @@ notificationSchema.statics.createNotification = async function (data) {
         type: notification.type,
         route: notification.link || '',
       };
-      if (notification.relatedOrder) pushData.relatedOrder = notification.relatedOrder.toString();
-      if (notification.relatedListing)
+      if (notification.relatedOrder) {
+        pushData.relatedOrder = notification.relatedOrder.toString();
+      }
+      if (notification.relatedListing) {
         pushData.relatedListing = notification.relatedListing.toString();
-      if (notification.relatedBusiness)
+      }
+      if (notification.relatedBusiness) {
         pushData.relatedBusiness = notification.relatedBusiness.toString();
+      }
 
       await sendMulticastPushNotification(user.fcmTokens, {
         title: notification.title,
