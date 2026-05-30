@@ -1,6 +1,6 @@
 import Footer from '../Components/Footer';
 import PageNavbar from '../Components/PageNavbar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Award,
   Leaf,
@@ -15,6 +15,21 @@ import { analyticsService } from '../services';
 
 const MyImpact = () => {
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const [impactData, setImpactData] = useState({
     mealsRescued: 0,
     co2Saved: 0,
@@ -83,6 +98,9 @@ const MyImpact = () => {
 
   const maxMeals = Math.max(...chartData.map((d) => d.meals), 1);
   const maxCo2 = Math.max(...chartData.map((d) => d.co2), 1);
+
+  const width = dimensions.width || 500;
+  const height = dimensions.height || 224;
 
   // Calculate milestones
   const mealsMilestone = Math.ceil(impactData.mealsRescued / 50) * 50 + 50; // Next 50 milestone
@@ -317,7 +335,7 @@ const MyImpact = () => {
                 </div>
 
                 {/* Chart area */}
-                <div className="absolute left-10 right-0 top-0 bottom-8">
+                <div ref={containerRef} className="absolute left-10 right-0 top-0 bottom-8">
                   {/* Grid lines */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {[0, 1, 2, 3, 4].map((i) => (
@@ -334,9 +352,9 @@ const MyImpact = () => {
                       strokeWidth="2"
                       points={chartData
                         .map((d, i) => {
-                          const x = (i / (chartData.length - 1)) * 100;
-                          const y = 100 - (d.meals / maxMeals) * 100;
-                          return `${x}%,${y}%`;
+                          const x = (i / (chartData.length - 1)) * width;
+                          const y = height - (d.meals / maxMeals) * height;
+                          return `${x},${y}`;
                         })
                         .join(' ')}
                     />
@@ -347,27 +365,23 @@ const MyImpact = () => {
                       strokeWidth="2"
                       points={chartData
                         .map((d, i) => {
-                          const x = (i / (chartData.length - 1)) * 100;
-                          const y = 100 - (d.co2 / maxCo2) * 100;
-                          return `${x}%,${y}%`;
+                          const x = (i / (chartData.length - 1)) * width;
+                          const y = height - (d.co2 / maxCo2) * height;
+                          return `${x},${y}`;
                         })
                         .join(' ')}
                     />
                     {/* Data points for meals */}
                     {chartData.map((d, i) => {
-                      const x = (i / (chartData.length - 1)) * 100;
-                      const y = 100 - (d.meals / maxMeals) * 100;
-                      return (
-                        <circle key={`meal-${i}`} cx={`${x}%`} cy={`${y}%`} r="3" fill="#00A86B" />
-                      );
+                      const x = (i / (chartData.length - 1)) * width;
+                      const y = height - (d.meals / maxMeals) * height;
+                      return <circle key={`meal-${i}`} cx={x} cy={y} r="3" fill="#00A86B" />;
                     })}
                     {/* Data points for CO2 */}
                     {chartData.map((d, i) => {
-                      const x = (i / (chartData.length - 1)) * 100;
-                      const y = 100 - (d.co2 / maxCo2) * 100;
-                      return (
-                        <circle key={`co2-${i}`} cx={`${x}%`} cy={`${y}%`} r="3" fill="#FF7A00" />
-                      );
+                      const x = (i / (chartData.length - 1)) * width;
+                      const y = height - (d.co2 / maxCo2) * height;
+                      return <circle key={`co2-${i}`} cx={x} cy={y} r="3" fill="#FF7A00" />;
                     })}
                   </svg>
                 </div>
