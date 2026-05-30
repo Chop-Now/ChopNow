@@ -298,7 +298,9 @@ const MyProfile = () => {
                         try {
                           await addBusinessRole(true);
                           navigate('/dashboard');
-                        } catch {}
+                        } catch (error) {
+                          console.error('Error adding business role:', error);
+                        }
                       }}
                       className="w-full mt-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
                     >
