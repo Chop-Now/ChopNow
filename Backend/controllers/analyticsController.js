@@ -185,18 +185,50 @@ const getMyImpact = async (req, res) => {
           { $match: { customer: req.user._id, status: 'completed' } },
           { $unwind: '$items' },
           {
+            $lookup: {
+              from: 'listings',
+              localField: 'items.listing',
+              foreignField: '_id',
+              as: 'listingInfo',
+            },
+          },
+          {
+            $addFields: {
+              itemOriginalPrice: { $arrayElemAt: ['$listingInfo.pricing.originalPrice', 0] },
+            },
+          },
+          {
             $facet: {
               totals: [
                 {
                   $group: {
                     _id: null,
                     totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+                    totalSavings: {
+                      $sum: {
+                        $multiply: [
+                          { $ifNull: ['$items.quantity', 1] },
+                          {
+                            $subtract: [
+                              {
+                                $ifNull: [
+                                  '$itemOriginalPrice',
+                                  { $multiply: ['$items.unitPrice', 2] },
+                                ],
+                              },
+                              '$items.unitPrice',
+                            ],
+                          },
+                        ],
+                      },
+                    },
                     ordersCount: { $addToSet: '$_id' },
                   },
                 },
                 {
                   $project: {
                     totalMeals: 1,
+                    totalSavings: 1,
                     ordersCount: { $size: '$ordersCount' },
                   },
                 },
@@ -239,7 +271,11 @@ const getMyImpact = async (req, res) => {
         calculateMonthlyImpact(req.user._id, 'consumer'),
       ]);
 
-      const totals = impactResult[0]?.totals[0] || { totalMeals: 0, ordersCount: 0 };
+      const totals = impactResult[0]?.totals[0] || {
+        totalMeals: 0,
+        totalSavings: 0,
+        ordersCount: 0,
+      };
       const thisMonthData = impactResult[0]?.thisMonth[0] || { meals: 0, ordersCount: 0 };
       const lastMonthData = impactResult[0]?.lastMonth[0] || { meals: 0, ordersCount: 0 };
 
@@ -247,6 +283,7 @@ const getMyImpact = async (req, res) => {
       const totalCo2Saved = totalMealsRescued * IMPACT_FACTORS.CO2_PER_MEAL;
       const totalWaterSaved = totalMealsRescued * IMPACT_FACTORS.WATER_PER_MEAL;
       const totalFoodWasteSaved = totalMealsRescued * IMPACT_FACTORS.AVG_MEAL_WEIGHT;
+      const totalSavings = totals.totalSavings || 0;
 
       const thisMonthMeals = thisMonthData.meals;
       const lastMonthMeals = lastMonthData.meals;
@@ -263,6 +300,7 @@ const getMyImpact = async (req, res) => {
         co2Saved: Math.round(totalCo2Saved * 10) / 10,
         waterSaved: Math.round(totalWaterSaved),
         foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
+        moneySaved: Math.round(totalSavings),
         ordersCount: totals.ordersCount,
         monthlyData,
         comparison: {
@@ -328,11 +366,21 @@ const getMyImpact = async (req, res) => {
         co2Saved: Math.round(totalCo2Saved * 10) / 10,
         waterSaved: Math.round(totalWaterSaved),
         foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
+        moneySaved: 0,
         ordersCount: totals.ordersCount,
         monthlyData,
       });
     } else {
-      res.status(400).json({ message: 'Invalid role for impact stats' });
+      // Return empty stats for riders/admin to prevent app crash
+      res.json({
+        mealsRescued: 0,
+        co2Saved: 0,
+        waterSaved: 0,
+        foodWasteSaved: 0,
+        moneySaved: 0,
+        ordersCount: 0,
+        monthlyData: [],
+      });
     }
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');

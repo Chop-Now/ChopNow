@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../animations/scale_tap.dart';
+import '../listings/expiry_countdown.dart';
 
 enum CardVariant { grid, list }
 
@@ -117,6 +118,8 @@ class ListingCard extends StatelessWidget {
                   ],
                 ],
               ),
+              const SizedBox(height: 4),
+              ExpiryCountdown(availableUntil: listing['availableUntil']?.toString(), compact: true),
               if (isLowStock) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -217,6 +220,8 @@ class ListingCard extends StatelessWidget {
                 ]),
                 const SizedBox(height: 2),
                 Text(business, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                ExpiryCountdown(availableUntil: listing['availableUntil']?.toString(), compact: true),
                 const SizedBox(height: 4),
                 Row(children: [
                   Text('RWF ${offerPrice.toStringAsFixed(0)}',

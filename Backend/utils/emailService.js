@@ -1,18 +1,47 @@
 const sgMail = require('@sendgrid/mail');
+const axios = require('axios');
 const logger = require('./logger');
 
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize SendGrid only if configured and Brevo is not active
+if (process.env.SENDGRID_API_KEY && !process.env.BREVO_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@chopnow.app';
 const FROM_NAME = process.env.FROM_NAME || 'ChopNow';
 const APP_URL = process.env.FRONTEND_URL || 'https://www.chopnow.app';
 
 /**
- * Send email using SendGrid
+ * Send email using Brevo or SendGrid
  */
 const sendEmail = async (to, subject, html) => {
   try {
+    // ── Use Brevo API if Key is Configured ──
+    if (process.env.BREVO_API_KEY) {
+      const response = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: FROM_NAME, email: FROM_EMAIL },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        },
+        {
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json',
+          },
+        }
+      );
+      return response.status === 201 || response.status === 200;
+    }
+
+    // ── Fallback to SendGrid ──
+    if (!process.env.SENDGRID_API_KEY) {
+      logger.warn('No email service configured (Neither BREVO_API_KEY nor SENDGRID_API_KEY found)');
+      return false;
+    }
+
     const msg = {
       to,
       from: {
@@ -26,8 +55,10 @@ const sendEmail = async (to, subject, html) => {
     await sgMail.send(msg);
     return true;
   } catch (error) {
-    logger.error({ err: error }, 'Error sending email via SendGrid');
-    if (error.response) {
+    logger.error({ err: error }, 'Error sending email');
+    if (error.response && error.response.data) {
+      logger.error({ body: error.response.data }, 'Email service response details');
+    } else if (error.response) {
       logger.error({ body: error.response.body }, 'SendGrid error details');
     }
     return false;

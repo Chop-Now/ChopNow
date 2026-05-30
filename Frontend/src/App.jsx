@@ -20,6 +20,8 @@ const MyImpact = lazy(() => import('./Pages/MyImpact'));
 const Notification = lazy(() => import('./Pages/Notification'));
 const MyProfile = lazy(() => import('./Pages/MyProfile'));
 const BusinessVerification = lazy(() => import('./Pages/BusinessVerification'));
+const RiderVerification = lazy(() => import('./Pages/RiderRegistration'));
+const RiderDashboard = lazy(() => import('./Pages/RiderDashboard'));
 const PendingReview = lazy(() => import('./Pages/PendingReview'));
 const FAQ = lazy(() => import('./Pages/FAQ'));
 const ContactUs = lazy(() => import('./Pages/ContactUs'));
@@ -149,6 +151,26 @@ const App = () => {
                 <ProtectedRoute>
                   <RoleRoute roles={['business_owner', 'admin']}>
                     <Dashboard />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ===== Rider Routes ===== */}
+            <Route
+              path="/rider-verification"
+              element={
+                <ProtectedRoute>
+                  <RiderVerification />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rider-dashboard"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute roles={['rider', 'admin']}>
+                    <RiderDashboard />
                   </RoleRoute>
                 </ProtectedRoute>
               }

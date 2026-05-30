@@ -32,6 +32,8 @@ const {
   logoutSession,
   logoutAllDevices,
   refreshAccessToken,
+  registerFcmToken,
+  deleteFcmToken,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -140,6 +142,10 @@ router.post('/avatar', protect, upload.single('avatar'), uploadAvatar);
 // Role management routes
 router.post('/switch-role', protect, switchRole);
 router.post('/add-role', protect, addRole);
+
+// FCM device tokens
+router.post('/fcm-token', protect, registerFcmToken);
+router.delete('/fcm-token', protect, deleteFcmToken);
 
 // Session management routes
 router.get('/sessions', protect, getActiveSessions);

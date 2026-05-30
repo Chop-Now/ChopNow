@@ -31,7 +31,13 @@ import {
 } from 'lucide-react';
 import { useAdminMode } from '../context/AdminModeContext';
 import { useAppContext } from '../../context/AppContext';
-import { businessService, authService, settingsService } from '../../services';
+import {
+  businessService,
+  authService,
+  settingsService,
+  searchAddress,
+  reverseGeocode,
+} from '../../services';
 import LocationPicker from '../../Components/maps/LocationPicker';
 import ConfirmationModal from '../components/ConfirmationModal';
 import toast from 'react-hot-toast';
@@ -411,11 +417,8 @@ const Settings = ({ initialTab = 'profile' }) => {
     if (!addressSearch.trim()) return;
 
     try {
-      // Using Nominatim API for geocoding
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressSearch)}&limit=1`
-      );
-      const data = await response.json();
+      // Using shared geocoding helper (LocationIQ / Nominatim)
+      const data = await searchAddress(addressSearch);
 
       if (data && data.length > 0) {
         const result = data[0];
@@ -442,11 +445,8 @@ const Settings = ({ initialTab = 'profile' }) => {
           const { latitude, longitude } = position.coords;
 
           try {
-            // Reverse geocoding to get address
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
+            // Using shared reverse geocoding helper (LocationIQ / Nominatim)
+            const data = await reverseGeocode(latitude, longitude);
 
             const location = {
               lat: latitude,

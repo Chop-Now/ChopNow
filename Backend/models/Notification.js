@@ -147,17 +147,29 @@ notificationSchema.statics.createNotification = async function (data) {
     const User = mongoose.model('User');
     const user = await User.findById(notification.user);
 
-    if (user && user.preferences && user.preferences.notifications) {
-      const { push: _push, email: _email } = user.preferences.notifications;
+    const { push } = user.preferences.notifications;
 
-      // Add your notification sending logic here
-      // For example:
-      // if (push) await sendPushNotification(notification);
-      // if (email) await sendEmailNotification(notification);
+    if (push && user.fcmTokens && user.fcmTokens.length > 0) {
+      const { sendMulticastPushNotification } = require('../utils/firebase');
+      const pushData = {
+        type: notification.type,
+        route: notification.link || '',
+      };
+      if (notification.relatedOrder) pushData.relatedOrder = notification.relatedOrder.toString();
+      if (notification.relatedListing)
+        pushData.relatedListing = notification.relatedListing.toString();
+      if (notification.relatedBusiness)
+        pushData.relatedBusiness = notification.relatedBusiness.toString();
 
-      // Mark as sent after successful delivery
-      await notification.markAsSent();
+      await sendMulticastPushNotification(user.fcmTokens, {
+        title: notification.title,
+        body: notification.message,
+        data: pushData,
+      });
     }
+
+    // Mark as sent after successful delivery
+    await notification.markAsSent();
   } catch (error) {
     logger.error({ err: error }, 'Error sending notification');
   }

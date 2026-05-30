@@ -9,6 +9,7 @@ import {
   Store,
   PersonStanding,
   ArrowRightLeft,
+  Bike,
 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
@@ -158,54 +159,85 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         >
                           Switch Mode
                         </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={async () => {
-                              if (activeRole !== 'consumer') {
-                                await switchRole('consumer');
-                                setShowProfileMenu(false);
-                                navigate('/shop');
-                              }
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                              activeRole === 'consumer'
-                                ? 'text-white'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                            }`}
-                            style={{
-                              backgroundColor:
-                                activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
-                              color: activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
-                            }}
-                          >
-                            <PersonStanding className="w-3.5 h-3.5" />
-                            Buyer
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (activeRole !== 'business_owner') {
-                                await switchRole('business_owner');
-                                setShowProfileMenu(false);
-                                window.location.href = '/dashboard';
-                              }
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                              activeRole === 'business_owner'
-                                ? 'text-white'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                            }`}
-                            style={{
-                              backgroundColor:
-                                activeRole === 'business_owner' ? 'var(--color-solid)' : undefined,
-                              color:
+                        <div className="flex flex-col gap-1.5">
+                          {availableRoles.includes('consumer') && (
+                            <button
+                              onClick={async () => {
+                                if (activeRole !== 'consumer') {
+                                  await switchRole('consumer');
+                                  setShowProfileMenu(false);
+                                  navigate('/shop');
+                                }
+                              }}
+                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                                activeRole === 'consumer'
+                                  ? 'text-white'
+                                  : 'bg-gray-100 hover:bg-gray-200'
+                              }`}
+                              style={{
+                                backgroundColor:
+                                  activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
+                                color:
+                                  activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
+                              }}
+                            >
+                              <PersonStanding className="w-3.5 h-3.5" />
+                              Buyer Mode
+                            </button>
+                          )}
+                          {availableRoles.includes('business_owner') && (
+                            <button
+                              onClick={async () => {
+                                if (activeRole !== 'business_owner') {
+                                  await switchRole('business_owner');
+                                  setShowProfileMenu(false);
+                                  window.location.href = '/dashboard';
+                                }
+                              }}
+                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
                                 activeRole === 'business_owner'
-                                  ? 'white'
-                                  : 'var(--color-textColor)',
-                            }}
-                          >
-                            <Store className="w-3.5 h-3.5" />
-                            Business
-                          </button>
+                                  ? 'text-white'
+                                  : 'bg-gray-100 hover:bg-gray-200'
+                              }`}
+                              style={{
+                                backgroundColor:
+                                  activeRole === 'business_owner'
+                                    ? 'var(--color-solid)'
+                                    : undefined,
+                                color:
+                                  activeRole === 'business_owner'
+                                    ? 'white'
+                                    : 'var(--color-textColor)',
+                              }}
+                            >
+                              <Store className="w-3.5 h-3.5" />
+                              Business Mode
+                            </button>
+                          )}
+                          {availableRoles.includes('rider') && (
+                            <button
+                              onClick={async () => {
+                                if (activeRole !== 'rider') {
+                                  await switchRole('rider');
+                                  setShowProfileMenu(false);
+                                  navigate('/rider-dashboard');
+                                }
+                              }}
+                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                                activeRole === 'rider'
+                                  ? 'text-white'
+                                  : 'bg-gray-100 hover:bg-gray-200'
+                              }`}
+                              style={{
+                                backgroundColor:
+                                  activeRole === 'rider' ? 'var(--color-solid)' : undefined,
+                                color: activeRole === 'rider' ? 'white' : 'var(--color-textColor)',
+                              }}
+                            >
+                              <Bike className="w-3.5 h-3.5" />
+                              Rider Mode
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -396,45 +428,71 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                   Switch Mode
                 </p>
                 <div className="flex flex-col gap-2">
-                  <button
-                    onClick={async () => {
-                      if (activeRole !== 'consumer') {
-                        await switchRole('consumer');
-                        setOpen(false);
-                        navigate('/shop');
-                      }
-                    }}
-                    className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      activeRole === 'consumer' ? 'text-white' : 'bg-gray-100'
-                    }`}
-                    style={{
-                      backgroundColor: activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
-                      color: activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
-                    }}
-                  >
-                    <PersonStanding className="w-4 h-4" />
-                    Buyer Mode
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (activeRole !== 'business_owner') {
-                        await switchRole('business_owner');
-                        setOpen(false);
-                        window.location.href = '/dashboard';
-                      }
-                    }}
-                    className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      activeRole === 'business_owner' ? 'text-white' : 'bg-gray-100'
-                    }`}
-                    style={{
-                      backgroundColor:
-                        activeRole === 'business_owner' ? 'var(--color-solid)' : undefined,
-                      color: activeRole === 'business_owner' ? 'white' : 'var(--color-textColor)',
-                    }}
-                  >
-                    <Store className="w-4 h-4" />
-                    Business Mode
-                  </button>
+                  {availableRoles.includes('consumer') && (
+                    <button
+                      onClick={async () => {
+                        if (activeRole !== 'consumer') {
+                          await switchRole('consumer');
+                          setOpen(false);
+                          navigate('/shop');
+                        }
+                      }}
+                      className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        activeRole === 'consumer' ? 'text-white' : 'bg-gray-100'
+                      }`}
+                      style={{
+                        backgroundColor:
+                          activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
+                        color: activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
+                      }}
+                    >
+                      <PersonStanding className="w-4 h-4" />
+                      Buyer Mode
+                    </button>
+                  )}
+                  {availableRoles.includes('business_owner') && (
+                    <button
+                      onClick={async () => {
+                        if (activeRole !== 'business_owner') {
+                          await switchRole('business_owner');
+                          setOpen(false);
+                          window.location.href = '/dashboard';
+                        }
+                      }}
+                      className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        activeRole === 'business_owner' ? 'text-white' : 'bg-gray-100'
+                      }`}
+                      style={{
+                        backgroundColor:
+                          activeRole === 'business_owner' ? 'var(--color-solid)' : undefined,
+                        color: activeRole === 'business_owner' ? 'white' : 'var(--color-textColor)',
+                      }}
+                    >
+                      <Store className="w-4 h-4" />
+                      Business Mode
+                    </button>
+                  )}
+                  {availableRoles.includes('rider') && (
+                    <button
+                      onClick={async () => {
+                        if (activeRole !== 'rider') {
+                          await switchRole('rider');
+                          setOpen(false);
+                          navigate('/rider-dashboard');
+                        }
+                      }}
+                      className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        activeRole === 'rider' ? 'text-white' : 'bg-gray-100'
+                      }`}
+                      style={{
+                        backgroundColor: activeRole === 'rider' ? 'var(--color-solid)' : undefined,
+                        color: activeRole === 'rider' ? 'white' : 'var(--color-textColor)',
+                      }}
+                    >
+                      <Bike className="w-4 h-4" />
+                      Rider Mode
+                    </button>
+                  )}
                 </div>
               </div>
             )}

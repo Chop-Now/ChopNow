@@ -81,7 +81,7 @@ class AppEndpoints {
 
   // ── Analytics ────────────────────────────────────────────────────────────
   static const String analytics = '/analytics';
-  static const String userImpact = '/analytics/user-impact';
+  static const String userImpact = '/analytics/impact/my';
   static const String businessAnalytics = '/analytics/business';
 
   // ── Payouts ──────────────────────────────────────────────────────────────
@@ -89,4 +89,14 @@ class AppEndpoints {
 
   // ── Settings ─────────────────────────────────────────────────────────────
   static const String settings = '/settings';
+
+  // ── FCM / Device Tokens ───────────────────────────────────────────────────
+  static const String fcmToken = '/users/fcm-token';
+
+  // ── Rider ─────────────────────────────────────────────────────────────────
+  static const String riderOrders = '/orders/rider';
+  static const String riderStats = '/rider/stats';
+  static const String riderEarnings = '/rider/earnings';
+  static String riderAcceptOrder(String id) => '/orders/$id/accept';
+  static String riderCompleteDelivery(String id) => '/orders/$id/complete';
 }

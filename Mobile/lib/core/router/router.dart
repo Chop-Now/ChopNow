@@ -35,6 +35,9 @@ import '../../features/business/create_business_screen.dart';
 import '../../features/rider/rider_shell.dart';
 import '../../features/rider/rider_dashboard_screen.dart';
 import '../../features/rider/active_delivery_screen.dart';
+import '../../features/rider/rider_earnings_screen.dart';
+import '../../features/rider/rider_profile_screen.dart';
+import '../../features/rider/become_rider_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/home/browse_screen.dart';
 import '../../features/profile/settings_screen.dart';
@@ -82,6 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── System ──
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+      GoRoute(path: '/become-rider', builder: (_, __) => const BecomeRiderScreen()),
 
       // ── Auth ──
       GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
@@ -158,6 +162,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => RiderShell(child: child),
         routes: [
           GoRoute(path: '/rider/dashboard', builder: (_, __) => const RiderDashboardScreen()),
+          GoRoute(path: '/rider/earnings', builder: (_, __) => const RiderEarningsScreen()),
+          GoRoute(path: '/rider/profile', builder: (_, __) => const RiderProfileScreen()),
           GoRoute(
             path: '/rider/deliveries/:id',
             builder: (_, state) => ActiveDeliveryScreen(orderId: state.pathParameters['id']!),
