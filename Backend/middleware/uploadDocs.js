@@ -4,16 +4,18 @@ const path = require('path');
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 
-// File filter to accept images and PDFs
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const allowedExtensions = /jpeg|jpg|png|gif|webp|pdf|doc|docx|txt/i;
+  const allowedMimeTypes =
+    /image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain/i;
+
+  const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedMimeTypes.test(file.mimetype);
 
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images and PDF files are allowed'));
+    cb(new Error('Only images, PDFs, Word documents, and text files are allowed'));
   }
 };
 

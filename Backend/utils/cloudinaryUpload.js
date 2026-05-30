@@ -8,14 +8,14 @@ const streamifier = require('streamifier');
  * @param {String} resourceType - Type of resource (image, video, etc.)
  * @returns {Promise} - Cloudinary upload result
  */
-const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'image') => {
+const uploadToCloudinary = (buffer, folder = 'chopnow', resourceType = 'auto') => {
   return new Promise((resolve, reject) => {
     const uploadOptions = {
       folder: folder,
-      resource_type: resourceType === 'pdf' ? 'auto' : resourceType,
+      resource_type: resourceType,
     };
 
-    // Only apply image transformations if it's an image
+    // Only apply image transformations if it's explicitly an image
     if (resourceType === 'image') {
       uploadOptions.transformation = [
         { width: 1000, height: 1000, crop: 'limit' },

@@ -12,6 +12,7 @@ import {
   Store,
   User,
   ExternalLink,
+  Bike,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAdminMode } from '../../context/AdminModeContext';
@@ -120,6 +121,15 @@ const websiteAdminMenuItems = [
     ],
   },
   {
+    id: 'riders',
+    icon: <Bike className="w-5 h-5 text-slate-400" />,
+    label: 'Riders',
+    submenu: [
+      { id: 'all-riders', label: 'All Riders' },
+      { id: 'rider-approval', label: 'Rider Approval' },
+    ],
+  },
+  {
     id: 'disputes',
     icon: <ServerCrash className="w-5 h-5 text-slate-400" />,
     label: 'Disputes',
@@ -145,7 +155,6 @@ const Sidebar = ({ collapsed, onToggle, currentPage, onPageChange, isAdminDashbo
 
   // For admin dashboard (/admin), always use website admin menu items
   // For vendor dashboard (/dashboard), always use shop admin menu items
-  const currentUserRole = user?.activeRole || user?.role;
   const menuItems = isAdminDashboard ? websiteAdminMenuItems : shopAdminMenuItems;
 
   const toggleMenu = (menuId) => {

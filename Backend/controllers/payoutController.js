@@ -1,12 +1,13 @@
 const Payout = require('../models/Payout');
 const Business = require('../models/Business');
 const PlatformSettings = require('../models/PlatformSettings');
+const User = require('../models/User');
 const logger = require('../utils/logger');
 
 /**
  * @desc    Request a payout
  * @route   POST /api/payouts/request
- * @access  Private (Business Owner/Manager)
+ * @access  Private (Business Owner/Manager/Rider)
  */
 const requestPayout = async (req, res) => {
   const { amount, method } = req.body;
@@ -23,30 +24,57 @@ const requestPayout = async (req, res) => {
       });
     }
 
-    // Atomic balance deduction - prevents race condition
-    const business = await Business.findOneAndUpdate(
-      { owner: req.user._id, 'stats.balance': { $gte: amount } },
-      { $inc: { 'stats.balance': -amount } },
-      { new: true }
-    );
+    if (req.user.activeRole === 'rider') {
+      // Atomic balance deduction from rider's user document
+      const user = await User.findOneAndUpdate(
+        { _id: req.user._id, 'stats.riderBalance': { $gte: amount } },
+        { $inc: { 'stats.riderBalance': -amount } },
+        { new: true }
+      );
 
-    if (!business) {
-      // Check if business exists but has insufficient balance
-      const exists = await Business.findOne({ owner: req.user._id }).lean();
-      if (!exists) {
-        return res.status(404).json({ message: 'Business not found' });
+      if (!user) {
+        // Check if user exists but has insufficient balance
+        const exists = await User.findById(req.user._id).lean();
+        if (!exists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        return res.status(400).json({ message: 'Insufficient balance' });
       }
-      return res.status(400).json({ message: 'Insufficient balance' });
+
+      const payout = await Payout.create({
+        user: user._id,
+        amount,
+        method,
+        status: 'requested',
+      });
+
+      return res.status(201).json(payout);
+    } else {
+      // Atomic balance deduction - prevents race condition
+      const business = await Business.findOneAndUpdate(
+        { owner: req.user._id, 'stats.balance': { $gte: amount } },
+        { $inc: { 'stats.balance': -amount } },
+        { new: true }
+      );
+
+      if (!business) {
+        // Check if business exists but has insufficient balance
+        const exists = await Business.findOne({ owner: req.user._id }).lean();
+        if (!exists) {
+          return res.status(404).json({ message: 'Business not found' });
+        }
+        return res.status(400).json({ message: 'Insufficient balance' });
+      }
+
+      const payout = await Payout.create({
+        business: business._id,
+        amount,
+        method,
+        status: 'requested',
+      });
+
+      return res.status(201).json(payout);
     }
-
-    const payout = await Payout.create({
-      business: business._id,
-      amount,
-      method,
-      status: 'requested',
-    });
-
-    res.status(201).json(payout);
   } catch (error) {
     logger.error({ err: error }, 'Payout request failed');
     res.status(500).json({
@@ -62,24 +90,32 @@ const requestPayout = async (req, res) => {
  */
 const getMyPayouts = async (req, res) => {
   try {
-    const business = await Business.findOne({ owner: req.user._id }).select('_id').lean();
-    if (!business) {
-      return res.status(404).json({ message: 'Business not found' });
-    }
-
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
-    const [payouts, total] = await Promise.all([
-      Payout.find({ business: business._id })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Payout.countDocuments({ business: business._id }),
-    ]);
-    res.json({ payouts, currentPage: page, totalPages: Math.ceil(total / limit), total });
+    if (req.user.activeRole === 'rider') {
+      const [payouts, total] = await Promise.all([
+        Payout.find({ user: req.user._id }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Payout.countDocuments({ user: req.user._id }),
+      ]);
+      return res.json({ payouts, currentPage: page, totalPages: Math.ceil(total / limit), total });
+    } else {
+      const business = await Business.findOne({ owner: req.user._id }).select('_id').lean();
+      if (!business) {
+        return res.status(404).json({ message: 'Business not found' });
+      }
+
+      const [payouts, total] = await Promise.all([
+        Payout.find({ business: business._id })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Payout.countDocuments({ business: business._id }),
+      ]);
+      return res.json({ payouts, currentPage: page, totalPages: Math.ceil(total / limit), total });
+    }
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -108,6 +144,7 @@ const getAdminPayouts = async (req, res) => {
     const [payouts, total] = await Promise.all([
       Payout.find(query)
         .populate('business', 'name contact stats payoutInfo')
+        .populate('user', 'firstName lastName email phone stats')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -149,9 +186,15 @@ const updatePayoutStatus = async (req, res) => {
       payout.processedBy = req.user._id;
     } else if (status === 'failed' || status === 'cancelled') {
       // Revert balance atomically if payout failed
-      await Business.findByIdAndUpdate(payout.business, {
-        $inc: { 'stats.balance': payout.amount },
-      });
+      if (payout.user) {
+        await User.findByIdAndUpdate(payout.user, {
+          $inc: { 'stats.riderBalance': payout.amount },
+        });
+      } else if (payout.business) {
+        await Business.findByIdAndUpdate(payout.business, {
+          $inc: { 'stats.balance': payout.amount },
+        });
+      }
     }
 
     await payout.save();

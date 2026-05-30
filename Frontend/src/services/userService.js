@@ -123,6 +123,44 @@ const userService = {
       throw error.response?.data || error;
     }
   },
+
+  // Apply for rider role
+  applyRider: async (formData) => {
+    try {
+      const response = await api.post('/api/users/apply-rider', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get riders for admin approval
+  getRiders: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams(filters);
+      const response = await api.get(`/api/users/admin/riders?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Review rider application (approve or reject)
+  reviewRider: async (id, status, rejectionReason) => {
+    try {
+      const response = await api.post(`/api/users/admin/riders/${id}/review`, {
+        status,
+        rejectionReason,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default userService;

@@ -34,9 +34,13 @@ const {
   refreshAccessToken,
   registerFcmToken,
   deleteFcmToken,
+  applyRider,
+  getRidersForAdmin,
+  reviewRider,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const uploadDocs = require('../middleware/uploadDocs');
 const {
   validateRegister,
   validateLogin,
@@ -142,6 +146,15 @@ router.post('/avatar', protect, upload.single('avatar'), uploadAvatar);
 // Role management routes
 router.post('/switch-role', protect, switchRole);
 router.post('/add-role', protect, addRole);
+router.post(
+  '/apply-rider',
+  protect,
+  uploadDocs.fields([
+    { name: 'vehiclePhoto', maxCount: 1 },
+    { name: 'nationalIdPhoto', maxCount: 1 },
+  ]),
+  applyRider
+);
 
 // FCM device tokens
 router.post('/fcm-token', protect, registerFcmToken);
@@ -160,6 +173,8 @@ router.delete('/addresses/:addressId', protect, deleteAddress);
 
 // Admin-only: list all users
 router.get('/', protect, authorize('admin'), getUsersForAdmin);
+router.get('/admin/riders', protect, authorize('admin'), getRidersForAdmin);
+router.post('/admin/riders/:id/review', protect, authorize('admin'), reviewRider);
 
 // Admin-only: user management (parameterized routes AFTER specific routes)
 router.put('/:id', protect, authorize('admin'), updateUserByAdmin);
