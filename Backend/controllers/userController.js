@@ -1570,11 +1570,9 @@ const reviewRider = async (req, res) => {
     }
 
     if (user.riderStatus !== 'pending') {
-      return res
-        .status(400)
-        .json({
-          message: `Rider application is not pending (current status: ${user.riderStatus})`,
-        });
+      return res.status(400).json({
+        message: `Rider application is not pending (current status: ${user.riderStatus})`,
+      });
     }
 
     user.riderStatus = status;
