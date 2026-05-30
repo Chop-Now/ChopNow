@@ -35,6 +35,7 @@ const logger = require('./utils/logger');
 const metrics = require('./utils/metrics');
 
 const app = express();
+app.set('trust proxy', 1); // Trust the first proxy (Render/Heroku reverse proxy)
 
 // --- Environment validation ---
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
