@@ -15,6 +15,59 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../services';
 import toast from 'react-hot-toast';
+import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import socketService from '../services/socket';
+
+// Helper to create beautiful, inline SVG icons for Leaflet
+const createMarkerIcon = (color, svgPath) => {
+  return L.divIcon({
+    html: `
+      <div style="
+        background-color: ${color};
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      ">
+        ${svgPath}
+      </div>
+    `,
+    className: 'custom-leaflet-icon',
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  });
+};
+
+const restaurantSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 0v1a3 3 0 0 0 6 0v-1m0 0v1a3 3 0 0 0 6 0v-1"/><path d="M4 21V10m16 11V10"/><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>`;
+const customerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
+const riderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6h1a2 2 0 0 1 2 2v2"/><path d="M12 17.5V14l-3-3-3 1"/><path d="m14 17.5-1.5-4h-3"/></svg>`;
+
+const vendorIcon = createMarkerIcon('#16a34a', restaurantSvg);
+const homeIcon = createMarkerIcon('#2563eb', customerSvg);
+const deliveryIcon = createMarkerIcon('#ea580c', riderSvg);
+
+// Component to dynamically fit map bounds to pickup, dropoff, and rider locations
+const ChangeMapBounds = ({ pickup, dropoff, rider }) => {
+  const map = useMap();
+  useEffect(() => {
+    const points = [];
+    if (pickup) points.push(pickup);
+    if (dropoff) points.push(dropoff);
+    if (rider) points.push([rider.lat, rider.lng]);
+
+    if (points.length > 0) {
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [pickup, dropoff, rider, map]);
+  return null;
+};
 
 const MyOrders = () => {
   const navigate = useNavigate();
@@ -30,6 +83,94 @@ const MyOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const itemsPerPage = 5;
+
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [fetchingDetails, setFetchingDetails] = useState(false);
+  const [riderLocation, setRiderLocation] = useState(null);
+
+  const handleViewDetails = async (order) => {
+    setSelectedOrder(order);
+    setOrderDetails(null);
+    setFetchingDetails(true);
+    try {
+      const data = await orderService.getOrderById(order.orderId);
+      setOrderDetails(data);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      toast.error('Failed to load live delivery tracking information.');
+    } finally {
+      setFetchingDetails(false);
+    }
+  };
+
+  const isValidCoords = (coords) => {
+    return Array.isArray(coords) && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0;
+  };
+
+  const getPickupCoords = () => {
+    if (orderDetails?.delivery?.pickupLocation?.location?.coordinates) {
+      const coords = orderDetails.delivery.pickupLocation.location.coordinates;
+      if (isValidCoords(coords)) return [coords[1], coords[0]];
+    }
+    if (orderDetails?.business?.location?.coordinates) {
+      const coords = orderDetails.business.location.coordinates;
+      if (isValidCoords(coords)) return [coords[1], coords[0]];
+    }
+    return null;
+  };
+
+  const getDropoffCoords = () => {
+    if (orderDetails?.delivery?.dropoffLocation?.location?.coordinates) {
+      const coords = orderDetails.delivery.dropoffLocation.location.coordinates;
+      if (isValidCoords(coords)) return [coords[1], coords[0]];
+    }
+    if (orderDetails?.deliveryDetails?.address?.location?.coordinates) {
+      const coords = orderDetails.deliveryDetails.address.location.coordinates;
+      if (isValidCoords(coords)) return [coords[1], coords[0]];
+    }
+    return null;
+  };
+
+  // Connection management for socket
+  useEffect(() => {
+    if (selectedOrder && selectedOrder.type === 'Delivery' && orderDetails) {
+      const socket = socketService.connect();
+      if (socket) {
+        socketService.trackOrder(selectedOrder.orderId);
+
+        if (orderDetails.delivery?.currentLocation?.coordinates) {
+          const [lng, lat] = orderDetails.delivery.currentLocation.coordinates;
+          if (lat !== 0 && lng !== 0) {
+            setRiderLocation({ lat, lng });
+          }
+        } else {
+          setRiderLocation(null);
+        }
+
+        const handleLocationUpdate = (data) => {
+          console.log('Rider location updated in Web client:', data);
+          if (data.lat && data.lng) {
+            setRiderLocation({ lat: data.lat, lng: data.lng });
+          }
+        };
+
+        socketService.on('location_update', handleLocationUpdate);
+
+        return () => {
+          socketService.off('location_update', handleLocationUpdate);
+        };
+      }
+    } else {
+      setRiderLocation(null);
+    }
+  }, [selectedOrder, orderDetails]);
+
+  // Disconnect socket on unmount
+  useEffect(() => {
+    return () => {
+      socketService.disconnect();
+    };
+  }, []);
 
   // Transform backend order format to frontend format
   const transformOrder = (order) => {
@@ -434,7 +575,7 @@ const MyOrders = () => {
                           </div>
                           <div className="text-right">
                             <button
-                              onClick={() => setSelectedOrder(order)}
+                              onClick={() => handleViewDetails(order)}
                               className="text-green-600 hover:text-green-700 text-sm font-medium underline cursor-pointer"
                             >
                               View Details
@@ -456,7 +597,7 @@ const MyOrders = () => {
                       return (
                         <div
                           key={index}
-                          onClick={() => setSelectedOrder(order)}
+                          onClick={() => handleViewDetails(order)}
                           className="border border-gray-200 rounded-lg p-4 bg-white active:bg-gray-50 cursor-pointer"
                         >
                           <div className="flex items-center gap-3 mb-3">
@@ -657,9 +798,154 @@ const MyOrders = () => {
                 </div>
 
                 {selectedOrder.type === 'Delivery' && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Delivery Information</h4>
-                    <p className="text-sm text-gray-600">Address details would be displayed here</p>
+                  <div className="mt-6 border-t pt-6">
+                    <h4 className="font-semibold text-lg mb-3 text-gray-800">
+                      Delivery Information
+                    </h4>
+
+                    {fetchingDetails ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <span className="text-sm text-gray-600">
+                          Loading live tracking details...
+                        </span>
+                      </div>
+                    ) : orderDetails ? (
+                      <div className="space-y-4">
+                        {/* Rider details card if assigned */}
+                        {orderDetails.delivery?.rider ? (
+                          <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
+                                {orderDetails.delivery.riderName?.charAt(0) || 'R'}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm text-gray-900">
+                                  {orderDetails.delivery.riderName || 'Assigned Rider'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {orderDetails.delivery.status === 'assigned' &&
+                                    'Rider heading to restaurant'}
+                                  {orderDetails.delivery.status === 'picked_up' &&
+                                    'Rider picked up order'}
+                                  {orderDetails.delivery.status === 'in_transit' &&
+                                    'Rider on the way to you!'}
+                                  {orderDetails.delivery.status === 'delivered' &&
+                                    'Order delivered successfully'}
+                                </p>
+                              </div>
+                            </div>
+                            {orderDetails.delivery.riderPhone && (
+                              <a
+                                href={`tel:${orderDetails.delivery.riderPhone}`}
+                                className="bg-white border border-green-200 text-green-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-50 transition-colors shadow-sm"
+                              >
+                                Call Rider
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Assigning a delivery agent...</span>
+                            <span className="text-xs bg-yellow-100 text-yellow-800 font-semibold px-2.5 py-0.5 rounded-full animate-pulse">
+                              Pending
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Address */}
+                        <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                          <p className="text-gray-500 font-medium text-xs mb-1">DELIVERY ADDRESS</p>
+                          <p className="font-semibold text-gray-800">
+                            {orderDetails.delivery?.dropoffLocation?.address ||
+                              (orderDetails.deliveryDetails?.address
+                                ? `${orderDetails.deliveryDetails.address.street || ''}, ${orderDetails.deliveryDetails.address.city || ''}`
+                                : 'N/A')}
+                          </p>
+                          {orderDetails.delivery?.dropoffLocation?.instructions && (
+                            <p className="text-xs text-gray-500 mt-1 italic">
+                              Instructions: "{orderDetails.delivery.dropoffLocation.instructions}"
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Real-time Tracking Map */}
+                        {getPickupCoords() && getDropoffCoords() ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-xs text-gray-500">
+                              <span className="font-medium text-gray-700">Live Delivery Route</span>
+                              {riderLocation && (
+                                <span className="flex items-center text-orange-600 font-semibold gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping"></span>
+                                  Live GPS Connected
+                                </span>
+                              )}
+                            </div>
+                            <div className="w-full h-80 rounded-xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
+                              <MapContainer
+                                center={getPickupCoords()}
+                                zoom={14}
+                                style={{ height: '100%', width: '100%' }}
+                                scrollWheelZoom={false}
+                              >
+                                <TileLayer
+                                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                />
+
+                                {/* Pickup/Restaurant Marker */}
+                                <Marker position={getPickupCoords()} icon={vendorIcon}>
+                                  <Popup>
+                                    <div className="text-xs font-semibold">
+                                      🏪{' '}
+                                      {orderDetails.delivery?.pickupLocation?.businessName ||
+                                        orderDetails.business?.name ||
+                                        'Restaurant'}
+                                    </div>
+                                  </Popup>
+                                </Marker>
+
+                                {/* Dropoff/Customer Marker */}
+                                <Marker position={getDropoffCoords()} icon={homeIcon}>
+                                  <Popup>
+                                    <div className="text-xs font-semibold">
+                                      🏠 Delivery Destination
+                                    </div>
+                                  </Popup>
+                                </Marker>
+
+                                {/* Rider Live Location Marker */}
+                                {riderLocation && (
+                                  <Marker
+                                    position={[riderLocation.lat, riderLocation.lng]}
+                                    icon={deliveryIcon}
+                                  >
+                                    <Popup>
+                                      <div className="text-xs font-semibold">🚴 Rider (Live)</div>
+                                    </Popup>
+                                  </Marker>
+                                )}
+
+                                <ChangeMapBounds
+                                  pickup={getPickupCoords()}
+                                  dropoff={getDropoffCoords()}
+                                  rider={riderLocation}
+                                />
+                              </MapContainer>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-800">
+                            Location coordinates are not available for this delivery. Live map
+                            tracking is disabled.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        Failed to load detailed delivery information.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/animations/scale_tap.dart';
 
@@ -12,6 +13,13 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    final asyncImpact = ref.watch(userImpactProvider);
+    final mealsRescued = asyncImpact.value?['mealsRescued'] ?? asyncImpact.value?['totalMeals'] ?? 0;
+    final co2SavedRaw = asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
+    final co2Saved = co2SavedRaw is num ? co2SavedRaw.toDouble() : 0.0;
+    final co2String = co2Saved >= 1.0 ? '${co2Saved.toStringAsFixed(1)} kg' : '${(co2Saved * 1000).toStringAsFixed(0)}g';
+    final moneySavedRaw = asyncImpact.value?['moneySaved'] ?? asyncImpact.value?['totalSavings'] ?? 0;
+    final moneySaved = moneySavedRaw is num ? moneySavedRaw.toDouble() : 0.0;
     final user = auth is AuthAuthenticated ? auth.user : null;
     final name = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
     final email = user?.email ?? '';
@@ -116,13 +124,13 @@ class ProfileScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Expanded(child: _StatItem(value: '12', label: 'Rescues')),
-                            _Divider(),
-                            Expanded(child: _StatItem(value: '8.4 kg', label: 'CO₂ Saved')),
-                            _Divider(),
-                            Expanded(child: _StatItem(value: 'RWF 14K', label: 'Saved')),
+                            Expanded(child: _StatItem(value: '$mealsRescued', label: 'Rescues')),
+                            const _Divider(),
+                            Expanded(child: _StatItem(value: co2String, label: 'CO₂ Saved')),
+                            const _Divider(),
+                            Expanded(child: _StatItem(value: moneySaved >= 1000 ? 'RWF ${(moneySaved / 1000).toStringAsFixed(0)}K' : 'RWF ${moneySaved.toStringAsFixed(0)}', label: 'Saved')),
                           ],
                         ),
                       ),
@@ -162,8 +170,24 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle: 'Current: ${_roleLabel(role)}',
                       onTap: () => _showRoleSwitcher(context, ref, user, role),
                     ),
+                  if (user != null && !user.isBusinessOwner)
+                    _Tile(
+                      icon: Icons.storefront_rounded,
+                      label: 'Sell on ChopNow',
+                      subtitle: 'Register your food business',
+                      iconColor: AppColors.primary,
+                      onTap: () => context.push('/business/create'),
+                    ),
+                  if (user != null && !user.isRider)
+                    _Tile(
+                      icon: Icons.directions_bike_rounded,
+                      label: 'Earn with ChopNow',
+                      subtitle: 'Register as a delivery partner',
+                      iconColor: AppColors.accent,
+                      onTap: () => context.push('/become-rider'),
+                    ),
                   _Tile(icon: Icons.settings_outlined, label: 'Settings',
-                      subtitle: 'Notifications, privacy & more', onTap: () => context.push('/settings')),
+                      subtitle: 'Notifications, privacy & more', onTap: () => context.push('/profile/settings')),
                 ]),
                 const SizedBox(height: 12),
 

@@ -9,6 +9,7 @@ class Listing {
   final String? category;
   final String? status;
   final DateTime? expiresAt;
+  final DateTime? availableUntil;
   final Map<String, dynamic>? business;
   final double? distance;
   final double? rating;
@@ -27,6 +28,7 @@ class Listing {
     this.category,
     this.status,
     this.expiresAt,
+    this.availableUntil,
     this.business,
     this.distance,
     this.rating,
@@ -36,6 +38,12 @@ class Listing {
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
+    final parsedAvailableUntil = json['availableUntil'] != null
+        ? DateTime.tryParse(json['availableUntil'].toString())
+        : (json['timeWindow'] != null && json['timeWindow']['availableUntil'] != null
+            ? DateTime.tryParse(json['timeWindow']['availableUntil'].toString())
+            : null);
+
     return Listing(
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? json['name'] ?? '',
@@ -49,7 +57,8 @@ class Listing {
       status: json['status'],
       expiresAt: json['expiresAt'] != null
           ? DateTime.tryParse(json['expiresAt'].toString())
-          : null,
+          : parsedAvailableUntil,
+      availableUntil: parsedAvailableUntil,
       business: json['business'] as Map<String, dynamic>?,
       distance: (json['distance'] as num?)?.toDouble(),
       rating: (json['rating'] as num?)?.toDouble(),

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2, Bike, Store } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { authService } from '../services';
 import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
 
 const MyProfile = () => {
+  const { addBusinessRole, availableRoles } = useAppContext();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -250,6 +252,62 @@ const MyProfile = () => {
               <h1 className="text-3xl font-bold text-textColor">Account</h1>
               <p className="text-sm text-gray-50">Update your profile and personal details here</p>
             </div>
+
+            {/* Account Upgrades Section */}
+            {(!availableRoles.includes('rider') || !availableRoles.includes('business_owner')) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                {!availableRoles.includes('rider') && (
+                  <div className="bg-amber-50/40 border border-amber-200 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-amber-700 font-bold">
+                        <Bike className="w-5 h-5" />
+                        <span className="text-xs uppercase tracking-wider">Deliver & Earn</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800">
+                        Become a Delivery Partner
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Join the ChopNow delivery fleet. Pick up food on your bicycle, motorcycle,
+                        or car and make extra cash on your own schedule.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/rider-verification')}
+                      className="w-full mt-2 py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
+                    >
+                      Register as Rider
+                    </button>
+                  </div>
+                )}
+
+                {!availableRoles.includes('business_owner') && (
+                  <div className="bg-emerald-50/40 border border-emerald-200 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                        <Store className="w-5 h-5" />
+                        <span className="text-xs uppercase tracking-wider">Sell Surplus</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800">Register as a Vendor</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        List your bakery, cafe, or restaurant surplus meals on ChopNow. Reduce food
+                        waste and earn extra revenue on food you would have thrown away.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await addBusinessRole(true);
+                          navigate('/dashboard');
+                        } catch {}
+                      }}
+                      className="w-full mt-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
+                    >
+                      Register Business
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Profile Section */}
             <div className="flex w-full flex-col items-start gap-6">

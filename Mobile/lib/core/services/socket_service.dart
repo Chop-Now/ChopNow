@@ -11,9 +11,13 @@ class SocketService {
   io.Socket? _socket;
   final _orderStatusController = StreamController<Map<String, dynamic>>.broadcast();
   final _newOrderController = StreamController<Map<String, dynamic>>.broadcast();
+  final _locationController = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get orderStatusStream => _orderStatusController.stream;
   Stream<Map<String, dynamic>> get newOrderStream => _newOrderController.stream;
+  Stream<Map<String, dynamic>> get locationStream => _locationController.stream;
+
+  bool get isConnected => _socket != null && _socket!.connected;
 
   void connect(String token) {
     if (_socket != null && _socket!.connected) return;
@@ -53,9 +57,33 @@ class SocketService {
         _newOrderController.add(Map<String, dynamic>.from(data));
       });
 
+      // Listen for live rider location updates (for Consumers tracking their delivery)
+      _socket!.on('location_update', (data) {
+        debugPrint('Live rider location update received via Socket!');
+        _locationController.add(Map<String, dynamic>.from(data));
+      });
+
     } catch (e) {
       debugPrint('Socket connection error: $e');
     }
+  }
+
+  /// Subscribe consumer/rider to a specific order's tracking updates room
+  void trackOrder(String orderId) {
+    if (_socket == null || !_socket!.connected) return;
+    debugPrint('Emitting track_order for order: $orderId');
+    _socket!.emit('track_order', orderId);
+  }
+
+  /// Emit location update from rider to tracking room
+  void updateRiderLocation(String orderId, double lat, double lng) {
+    if (_socket == null || !_socket!.connected) return;
+    debugPrint('Emitting rider_location_update: $lat, $lng');
+    _socket!.emit('rider_location_update', {
+      'orderId': orderId,
+      'lat': lat,
+      'lng': lng,
+    });
   }
 
   void disconnect() {

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../../core/services/socket_service.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
@@ -26,6 +31,9 @@ class OrderTrackingScreen extends ConsumerStatefulWidget {
 class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
+  StreamSubscription<Map<String, dynamic>>? _locationSubscription;
+  LatLng? _riderPosition;
+  bool _socketInitialized = false;
 
   static const _steps = [
     _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
@@ -44,8 +52,132 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
 
   @override
   void dispose() {
+    _locationSubscription?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
+  }
+
+  void _setupSocketTracking() {
+    if (_socketInitialized) return;
+    final auth = ref.read(authProvider);
+    if (auth is AuthAuthenticated) {
+      _socketInitialized = true;
+      final socketService = SocketService();
+      socketService.connect(auth.token);
+      socketService.trackOrder(widget.orderId);
+
+      _locationSubscription = socketService.locationStream.listen((data) {
+        if (!mounted) return;
+        debugPrint("Live tracking coordinate received in consumer screen: $data");
+        if (data['orderId'] == widget.orderId || data['riderId'] != null) {
+          setState(() {
+            _riderPosition = LatLng(
+              (data['lat'] as num).toDouble(),
+              (data['lng'] as num).toDouble(),
+            );
+          });
+        }
+      });
+    }
+  }
+
+  LatLng? _parseCoords(dynamic locationData) {
+    if (locationData == null) return null;
+    if (locationData is Map && locationData['location'] is Map) {
+      // Sometimes it is nested inside location object
+      return _parseCoords(locationData['location']);
+    }
+    if (locationData is Map && locationData['coordinates'] is List) {
+      final list = locationData['coordinates'] as List;
+      if (list.length >= 2) {
+        return LatLng(
+          (list[1] as num).toDouble(),
+          (list[0] as num).toDouble(),
+        );
+      }
+    }
+    return null;
+  }
+
+  Widget _buildMapCard(Map<String, dynamic> order, Map<String, dynamic> delivery) {
+    final pickup = delivery['pickupLocation'] as Map<String, dynamic>?;
+    final dropoff = delivery['dropoffLocation'] as Map<String, dynamic>?;
+
+    final pickupCoords = _parseCoords(pickup);
+    final dropoffCoords = _parseCoords(dropoff);
+    final currentCoords = _riderPosition ?? _parseCoords(delivery);
+
+    final markers = <Marker>[];
+    
+    if (pickupCoords != null) {
+      markers.add(Marker(
+        point: pickupCoords,
+        width: 40,
+        height: 40,
+        child: Container(
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+          child: const Center(child: Text('🏪', style: TextStyle(fontSize: 16))),
+        ),
+      ));
+    }
+
+    if (dropoffCoords != null) {
+      markers.add(Marker(
+        point: dropoffCoords,
+        width: 40,
+        height: 40,
+        child: Container(
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+          child: const Center(child: Text('🏠', style: TextStyle(fontSize: 16))),
+        ),
+      ));
+    }
+
+    if (currentCoords != null) {
+      markers.add(Marker(
+        point: currentCoords,
+        width: 40,
+        height: 40,
+        child: Container(
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 6)]),
+          child: const Center(child: Text('🏍️', style: TextStyle(fontSize: 18))),
+        ),
+      ));
+    }
+
+    if (pickupCoords == null && dropoffCoords == null) {
+      return const SizedBox.shrink();
+    }
+
+    final initialCenter = currentCoords ?? pickupCoords ?? dropoffCoords!;
+
+    return Container(
+      height: 220,
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: FlutterMap(
+        options: MapOptions(
+          initialCenter: initialCenter,
+          initialZoom: 14.0,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+          ),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            subdomains: const ['a', 'b', 'c', 'd'],
+            userAgentPackageName: 'com.chopnow.app',
+          ),
+          MarkerLayer(markers: markers),
+        ],
+      ),
+    );
   }
 
   @override
@@ -87,6 +219,14 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
           final status = order['status']?.toString() ?? 'pending';
           final currentStep = _steps.indexWhere((s) => s.key == status);
           final isActive = status != 'completed' && status != 'cancelled';
+          final isDelivery = order['fulfillmentType']?.toString().toLowerCase() == 'delivery';
+          final delivery = order['delivery'] as Map<String, dynamic>?;
+
+          // Enable live location socket tracking for active delivery statuses
+          if (isDelivery && delivery != null && 
+              (status == 'out_for_delivery' || status == 'delivering' || status == 'picked_up' || status == 'in_transit')) {
+            _setupSocketTracking();
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -144,6 +284,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // ── Live Rider Map Tracking ──
+                if (isDelivery && delivery != null && 
+                    (status == 'out_for_delivery' || status == 'delivering' || status == 'picked_up' || status == 'in_transit'))
+                  _buildMapCard(order, delivery),
                 const SizedBox(height: 20),
 
                 // ── Pickup Code ──

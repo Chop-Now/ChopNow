@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
@@ -52,6 +53,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final auth = ref.watch(authProvider);
     final user = auth is AuthAuthenticated ? auth.user : null;
     final selectedCat = ref.watch(selectedCategoryProvider);
+    final asyncImpact = ref.watch(userImpactProvider);
+    final mealsRescued = asyncImpact.value?['mealsRescued'] ?? asyncImpact.value?['totalMeals'] ?? 0;
+    final co2SavedRaw = asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
+    final co2Saved = co2SavedRaw is num ? co2SavedRaw.toDouble() : 0.0;
+    final co2String = co2Saved >= 1.0 ? '${co2Saved.toStringAsFixed(1)} kg' : '${(co2Saved * 1000).toStringAsFixed(0)}g';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
@@ -185,17 +191,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     borderRadius: BorderRadius.circular(24),
                                     boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     children: [
-                                      DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
-                                      SizedBox(width: 16),
+                                      const DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
+                                      const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text('You\'ve rescued 12 meals', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-                                            SizedBox(height: 2),
-                                            Text('Saving 8.4 kg CO₂ — keep going!', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                            Text('You\'ve rescued $mealsRescued ${mealsRescued == 1 ? 'meal' : 'meals'}', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                                            const SizedBox(height: 2),
+                                            Text('Saving $co2String CO₂ — keep going!', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                                           ],
                                         ),
                                       ),

@@ -22,9 +22,9 @@ const ProductCard = memo(({ product }) => {
   const isSellingFast = soldPercent >= 0.5 && qty > 0;
   const cartCount = product.cartCount || 0;
 
-  // Show expiry if within 2 hours
+  // Show expiry if within 12 hours
   const showExpiry = product.availableUntil
-    ? new Date(product.availableUntil) - Date.now() < 2 * 60 * 60 * 1000
+    ? new Date(product.availableUntil) - Date.now() < 12 * 60 * 60 * 1000
     : false;
 
   const handleProductClick = () => {

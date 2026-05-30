@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/api/api_client.dart';
-import '../../core/api/api_endpoints.dart';
+import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
-
-// Provider for user impact stats
-final userImpactProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final response = await ApiClient.instance.get(AppEndpoints.userImpact);
-  final data = response.data;
-  return data is Map<String, dynamic>
-      ? (data['data'] ?? data['impact'] ?? data) as Map<String, dynamic>
-      : {};
-});
 
 class ImpactDashboardScreen extends ConsumerWidget {
   const ImpactDashboardScreen({super.key});

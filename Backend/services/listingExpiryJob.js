@@ -14,6 +14,9 @@ const logger = require('../utils/logger');
 // server session, to avoid duplicate notifications on repeated job runs.
 const notifiedExpirySoon = new Set();
 
+// Track notified buyer-listing pairs: "listingId_userId"
+const notifiedBuyersExpirySoon = new Set();
+
 /**
  * Mark all listings whose availableUntil has passed as 'expired'.
  * Notifies the owning vendor for each newly expired listing.
@@ -112,6 +115,87 @@ const notifyUpcomingExpiry = async () => {
 };
 
 /**
+ * Notify nearby buyers (within 5km) when a listing is expiring within the next 1 hour
+ * and has unsold quantity. Fires once per listing-buyer pair.
+ */
+const notifyBuyersUpcomingExpiry = async () => {
+  try {
+    const now = new Date();
+    const in1Hour = new Date(now.getTime() + 60 * 60 * 1000);
+
+    const soonExpiring = await Listing.find({
+      status: 'active',
+      'timeWindow.availableUntil': { $gte: now, $lte: in1Hour },
+      'inventory.quantity': { $gt: 0 },
+    })
+      .populate('business')
+      .lean();
+
+    const User = require('../models/User');
+
+    for (const listing of soonExpiring) {
+      if (
+        !listing.business ||
+        !listing.business.location ||
+        !listing.business.location.coordinates
+      ) {
+        continue;
+      }
+
+      const coords = listing.business.location.coordinates;
+
+      // Find active users with registered FCM tokens within 5km
+      const nearbyUsers = await User.find({
+        status: 'active',
+        'addresses.location': {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: coords,
+            },
+            $maxDistance: 5000, // 5 kilometers in meters
+          },
+        },
+        fcmTokens: { $exists: true, $not: { $size: 0 } },
+      })
+        .select('_id fcmTokens preferences')
+        .lean();
+
+      for (const user of nearbyUsers) {
+        const key = `${listing._id}_${user._id}`;
+        if (notifiedBuyersExpirySoon.has(key)) continue;
+
+        // Skip if they explicitly disabled push alerts
+        const pushEnabled = user.preferences?.notifications?.push !== false;
+        if (!pushEnabled) continue;
+
+        const minutesLeft = Math.max(
+          1,
+          Math.round((new Date(listing.timeWindow.availableUntil) - now) / 60_000)
+        );
+
+        // Notify buyer
+        Notification.createNotification({
+          user: user._id,
+          title: 'Deal Expiring Soon! ⏰',
+          message: `"${listing.title}" from "${listing.business.name}" is expiring in ${minutesLeft} minutes! Save it now before it's gone.`,
+          type: 'new_listing_nearby',
+          relatedListing: listing._id,
+          relatedBusiness: listing.business._id,
+          link: `/shop/${listing.category}/${listing._id}`,
+        }).catch((err) =>
+          logger.warn({ err }, 'Failed to send buyer upcoming expiry notification')
+        );
+
+        notifiedBuyersExpirySoon.add(key);
+      }
+    }
+  } catch (err) {
+    logger.error({ err }, 'listingExpiryJob: notifyBuyersUpcomingExpiry failed');
+  }
+};
+
+/**
  * Start the background expiry job.
  * Call once after the database connection is ready.
  */
@@ -122,11 +206,18 @@ const startExpiryJob = () => {
   // Run immediately so we catch any already-expired listings on startup
   expireListings();
   notifyUpcomingExpiry();
+  notifyBuyersUpcomingExpiry();
 
   setInterval(expireListings, FIVE_MIN);
   setInterval(notifyUpcomingExpiry, THIRTY_MIN);
+  setInterval(notifyBuyersUpcomingExpiry, FIVE_MIN);
 
   logger.info('Listing expiry job started — runs every 5 min');
 };
 
-module.exports = { startExpiryJob, expireListings, notifyUpcomingExpiry };
+module.exports = {
+  startExpiryJob,
+  expireListings,
+  notifyUpcomingExpiry,
+  notifyBuyersUpcomingExpiry,
+};

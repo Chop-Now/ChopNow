@@ -5,6 +5,7 @@ import '../api/api_endpoints.dart';
 import '../api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/socket_service.dart';
+import '../services/notification_service.dart';
 import '../models/user_model.dart';
 
 // ── Auth States ───────────────────────────────────────────────────────────────
@@ -156,6 +157,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> addRiderRole() async {
+    if (state is! AuthAuthenticated) return;
+    try {
+      final res = await ApiClient.instance.post(AppEndpoints.addRole,
+          data: {'role': 'rider', 'switchToNew': true});
+      final user = AppUser.fromJson(_extractUser(res.data));
+      final current = state as AuthAuthenticated;
+      
+      // Update local storage active role
+      await AuthService.saveActiveRole('rider');
+      
+      state = AuthAuthenticated(user: user, token: current.token);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<void> updateProfile({
     required String firstName,
     required String lastName,
@@ -225,6 +243,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    await NotificationService.instance.unregisterToken();
     await AuthService.clearAll();
     SocketService().disconnect();
     state = const AuthUnauthenticated();
@@ -254,6 +273,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthAuthenticated(user: user, token: token ?? '');
     if (token != null && token.isNotEmpty) {
       SocketService().connect(token);
+      // Register FCM token with backend so server can push to this device
+      NotificationService.instance.registerToken();
     }
   }
 

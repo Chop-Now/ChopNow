@@ -373,6 +373,29 @@ const AppContextProvider = ({ children }) => {
     }
   };
 
+  // Add rider role to existing consumer
+  const addRiderRole = async (switchToNew = true) => {
+    try {
+      const result = await userService.addRole('rider', switchToNew);
+
+      // Update local state
+      const updatedUser = { ...user, ...result.user };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setAvailableRoles(result.roles);
+      if (switchToNew) {
+        setActiveRole(result.activeRole);
+      }
+
+      toast.success('Rider role activated successfully!');
+      return result;
+    } catch (error) {
+      console.error('Add rider role failed', error);
+      toast.error(error.message || 'Failed to activate rider role');
+      throw error;
+    }
+  };
+
   // Check if user has a specific role
   const hasRole = (role) => {
     return availableRoles.includes(role);
@@ -538,6 +561,7 @@ const AppContextProvider = ({ children }) => {
     availableRoles,
     switchRole,
     addBusinessRole,
+    addRiderRole,
     hasRole,
     // Products
     products,

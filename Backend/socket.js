@@ -68,15 +68,38 @@ module.exports = {
         }
       });
 
-      // Allow riders to broadcast their location
-      socket.on('rider_location_update', (data) => {
+      // Allow riders to broadcast their location and save to MongoDB
+      socket.on('rider_location_update', async (data) => {
         if (socket.user.role === 'rider' && data.orderId && data.lat && data.lng) {
-          io.to(`order_tracking_${data.orderId}`).emit('location_update', {
-            riderId: socket.user.id,
-            lat: data.lat,
-            lng: data.lng,
-            timestamp: new Date(),
-          });
+          const latitude = parseFloat(data.lat);
+          const longitude = parseFloat(data.lng);
+
+          if (!isNaN(latitude) && !isNaN(longitude)) {
+            // Broadcast real-time location to tracking room immediately
+            io.to(`order_tracking_${data.orderId}`).emit('location_update', {
+              riderId: socket.user.id,
+              lat: latitude,
+              lng: longitude,
+              timestamp: new Date(),
+            });
+
+            // Update delivery record in the background (fire-and-forget)
+            try {
+              const Delivery = require('./models/Delivery');
+              await Delivery.findOneAndUpdate(
+                { order: data.orderId, rider: socket.user.id },
+                {
+                  currentLocation: { type: 'Point', coordinates: [longitude, latitude] },
+                  lastLocationUpdate: new Date(),
+                }
+              );
+            } catch (err) {
+              logger.error(
+                { err, orderId: data.orderId },
+                'Failed to save rider location from socket'
+              );
+            }
+          }
         }
       });
 

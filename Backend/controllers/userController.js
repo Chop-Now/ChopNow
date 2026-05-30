@@ -1360,6 +1360,68 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Register FCM device token for push notifications
+ * @route   POST /api/users/fcm-token
+ * @access  Private
+ */
+const registerFcmToken = async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken) {
+      return res.status(400).json({ message: 'fcmToken is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Add token if it doesn't exist
+    if (!user.fcmTokens.includes(fcmToken)) {
+      user.fcmTokens.push(fcmToken);
+      await user.save();
+    }
+
+    res.json({ success: true, message: 'FCM token registered successfully' });
+  } catch (error) {
+    logger.error({ err: error }, 'Register FCM token failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Unregister FCM device token
+ * @route   DELETE /api/users/fcm-token
+ * @access  Private
+ */
+const deleteFcmToken = async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (fcmToken) {
+      user.fcmTokens = user.fcmTokens.filter((token) => token !== fcmToken);
+    } else {
+      user.fcmTokens = [];
+    }
+    await user.save();
+
+    res.json({ success: true, message: 'FCM token unregistered successfully' });
+  } catch (error) {
+    logger.error({ err: error }, 'Unregister FCM token failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -1392,4 +1454,6 @@ module.exports = {
   logoutSession,
   logoutAllDevices,
   refreshAccessToken,
+  registerFcmToken,
+  deleteFcmToken,
 };

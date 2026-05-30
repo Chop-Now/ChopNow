@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
+import '../../shared/widgets/listings/expiry_countdown.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   final String listingId;
@@ -133,6 +134,10 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                         if (listing.businessName.isNotEmpty)
                           Text('🏪 ${listing.businessName}',
                               style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                        if (listing.availableUntil != null) ...[
+                          const SizedBox(height: 8),
+                          ExpiryCountdown(availableUntil: listing.availableUntil?.toIso8601String()),
+                        ],
                         const SizedBox(height: 14),
                         // Price row
                         Row(

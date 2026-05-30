@@ -32,6 +32,7 @@ class Order {
               .toList() ??
           [],
       total: (json['total'] as num?)?.toDouble() ??
+          (json['pricing']?['total'] as num?)?.toDouble() ??
           (json['totalAmount'] as num?)?.toDouble() ?? 0,
       paymentMethod: json['paymentMethod'],
       deliveryType: json['deliveryType'],
@@ -77,7 +78,8 @@ class OrderItem {
       id: json['_id'] ?? json['id'] ?? '',
       listingId: listing?['_id'] ?? listing?['id'] ?? json['listingId'] ?? '',
       name: listing?['title'] ?? listing?['name'] ?? json['name'] ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0,
+      price: (json['price'] as num?)?.toDouble() ??
+          (json['unitPrice'] as num?)?.toDouble() ?? 0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       photo: (listing?['photos'] as List?)?.isNotEmpty == true
           ? listing!['photos'][0].toString()

@@ -24,7 +24,7 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: SENDGRID_API_KEY
+      - key: BREVO_API_KEY
         sync: false
       - key: FROM_EMAIL
         sync: false

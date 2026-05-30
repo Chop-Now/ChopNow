@@ -184,6 +184,11 @@ const userSchema = new Schema(
         min: 0,
       },
     },
+    // FCM Push Tokens
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,
