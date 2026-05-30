@@ -396,6 +396,18 @@ const updateDeliveryStatus = async (req, res) => {
     // Sync order status
     if (status === 'delivered') {
       await Order.findByIdAndUpdate(order._id, { status: 'completed' });
+
+      // Credit the rider's balance atomically
+      if (delivery.rider) {
+        await User.findByIdAndUpdate(delivery.rider, {
+          $inc: { 'stats.riderBalance': delivery.deliveryFee || 0 },
+        });
+        logger.info(
+          { riderId: delivery.rider, amount: delivery.deliveryFee },
+          'Credited rider balance for delivery completion'
+        );
+      }
+
       await Notification.createNotification({
         user: order.customer,
         title: 'Order Delivered!',
@@ -565,6 +577,103 @@ const getAllDeliveries = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get dynamic rider stats and weekly earnings chart (Rider only)
+ * @route   GET /api/v1/deliveries/rider-stats
+ * @access  Private (Rider)
+ */
+const getRiderStats = async (req, res) => {
+  try {
+    const riderId = req.user._id;
+
+    // Sum total earnings and count total trips from delivered orders
+    const statsResult = await Delivery.aggregate([
+      { $match: { rider: riderId, status: 'delivered' } },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: { $sum: '$deliveryFee' },
+          totalTrips: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalEarnings = statsResult[0]?.totalEarnings || 0;
+    const totalTrips = statsResult[0]?.totalTrips || 0;
+
+    // Get active trips count (assigned, picked_up, in_transit)
+    const activeTrips = await Delivery.countDocuments({
+      rider: riderId,
+      status: { $in: ['assigned', 'picked_up', 'in_transit'] },
+    });
+
+    // Get weekly earnings data for the past 7 days (grouped by day of week)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const weeklyDeliveries = await Delivery.find({
+      rider: riderId,
+      status: 'delivered',
+      'statusTimestamps.deliveredAt': { $gte: sevenDaysAgo },
+    })
+      .select('deliveryFee statusTimestamps.deliveredAt')
+      .lean();
+
+    // Map to days of the week
+    const daysMap = {
+      0: { day: 'Sun', amount: 0 },
+      1: { day: 'Mon', amount: 0 },
+      2: { day: 'Tue', amount: 0 },
+      3: { day: 'Wed', amount: 0 },
+      4: { day: 'Thu', amount: 0 },
+      5: { day: 'Fri', amount: 0 },
+      6: { day: 'Sat', amount: 0 },
+    };
+
+    // Initialize labels
+    let weeklyEarningsSum = 0;
+    weeklyDeliveries.forEach((del) => {
+      const deliveredDate = del.statusTimestamps?.deliveredAt
+        ? new Date(del.statusTimestamps.deliveredAt)
+        : new Date(del.updatedAt);
+      const dayIndex = deliveredDate.getDay();
+      daysMap[dayIndex].amount += del.deliveryFee || 0;
+      weeklyEarningsSum += del.deliveryFee || 0;
+    });
+
+    // Arrange days relative to last 7 days order
+    const orderedDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayIndex = d.getDay();
+      orderedDays.push({
+        day: daysMap[dayIndex].day,
+        amount: daysMap[dayIndex].amount,
+        label:
+          daysMap[dayIndex].amount > 0 ? `${(daysMap[dayIndex].amount / 1000).toFixed(1)}K` : '0',
+      });
+    }
+
+    res.json({
+      success: true,
+      stats: {
+        totalEarnings,
+        totalTrips,
+        activeTrips,
+        rating: 4.9, // Default standing rating or dynamic if reviews implemented
+        weeklyEarningsSum,
+        weeklyData: orderedDays,
+      },
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Get rider stats failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   createDelivery,
   getDeliveryByOrder,
@@ -575,4 +684,5 @@ module.exports = {
   updateRiderLocation,
   uploadProofOfDelivery,
   getAllDeliveries,
+  getRiderStats,
 };

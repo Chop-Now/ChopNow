@@ -183,6 +183,49 @@ const userSchema = new Schema(
         default: 0,
         min: 0,
       },
+      riderBalance: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+    },
+    // Rider Details
+    riderStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+    },
+    riderDetails: {
+      vehicleType: {
+        type: String,
+        enum: ['bicycle', 'motorcycle', 'car', 'walking'],
+      },
+      licensePlate: {
+        type: String,
+        trim: true,
+      },
+      nationalId: {
+        type: String,
+        trim: true,
+      },
+      phone: {
+        type: String,
+        trim: true,
+      },
+      vehiclePhoto: {
+        type: String,
+        trim: true,
+      },
+      nationalIdPhoto: {
+        type: String,
+        trim: true,
+      },
+      rejectedReason: {
+        type: String,
+        trim: true,
+      },
+      appliedAt: Date,
+      reviewedAt: Date,
     },
     // FCM Push Tokens
     fcmTokens: {
@@ -205,6 +248,8 @@ userSchema.index({ 'stats.ordersCount': -1 }); // Top customers
 userSchema.index({ verificationToken: 1 }, { sparse: true }); // Token lookups
 userSchema.index({ resetPasswordToken: 1 }, { sparse: true }); // Password reset lookups
 userSchema.index({ otpCode: 1, otpExpires: 1 }, { sparse: true }); // OTP validation
+userSchema.index({ riderStatus: 1 }); // Rider status filtering
+userSchema.index({ 'stats.riderBalance': -1 }); // Top earning riders
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function () {

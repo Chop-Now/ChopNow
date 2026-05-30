@@ -1422,6 +1422,192 @@ const deleteFcmToken = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Submit rider application with vehicle and ID document uploads
+ * @route   POST /api/users/apply-rider
+ * @access  Private
+ */
+const applyRider = async (req, res) => {
+  try {
+    const { phone, vehicleType, nationalId, licensePlate } = req.body;
+
+    if (!phone || !vehicleType || !nationalId) {
+      return res.status(400).json({ message: 'Phone, vehicle type, and national ID are required' });
+    }
+
+    if (['motorcycle', 'car'].includes(vehicleType) && !licensePlate) {
+      return res.status(400).json({ message: 'License plate is required for motor vehicles' });
+    }
+
+    // Check files uploaded
+    if (!req.files || !req.files.vehiclePhoto || !req.files.nationalIdPhoto) {
+      return res
+        .status(400)
+        .json({ message: 'Both vehicle photo and national ID photo are required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.riderStatus === 'pending') {
+      return res.status(400).json({ message: 'Your application is already pending review' });
+    }
+
+    // Upload to Cloudinary
+    const vehiclePhotoResult = await uploadToCloudinary(
+      req.files.vehiclePhoto[0].buffer,
+      'chopnow/riders/vehicles',
+      'auto'
+    );
+    const nationalIdPhotoResult = await uploadToCloudinary(
+      req.files.nationalIdPhoto[0].buffer,
+      'chopnow/riders/ids',
+      'auto'
+    );
+
+    // Save details
+    user.riderStatus = 'pending';
+    user.riderDetails = {
+      phone,
+      vehicleType,
+      nationalId,
+      licensePlate: ['motorcycle', 'car'].includes(vehicleType) ? licensePlate : undefined,
+      vehiclePhoto: vehiclePhotoResult.secure_url,
+      nationalIdPhoto: nationalIdPhotoResult.secure_url,
+      appliedAt: new Date(),
+    };
+
+    // Keep phone number synced if they don't have one
+    if (!user.phone) {
+      user.phone = phone;
+    }
+
+    await user.save();
+
+    logger.info({ userId: user._id }, 'User submitted rider application');
+
+    res.json({
+      success: true,
+      message: 'Rider application submitted successfully. Pending admin review.',
+      riderStatus: user.riderStatus,
+      riderDetails: user.riderDetails,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Rider application failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get riders list with optional status filters (Admin only)
+ * @route   GET /api/users/admin/riders
+ * @access  Private (Admin)
+ */
+const getRidersForAdmin = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = { riderStatus: { $ne: 'none' } };
+
+    if (status && status !== 'all') {
+      query.riderStatus = status;
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [riders, total] = await Promise.all([
+      User.find(query)
+        .select('firstName lastName email phone roles riderStatus riderDetails createdAt')
+        .sort({ 'riderDetails.appliedAt': -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    res.json({
+      success: true,
+      riders,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Fetch riders for admin failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Approve or reject a rider's application (Admin only)
+ * @route   POST /api/users/admin/riders/:id/review
+ * @access  Private (Admin)
+ */
+const reviewRider = async (req, res) => {
+  try {
+    const { status, rejectionReason } = req.body;
+
+    if (!status || !['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Must be approved or rejected.' });
+    }
+
+    if (status === 'rejected' && !rejectionReason) {
+      return res
+        .status(400)
+        .json({ message: 'Rejection reason is required when status is rejected' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.riderStatus !== 'pending') {
+      return res
+        .status(400)
+        .json({
+          message: `Rider application is not pending (current status: ${user.riderStatus})`,
+        });
+    }
+
+    user.riderStatus = status;
+    user.riderDetails.reviewedAt = new Date();
+
+    if (status === 'approved') {
+      // Add rider role
+      if (!user.roles.includes('rider')) {
+        user.roles.push('rider');
+      }
+      user.activeRole = 'rider'; // Default active role to rider for convenience
+    } else {
+      user.riderDetails.rejectedReason = rejectionReason;
+    }
+
+    await user.save();
+
+    logger.info({ userId: user._id, status }, 'Admin reviewed rider application');
+
+    res.json({
+      success: true,
+      message: `Rider application successfully ${status}`,
+      riderStatus: user.riderStatus,
+      roles: user.roles,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Rider review failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -1456,4 +1642,7 @@ module.exports = {
   refreshAccessToken,
   registerFcmToken,
   deleteFcmToken,
+  applyRider,
+  getRidersForAdmin,
+  reviewRider,
 };

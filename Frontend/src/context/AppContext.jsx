@@ -396,6 +396,21 @@ const AppContextProvider = ({ children }) => {
     }
   };
 
+  // Refresh fresh user data
+  const refreshUser = async () => {
+    try {
+      const profile = await authService.getProfile();
+      const freshUser = { ...user, ...profile };
+      localStorage.setItem('user', JSON.stringify(freshUser));
+      setUser(freshUser);
+      setAvailableRoles(freshUser.roles || [freshUser.role || 'consumer']);
+      return freshUser;
+    } catch (error) {
+      console.error('Refresh user failed', error);
+      throw error;
+    }
+  };
+
   // Check if user has a specific role
   const hasRole = (role) => {
     return availableRoles.includes(role);
@@ -562,6 +577,7 @@ const AppContextProvider = ({ children }) => {
     switchRole,
     addBusinessRole,
     addRiderRole,
+    refreshUser,
     hasRole,
     // Products
     products,

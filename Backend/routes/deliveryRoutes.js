@@ -10,6 +10,7 @@ const {
   updateRiderLocation,
   uploadProofOfDelivery,
   getAllDeliveries,
+  getRiderStats,
 } = require('../controllers/deliveryController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -29,6 +30,9 @@ router.get('/available', protect, authorize('rider', 'admin'), getAvailableDeliv
 
 // GET  /api/v1/deliveries/my        — rider's own deliveries
 router.get('/my', protect, authorize('rider'), getMyDeliveries);
+
+// GET  /api/v1/deliveries/rider-stats — rider stats
+router.get('/rider-stats', protect, authorize('rider'), getRiderStats);
 
 // ── Shared (by orderId) ────────────────────────────────────────────────────────
 

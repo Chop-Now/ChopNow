@@ -9,8 +9,14 @@ const {
 const { protect, authorize } = require('../middleware/auth');
 const { validatePayoutRequest, validatePayoutStatus } = require('../middleware/validation');
 
-router.post('/request', protect, authorize('business_owner'), validatePayoutRequest, requestPayout);
-router.get('/me', protect, authorize('business_owner'), getMyPayouts);
+router.post(
+  '/request',
+  protect,
+  authorize('business_owner', 'rider'),
+  validatePayoutRequest,
+  requestPayout
+);
+router.get('/me', protect, authorize('business_owner', 'rider'), getMyPayouts);
 router.get('/admin', protect, authorize('admin'), getAdminPayouts);
 router.patch('/:id/status', protect, authorize('admin'), validatePayoutStatus, updatePayoutStatus);
 

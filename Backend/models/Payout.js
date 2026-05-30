@@ -6,7 +6,12 @@ const payoutSchema = new Schema(
     business: {
       type: Schema.Types.ObjectId,
       ref: 'Business',
-      required: true,
+      required: false,
+    },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
     },
     amount: {
       type: Number,
@@ -45,8 +50,16 @@ const payoutSchema = new Schema(
   }
 );
 
+payoutSchema.pre('validate', function (next) {
+  if (!this.business && !this.user) {
+    this.invalidate('business', 'Either business or user reference is required');
+  }
+  next();
+});
+
 // Indexes for query optimization
 payoutSchema.index({ business: 1, status: 1, createdAt: -1 }); // Business payouts history
+payoutSchema.index({ user: 1, status: 1, createdAt: -1 }); // User payouts history
 payoutSchema.index({ status: 1, createdAt: -1 }); // Processing queue
 payoutSchema.index({ processedBy: 1, processedAt: -1 }, { sparse: true }); // Admin processing history
 payoutSchema.index({ method: 1, status: 1 }); // Payouts by method

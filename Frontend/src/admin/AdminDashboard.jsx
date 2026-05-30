@@ -17,6 +17,8 @@ import { AllOrders, PendingOrders, CompletedOrders, Deliveries } from './pages/O
 import { AllListings, NewListing } from './pages/Listings';
 // Vendors pages
 import { AllVendors, VendorApproval } from './pages/Vendors';
+// Riders pages
+import Riders from './pages/Riders';
 // Disputes pages
 import { RefundRequests, CustomerComplaints } from './pages/Disputes';
 // Other pages
@@ -220,6 +222,11 @@ const AdminDashboard = () => {
         return <AllVendors />;
       case 'vendor-approval':
         return <VendorApproval />;
+      // Riders
+      case 'all-riders':
+        return <Riders defaultStatus="all" />;
+      case 'rider-approval':
+        return <Riders defaultStatus="pending" />;
       // Disputes
       case 'refunds':
         return <RefundRequests />;
