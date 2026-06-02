@@ -31,26 +31,26 @@ This guide covers deploying ChopNow with:
 
 In Railway dashboard → Your Project → **Variables** tab, add all variables from your local `Backend/.env` file:
 
-| Variable                     | Description                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `MONGO_URI`                  | Your MongoDB connection string                                              |
-| `JWT_SECRET`                 | Your JWT secret key (generate strong 32+ char string)                       |
-| `JWT_EXPIRE`                 | `30d`                                                                       |
-| `PORT`                       | `5000`                                                                      |
-| `NODE_ENV`                   | `production`                                                                |
-| `CLOUDINARY_CLOUD_NAME`      | Your Cloudinary cloud name                                                  |
-| `CLOUDINARY_API_KEY`         | Your Cloudinary API key                                                     |
-| `CLOUDINARY_API_SECRET`      | Your Cloudinary API secret                                                  |
-| `BREVO_API_KEY`              | Your Brevo API key (used for transaction emails / OTPs)                      |
-| `FROM_EMAIL`                 | Your verified sender email address                                          |
-| `FROM_NAME`                  | `ChopNow`                                                                   |
-| `GOOGLE_CLIENT_ID`           | Your Google OAuth client ID                                                 |
-| `GOOGLE_CLIENT_SECRET`       | Your Google OAuth client secret                                             |
-| `FRONTEND_URL`               | (Add after frontend deploy, e.g., https://your-app.vercel.app)               |
-| `ALLOWED_ORIGINS`            | (Add after frontend deploy, e.g., https://your-app.vercel.app)               |
-| `FIREBASE_PROJECT_ID`        | Your Firebase project ID (for push notifications)                           |
-| `FIREBASE_CLIENT_EMAIL`      | Your Firebase Admin service account client email                            |
-| `FIREBASE_PRIVATE_KEY`       | Your Firebase Admin private key (escape newlines as `\n` or `\\n`)          |
+| Variable                | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `MONGO_URI`             | Your MongoDB connection string                                     |
+| `JWT_SECRET`            | Your JWT secret key (generate strong 32+ char string)              |
+| `JWT_EXPIRE`            | `30d`                                                              |
+| `PORT`                  | `5000`                                                             |
+| `NODE_ENV`              | `production`                                                       |
+| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name                                         |
+| `CLOUDINARY_API_KEY`    | Your Cloudinary API key                                            |
+| `CLOUDINARY_API_SECRET` | Your Cloudinary API secret                                         |
+| `BREVO_API_KEY`         | Your Brevo API key (used for transaction emails / OTPs)            |
+| `FROM_EMAIL`            | Your verified sender email address                                 |
+| `FROM_NAME`             | `ChopNow`                                                          |
+| `GOOGLE_CLIENT_ID`      | Your Google OAuth client ID                                        |
+| `GOOGLE_CLIENT_SECRET`  | Your Google OAuth client secret                                    |
+| `FRONTEND_URL`          | (Add after frontend deploy, e.g., https://your-app.vercel.app)     |
+| `ALLOWED_ORIGINS`       | (Add after frontend deploy, e.g., https://your-app.vercel.app)     |
+| `FIREBASE_PROJECT_ID`   | Your Firebase project ID (for push notifications)                  |
+| `FIREBASE_CLIENT_EMAIL` | Your Firebase Admin service account client email                   |
+| `FIREBASE_PRIVATE_KEY`  | Your Firebase Admin private key (escape newlines as `\n` or `\\n`) |
 
 > **TIP**: Copy values directly from your local `Backend/.env` file. Do NOT upload `firebase-service-account.json` directly to git; instead, populate the `FIREBASE_*` inline variables listed above in the Railway panel.
 
