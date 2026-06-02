@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../core/providers/business_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
@@ -123,9 +124,21 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
               CnTextField(label: 'Address *', controller: _addressCtrl, hint: 'KN 5 Rd, Kigali',
                   validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
               const SizedBox(height: 12),
-              CnTextField(label: 'Business Phone', controller: _phoneCtrl, hint: '+250 7XX XXX XXX', keyboardType: TextInputType.phone),
+              CnTextField(
+                label: 'Business Phone *',
+                controller: _phoneCtrl,
+                hint: '+250 7XX XXX XXX',
+                keyboardType: TextInputType.phone,
+                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+              ),
               const SizedBox(height: 12),
-              CnTextField(label: 'Business Email', controller: _emailCtrl, hint: 'info@yourbiz.com', keyboardType: TextInputType.emailAddress),
+              CnTextField(
+                label: 'Business Email *',
+                controller: _emailCtrl,
+                hint: 'info@yourbiz.com',
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) => v == null || !v.contains('@') ? 'Invalid email' : null,
+              ),
 
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -165,6 +178,18 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
     );
   }
 
+  Future<List<double>> _resolveCoordinates(String query) async {
+    try {
+      final locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        return [locations.first.longitude, locations.first.latitude];
+      }
+    } catch (e) {
+      debugPrint('Geocoding failed for business address: $e');
+    }
+    return [30.0619, -1.9403]; // Default Kigali coordinates
+  }
+
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
     final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
@@ -176,14 +201,29 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
     HapticFeedback.mediumImpact();
     setState(() { _isLoading = true; _error = null; });
     try {
-      final biz = await ref.read(businessNotifierProvider.notifier).createBusiness({
+      final phoneVal = _phoneCtrl.text.trim();
+      final formattedPhone = phoneVal.startsWith('+') ? phoneVal : (phoneVal.startsWith('0') ? '+250${phoneVal.substring(1)}' : phoneVal);
+      final coords = await _resolveCoordinates(_addressCtrl.text.trim());
+
+      final businessData = {
         'name': _nameCtrl.text.trim(),
         'type': _selectedType,
         'description': _descCtrl.text.trim(),
-        'address': _addressCtrl.text.trim(),
-        if (_phoneCtrl.text.isNotEmpty) 'phone': _phoneCtrl.text.trim(),
-        if (_emailCtrl.text.isNotEmpty) 'email': _emailCtrl.text.trim(),
-      });
+        'contact': {
+          'email': _emailCtrl.text.trim(),
+          'phone': formattedPhone,
+        },
+        'address': {
+          'street': _addressCtrl.text.trim(),
+          'city': 'Kigali', // Default city
+          'location': {
+            'type': 'Point',
+            'coordinates': coords,
+          },
+        },
+      };
+
+      final biz = await ref.read(businessNotifierProvider.notifier).createBusiness(businessData);
 
       // Upload logo if selected
       if (_logoPath != null) {
@@ -200,7 +240,7 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
         context.go('/business/dashboard');
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

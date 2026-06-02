@@ -534,8 +534,11 @@ class _OrderItem extends StatelessWidget {
               width: 56,
               height: 56,
               color: AppColors.surfaceVariant,
-              child: listing['photos'] != null && (listing['photos'] as List).isNotEmpty
-                  ? Image.network(listing['photos'][0], fit: BoxFit.cover,
+              child: listing['photos'] != null &&
+                      (listing['photos'] as List).isNotEmpty &&
+                      (listing['photos'][0].toString().startsWith('http://') ||
+                          listing['photos'][0].toString().startsWith('https://'))
+                  ? Image.network(listing['photos'][0].toString(), fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary))
                   : const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary),
             ),

@@ -141,6 +141,12 @@ class _OrderDetailView extends StatelessWidget {
                 },
               ),
             ],
+            const SizedBox(height: 10),
+            CnSecondaryButton(
+              label: 'Report an Issue',
+              icon: Icons.flag_outlined,
+              onTap: () => context.push('/orders/${order.id}/dispute'),
+            ),
             const SizedBox(height: 20),
           ],
         ),

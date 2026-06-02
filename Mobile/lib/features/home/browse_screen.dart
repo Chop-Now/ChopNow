@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
+import '../../core/providers/cart_provider.dart';
 
 final _browseCategoryProvider = StateProvider<String>((ref) => 'All');
 final _browseSearchProvider = StateProvider<String>((ref) => '');
@@ -46,6 +47,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   Widget build(BuildContext context) {
     final asyncListings = ref.watch(_browseListingsProvider);
     final selectedCat = ref.watch(_browseCategoryProvider);
+    final cartCount = ref.watch(cartCountProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -59,7 +61,44 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Browse', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Row(
+                    children: [
+                      const Text('Browse', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      const Spacer(),
+                      ScaleTap(
+                        onTap: () => context.push('/cart'),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined, size: 20, color: AppColors.textPrimary),
+                              if (cartCount > 0)
+                                Positioned(
+                                  top: 6, right: 6,
+                                  child: Container(
+                                    width: 12, height: 12,
+                                    decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                                    child: Center(
+                                      child: Text(
+                                        '$cartCount',
+                                        style: const TextStyle(fontSize: 7, color: Colors.white, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   // Search field
                   Container(
@@ -135,7 +174,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 child: asyncListings.when(
                   loading: () => GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
                     itemCount: 6,
                     itemBuilder: (_, __) => const ListingCardSkeleton(),
                   ),
@@ -144,7 +183,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       ? const CnEmptyState(title: 'No deals found', subtitle: 'Try a different category or search term', icon: Icons.search_off_rounded)
                       : GridView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
                           itemCount: listings.length,
                           itemBuilder: (_, i) => ListingCard(
                             listing: listings[i],

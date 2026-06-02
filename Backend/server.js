@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const pinoHttp = require('pino-http');
 const { createServer } = require('http');
@@ -31,6 +32,7 @@ const deliveryRoutes = require('./routes/deliveryRoutes');
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const requestId = require('./middleware/requestId');
+const sanitizeInput = require('./middleware/sanitizeInput');
 const logger = require('./utils/logger');
 const metrics = require('./utils/metrics');
 
@@ -139,6 +141,9 @@ app.use(
   })
 );
 
+// Compression (gzip) — reduces response sizes for text/JSON payloads
+app.use(compression());
+
 // Request correlation id + structured request logging
 app.use(requestId);
 app.use(metrics.metricsMiddleware()); // Collect request metrics
@@ -173,6 +178,9 @@ app.use(
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Input sanitization — strips all HTML from string fields in req.body
+app.use(sanitizeInput);
 
 // --- Rate limiting ---
 const apiLimiter = rateLimit({

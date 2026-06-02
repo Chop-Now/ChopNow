@@ -202,26 +202,29 @@ class ProfileScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ScaleTap(
-                    onTap: () {
+                    onTap: () async {
                       HapticFeedback.mediumImpact();
-                      showDialog(
+                      final confirm = await showDialog<bool>(
                         context: context,
-                        builder: (_) => AlertDialog(
+                        builder: (ctx) => AlertDialog(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w800)),
                           content: const Text('Are you sure you want to sign out?'),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                             TextButton(
-                              onPressed: () {
-                                ref.read(authProvider.notifier).logout();
-                                Navigator.pop(context);
-                              },
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
                               child: const Text('Sign Out', style: TextStyle(color: AppColors.error)),
                             ),
                           ],
                         ),
                       );
+                      if (confirm == true && context.mounted) {
+                        ref.read(authProvider.notifier).logout();
+                      }
                     },
                     child: Container(
                       width: double.infinity,
@@ -282,9 +285,17 @@ class ProfileScreen extends ConsumerWidget {
             ...roles.map((r) => ListTile(
               leading: Icon(r == current ? Icons.radio_button_checked : Icons.radio_button_off, color: AppColors.primary),
               title: Text(_roleLabel(r), style: const TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                ref.read(authProvider.notifier).switchRole(r);
-                Navigator.pop(context);
+              onTap: () async {
+                await ref.read(authProvider.notifier).switchRole(r);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  final target = switch (r) {
+                    'business_owner' => '/business/dashboard',
+                    'rider' => '/rider/dashboard',
+                    _ => '/home',
+                  };
+                  context.go(target);
+                }
               },
             )),
             const SizedBox(height: 8),
@@ -334,8 +345,8 @@ class _Avatar extends StatelessWidget {
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: Colors.white.withValues(alpha: 0.2),
-      backgroundImage: url != null && url!.isNotEmpty ? NetworkImage(url!) : null,
-      child: url == null || url!.isEmpty
+      backgroundImage: url != null && url!.isNotEmpty && (url!.startsWith('http://') || url!.startsWith('https://')) ? NetworkImage(url!) : null,
+      child: url == null || url!.isEmpty || !(url!.startsWith('http://') || url!.startsWith('https://'))
           ? Text(initials, style: TextStyle(fontSize: size * 0.35, fontWeight: FontWeight.w800, color: Colors.white))
           : null,
     );

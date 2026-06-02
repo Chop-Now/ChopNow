@@ -19,6 +19,7 @@ import '../../features/orders/order_tracking_screen.dart';
 import '../../features/orders/order_history_screen.dart';
 import '../../features/orders/order_detail_screen.dart';
 import '../../features/orders/review_screen.dart';
+import '../../features/orders/dispute_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/edit_profile_screen.dart';
@@ -32,6 +33,9 @@ import '../../features/business/create_listing_details_screen.dart';
 import '../../features/business/business_orders_screen.dart';
 import '../../features/business/analytics_screen.dart';
 import '../../features/business/create_business_screen.dart';
+import '../../features/business/business_verification_screen.dart';
+import '../../features/business/pending_review_screen.dart';
+import '../../features/business/payouts_screen.dart';
 import '../../features/rider/rider_shell.dart';
 import '../../features/rider/rider_dashboard_screen.dart';
 import '../../features/rider/active_delivery_screen.dart';
@@ -86,6 +90,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
       GoRoute(path: '/become-rider', builder: (_, __) => const BecomeRiderScreen()),
+      GoRoute(path: '/business/verify', builder: (_, __) => const BusinessVerificationScreen()),
+      GoRoute(path: '/business/pending-review', builder: (_, __) => const PendingReviewScreen()),
+      GoRoute(
+        path: '/listings/:id',
+        builder: (_, state) => ListingDetailScreen(listingId: state.pathParameters['id']!),
+      ),
 
       // ── Auth ──
       GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
@@ -105,10 +115,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => ConsumerShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
-          GoRoute(
-            path: '/listings/:id',
-            builder: (_, state) => ListingDetailScreen(listingId: state.pathParameters['id']!),
-          ),
           GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
           GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
           GoRoute(
@@ -127,6 +133,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/orders/:id/review',
             builder: (_, state) => ReviewScreen(orderId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/orders/:id/dispute',
+            builder: (_, state) => DisputeScreen(orderId: state.pathParameters['id']!),
           ),
           GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
           GoRoute(path: '/browse', builder: (_, __) => const BrowseScreen()),
@@ -151,9 +161,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/business/create', builder: (_, __) => const CreateBusinessScreen()),
           GoRoute(path: '/business/listings', builder: (_, __) => const MyListingsScreen()),
           GoRoute(path: '/business/listings/camera', builder: (_, __) => const CreateListingCameraScreen()),
-          GoRoute(path: '/business/listings/create', builder: (_, __) => const CreateListingDetailsScreen()),
+          GoRoute(
+            path: '/business/listings/create',
+            builder: (_, state) {
+              final imagePath = state.uri.queryParameters['imagePath'] ?? '';
+              return CreateListingDetailsScreen(imagePath: imagePath);
+            },
+          ),
           GoRoute(path: '/business/orders', builder: (_, __) => const BusinessOrdersScreen()),
           GoRoute(path: '/business/analytics', builder: (_, __) => const AnalyticsScreen()),
+          GoRoute(path: '/business/payouts', builder: (_, __) => const PayoutsScreen()),
+          GoRoute(
+            path: '/business/listings/:id/edit',
+            builder: (_, state) {
+              final id = state.pathParameters['id']!;
+              return CreateListingDetailsScreen(imagePath: '', listingId: id);
+            },
+          ),
         ],
       ),
 

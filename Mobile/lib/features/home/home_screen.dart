@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/models/listing_model.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
+import '../../core/providers/cart_provider.dart';
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
@@ -58,6 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final co2SavedRaw = asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
     final co2Saved = co2SavedRaw is num ? co2SavedRaw.toDouble() : 0.0;
     final co2String = co2Saved >= 1.0 ? '${co2Saved.toStringAsFixed(1)} kg' : '${(co2Saved * 1000).toStringAsFixed(0)}g';
+    final cartCount = ref.watch(cartCountProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
@@ -143,6 +146,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ],
                                     ),
                                   ),
+                                  ScaleTap(
+                                    onTap: () => context.push('/cart'),
+                                    child: Container(
+                                      width: 46,
+                                      height: 46,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: AppColors.border, width: 1.5),
+                                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          const Icon(Icons.shopping_cart_outlined, size: 22, color: AppColors.textPrimary),
+                                          if (cartCount > 0)
+                                            Positioned(
+                                              top: 8, right: 8,
+                                              child: Container(
+                                                width: 14, height: 14,
+                                                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                                                child: Center(
+                                                  child: Text(
+                                                    '$cartCount',
+                                                    style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
                                   ScaleTap(
                                     onTap: () => context.push('/notifications'),
                                     child: Container(
@@ -284,7 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.78,
+                      childAspectRatio: 0.70,
                     ),
                     itemCount: 6,
                     itemBuilder: (_, __) => const ListingCardSkeleton(),
@@ -311,14 +348,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
-                            childAspectRatio: 0.78,
+                            childAspectRatio: 0.70,
                           ),
-                          itemCount: listings.length,
-                          itemBuilder: (_, i) => ListingCard(
-                            listing: listings[i],
-                            onTap: () => context.push('/listings/${listings[i]['_id']}'),
-                            onAddToCart: () {},
-                          ),
+                           itemCount: listings.length,
+                           itemBuilder: (_, i) {
+                             final rawListing = listings[i];
+                             return ListingCard(
+                               listing: rawListing,
+                               onTap: () => context.push('/listings/${rawListing['_id']}'),
+                               onAddToCart: () {
+                                 final listingModel = Listing.fromJson(rawListing);
+                                 ref.read(cartProvider.notifier).addItem(listingModel);
+                                 HapticFeedback.lightImpact();
+                                 ScaffoldMessenger.of(context).showSnackBar(
+                                   SnackBar(
+                                     content: Text('${listingModel.title} added to cart 🛒'),
+                                     behavior: SnackBarBehavior.floating,
+                                     backgroundColor: AppColors.primary,
+                                     duration: const Duration(seconds: 2),
+                                   ),
+                                 );
+                               },
+                             );
+                           },
                         ),
                       ),
               ),

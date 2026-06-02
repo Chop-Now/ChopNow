@@ -14,16 +14,16 @@ class ConsumerShell extends ConsumerWidget {
   static const _tabs = [
     _TabItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home_rounded, path: '/home'),
     _TabItem(label: 'Browse', icon: Icons.search_outlined, activeIcon: Icons.search_rounded, path: '/browse'),
+    _TabItem(label: 'Cart', icon: Icons.shopping_cart_outlined, activeIcon: Icons.shopping_cart_rounded, path: '/cart'),
     _TabItem(label: 'Orders', icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, path: '/orders'),
-    _TabItem(label: 'Impact', icon: Icons.eco_outlined, activeIcon: Icons.eco_rounded, path: '/impact'),
     _TabItem(label: 'Profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, path: '/profile'),
   ];
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/browse')) return 1;
-    if (location.startsWith('/orders')) return 2;
-    if (location.startsWith('/impact')) return 3;
+    if (location.startsWith('/cart')) return 2;
+    if (location.startsWith('/orders')) return 3;
     if (location.startsWith('/profile')) return 4;
     return 0;
   }

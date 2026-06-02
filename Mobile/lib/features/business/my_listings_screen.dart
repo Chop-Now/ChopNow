@@ -8,8 +8,13 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 
-final _myListingsProvider = FutureProvider<List<dynamic>>((ref) async {
-  final res = await ApiClient.instance.get(AppEndpoints.myListings);
+import '../../core/providers/business_provider.dart';
+
+final myListingsProvider = FutureProvider<List<dynamic>>((ref) async {
+  final businesses = await ref.watch(myBusinessesProvider.future);
+  if (businesses.isEmpty) return [];
+  final businessId = businesses.first.id;
+  final res = await ApiClient.instance.get(AppEndpoints.listingsByBusiness(businessId));
   final data = res.data;
   if (data is List) return data;
   if (data is Map) return (data['listings'] ?? data['data'] ?? []) as List;
@@ -37,7 +42,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final asyncListings = ref.watch(_myListingsProvider);
+    final asyncListings = ref.watch(myListingsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -70,7 +75,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
       ),
       body: asyncListings.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(_myListingsProvider)),
+        error: (e, _) => CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(myListingsProvider)),
         data: (all) {
           final active = all.where((l) => l['status'] == 'active').toList();
           final expired = all.where((l) => l['status'] == 'expired' || l['status'] == 'sold_out').toList();
@@ -78,7 +83,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
 
           return RefreshIndicator(
             color: AppColors.primary,
-            onRefresh: () async => ref.invalidate(_myListingsProvider),
+            onRefresh: () async => ref.invalidate(myListingsProvider),
             child: TabBarView(
               controller: _tabs,
               children: [
@@ -111,7 +116,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
     if (confirmed == true) {
       try {
         await ApiClient.instance.delete(AppEndpoints.listingById(id));
-        ref.invalidate(_myListingsProvider);
+        ref.invalidate(myListingsProvider);
         HapticFeedback.heavyImpact();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -172,8 +177,8 @@ class _ListingCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             child: Container(
               width: 64, height: 64, color: AppColors.surfaceVariant,
-              child: photos.isNotEmpty
-                  ? Image.network(photos[0], fit: BoxFit.cover)
+              child: photos.isNotEmpty && (photos[0].toString().startsWith('http://') || photos[0].toString().startsWith('https://'))
+                  ? Image.network(photos[0].toString(), fit: BoxFit.cover)
                   : const Center(child: Icon(Icons.fastfood_outlined, color: AppColors.textSecondary, size: 28)),
             ),
           ),

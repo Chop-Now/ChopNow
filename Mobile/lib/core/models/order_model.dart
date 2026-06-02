@@ -24,6 +24,14 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? businessMap;
+    final rawBusiness = json['business'];
+    if (rawBusiness is Map) {
+      businessMap = Map<String, dynamic>.from(rawBusiness);
+    } else if (rawBusiness is String) {
+      businessMap = {'_id': rawBusiness, 'name': ''};
+    }
+
     return Order(
       id: json['_id'] ?? json['id'] ?? '',
       status: json['status'] ?? 'pending',
@@ -36,7 +44,7 @@ class Order {
           (json['totalAmount'] as num?)?.toDouble() ?? 0,
       paymentMethod: json['paymentMethod'],
       deliveryType: json['deliveryType'],
-      business: json['business'] as Map<String, dynamic>?,
+      business: businessMap,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -73,17 +81,38 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
-    final listing = json['listing'] as Map<String, dynamic>?;
+    Map<String, dynamic>? listingMap;
+    final rawListing = json['listing'];
+    if (rawListing is Map) {
+      listingMap = Map<String, dynamic>.from(rawListing);
+    } else if (rawListing is String) {
+      listingMap = {'_id': rawListing};
+    }
+
+    String? parsedPhoto;
+    if (listingMap != null) {
+      final rawPhotos = listingMap['photos'];
+      final rawImages = listingMap['images'];
+      final rawImage = listingMap['image'];
+      if (rawPhotos is List && rawPhotos.isNotEmpty) {
+        parsedPhoto = rawPhotos[0].toString();
+      } else if (rawImages is List && rawImages.isNotEmpty) {
+        parsedPhoto = rawImages[0].toString();
+      } else if (rawImage is List && rawImage.isNotEmpty) {
+        parsedPhoto = rawImage[0].toString();
+      } else if (rawImage is String) {
+        parsedPhoto = rawImage;
+      }
+    }
+
     return OrderItem(
       id: json['_id'] ?? json['id'] ?? '',
-      listingId: listing?['_id'] ?? listing?['id'] ?? json['listingId'] ?? '',
-      name: listing?['title'] ?? listing?['name'] ?? json['name'] ?? '',
+      listingId: listingMap?['_id'] ?? listingMap?['id'] ?? json['listingId'] ?? '',
+      name: listingMap?['title'] ?? listingMap?['name'] ?? json['name'] ?? '',
       price: (json['price'] as num?)?.toDouble() ??
           (json['unitPrice'] as num?)?.toDouble() ?? 0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
-      photo: (listing?['photos'] as List?)?.isNotEmpty == true
-          ? listing!['photos'][0].toString()
-          : null,
+      photo: parsedPhoto ?? json['photo']?.toString(),
     );
   }
 }

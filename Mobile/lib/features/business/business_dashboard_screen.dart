@@ -59,6 +59,17 @@ class BusinessDashboardScreen extends ConsumerWidget {
                 onAction: () => context.push('/business/create'),
               );
             }
+            final business = businesses.first;
+            if (!business.isApproved) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (business.isPending) {
+                  context.go('/business/pending-review');
+                } else {
+                  context.go('/business/verify');
+                }
+              });
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            }
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -97,7 +108,7 @@ class _BusinessCard extends StatelessWidget {
               height: 90,
               decoration: BoxDecoration(
                 gradient: AppColors.heroGradient,
-                image: business.coverImage != null
+                image: business.coverImage != null && (business.coverImage!.startsWith('http://') || business.coverImage!.startsWith('https://'))
                     ? DecorationImage(image: NetworkImage(business.coverImage!), fit: BoxFit.cover, opacity: 0.3)
                     : null,
               ),
@@ -110,7 +121,7 @@ class _BusinessCard extends StatelessWidget {
                     child: Container(
                       width: 52, height: 52,
                       color: Colors.white.withValues(alpha: 0.2),
-                      child: business.logo != null
+                      child: business.logo != null && (business.logo!.startsWith('http://') || business.logo!.startsWith('https://'))
                           ? Image.network(business.logo!, fit: BoxFit.cover)
                           : const Center(child: Text('🏪', style: TextStyle(fontSize: 24))),
                     ),
@@ -151,15 +162,18 @@ class _BusinessCard extends StatelessWidget {
                   Row(children: [
                     Expanded(child: _ActionBtn(icon: Icons.list_alt_rounded, label: 'Listings',
                         onTap: () => context.push('/business/listings'))),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(child: _ActionBtn(icon: Icons.receipt_long_rounded, label: 'Orders',
                         onTap: () => context.push('/business/orders'))),
+                    const SizedBox(width: 8),
+                    Expanded(child: _ActionBtn(icon: Icons.payments_outlined, label: 'Payouts',
+                        onTap: () => context.push('/business/payouts'))),
                   ]),
                   const SizedBox(height: 10),
                   Row(children: [
                     Expanded(child: _ActionBtn(icon: Icons.analytics_outlined, label: 'Analytics',
                         onTap: () => context.push('/business/analytics'))),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(child: _ActionBtn(icon: Icons.add_circle_outline_rounded, label: 'Add Listing',
                         onTap: () => context.push('/business/listings/create'))),
                   ]),

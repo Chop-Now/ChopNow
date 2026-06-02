@@ -27,15 +27,57 @@ class ListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final price = (listing['price'] as num?)?.toDouble() ?? 0;
-    final offerPrice = (listing['offerPrice'] as num?)?.toDouble() ?? price;
+    // 1. Parse pricing info (support nested "pricing" map or flat fields)
+    double price = 0;
+    double offerPrice = 0;
+    final rawPricing = listing['pricing'];
+    if (rawPricing is Map) {
+      price = (rawPricing['originalPrice'] as num?)?.toDouble() ?? 
+              (rawPricing['price'] as num?)?.toDouble() ?? 0;
+      offerPrice = (rawPricing['price'] as num?)?.toDouble() ?? price;
+    } else {
+      price = (listing['price'] as num?)?.toDouble() ?? 0;
+      offerPrice = (listing['offerPrice'] as num?)?.toDouble() ?? price;
+    }
+
     final discount = price > 0 ? ((price - offerPrice) / price * 100).round() : 0;
-    final qty = (listing['quantity'] as num?)?.toInt() ?? 0;
+
+    // 2. Parse inventory quantity (support nested "inventory" map or flat fields)
+    int qty = 0;
+    final rawInventory = listing['inventory'];
+    if (rawInventory is Map) {
+      qty = (rawInventory['quantity'] as num?)?.toInt() ?? 0;
+    } else {
+      qty = (listing['quantity'] as num?)?.toInt() ?? 0;
+    }
+
     final isLowStock = qty > 0 && qty <= 3;
     final name = listing['title'] ?? listing['name'] ?? '';
-    final business = listing['business']?['name'] ?? listing['vendor'] ?? '';
+
+    // 3. Parse business safely
+    String business = '';
+    final rawBusiness = listing['business'];
+    if (rawBusiness is Map) {
+      business = rawBusiness['name']?.toString() ?? '';
+    } else if (rawBusiness is String) {
+      business = '';
+    } else {
+      business = (listing['vendor'] ?? '').toString();
+    }
+
     final distance = listing['distance'];
-    final img = (listing['photos'] as List?)?.firstOrNull ?? listing['image']?[0];
+
+    // 4. Parse images / photos list
+    final rawPhotos = listing['photos'];
+    final rawImages = listing['images'];
+    final rawImage = listing['image'];
+    final String? img = (rawPhotos is List && rawPhotos.isNotEmpty)
+        ? rawPhotos.firstOrNull?.toString()
+        : ((rawImages is List && rawImages.isNotEmpty)
+            ? rawImages.firstOrNull?.toString()
+            : ((rawImage is List && rawImage.isNotEmpty)
+                ? rawImage.firstOrNull?.toString()
+                : rawImage?.toString()));
 
     return ScaleTap(
       onTap: onTap,
@@ -52,7 +94,9 @@ class ListingCard extends StatelessWidget {
             ),
           ],
         ),
-        child: variant == CardVariant.grid ? _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) : _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance),
+        child: variant == CardVariant.grid 
+            ? _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) 
+            : _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance),
       ),
     );
   }
@@ -67,8 +111,8 @@ class ListingCard extends StatelessWidget {
           child: Stack(
             children: [
               AspectRatio(
-                aspectRatio: 1.4,
-                child: img != null
+                aspectRatio: 1.5,
+                child: img != null && (img.startsWith('http://') || img.startsWith('https://'))
                     ? CachedNetworkImage(
                         imageUrl: img,
                         fit: BoxFit.cover,
@@ -88,7 +132,7 @@ class ListingCard extends StatelessWidget {
         ),
         // Body
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -105,9 +149,13 @@ class ListingCard extends StatelessWidget {
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Text(
-                    business,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  Expanded(
+                    child: Text(
+                      business,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
                   ),
                   if (distance != null) ...[
                     const Text(' • ', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
@@ -119,7 +167,7 @@ class ListingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              ExpiryCountdown(availableUntil: listing['availableUntil']?.toString(), compact: true),
+              ExpiryCountdown(availableUntil: listing['availableUntil']?.toString() ?? (listing['timeWindow'] is Map ? (listing['timeWindow'] as Map)['availableUntil']?.toString() : null), compact: true),
               if (isLowStock) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -156,8 +204,8 @@ class ListingCard extends StatelessWidget {
                   ScaleTap(
                     onTap: onAddToCart,
                     child: Container(
-                      constraints: const BoxConstraints(minWidth: 64, minHeight: 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      constraints: const BoxConstraints(minWidth: 56, minHeight: 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
@@ -197,7 +245,7 @@ class ListingCard extends StatelessWidget {
           child: SizedBox(
             width: 90,
             height: 90,
-            child: img != null
+            child: img != null && (img.startsWith('http://') || img.startsWith('https://'))
                 ? CachedNetworkImage(
                     imageUrl: img,
                     fit: BoxFit.cover,

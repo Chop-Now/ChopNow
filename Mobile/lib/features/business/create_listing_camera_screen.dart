@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Camera enforcement screen — backend requires LIVE photos for listings.
 /// User must take a fresh photo (no gallery pick allowed).
 class CreateListingCameraScreen extends StatelessWidget {
   const CreateListingCameraScreen({super.key});
+
+  Future<void> _capturePhoto(BuildContext context) async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        if (context.mounted) {
+          context.push('/business/listings/create?imagePath=${Uri.encodeComponent(image.path)}');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open camera: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +68,7 @@ class CreateListingCameraScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: () => context.push('/business/listings/create'),
+              onPressed: () => _capturePhoto(context),
               icon: const Icon(Icons.camera_alt_rounded),
               label: const Text('Capture Photo'),
               style: ElevatedButton.styleFrom(

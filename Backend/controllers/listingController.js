@@ -216,10 +216,12 @@ const getListingById = async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Increment view count (with null check)
+    // Increment view count atomically without calling save() (which runs full schema validation and can fail on read-only requests)
+    await Listing.findByIdAndUpdate(req.params.id, {
+      $inc: { 'stats.views': 1 },
+    });
     if (!listing.stats) listing.stats = { views: 0, orders: 0 };
     listing.stats.views = (listing.stats.views || 0) + 1;
-    await listing.save();
 
     res.json(listing);
   } catch (error) {

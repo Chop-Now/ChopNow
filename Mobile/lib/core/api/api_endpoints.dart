@@ -82,7 +82,7 @@ class AppEndpoints {
   // ── Analytics ────────────────────────────────────────────────────────────
   static const String analytics = '/analytics';
   static const String userImpact = '/analytics/impact/my';
-  static const String businessAnalytics = '/analytics/business';
+  static const String businessAnalytics = '/analytics/business/overview';
 
   // ── Payouts ──────────────────────────────────────────────────────────────
   static const String payouts = '/payouts';
@@ -99,4 +99,5 @@ class AppEndpoints {
   static const String riderEarnings = '/rider/earnings';
   static String riderAcceptOrder(String id) => '/orders/$id/accept';
   static String riderCompleteDelivery(String id) => '/orders/$id/complete';
+  static const String applyRider = '/users/apply-rider';
 }

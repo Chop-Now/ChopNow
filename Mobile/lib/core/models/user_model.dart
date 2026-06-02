@@ -5,6 +5,7 @@ class UserAddress {
   final String? city;
   final String? country;
   final bool isDefault;
+  final List<double>? coordinates;
 
   const UserAddress({
     this.id,
@@ -13,9 +14,17 @@ class UserAddress {
     this.city,
     this.country,
     this.isDefault = false,
+    this.coordinates,
   });
 
   factory UserAddress.fromJson(Map<String, dynamic> json) {
+    List<double>? coords;
+    final loc = json['location'];
+    if (loc is Map && loc['coordinates'] is List) {
+      coords = (loc['coordinates'] as List).map((e) => (e as num).toDouble()).toList();
+    } else if (json['coordinates'] is List) {
+      coords = (json['coordinates'] as List).map((e) => (e as num).toDouble()).toList();
+    }
     return UserAddress(
       id: json['_id'] ?? json['id'],
       label: json['label'] ?? 'Home',
@@ -23,6 +32,7 @@ class UserAddress {
       city: json['city'],
       country: json['country'],
       isDefault: json['isDefault'] == true,
+      coordinates: coords,
     );
   }
 
@@ -32,6 +42,7 @@ class UserAddress {
     if (city != null) 'city': city,
     if (country != null) 'country': country,
     'isDefault': isDefault,
+    if (coordinates != null) 'coordinates': coordinates,
   };
 }
 
@@ -47,6 +58,8 @@ class AppUser {
   final List<UserAddress> addresses;
   final bool isEmailVerified;
   final bool isActive;
+  final String riderStatus; // 'none', 'pending', 'approved', 'rejected'
+  final Map<String, dynamic>? riderDetails;
 
   const AppUser({
     required this.id,
@@ -60,6 +73,8 @@ class AppUser {
     required this.addresses,
     this.isEmailVerified = false,
     this.isActive = true,
+    this.riderStatus = 'none',
+    this.riderDetails,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -80,6 +95,8 @@ class AppUser {
           [],
       isEmailVerified: json['isEmailVerified'] == true,
       isActive: json['isActive'] != false,
+      riderStatus: json['riderStatus'] ?? 'none',
+      riderDetails: json['riderDetails'] is Map ? Map<String, dynamic>.from(json['riderDetails'] as Map) : null,
     );
   }
 
@@ -88,6 +105,8 @@ class AppUser {
     'lastName': lastName,
     'email': email,
     if (phone != null) 'phone': phone,
+    'riderStatus': riderStatus,
+    if (riderDetails != null) 'riderDetails': riderDetails,
   };
 
   bool get isBusinessOwner => roles.contains('business_owner');
