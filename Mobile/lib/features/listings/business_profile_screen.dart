@@ -48,7 +48,7 @@ class BusinessProfileScreen extends ConsumerWidget {
               foregroundColor: Colors.white,
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(children: [
-                  if (biz['coverImage'] != null)
+                  if (biz['coverImage'] != null && (biz['coverImage'].toString().startsWith('http://') || biz['coverImage'].toString().startsWith('https://')))
                     Image.network(biz['coverImage'], width: double.infinity, height: 220, fit: BoxFit.cover)
                   else
                     Container(decoration: const BoxDecoration(gradient: AppColors.heroGradient)),
@@ -74,7 +74,7 @@ class BusinessProfileScreen extends ConsumerWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Container(width: 56, height: 56, color: AppColors.surfaceVariant,
-                              child: biz['logo'] != null
+                              child: biz['logo'] != null && (biz['logo'].toString().startsWith('http://') || biz['logo'].toString().startsWith('https://'))
                                   ? Image.network(biz['logo'], fit: BoxFit.cover)
                                   : const Center(child: Text('🏪', style: TextStyle(fontSize: 28)))),
                         ),
@@ -123,17 +123,42 @@ class BusinessProfileScreen extends ConsumerWidget {
                   : SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
-                          final l = listings[i];
-                          return ListTile(
-                            leading: ClipRRect(borderRadius: BorderRadius.circular(8),
-                              child: Container(width: 48, height: 48, color: AppColors.surfaceVariant,
-                                child: l['photos'] != null && (l['photos'] as List).isNotEmpty
-                                    ? Image.network(l['photos'][0], fit: BoxFit.cover) : const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary))),
-                            title: Text(l['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-                            subtitle: Text('RWF ${l['offerPrice'] ?? l['price'] ?? 0}', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
-                            onTap: () => context.push('/listings/${l['_id']}'),
-                          );
+                           final l = listings[i];
+                           // Parse pricing info robustly
+                           double price = 0;
+                           double offerPrice = 0;
+                           final rawPricing = l['pricing'];
+                           if (rawPricing is Map) {
+                             price = (rawPricing['originalPrice'] as num?)?.toDouble() ?? 
+                                     (rawPricing['price'] as num?)?.toDouble() ?? 0;
+                             offerPrice = (rawPricing['price'] as num?)?.toDouble() ?? price;
+                           } else {
+                             price = (l['price'] as num?)?.toDouble() ?? 0;
+                             offerPrice = (l['offerPrice'] as num?)?.toDouble() ?? price;
+                           }
+
+                           // Parse photos info robustly
+                           final rawPhotos = l['photos'];
+                           final rawImages = l['images'];
+                           final rawImage = l['image'];
+                           final String? img = (rawPhotos is List && rawPhotos.isNotEmpty)
+                               ? rawPhotos.firstOrNull?.toString()
+                               : ((rawImages is List && rawImages.isNotEmpty)
+                                   ? rawImages.firstOrNull?.toString()
+                                   : ((rawImage is List && rawImage.isNotEmpty)
+                                       ? rawImage.firstOrNull?.toString()
+                                       : rawImage?.toString()));
+
+                           return ListTile(
+                             leading: ClipRRect(borderRadius: BorderRadius.circular(8),
+                               child: Container(width: 48, height: 48, color: AppColors.surfaceVariant,
+                                  child: img != null && (img.startsWith('http://') || img.startsWith('https://'))
+                                      ? Image.network(img, fit: BoxFit.cover) : const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary))),
+                             title: Text(l['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                             subtitle: Text('RWF ${offerPrice.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                             trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                             onTap: () => context.push('/listings/${l['_id']}'),
+                           );
                         },
                         childCount: listings.length,
                       ),

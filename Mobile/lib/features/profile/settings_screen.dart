@@ -77,7 +77,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             return Column(children: [
               const _SectionHeader('Business'),
               _NavTile(icon: Icons.storefront_outlined, label: 'My Businesses', onTap: () => context.go('/business/dashboard')),
-              _NavTile(icon: Icons.payments_outlined, label: 'Payouts & Earnings', onTap: () {}),
+              _NavTile(icon: Icons.payments_outlined, label: 'Payouts & Earnings', onTap: () => context.push('/business/payouts')),
             ]);
           }),
 
@@ -145,18 +145,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ));
   }
 
-  void _confirmSignOut(BuildContext context, WidgetRef ref) {
-    showDialog(context: context, builder: (_) => AlertDialog(
-      title: const Text('Sign Out?', style: TextStyle(fontWeight: FontWeight.w700)),
-      content: const Text('You will need to sign in again to access your account.'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(onPressed: () {
-          ref.read(authProvider.notifier).logout();
-          Navigator.pop(context);
-        }, child: const Text('Sign Out', style: TextStyle(color: AppColors.error))),
-      ],
-    ));
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign Out?', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text('You will need to sign in again to access your account.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sign Out', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      ref.read(authProvider.notifier).logout();
+    }
   }
 
   void _showDeleteAccount(BuildContext context) {

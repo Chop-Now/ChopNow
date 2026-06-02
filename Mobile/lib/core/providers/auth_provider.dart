@@ -249,6 +249,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthUnauthenticated();
   }
 
+  Future<void> refreshProfile() => _refreshProfile();
+
   Future<void> _refreshProfile() async {
     try {
       final res = await ApiClient.instance.get(AppEndpoints.profile);

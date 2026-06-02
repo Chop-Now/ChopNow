@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../core/models/user_model.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -54,6 +56,64 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
     );
   }
 
+  Future<List<double>> _resolveCoordinates(String street, String city) async {
+    try {
+      final query = '$street, $city';
+      final locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        return [locations.first.longitude, locations.first.latitude];
+      }
+    } catch (e) {
+      debugPrint('Geocoding failed for $street, $city: $e');
+    }
+    return [30.0619, -1.9441]; // Default to Kigali coordinates
+  }
+
+  Future<void> _fillWithCurrentLocation(
+    TextEditingController streetCtrl,
+    TextEditingController cityCtrl,
+    void Function(void Function()) ss,
+  ) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permission denied.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Location permissions are permanently denied.');
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+
+    final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    if (placemarks.isNotEmpty) {
+      final pm = placemarks.first;
+      final street = [pm.street, pm.subLocality, pm.locality]
+          .where((s) => s != null && s.isNotEmpty)
+          .join(', ');
+      final city = pm.subAdministrativeArea ?? pm.administrativeArea ?? pm.locality ?? 'Kigali';
+      ss(() {
+        streetCtrl.text = street.isEmpty ? 'Unnamed Street' : street;
+        cityCtrl.text = city.isEmpty ? 'Kigali' : city;
+      });
+    } else {
+      ss(() {
+        streetCtrl.text = 'Location near Lat: ${position.latitude.toStringAsFixed(4)}';
+        cityCtrl.text = 'Kigali';
+      });
+    }
+  }
+
   void _showAddressSheet(BuildContext context, {UserAddress? existing}) {
     final labelCtrl = TextEditingController(text: existing?.label ?? '');
     final streetCtrl = TextEditingController(text: existing?.street ?? '');
@@ -71,8 +131,28 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(existing == null ? 'Add Address' : 'Edit Address',
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(existing == null ? 'Add Address' : 'Edit Address',
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                TextButton.icon(
+                  onPressed: isLoading ? null : () async {
+                    ss(() { isLoading = true; error = null; });
+                    try {
+                      await _fillWithCurrentLocation(streetCtrl, cityCtrl, ss);
+                      HapticFeedback.selectionClick();
+                    } catch (e) {
+                      ss(() { error = e.toString().replaceAll('Exception: ', ''); });
+                    } finally {
+                      ss(() { isLoading = false; });
+                    }
+                  },
+                  icon: const Icon(Icons.my_location, size: 16, color: AppColors.primary),
+                  label: const Text('Autofill GPS', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             CnTextField(label: 'Label', controller: labelCtrl, hint: 'Home, Work, Other…'),
             const SizedBox(height: 12),
@@ -88,12 +168,20 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
               label: existing == null ? 'Add Address' : 'Save Changes',
               isLoading: isLoading,
               onTap: isLoading ? null : () async {
+                if (streetCtrl.text.trim().isEmpty) {
+                  ss(() { error = 'Street address is required'; });
+                  return;
+                }
                 ss(() { isLoading = true; error = null; });
                 try {
+                  final streetVal = streetCtrl.text.trim();
+                  final cityVal = cityCtrl.text.trim().isEmpty ? 'Kigali' : cityCtrl.text.trim();
+                  final coords = await _resolveCoordinates(streetVal, cityVal);
                   final data = {
                     'label': labelCtrl.text.trim().isEmpty ? 'Home' : labelCtrl.text.trim(),
-                    'street': streetCtrl.text.trim(),
-                    if (cityCtrl.text.trim().isNotEmpty) 'city': cityCtrl.text.trim(),
+                    'street': streetVal,
+                    'city': cityVal,
+                    'coordinates': coords,
                   };
                   if (existing == null) {
                     await ref.read(authProvider.notifier).addAddress(data);
@@ -103,7 +191,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                   HapticFeedback.heavyImpact();
                   if (ctx.mounted) Navigator.pop(ctx);
                 } catch (e) {
-                  ss(() { error = e.toString(); isLoading = false; });
+                  ss(() { error = e.toString().replaceAll('Exception: ', ''); isLoading = false; });
                 }
               },
             ),

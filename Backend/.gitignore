@@ -64,3 +64,7 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Firebase service account credentials (NEVER commit these)
+config/firebase-service-account.json
+**/firebase-service-account.json

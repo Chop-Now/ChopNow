@@ -63,9 +63,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.primarySurface,
-                    backgroundImage: user?.avatar != null && user!.avatar!.isNotEmpty
+                    backgroundImage: user?.avatar != null && user!.avatar!.isNotEmpty && (user.avatar!.startsWith('http://') || user.avatar!.startsWith('https://'))
                         ? NetworkImage(user.avatar!) : null,
-                    child: user?.avatar == null || user!.avatar!.isEmpty
+                    child: user?.avatar == null || user!.avatar!.isEmpty || !(user.avatar!.startsWith('http://') || user.avatar!.startsWith('https://'))
                         ? Text(
                             _initials(user?.firstName, user?.lastName),
                             style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary),

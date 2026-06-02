@@ -34,6 +34,7 @@ import { useAppContext } from '../../context/AppContext';
 import {
   businessService,
   authService,
+  userService,
   settingsService,
   searchAddress,
   reverseGeocode,
@@ -54,6 +55,14 @@ const Settings = ({ initialTab = 'profile' }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Loading states for async actions
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [businessDetailsLoading, setBusinessDetailsLoading] = useState(false);
+  const [logoutAllLoading, setLogoutAllLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [twoFALoading, setTwoFALoading] = useState(false);
 
   // Update active tab when initialTab prop changes
   useEffect(() => {
@@ -276,6 +285,7 @@ const Settings = ({ initialTab = 'profile' }) => {
   };
 
   const handleUpdateProfile = async () => {
+    setProfileLoading(true);
     try {
       if (adminMode === 'shop') {
         // Update business profile
@@ -307,7 +317,9 @@ const Settings = ({ initialTab = 'profile' }) => {
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || error.message || 'Failed to update profile');
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -317,6 +329,7 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   const handleConfirmLogout = async () => {
     setShowLogoutModal(false);
+    setLogoutAllLoading(true);
     try {
       await authService.logoutAllDevices();
       toast.success('Logged out from all devices successfully');
@@ -324,7 +337,11 @@ const Settings = ({ initialTab = 'profile' }) => {
       window.location.href = '/login';
     } catch (error) {
       console.error('Error logging out from all devices:', error);
-      toast.error(error.message || 'Failed to logout from all devices');
+      toast.error(
+        error.response?.data?.message || error.message || 'Failed to logout from all devices'
+      );
+    } finally {
+      setLogoutAllLoading(false);
     }
   };
 
@@ -334,6 +351,7 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   const handleConfirmDelete = async () => {
     setShowDeleteModal(false);
+    setDeleteLoading(true);
     try {
       await authService.deleteAccount();
       toast.success('Account deleted successfully. Redirecting...');
@@ -343,7 +361,9 @@ const Settings = ({ initialTab = 'profile' }) => {
         window.location.href = '/login';
       }, 1500);
     } catch (error) {
-      toast.error(error.message || 'Failed to delete account');
+      toast.error(error.response?.data?.message || error.message || 'Failed to delete account');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -364,6 +384,7 @@ const Settings = ({ initialTab = 'profile' }) => {
       toast.error('Please fill in all password fields');
       return;
     }
+    setPasswordLoading(true);
     try {
       await authService.changePassword(passwordData.currentPassword, passwordData.newPassword);
       toast.success('Password updated successfully!');
@@ -371,7 +392,9 @@ const Settings = ({ initialTab = 'profile' }) => {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       console.error('Error updating password:', error);
-      toast.error(error.message || 'Failed to update password');
+      toast.error(error.response?.data?.message || error.message || 'Failed to update password');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -501,6 +524,7 @@ const Settings = ({ initialTab = 'profile' }) => {
   };
 
   const handleSaveBusinessDetails = async () => {
+    setBusinessDetailsLoading(true);
     try {
       const response = await businessService.getMyBusinesses();
       const businesses = response.businesses || response || [];
@@ -522,7 +546,11 @@ const Settings = ({ initialTab = 'profile' }) => {
         toast.error('No business found to update');
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to save business details');
+      toast.error(
+        error.response?.data?.message || error.message || 'Failed to save business details'
+      );
+    } finally {
+      setBusinessDetailsLoading(false);
     }
   };
 
@@ -533,18 +561,23 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   const handleToggle2FA = async () => {
     const newState = !twoFactorEnabled;
+    setTwoFALoading(true);
     try {
       // 2FA uses OTP-based verification via existing endpoints
       if (newState) {
         // Enable 2FA - sends OTP to user's email for verification on each login
-        await authService.requestSensitiveChangeOTP('email address');
-        toast.success('Two-Factor Authentication enabled. OTP will be sent on each login.');
+        // Note: full dedicated 2FA endpoint not yet implemented; showing coming-soon notice
+        toast('Two-Factor Authentication via email OTP is coming soon.', { icon: '🔒' });
+        setTwoFALoading(false);
+        return;
       } else {
         toast.success('Two-Factor Authentication disabled.');
       }
       setTwoFactorEnabled(newState);
     } catch (error) {
-      toast.error(error.message || 'Failed to toggle 2FA');
+      toast.error(error.response?.data?.message || error.message || 'Failed to toggle 2FA');
+    } finally {
+      setTwoFALoading(false);
     }
   };
 
@@ -947,9 +980,11 @@ const Settings = ({ initialTab = 'profile' }) => {
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <button
                     onClick={handleUpdateProfile}
-                    className="px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer"
+                    disabled={profileLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Update Profile
+                    {profileLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {profileLoading ? 'Saving...' : 'Update Profile'}
                   </button>
                 </div>
               </div>
@@ -978,9 +1013,11 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </div>
                     <button
                       onClick={handleLogoutAllDevices}
-                      className="w-full px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium cursor-pointer"
+                      disabled={logoutAllLoading}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Logout
+                      {logoutAllLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {logoutAllLoading ? 'Logging out...' : 'Logout'}
                     </button>
                   </div>
 
@@ -1001,9 +1038,11 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </div>
                     <button
                       onClick={handleDeleteAccount}
-                      className="w-full px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium cursor-pointer"
+                      disabled={deleteLoading}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Delete
+                      {deleteLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {deleteLoading ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -1245,9 +1284,11 @@ const Settings = ({ initialTab = 'profile' }) => {
                 </button>
                 <button
                   onClick={handleSaveBusinessDetails}
-                  className="px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer"
+                  disabled={businessDetailsLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {businessDetailsLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {businessDetailsLoading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -1685,9 +1726,11 @@ const Settings = ({ initialTab = 'profile' }) => {
                     {/* Update Password Button */}
                     <button
                       onClick={handleUpdatePassword}
-                      className="px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer"
+                      disabled={passwordLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Update Password
+                      {passwordLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {passwordLoading ? 'Updating...' : 'Update Password'}
                     </button>
                   </div>
                 )}
@@ -1718,11 +1761,14 @@ const Settings = ({ initialTab = 'profile' }) => {
                         </span>
                       </div>
                     )}
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label
+                      className={`relative inline-flex items-center ${twoFALoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
                       <input
                         type="checkbox"
                         checked={twoFactorEnabled}
-                        onChange={handleToggle2FA}
+                        onChange={twoFALoading ? undefined : handleToggle2FA}
+                        disabled={twoFALoading}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>

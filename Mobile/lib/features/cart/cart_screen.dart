@@ -235,7 +235,7 @@ class _CartItemCard extends ConsumerWidget {
             child: SizedBox(
               width: 80,
               height: 80,
-              child: listing.firstPhoto != null
+              child: listing.firstPhoto != null && (listing.firstPhoto!.startsWith('http://') || listing.firstPhoto!.startsWith('https://'))
                   ? CachedNetworkImage(
                       imageUrl: listing.firstPhoto!,
                       fit: BoxFit.cover,

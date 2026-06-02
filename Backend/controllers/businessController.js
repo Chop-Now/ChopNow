@@ -192,6 +192,7 @@ const updateBusiness = async (req, res) => {
       'contact',
       'address',
       'deliverySettings',
+      'payoutInfo',
     ];
     allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -400,7 +401,7 @@ const uploadKYC = async (req, res) => {
     for (const file of req.files) {
       // Determine resource type
       const isPDF = file.mimetype === 'application/pdf';
-      const resourceType = isPDF ? 'pdf' : 'image';
+      const resourceType = isPDF ? 'auto' : 'image';
 
       // Upload to Cloudinary
       const result = await uploadToCloudinary(file.buffer, 'chopnow/businesses/kyc', resourceType);

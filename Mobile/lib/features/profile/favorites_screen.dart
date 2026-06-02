@@ -34,7 +34,7 @@ class FavoritesScreen extends ConsumerWidget {
         child: async.when(
           loading: () => GridView.builder(
             padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
             itemCount: 4,
             itemBuilder: (_, __) => const ListingCardSkeleton(),
           ),
@@ -47,7 +47,7 @@ class FavoritesScreen extends ConsumerWidget {
                 )
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
                   itemCount: favs.length,
                   itemBuilder: (_, i) {
                     final listing = favs[i]['listing'] ?? favs[i];

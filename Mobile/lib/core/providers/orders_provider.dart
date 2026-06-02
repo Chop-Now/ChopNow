@@ -33,16 +33,22 @@ final orderDetailProvider = FutureProvider.family<Order, String>((ref, id) async
 // ── Place order ───────────────────────────────────────────────────────────────
 // Returns the new Order on success
 Future<Order> placeOrder({
+  required String listingId,
   required List<Map<String, dynamic>> items,
-  required String paymentMethod,
-  String deliveryType = 'pickup',
+  required String fulfillmentType,
+  Map<String, dynamic>? deliveryDetails,
+  Map<String, dynamic>? pickupDetails,
+  required Map<String, dynamic> payment,
 }) async {
   final response = await ApiClient.instance.post(
     AppEndpoints.orders,
     data: {
+      'listing': listingId,
       'items': items,
-      'paymentMethod': paymentMethod,
-      'deliveryType': deliveryType,
+      'fulfillmentType': fulfillmentType,
+      if (deliveryDetails != null) 'deliveryDetails': deliveryDetails,
+      if (pickupDetails != null) 'pickupDetails': pickupDetails,
+      'payment': payment,
     },
   );
   final data = response.data;
