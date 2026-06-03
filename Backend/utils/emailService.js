@@ -212,20 +212,28 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
   const coords = hasVendor && order.business.location?.coordinates;
   const googleMapsLink =
     coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
-      ? `https://www.google.com/maps?q=${coords[1]},${coords[0]}`
+      ? `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`
+      : null;
+  const appleMapsLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `http://maps.apple.com/?daddr=${coords[1]},${coords[0]}`
+      : null;
+  const wazeLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `https://waze.com/ul?ll=${coords[1]},${coords[0]}&navigate=yes`
       : null;
 
   const content = `
     <p>Hello ${name},</p>
     <p>Your order has been confirmed. Here are the details:</p>
-    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e5e7eb;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
       <p style="margin: 5px 0;"><strong>Fulfillment Type:</strong> <span style="text-transform: capitalize;">${order.fulfillmentType}</span></p>
       <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
       ${
         order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode
-          ? `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00a86b;">${order.pickupDetails.pickupCode}</span></p>`
+          ? `<p style="margin: 15px 0 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00a86b;">${order.pickupDetails.pickupCode}</span></p>`
           : ''
       }
     </div>
@@ -233,24 +241,41 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
     ${
       order.fulfillmentType === 'pickup'
         ? `
-      <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 4px; padding: 15px; margin: 20px 0;">
-        <h4 style="margin: 0 0 10px 0; color: #166534;">Store Pickup Details</h4>
-        <p style="margin: 5px 0; font-size: 14px;"><strong>Vendor Name:</strong> ${vendorName}</p>
+      <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 8px; padding: 20px; margin: 20px 0; font-family: sans-serif;">
+        <h4 style="margin: 0 0 15px 0; color: #166534; font-size: 16px;">Store Pickup Details</h4>
+        
+        ${
+          order.pickupDetails?.pickupCode
+            ? `
+          <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dcfce7; margin-bottom: 15px;">
+            <p style="margin: 0 0 10px 0; font-size: 12px; color: #6b7280; font-weight: bold; letter-spacing: 0.5px;">YOUR SCAN PASS</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${order.pickupDetails.pickupCode}" width="150" height="150" alt="Pickup QR Code" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
+            <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold; color: #166534; letter-spacing: 2px;">${order.pickupDetails.pickupCode}</p>
+          </div>
+          `
+            : ''
+        }
+
+        <p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Vendor Name:</strong> ${vendorName}</p>
         ${
           vendorAddress
-            ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
+            ? `<p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
             : ''
         }
         ${
           order.pickupDetails?.pickupTime
-            ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
+            ? `<p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
             : ''
         }
+        
         ${
           googleMapsLink
             ? `
-          <div style="margin-top: 15px;">
-            <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 13px; font-weight: bold;">Open in Google Maps</a>
+          <div style="margin-top: 15px; border-top: 1px solid #dcfce7; padding-top: 15px;">
+            <p style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;">Get Directions:</p>
+            <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-right: 8px; margin-bottom: 8px;">Google Maps</a>
+            <a href="${appleMapsLink}" target="_blank" style="background: #ffffff; color: #1f2937; border: 1px solid #d1d5db; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-right: 8px; margin-bottom: 8px;">Apple Maps</a>
+            <a href="${wazeLink}" target="_blank" style="background: #ffffff; color: #2563eb; border: 1px solid #d1d5db; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-bottom: 8px;">Waze</a>
           </div>
           `
             : ''
@@ -364,42 +389,55 @@ const sendOrderReadyForPickupEmail = async (email, name, order) => {
   const coords = hasVendor && order.business.location?.coordinates;
   const googleMapsLink =
     coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
-      ? `https://www.google.com/maps?q=${coords[1]},${coords[0]}`
+      ? `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`
+      : null;
+  const appleMapsLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `http://maps.apple.com/?daddr=${coords[1]},${coords[0]}`
+      : null;
+  const wazeLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `https://waze.com/ul?ll=${coords[1]},${coords[0]}&navigate=yes`
       : null;
 
   const content = `
     <p>Hello ${name},</p>
     <p>Great news! Your order is ready for pickup.</p>
     
-    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #e5e7eb;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <div style="margin: 20px 0;">
-        <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">Your Pickup Code:</p>
-        <div style="background: #00A86B; color: white; font-size: 28px; font-weight: bold; letter-spacing: 6px; padding: 15px 30px; border-radius: 8px; display: inline-block;">
+        <p style="margin: 0 0 10px 0; font-size: 12px; color: #6b7280; font-weight: bold; letter-spacing: 0.5px;">YOUR SCAN PASS</p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${order.pickupDetails?.pickupCode || 'N/A'}" width="150" height="150" alt="Pickup QR Code" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
+        <div style="background: #00A86B; color: white; font-size: 28px; font-weight: bold; letter-spacing: 6px; padding: 15px 30px; border-radius: 8px; display: inline-block; margin-top: 15px; font-family: monospace;">
           ${order.pickupDetails?.pickupCode || 'N/A'}
         </div>
       </div>
-      <p style="margin: 15px 0 5px 0; font-size: 14px; color: #6b7280;">Show this code to the vendor when you pick up your order.</p>
+      <p style="margin: 15px 0 5px 0; font-size: 14px; color: #6b7280;">Show either the QR code or the code digits to the vendor.</p>
     </div>
 
-    <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 4px; padding: 15px; margin: 20px 0; text-align: left;">
-      <h4 style="margin: 0 0 10px 0; color: #166534;">Vendor Location & Info</h4>
-      <p style="margin: 5px 0; font-size: 14px;"><strong>Vendor Name:</strong> ${vendorName}</p>
+    <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; font-family: sans-serif;">
+      <h4 style="margin: 0 0 15px 0; color: #166534; font-size: 16px;">Vendor Location & Info</h4>
+      <p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Vendor Name:</strong> ${vendorName}</p>
       ${
         vendorAddress
-          ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
+          ? `<p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
           : ''
       }
       ${
         order.pickupDetails?.pickupTime
-          ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
+          ? `<p style="margin: 5px 0; font-size: 14px; color: #374151;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
           : ''
       }
+      
       ${
         googleMapsLink
           ? `
-        <div style="margin-top: 15px;">
-          <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 13px; font-weight: bold;">Get Directions in Google Maps</a>
+        <div style="margin-top: 15px; border-top: 1px solid #dcfce7; padding-top: 15px;">
+          <p style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;">Get Directions:</p>
+          <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-right: 8px; margin-bottom: 8px;">Google Maps</a>
+          <a href="${appleMapsLink}" target="_blank" style="background: #ffffff; color: #1f2937; border: 1px solid #d1d5db; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-right: 8px; margin-bottom: 8px;">Apple Maps</a>
+          <a href="${wazeLink}" target="_blank" style="background: #ffffff; color: #2563eb; border: 1px solid #d1d5db; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: bold; margin-bottom: 8px;">Waze</a>
         </div>
         `
           : ''

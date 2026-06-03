@@ -11,6 +11,10 @@ import {
   Utensils,
   Trash2,
   Loader2,
+  Phone,
+  Navigation,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../services';
@@ -87,6 +91,17 @@ const MyOrders = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [riderLocation, setRiderLocation] = useState(null);
+
+  const [copiedText, setCopiedText] = useState('');
+
+  const handleCopy = (text, type) => {
+    navigator.clipboard.writeText(text);
+    setCopiedText(type);
+    toast.success(`${type === 'code' ? 'Pickup code' : 'Store address'} copied to clipboard!`);
+    setTimeout(() => {
+      setCopiedText('');
+    }, 2000);
+  };
 
   const handleViewDetails = async (order) => {
     setSelectedOrder(order);
@@ -799,7 +814,7 @@ const MyOrders = () => {
 
                 {selectedOrder.type === 'Pickup' && (
                   <div className="mt-6 border-t pt-6">
-                    <h4 className="font-semibold text-lg mb-3 text-gray-800 font-medium">
+                    <h4 className="font-semibold text-lg mb-4 text-gray-800 font-medium">
                       Pickup Information
                     </h4>
 
@@ -809,75 +824,160 @@ const MyOrders = () => {
                         <span className="text-sm text-gray-600">Loading pickup details...</span>
                       </div>
                     ) : orderDetails ? (
-                      <div className="space-y-4">
-                        {/* Pickup Code Badge */}
-                        <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex flex-col items-center text-center shadow-sm">
-                          <p className="text-gray-500 font-medium text-xs mb-1">YOUR PICKUP CODE</p>
-                          <p className="text-2xl font-bold text-green-700 tracking-wider">
-                            {orderDetails.pickupDetails?.pickupCode || 'N/A'}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                            Show this code to the vendor when you pick up your order to confirm
-                            receipt.
-                          </p>
+                      <div className="space-y-6">
+                        {/* Pickup Code & QR Code Pass */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
+                          {/* QR Code */}
+                          <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${orderDetails.pickupDetails?.pickupCode || 'N/A'}`}
+                              alt="Pickup QR Code"
+                              className="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                            />
+                          </div>
+
+                          {/* Code details & Copy */}
+                          <div className="flex-1 text-center sm:text-left space-y-2 w-full">
+                            <span className="text-[10px] tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
+                              Your Store Pickup Pass
+                            </span>
+                            <div>
+                              <p className="text-gray-500 font-semibold text-xs mt-1">
+                                PICKUP CODE
+                              </p>
+                              <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                                <span className="text-2xl sm:text-3xl font-extrabold text-green-800 tracking-widest font-mono">
+                                  {orderDetails.pickupDetails?.pickupCode || 'N/A'}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    handleCopy(orderDetails.pickupDetails?.pickupCode || '', 'code')
+                                  }
+                                  className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+                                  title="Copy Code"
+                                >
+                                  {copiedText === 'code' ? (
+                                    <Check className="w-4 h-4" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                            <p className="text-xs text-green-800/80 leading-relaxed font-medium">
+                              Show either this QR code or the code digits to the vendor at the
+                              pickup counter.
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Store Details */}
-                        <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-2 text-left">
-                          <div>
-                            <p className="text-gray-500 font-medium text-xs">STORE NAME</p>
-                            <p className="font-semibold text-gray-800">
-                              {orderDetails.business?.name || 'N/A'}
-                            </p>
-                          </div>
-                          {orderDetails.pickupDetails?.pickupTime && (
-                            <div>
-                              <p className="text-gray-500 font-medium text-xs">
-                                PICKUP TIME WINDOW
-                              </p>
-                              <p className="font-semibold text-gray-800">
-                                {orderDetails.pickupDetails.pickupTime}
-                              </p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-gray-500 font-medium text-xs">STORE ADDRESS</p>
-                            <p className="font-semibold text-gray-800">
-                              {typeof orderDetails.business?.address === 'string'
-                                ? orderDetails.business.address
-                                : orderDetails.business?.address
-                                  ? `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`
-                                  : 'N/A'}
-                            </p>
-                          </div>
-                          {orderDetails.business?.contact?.phone && (
-                            <div>
-                              <p className="text-gray-500 font-medium text-xs">CONTACT NUMBER</p>
+                        {/* Store Info Card */}
+                        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden text-left">
+                          <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h5 className="font-semibold text-gray-800 text-sm">
+                              Store Info & Directions
+                            </h5>
+                            {orderDetails.business?.contact?.phone && (
                               <a
                                 href={`tel:${orderDetails.business.contact.phone}`}
-                                className="font-semibold text-green-600 hover:underline"
+                                className="flex items-center gap-1.5 text-xs text-green-600 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
                               >
-                                {orderDetails.business.contact.phone}
+                                <Phone className="w-3.5 h-3.5" />
+                                Call Store
                               </a>
+                            )}
+                          </div>
+                          <div className="p-4 space-y-4">
+                            {/* Name and Address */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                  Store Name
+                                </span>
+                                <p className="font-bold text-gray-900">
+                                  {orderDetails.business?.name || 'N/A'}
+                                </p>
+                              </div>
+                              {orderDetails.pickupDetails?.pickupTime && (
+                                <div className="space-y-1">
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                    Pickup Window
+                                  </span>
+                                  <p className="font-semibold text-gray-700">
+                                    {orderDetails.pickupDetails.pickupTime}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          )}
+
+                            <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="space-y-1 max-w-md">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                  Store Address
+                                </span>
+                                <div className="flex items-start gap-1">
+                                  <p className="font-medium text-gray-800 text-sm">
+                                    {typeof orderDetails.business?.address === 'string'
+                                      ? orderDetails.business.address
+                                      : orderDetails.business?.address
+                                        ? `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`
+                                        : 'N/A'}
+                                  </p>
+                                  {orderDetails.business?.address && (
+                                    <button
+                                      onClick={() =>
+                                        handleCopy(
+                                          typeof orderDetails.business.address === 'string'
+                                            ? orderDetails.business.address
+                                            : `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`,
+                                          'address'
+                                        )
+                                      }
+                                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                      title="Copy Address"
+                                    >
+                                      {copiedText === 'address' ? (
+                                        <Check className="w-3.5 h-3.5 text-green-600" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {getPickupCoords() && (
+                                <div className="flex flex-wrap gap-2">
+                                  <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
+                                  >
+                                    <Navigation className="w-3.5 h-3.5" />
+                                    Google Maps
+                                  </a>
+                                  <a
+                                    href={`https://waze.com/ul?ll=${getPickupCoords()[0]},${getPickupCoords()[1]}&navigate=yes`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1.5 text-xs text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all duration-300 border border-blue-100 shadow-sm"
+                                  >
+                                    Waze
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Store Location Map / Directions */}
-                        {getPickupCoords() ? (
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center text-xs text-gray-500">
-                              <span className="font-medium text-gray-700">Store Location Map</span>
-                              <a
-                                href={`https://www.google.com/maps?q=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-green-600 font-semibold hover:underline"
-                              >
-                                Get Directions
-                              </a>
-                            </div>
-                            <div className="w-full h-60 rounded-xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
+                        {/* Store Location Map */}
+                        {getPickupCoords() && (
+                          <div className="space-y-2 text-left">
+                            <span className="text-xs font-semibold text-gray-500 block">
+                              Store Location Map
+                            </span>
+                            <div className="w-full h-60 rounded-2xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
                               <MapContainer
                                 center={getPickupCoords()}
                                 zoom={15}
@@ -898,7 +998,7 @@ const MyOrders = () => {
                               </MapContainer>
                             </div>
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500">Failed to load pickup information.</p>
