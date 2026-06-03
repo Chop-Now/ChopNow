@@ -52,6 +52,26 @@ const orderService = {
     }
   },
 
+  // Verify pickup code (for business owner/admin)
+  verifyPickupCode: async (id, pickupCode) => {
+    try {
+      const response = await api.post(`/api/orders/${id}/verify-pickup`, { pickupCode });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Verify pickup code directly (without order ID)
+  verifyPickupCodeDirect: async (pickupCode) => {
+    try {
+      const response = await api.post('/api/orders/verify-pickup-code', { pickupCode });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get all orders for admin (across all businesses)
   getAdminOrders: async (filters = {}) => {
     try {
