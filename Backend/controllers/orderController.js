@@ -302,13 +302,17 @@ const getOrders = async (req, res) => {
     const query = {};
 
     // Role-based filtering
-    if (req.user.role === 'consumer') {
-      query.customer = req.user._id;
-    } else if (req.user.role === 'business_owner') {
+    const filterRole = req.query.role || req.user.role;
+    if (filterRole === 'business_owner') {
       const businesses = await Business.find({ owner: req.user._id }).select('_id').lean();
       query.business = { $in: businesses.map((b) => b._id) };
+    } else if (filterRole === 'admin') {
+      if (req.query.role === 'consumer') {
+        query.customer = req.user._id;
+      }
+    } else {
+      query.customer = req.user._id;
     }
-    // Admin can see all orders
 
     if (status) query.status = status;
     if (fulfillmentType) query.fulfillmentType = fulfillmentType;

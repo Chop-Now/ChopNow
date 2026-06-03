@@ -220,7 +220,7 @@ const MyOrders = () => {
     const { isMounted = () => true } = options;
     setLoading(true);
     try {
-      const response = await orderService.getOrders();
+      const response = await orderService.getOrders({ role: 'consumer' });
       if (!isMounted()) return;
       const orders = (response.orders || []).map(transformOrder);
       setMyOrders(orders);
@@ -244,36 +244,40 @@ const MyOrders = () => {
     };
   }, []);
 
-  // Apply mobile filters on mount for mobile view
+  // Helper to categorize status
+  const getStatusCategory = (statusText) => {
+    if (!statusText) return 'processing';
+    const s = statusText.toLowerCase();
+    if (s.includes('completed') || s.includes('delivered')) return 'completed';
+    if (s.includes('cancelled')) return 'cancelled';
+    if (s.includes('failed')) return 'failed';
+    return 'processing'; // pending_payment, paid, confirmed, ready_for_pickup, out_for_delivery, etc.
+  };
+
+  // Apply mobile filters for mobile view
   useEffect(() => {
     if (window.innerWidth < 768) {
-      // On mobile, filter by processing + delivery by default
-      const filtered = myOrders.filter(
-        (order) => order.status.toLowerCase() === 'processing' && order.type === 'Delivery'
-      );
+      const filtered = myOrders.filter((order) => {
+        const cat = getStatusCategory(order.status);
+        const matchesStatus =
+          mobileStatusFilter === 'failed'
+            ? cat === 'cancelled' || cat === 'failed'
+            : cat === mobileStatusFilter;
+        return matchesStatus && order.type === selectedDeliveryType;
+      });
       setFilteredOrders(filtered);
     }
-  }, [myOrders]);
+  }, [myOrders, mobileStatusFilter, selectedDeliveryType]);
 
   // Handle mobile status filter change
   const handleMobileStatusChange = (status) => {
     setMobileStatusFilter(status);
-    const filtered = myOrders.filter(
-      (order) =>
-        order.status.toLowerCase() === status.toLowerCase() && order.type === selectedDeliveryType
-    );
-    setFilteredOrders(filtered);
     setCurrentPage(1);
   };
 
   // Handle mobile delivery type change
   const handleDeliveryTypeChange = (type) => {
     setSelectedDeliveryType(type);
-    const filtered = myOrders.filter(
-      (order) =>
-        order.type === type && order.status.toLowerCase() === mobileStatusFilter.toLowerCase()
-    );
-    setFilteredOrders(filtered);
     setCurrentPage(1);
   };
 
@@ -289,9 +293,10 @@ const MyOrders = () => {
     }
 
     if (selectedStatus !== 'all') {
-      filtered = filtered.filter(
-        (order) => order.status.toLowerCase() === selectedStatus.toLowerCase()
-      );
+      filtered = filtered.filter((order) => {
+        const cat = getStatusCategory(order.status);
+        return cat === selectedStatus.toLowerCase();
+      });
     }
 
     if (startDate && endDate) {
