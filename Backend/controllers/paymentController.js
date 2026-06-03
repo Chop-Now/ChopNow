@@ -95,6 +95,7 @@ const initiatePayment = async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
+        'Idempotency-Key': depositId, // Prevents double-charges on retries
       },
       timeout: 10000,
     });

@@ -311,6 +311,10 @@ app.use('/api/payments', paymentRoutes);
 const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');
 const redis = require('./config/redis');
 const { startExpiryJob } = require('./services/listingExpiryJob');
+const {
+  startPendingPaymentExpiryJob,
+  stopPendingPaymentExpiryJob,
+} = require('./services/pendingPaymentExpiryJob');
 
 // Enhanced health check endpoint with database stats
 // NOTE: must be registered BEFORE notFound middleware or it will always 404
@@ -442,6 +446,9 @@ const startServer = async () => {
     // Start listing expiry background job (marks expired listings every 5 min)
     startExpiryJob();
 
+    // Start pending payment expiry job (cancels stale orders every 5 min)
+    startPendingPaymentExpiryJob();
+
     const port = process.env.PORT || 5000;
     const httpServer = createServer(app);
 
@@ -467,10 +474,12 @@ const startServer = async () => {
 
 // Handle graceful shutdown for Redis
 process.on('SIGTERM', async () => {
+  stopPendingPaymentExpiryJob();
   await redis.close();
 });
 
 process.on('SIGINT', async () => {
+  stopPendingPaymentExpiryJob();
   await redis.close();
 });
 
