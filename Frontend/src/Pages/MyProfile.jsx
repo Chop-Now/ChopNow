@@ -254,7 +254,9 @@ const MyProfile = () => {
             </div>
 
             {/* Account Upgrades Section */}
-            {(!availableRoles.includes('rider') || !availableRoles.includes('business_owner')) && (
+            {!availableRoles.includes(
+              'rider'
+            ) /* || !availableRoles.includes('business_owner') */ && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {!availableRoles.includes('rider') && (
                   <div className="bg-amber-50/40 border border-amber-200 rounded-2xl p-6 flex flex-col justify-between gap-4">
@@ -280,6 +282,7 @@ const MyProfile = () => {
                   </div>
                 )}
 
+                {/* 
                 {!availableRoles.includes('business_owner') && (
                   <div className="bg-emerald-50/40 border border-emerald-200 rounded-2xl p-6 flex flex-col justify-between gap-4">
                     <div className="space-y-2">
@@ -308,6 +311,7 @@ const MyProfile = () => {
                     </button>
                   </div>
                 )}
+                */}
               </div>
             )}
 
