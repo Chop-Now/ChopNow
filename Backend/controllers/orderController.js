@@ -186,7 +186,7 @@ const createOrder = async (req, res) => {
  */
 const sendNewOrderNotifications = async (orderId) => {
   try {
-    const order = await Order.findById(orderId).populate('listing');
+    const order = await Order.findById(orderId).populate('listing').populate('business');
     if (!order) {
       logger.error({ orderId }, 'sendNewOrderNotifications failed: Order not found');
       return;
@@ -346,7 +346,7 @@ const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('customer', 'firstName lastName email phone')
-      .populate('business', 'name type address contact media')
+      .populate('business', 'name type address contact media location')
       .populate('listing', 'title category photos pricing')
       .populate('delivery')
       .lean();
