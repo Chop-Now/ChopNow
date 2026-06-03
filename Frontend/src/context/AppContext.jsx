@@ -472,6 +472,7 @@ const AppContextProvider = ({ children }) => {
             vendorId: transformed.businessId,
             quantity: transformed.quantity || 0,
             inStock: transformed.isAvailable !== false,
+            status: transformed.status || 'active',
             pickupTime:
               transformed.pickupFrom && transformed.pickupTo
                 ? `${new Date(transformed.pickupFrom).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(transformed.pickupTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
