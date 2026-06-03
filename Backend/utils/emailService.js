@@ -206,19 +206,60 @@ const sendSensitiveChangeOTP = async (email, name, otpCode, changeType) => {
  * Send order confirmation email
  */
 const sendOrderConfirmationEmail = async (email, name, order) => {
+  const hasVendor = order.business && typeof order.business === 'object';
+  const vendorName = hasVendor ? order.business.name : 'Vendor';
+  const vendorAddress = hasVendor ? order.business.address : null;
+  const coords = hasVendor && order.business.location?.coordinates;
+  const googleMapsLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `https://www.google.com/maps?q=${coords[1]},${coords[0]}`
+      : null;
+
   const content = `
     <p>Hello ${name},</p>
     <p>Your order has been confirmed. Here are the details:</p>
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Fulfillment Type:</strong> <span style="text-transform: capitalize;">${order.fulfillmentType}</span></p>
       <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
       ${
         order.fulfillmentType === 'pickup' && order.pickupDetails?.pickupCode
-          ? `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00A86B;">${order.pickupDetails.pickupCode}</span></p>`
+          ? `<p style="margin: 5px 0;"><strong>Pickup Code:</strong> <span style="font-size: 18px; font-weight: bold; color: #00a86b;">${order.pickupDetails.pickupCode}</span></p>`
           : ''
       }
     </div>
+
+    ${
+      order.fulfillmentType === 'pickup'
+        ? `
+      <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 4px; padding: 15px; margin: 20px 0;">
+        <h4 style="margin: 0 0 10px 0; color: #166534;">Store Pickup Details</h4>
+        <p style="margin: 5px 0; font-size: 14px;"><strong>Vendor Name:</strong> ${vendorName}</p>
+        ${
+          vendorAddress
+            ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
+            : ''
+        }
+        ${
+          order.pickupDetails?.pickupTime
+            ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
+            : ''
+        }
+        ${
+          googleMapsLink
+            ? `
+          <div style="margin-top: 15px;">
+            <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 13px; font-weight: bold;">Open in Google Maps</a>
+          </div>
+          `
+            : ''
+        }
+      </div>
+      `
+        : ''
+    }
+
     <p style="color: #6b7280; font-size: 14px;">You can track your order in the app.</p>
   `;
 
@@ -317,9 +358,19 @@ const sendPasswordChangedConfirmation = async (email, name) => {
  * Send order ready for pickup email with pickup code
  */
 const sendOrderReadyForPickupEmail = async (email, name, order) => {
+  const hasVendor = order.business && typeof order.business === 'object';
+  const vendorName = hasVendor ? order.business.name : 'Vendor';
+  const vendorAddress = hasVendor ? order.business.address : null;
+  const coords = hasVendor && order.business.location?.coordinates;
+  const googleMapsLink =
+    coords && coords.length === 2 && coords[0] !== 0 && coords[1] !== 0
+      ? `https://www.google.com/maps?q=${coords[1]},${coords[0]}`
+      : null;
+
   const content = `
     <p>Hello ${name},</p>
     <p>Great news! Your order is ready for pickup.</p>
+    
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <div style="margin: 20px 0;">
@@ -330,9 +381,33 @@ const sendOrderReadyForPickupEmail = async (email, name, order) => {
       </div>
       <p style="margin: 15px 0 5px 0; font-size: 14px; color: #6b7280;">Show this code to the vendor when you pick up your order.</p>
     </div>
+
+    <div style="background: #f0fdf4; border-left: 4px solid #00A86B; border-radius: 4px; padding: 15px; margin: 20px 0; text-align: left;">
+      <h4 style="margin: 0 0 10px 0; color: #166534;">Vendor Location & Info</h4>
+      <p style="margin: 5px 0; font-size: 14px;"><strong>Vendor Name:</strong> ${vendorName}</p>
+      ${
+        vendorAddress
+          ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${typeof vendorAddress === 'string' ? vendorAddress : JSON.stringify(vendorAddress)}</p>`
+          : ''
+      }
+      ${
+        order.pickupDetails?.pickupTime
+          ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Pickup Time:</strong> ${order.pickupDetails.pickupTime}</p>`
+          : ''
+      }
+      ${
+        googleMapsLink
+          ? `
+        <div style="margin-top: 15px;">
+          <a href="${googleMapsLink}" target="_blank" style="background: #00A86B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 13px; font-weight: bold;">Get Directions in Google Maps</a>
+        </div>
+        `
+          : ''
+      }
+    </div>
+
     <p style="color: #6b7280; font-size: 14px;">Please pick up your order as soon as possible to ensure freshness.</p>
   `;
-
   return sendEmail(
     email,
     `Your Order is Ready for Pickup - #${order.orderNumber}`,
