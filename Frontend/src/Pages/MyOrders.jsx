@@ -797,6 +797,115 @@ const MyOrders = () => {
                   </div>
                 </div>
 
+                {selectedOrder.type === 'Pickup' && (
+                  <div className="mt-6 border-t pt-6">
+                    <h4 className="font-semibold text-lg mb-3 text-gray-800 font-medium">
+                      Pickup Information
+                    </h4>
+
+                    {fetchingDetails ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <span className="text-sm text-gray-600">Loading pickup details...</span>
+                      </div>
+                    ) : orderDetails ? (
+                      <div className="space-y-4">
+                        {/* Pickup Code Badge */}
+                        <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex flex-col items-center text-center shadow-sm">
+                          <p className="text-gray-500 font-medium text-xs mb-1">YOUR PICKUP CODE</p>
+                          <p className="text-2xl font-bold text-green-700 tracking-wider">
+                            {orderDetails.pickupDetails?.pickupCode || 'N/A'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                            Show this code to the vendor when you pick up your order to confirm
+                            receipt.
+                          </p>
+                        </div>
+
+                        {/* Store Details */}
+                        <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-2 text-left">
+                          <div>
+                            <p className="text-gray-500 font-medium text-xs">STORE NAME</p>
+                            <p className="font-semibold text-gray-800">
+                              {orderDetails.business?.name || 'N/A'}
+                            </p>
+                          </div>
+                          {orderDetails.pickupDetails?.pickupTime && (
+                            <div>
+                              <p className="text-gray-500 font-medium text-xs">
+                                PICKUP TIME WINDOW
+                              </p>
+                              <p className="font-semibold text-gray-800">
+                                {orderDetails.pickupDetails.pickupTime}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-gray-500 font-medium text-xs">STORE ADDRESS</p>
+                            <p className="font-semibold text-gray-800">
+                              {typeof orderDetails.business?.address === 'string'
+                                ? orderDetails.business.address
+                                : orderDetails.business?.address
+                                  ? `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`
+                                  : 'N/A'}
+                            </p>
+                          </div>
+                          {orderDetails.business?.contact?.phone && (
+                            <div>
+                              <p className="text-gray-500 font-medium text-xs">CONTACT NUMBER</p>
+                              <a
+                                href={`tel:${orderDetails.business.contact.phone}`}
+                                className="font-semibold text-green-600 hover:underline"
+                              >
+                                {orderDetails.business.contact.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Store Location Map / Directions */}
+                        {getPickupCoords() ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-xs text-gray-500">
+                              <span className="font-medium text-gray-700">Store Location Map</span>
+                              <a
+                                href={`https://www.google.com/maps?q=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-green-600 font-semibold hover:underline"
+                              >
+                                Get Directions
+                              </a>
+                            </div>
+                            <div className="w-full h-60 rounded-xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
+                              <MapContainer
+                                center={getPickupCoords()}
+                                zoom={15}
+                                style={{ height: '100%', width: '100%' }}
+                                scrollWheelZoom={false}
+                              >
+                                <TileLayer
+                                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                />
+                                <Marker position={getPickupCoords()} icon={vendorIcon}>
+                                  <Popup>
+                                    <div className="text-xs font-semibold text-center">
+                                      🏪 {orderDetails.business?.name || 'Store'}
+                                    </div>
+                                  </Popup>
+                                </Marker>
+                              </MapContainer>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Failed to load pickup information.</p>
+                    )}
+                  </div>
+                )}
+
                 {selectedOrder.type === 'Delivery' && (
                   <div className="mt-6 border-t pt-6">
                     <h4 className="font-semibold text-lg mb-3 text-gray-800">
