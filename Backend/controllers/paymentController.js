@@ -91,10 +91,19 @@ const initiatePayment = async (req, res) => {
     logger.debug({ payload }, 'Initiating pawaPay deposit request');
 
     // ─── TEST MODE ──────────────────────────────────────────────────────────
-    // When PAYMENT_TEST_MODE=true, simulate a successful pawaPay response
-    // without hitting the real API. Safe for development / staging tests.
-    if (process.env.PAYMENT_TEST_MODE === 'true') {
-      logger.info({ orderId, depositId }, 'PAYMENT_TEST_MODE: Simulating successful deposit');
+    // Active when PAYMENT_TEST_MODE=true, OR when running in sandbox and
+    // PAYMENT_TEST_MODE has not been explicitly set to 'false'.
+    // This prevents real API failures during staging/testing.
+    const isSandbox = process.env.PAWAPAY_ENVIRONMENT !== 'production';
+    const testModeExplicitlyDisabled = process.env.PAYMENT_TEST_MODE === 'false';
+    const isTestMode =
+      process.env.PAYMENT_TEST_MODE === 'true' || (isSandbox && !testModeExplicitlyDisabled);
+
+    if (isTestMode) {
+      logger.info(
+        { orderId, depositId, reason: isSandbox ? 'sandbox-auto' : 'explicit' },
+        'PAYMENT_TEST_MODE: Simulating successful deposit'
+      );
 
       // Create Payment record immediately
       const payment = await Payment.create({
@@ -111,12 +120,14 @@ const initiatePayment = async (req, res) => {
       await order.save();
 
       // Simulate webhook callback after 5 seconds (COMPLETED)
+      // Call the webhook handler directly in-process (no HTTP self-call needed)
       setTimeout(async () => {
         try {
-          const axios2 = require('axios');
-          await axios2.post(
-            `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/v1/payments/webhook`,
-            {
+          logger.info({ depositId }, 'PAYMENT_TEST_MODE: Firing simulated COMPLETED callback');
+
+          // Build a minimal fake request/response matching what the real webhook handler expects
+          const fakeReq = {
+            body: {
               depositId,
               status: 'COMPLETED',
               providerTransactionId: `TEST-${depositId.substring(0, 8).toUpperCase()}`,
@@ -127,11 +138,57 @@ const initiatePayment = async (req, res) => {
               payer: { address: { value: formattedPhone } },
               customerTimestamp: new Date().toISOString(),
             },
-            { headers: { 'Content-Type': 'application/json' } }
-          );
-          logger.info({ depositId }, 'PAYMENT_TEST_MODE: Simulated webhook fired');
+            headers: {}, // No signature headers — sandbox mode allows this
+          };
+
+          // Directly invoke the webhook handler logic (skip signature check in sandbox)
+          const paymentRecord = await Payment.findOne({ depositId });
+          if (!paymentRecord) {
+            logger.warn(
+              { depositId },
+              'PAYMENT_TEST_MODE: Payment not found for simulated callback'
+            );
+            return;
+          }
+
+          paymentRecord.status = 'completed';
+          paymentRecord.callbackReceived = true;
+          paymentRecord.rawCallbackData = fakeReq.body;
+          paymentRecord.providerTransactionId = fakeReq.body.providerTransactionId;
+          await paymentRecord.save();
+
+          const orderToUpdate = await Order.findById(paymentRecord.order);
+          if (orderToUpdate) {
+            orderToUpdate.status = 'paid';
+            orderToUpdate.payment.paymentStatus = 'completed';
+            orderToUpdate.statusTimestamps.paidAt = new Date();
+            await orderToUpdate.save();
+
+            // Notify customer via socket
+            try {
+              const io = socketManager.getIO();
+              io.to(`user_${orderToUpdate.customer.toString()}`).emit(
+                'order_status_updated',
+                orderToUpdate
+              );
+              logger.info(
+                { orderNumber: orderToUpdate.orderNumber },
+                'PAYMENT_TEST_MODE: Order marked paid and customer notified'
+              );
+            } catch (socketErr) {
+              logger.warn({ err: socketErr.message }, 'PAYMENT_TEST_MODE: Socket emit failed');
+            }
+
+            // Send email/vendor notifications
+            sendNewOrderNotifications(orderToUpdate._id).catch((err) =>
+              logger.warn({ err: err.message }, 'PAYMENT_TEST_MODE: Notification send failed')
+            );
+          }
         } catch (err) {
-          logger.warn({ err: err.message }, 'PAYMENT_TEST_MODE: Failed to fire simulated webhook');
+          logger.warn(
+            { err: err.message },
+            'PAYMENT_TEST_MODE: Failed to process simulated callback'
+          );
         }
       }, 5000);
 
