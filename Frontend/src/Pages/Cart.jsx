@@ -223,7 +223,7 @@ const Cart = () => {
     toast.success('Payment completed successfully!');
     setTimeout(() => {
       setShowPaymentModal(false);
-      navigate('/myorders');
+      navigate('/my-orders');
     }, 2000);
   };
 
@@ -695,7 +695,7 @@ const Cart = () => {
                       const order = await placeOrder(orderData);
 
                       if (paymentMethod === 'cash') {
-                        navigate('/myorders');
+                        navigate('/my-orders');
                       } else {
                         // Show payment modal — user confirms their phone number then clicks "Confirm & Pay"
                         setActiveOrder(order);
@@ -725,7 +725,7 @@ const Cart = () => {
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
-                  navigate('/myorders');
+                  navigate('/my-orders');
                 }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition cursor-pointer"
               >
@@ -803,7 +803,7 @@ const Cart = () => {
                 <button
                   onClick={() => {
                     setShowPaymentModal(false);
-                    navigate('/myorders');
+                    navigate('/my-orders');
                   }}
                   className="w-full py-3 rounded-xl border border-gray-200 text-gray-500 font-semibold hover:bg-gray-50 transition cursor-pointer"
                 >
