@@ -85,7 +85,7 @@ const initiatePayment = async (req, res) => {
         },
       },
       customerTimestamp: new Date().toISOString(),
-      statementDescription: `ChopNow Order ${order.orderNumber.substring(0, 15)}`,
+      statementDescription: `ChopNow-${order.orderNumber.slice(-8)}`,
     };
 
     logger.debug({ payload }, 'Initiating pawaPay deposit request');
