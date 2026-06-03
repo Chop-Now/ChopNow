@@ -90,12 +90,68 @@ const initiatePayment = async (req, res) => {
 
     logger.debug({ payload }, 'Initiating pawaPay deposit request');
 
+    // ─── TEST MODE ──────────────────────────────────────────────────────────
+    // When PAYMENT_TEST_MODE=true, simulate a successful pawaPay response
+    // without hitting the real API. Safe for development / staging tests.
+    if (process.env.PAYMENT_TEST_MODE === 'true') {
+      logger.info({ orderId, depositId }, 'PAYMENT_TEST_MODE: Simulating successful deposit');
+
+      // Create Payment record immediately
+      const payment = await Payment.create({
+        order: order._id,
+        depositId,
+        amount: order.pricing.total,
+        currency: order.pricing.currency || 'RWF',
+        payerPhoneNumber: formattedPhone,
+        correspondent,
+        status: 'pending',
+      });
+
+      order.payment.paymentMethod = 'mobile_money';
+      await order.save();
+
+      // Simulate webhook callback after 5 seconds (COMPLETED)
+      setTimeout(async () => {
+        try {
+          const axios2 = require('axios');
+          await axios2.post(
+            `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/v1/payments/webhook`,
+            {
+              depositId,
+              status: 'COMPLETED',
+              providerTransactionId: `TEST-${depositId.substring(0, 8).toUpperCase()}`,
+              amount: String(order.pricing.total),
+              currency: order.pricing.currency || 'RWF',
+              country: 'RWA',
+              correspondent,
+              payer: { address: { value: formattedPhone } },
+              customerTimestamp: new Date().toISOString(),
+            },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+          logger.info({ depositId }, 'PAYMENT_TEST_MODE: Simulated webhook fired');
+        } catch (err) {
+          logger.warn({ err: err.message }, 'PAYMENT_TEST_MODE: Failed to fire simulated webhook');
+        }
+      }, 5000);
+
+      return res.status(200).json({
+        success: true,
+        message:
+          '[TEST MODE] Payment simulated. A fake webhook will complete the order in 5 seconds.',
+        depositId,
+        paymentId: payment._id,
+        testMode: true,
+      });
+    }
+    // ─── END TEST MODE ───────────────────────────────────────────────────────
+
     // Call pawaPay Deposits API
     const response = await axios.post(`${baseUrl}/v2/deposits`, payload, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
-        'Idempotency-Key': depositId, // Prevents double-charges on retries
+        'Idempotency-Key': depositId,
       },
       timeout: 10000,
     });
@@ -133,10 +189,20 @@ const initiatePayment = async (req, res) => {
       });
     }
   } catch (error) {
-    logger.error({ err: error.response?.data || error.message }, 'pawaPay initiation failed');
+    // Log the full pawaPay error response for debugging
+    const pawapayError = error.response?.data;
+    logger.error(
+      {
+        err: error.message,
+        status: error.response?.status,
+        pawapayError,
+      },
+      'pawaPay initiation failed'
+    );
     return res.status(500).json({
       message: 'Failed to initiate mobile money payment',
-      error: error.response?.data?.message || error.message,
+      error: pawapayError?.message || error.message,
+      details: pawapayError,
     });
   }
 };

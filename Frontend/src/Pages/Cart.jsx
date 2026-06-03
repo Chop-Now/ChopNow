@@ -223,7 +223,7 @@ const Cart = () => {
     toast.success('Payment completed successfully!');
     setTimeout(() => {
       setShowPaymentModal(false);
-      navigate('/my-orders');
+      navigate('/myorders');
     }, 2000);
   };
 
@@ -697,10 +697,10 @@ const Cart = () => {
                       if (paymentMethod === 'cash') {
                         navigate('/myorders');
                       } else {
+                        // Show payment modal — user confirms their phone number then clicks "Confirm & Pay"
                         setActiveOrder(order);
                         setShowPaymentModal(true);
-                        // Trigger immediate payment initiation
-                        handleInitiateMobileMoney(order);
+                        // Do NOT auto-fire payment — wait for user to confirm phone number
                       }
                     } catch (error) {
                       console.error('Checkout execution failed', error);
@@ -751,7 +751,9 @@ const Cart = () => {
             </h3>
             <p className="text-sm text-gray-500 mb-6">
               Complete your rescue order for a total of{' '}
-              <strong className="text-gray-800">RWF {total.toLocaleString()}</strong>
+              <strong className="text-gray-800">
+                RWF {(activeOrder?.pricing?.total ?? 0).toLocaleString()}
+              </strong>
             </p>
 
             {isPaymentLoading ? (
@@ -765,7 +767,7 @@ const Cart = () => {
                 <p className="text-sm font-semibold text-gray-700">{paymentStatusText}</p>
                 <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
                   Please check your phone for a PIN prompt to authorize the transaction of RWF{' '}
-                  {total.toLocaleString()}.
+                  {(activeOrder?.pricing?.total ?? 0).toLocaleString()}.
                 </p>
               </div>
             ) : (
@@ -795,7 +797,7 @@ const Cart = () => {
                   className="w-full py-3 rounded-xl text-white font-semibold shadow-md transition-all hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: paymentMethod === 'momo' ? '#EAB308' : '#DC2626' }}
                 >
-                  Confirm & Pay RWF {total.toLocaleString()}
+                  Confirm & Pay RWF {(activeOrder?.pricing?.total ?? 0).toLocaleString()}
                 </button>
 
                 <button
