@@ -314,7 +314,17 @@ const getOrders = async (req, res) => {
       query.customer = req.user._id;
     }
 
-    if (status) query.status = status;
+    if (status) {
+      if (status === 'pending') {
+        query.status = {
+          $in: ['pending_payment', 'paid', 'confirmed', 'ready_for_pickup', 'out_for_delivery'],
+        };
+      } else if (status.includes(',')) {
+        query.status = { $in: status.split(',') };
+      } else {
+        query.status = status;
+      }
+    }
     if (fulfillmentType) query.fulfillmentType = fulfillmentType;
 
     const orders = await Order.find(query)
@@ -729,6 +739,98 @@ const verifyPickupCode = async (req, res) => {
 };
 
 /**
+ * @desc    Verify pickup code directly (without order ID)
+ * @route   POST /api/orders/verify-pickup-code
+ * @access  Private (business owner, admin)
+ */
+const verifyPickupCodeDirect = async (req, res) => {
+  try {
+    const { pickupCode } = req.body;
+
+    if (!pickupCode) {
+      return res.status(400).json({ message: 'Please provide pickup code' });
+    }
+
+    // Find businesses owned by this user
+    let allowedBusinesses = [];
+    if (req.user.role === 'business_owner') {
+      const businesses = await Business.find({ owner: req.user._id }).select('_id').lean();
+      allowedBusinesses = businesses.map((b) => b._id.toString());
+    }
+
+    // Query active pickup orders
+    const query = {
+      fulfillmentType: 'pickup',
+      'pickupDetails.pickupCode': pickupCode,
+      status: { $in: ['paid', 'confirmed', 'ready_for_pickup'] },
+    };
+
+    if (req.user.role === 'business_owner') {
+      query.business = { $in: allowedBusinesses };
+    }
+
+    const order = await Order.findOne(query).populate('business');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Active order with this pickup code not found' });
+    }
+
+    order.pickupDetails.pickedUpAt = new Date();
+    await order.updateStatus('completed');
+
+    // Update impact metrics on business
+    const totalMealsPickup = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const co2IncrementPickup = totalMealsPickup * IMPACT_FACTORS.CO2_PER_MEAL;
+    const waterIncrementPickup = totalMealsPickup * IMPACT_FACTORS.WATER_PER_MEAL;
+
+    await Business.findByIdAndUpdate(order.business._id || order.business, {
+      $inc: {
+        'stats.impact.mealsRescued': totalMealsPickup,
+        'stats.impact.co2Saved': co2IncrementPickup,
+        'stats.impact.waterSaved': waterIncrementPickup,
+        'metrics.mealsSaved': totalMealsPickup,
+        'metrics.co2Saved': co2IncrementPickup,
+      },
+    }).catch((err) => logger.error({ err }, 'Failed to update impact metrics on pickup'));
+
+    // Email customer
+    const customer = await User.findById(order.customer)
+      .select('email firstName lastName preferences')
+      .lean();
+    if (customer && customer.preferences?.notifications?.email !== false) {
+      const customerName =
+        `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+      sendOrderCompletedEmail(customer.email, customerName, order).catch((err) =>
+        logger.error({ err }, 'Failed to send order completed email on pickup verify')
+      );
+    }
+
+    // Update user total spent stats
+    await User.findByIdAndUpdate(order.customer, {
+      $inc: { 'stats.totalSpent': order.pricing.total },
+    });
+
+    res.json({
+      message: 'Pickup verified and order completed successfully',
+      order: {
+        _id: order.orderNumber || order._id,
+        orderId: order._id,
+        customerName: customer
+          ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim()
+          : 'Customer',
+        total: order.pricing.total,
+        status: 'Completed',
+      },
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Direct verify pickup failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
  * @desc    Get all orders (admin only)
  * @route   GET /api/orders/admin
  * @access  Private (admin)
@@ -742,7 +844,17 @@ const getAdminOrders = async (req, res) => {
 
     const query = {};
 
-    if (status) query.status = status;
+    if (status) {
+      if (status === 'pending') {
+        query.status = {
+          $in: ['pending_payment', 'paid', 'confirmed', 'ready_for_pickup', 'out_for_delivery'],
+        };
+      } else if (status.includes(',')) {
+        query.status = { $in: status.split(',') };
+      } else {
+        query.status = status;
+      }
+    }
     if (fulfillmentType) query.fulfillmentType = fulfillmentType;
     if (business) query.business = business;
     if (customer) query.customer = customer;
@@ -778,6 +890,7 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   verifyPickupCode,
+  verifyPickupCodeDirect,
   getAdminOrders,
   sendNewOrderNotifications,
 };

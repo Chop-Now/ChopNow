@@ -7,6 +7,7 @@ const {
   updateOrderStatus,
   cancelOrder,
   verifyPickupCode,
+  verifyPickupCodeDirect,
   getAdminOrders,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
@@ -57,6 +58,14 @@ router.get('/', protect, getOrders);
 
 // Admin-only: Get all orders across all businesses
 router.get('/admin', protect, authorize('admin'), getAdminOrders);
+
+// Verify pickup code directly (without order ID)
+router.post(
+  '/verify-pickup-code',
+  protect,
+  authorize('business_owner', 'admin'),
+  verifyPickupCodeDirect
+);
 
 router.get('/:id', protect, getOrderById);
 
