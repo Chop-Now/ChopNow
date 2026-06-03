@@ -84,7 +84,7 @@ const initiatePayment = async (req, res) => {
           provider: correspondent,
         },
       },
-      customerMessage: `ChopNow ${order.orderNumber.slice(-8)}`,
+      customerMessage: `ChopNow ${order.orderNumber.replace(/[^a-zA-Z0-9]/g, '').slice(-8)}`,
     };
 
     logger.debug({ payload }, 'Initiating pawaPay deposit request');
