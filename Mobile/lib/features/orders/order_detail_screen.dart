@@ -19,12 +19,18 @@ class OrderDetailScreen extends ConsumerWidget {
     return asyncOrder.when(
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body:
+            Center(child: CircularProgressIndicator(color: AppColors.primary)),
       ),
       error: (e, _) => Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(backgroundColor: AppColors.surface, foregroundColor: AppColors.textPrimary, elevation: 0),
-        body: CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(orderDetailProvider(orderId))),
+        appBar: AppBar(
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.textPrimary,
+            elevation: 0),
+        body: CnErrorState(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(orderDetailProvider(orderId))),
       ),
       data: (order) => _OrderDetailView(order: order),
     );
@@ -40,8 +46,10 @@ class _OrderDetailView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Order #${order.id.substring(order.id.length > 8 ? order.id.length - 8 : 0)}',
-            style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: Text(
+            'Order #${order.id.substring(order.id.length > 8 ? order.id.length - 8 : 0)}',
+            style: const TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -61,10 +69,14 @@ class _OrderDetailView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Text(_emojiForStatus(order.status), style: const TextStyle(fontSize: 36)),
+                  Text(_emojiForStatus(order.status),
+                      style: const TextStyle(fontSize: 36)),
                   const SizedBox(height: 6),
                   Text(_labelForStatus(order.status),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white)),
                 ],
               ),
             ),
@@ -73,29 +85,46 @@ class _OrderDetailView extends StatelessWidget {
             _Card(
               title: 'Items',
               child: Column(
-                children: order.items.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text('${item.name} × ${item.quantity}',
-                          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary))),
-                      Text('RWF ${(item.price * item.quantity).toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                    ],
-                  ),
-                )).toList()..add(
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                        Text('RWF ${order.total.toStringAsFixed(0)}',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                      ],
+                children: order.items
+                    .map((item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  child: Text('${item.name} × ${item.quantity}',
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textPrimary))),
+                              Text(
+                                  'RWF ${(item.price * item.quantity).toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary)),
+                            ],
+                          ),
+                        ))
+                    .toList()
+                  ..add(
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Total',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary)),
+                          Text('RWF ${order.total.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -104,7 +133,9 @@ class _OrderDetailView extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(gradient: AppColors.impactGradient, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                    gradient: AppColors.impactGradient,
+                    borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     const Text('🌿', style: TextStyle(fontSize: 24)),
@@ -113,9 +144,15 @@ class _OrderDetailView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Planet Impact', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-                          Text('You saved ${order.co2Saved}g of CO₂ from going to landfill!',
-                              style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                          const Text('Planet Impact',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white)),
+                          Text(
+                              'You saved ${order.co2Saved}g of CO₂ from going to landfill!',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.white70)),
                         ],
                       ),
                     ),
@@ -128,7 +165,7 @@ class _OrderDetailView extends StatelessWidget {
               CnPrimaryButton(
                 label: 'Track Order',
                 icon: Icons.location_on_outlined,
-                onTap: () => context.push('/orders/${ order.id}/tracking'),
+                onTap: () => context.push('/orders/${order.id}/tracking'),
               ),
             if (order.isCompleted) ...[
               const SizedBox(height: 10),
@@ -156,28 +193,30 @@ class _OrderDetailView extends StatelessWidget {
 
   LinearGradient _gradientForStatus(String status) {
     if (status == 'completed') return AppColors.primaryGradient;
-    if (status == 'cancelled') return const LinearGradient(colors: [Color(0xFFE53935), Color(0xFFEF5350)]);
+    if (status == 'cancelled')
+      return const LinearGradient(
+          colors: [Color(0xFFE53935), Color(0xFFEF5350)]);
     return const LinearGradient(colors: [Color(0xFF00897B), Color(0xFF26A69A)]);
   }
 
   String _emojiForStatus(String status) => switch (status) {
-    'completed' => '✅',
-    'cancelled' => '❌',
-    'ready_for_pickup' => '🛍',
-    'out_for_delivery' => '🚴',
-    _ => '⏳',
-  };
+        'completed' => '✅',
+        'cancelled' => '❌',
+        'ready_for_pickup' => '🛍',
+        'out_for_delivery' => '🚴',
+        _ => '⏳',
+      };
 
   String _labelForStatus(String status) => switch (status) {
-    'pending' => 'Pending Payment',
-    'paid' => 'Payment Confirmed',
-    'confirmed' => 'Preparing Your Order',
-    'ready_for_pickup' => 'Ready for Pickup!',
-    'out_for_delivery' => 'Out for Delivery',
-    'completed' => 'Order Completed',
-    'cancelled' => 'Order Cancelled',
-    _ => status,
-  };
+        'pending' => 'Pending Payment',
+        'paid' => 'Payment Confirmed',
+        'confirmed' => 'Preparing Your Order',
+        'ready_for_pickup' => 'Ready for Pickup!',
+        'out_for_delivery' => 'Out for Delivery',
+        'completed' => 'Order Completed',
+        'cancelled' => 'Order Cancelled',
+        _ => status,
+      };
 }
 
 class _Card extends StatelessWidget {
@@ -197,7 +236,11 @@ class _Card extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary)),
           const SizedBox(height: 10),
           const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),

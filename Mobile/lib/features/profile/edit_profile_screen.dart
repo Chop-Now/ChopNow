@@ -46,7 +46,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: const Text('Edit Profile',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -63,23 +65,36 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.primarySurface,
-                    backgroundImage: user?.avatar != null && user!.avatar!.isNotEmpty && (user.avatar!.startsWith('http://') || user.avatar!.startsWith('https://'))
-                        ? NetworkImage(user.avatar!) : null,
-                    child: user?.avatar == null || user!.avatar!.isEmpty || !(user.avatar!.startsWith('http://') || user.avatar!.startsWith('https://'))
+                    backgroundImage: user?.avatar != null &&
+                            user!.avatar!.isNotEmpty &&
+                            (user.avatar!.startsWith('http://') ||
+                                user.avatar!.startsWith('https://'))
+                        ? NetworkImage(user.avatar!)
+                        : null,
+                    child: user?.avatar == null ||
+                            user!.avatar!.isEmpty ||
+                            !(user.avatar!.startsWith('http://') ||
+                                user.avatar!.startsWith('https://'))
                         ? Text(
                             _initials(user?.firstName, user?.lastName),
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary),
+                            style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary),
                           )
                         : null,
                   ),
                   Positioned(
-                    bottom: 0, right: 0,
+                    bottom: 0,
+                    right: 0,
                     child: GestureDetector(
                       onTap: _pickAvatar,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                        decoration: const BoxDecoration(
+                            color: AppColors.primary, shape: BoxShape.circle),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            color: Colors.white, size: 16),
                       ),
                     ),
                   ),
@@ -87,33 +102,56 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Center(child: Text(user?.email ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary))),
+            Center(
+                child: Text(user?.email ?? '',
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textSecondary))),
             const SizedBox(height: 28),
 
             Row(
               children: [
-                Expanded(child: CnTextField(label: 'First Name', controller: _firstNameCtrl, hint: 'Jane')),
+                Expanded(
+                    child: CnTextField(
+                        label: 'First Name',
+                        controller: _firstNameCtrl,
+                        hint: 'Jane')),
                 const SizedBox(width: 12),
-                Expanded(child: CnTextField(label: 'Last Name', controller: _lastNameCtrl, hint: 'Doe')),
+                Expanded(
+                    child: CnTextField(
+                        label: 'Last Name',
+                        controller: _lastNameCtrl,
+                        hint: 'Doe')),
               ],
             ),
             const SizedBox(height: 14),
-            CnTextField(label: 'Phone', controller: _phoneCtrl, hint: '+250 7XX XXX XXX', keyboardType: TextInputType.phone),
+            CnTextField(
+                label: 'Phone',
+                controller: _phoneCtrl,
+                hint: '+250 7XX XXX XXX',
+                keyboardType: TextInputType.phone),
 
             if (_error != null) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
-                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                decoration: BoxDecoration(
+                    color: AppColors.errorSurface,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text(_error!,
+                    style:
+                        const TextStyle(color: AppColors.error, fontSize: 13)),
               ),
             ],
             if (_success != null) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.successSurface, borderRadius: BorderRadius.circular(10)),
-                child: Text(_success!, style: const TextStyle(color: AppColors.success, fontSize: 13)),
+                decoration: BoxDecoration(
+                    color: AppColors.successSurface,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text(_success!,
+                    style: const TextStyle(
+                        color: AppColors.success, fontSize: 13)),
               ),
             ],
 
@@ -146,21 +184,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final source = await showModalBottomSheet<ImageSource>(
         context: context,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (context) => SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 16),
-              const Text('Choose Avatar Source', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const Text('Choose Avatar Source',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                leading: const Icon(Icons.photo_library_rounded,
+                    color: AppColors.primary),
                 title: const Text('Photo Gallery'),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                leading: const Icon(Icons.camera_alt_rounded,
+                    color: AppColors.primary),
                 title: const Text('Camera'),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
@@ -181,9 +223,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (file == null) return;
 
-      setState(() { _isLoading = true; _error = null; _success = null; });
+      setState(() {
+        _isLoading = true;
+        _error = null;
+        _success = null;
+      });
       await ref.read(authProvider.notifier).uploadAvatar(file.path);
-      
+
       HapticFeedback.heavyImpact();
       setState(() => _success = 'Avatar updated successfully!');
     } catch (e) {
@@ -200,13 +246,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       setState(() => _error = 'First and last name are required');
       return;
     }
-    setState(() { _isLoading = true; _error = null; _success = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _success = null;
+    });
     try {
       await ref.read(authProvider.notifier).updateProfile(
-        firstName: fn,
-        lastName: ln,
-        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-      );
+            firstName: fn,
+            lastName: ln,
+            phone:
+                _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+          );
       HapticFeedback.heavyImpact();
       setState(() => _success = 'Profile updated successfully!');
     } catch (e) {
@@ -223,20 +274,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Change Password', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            const Text('Change Password',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
-            CnTextField(label: 'Current Password', controller: currentCtrl, obscureText: true),
+            CnTextField(
+                label: 'Current Password',
+                controller: currentCtrl,
+                obscureText: true),
             const SizedBox(height: 12),
-            CnTextField(label: 'New Password', controller: newCtrl, obscureText: true),
+            CnTextField(
+                label: 'New Password', controller: newCtrl, obscureText: true),
             const SizedBox(height: 12),
-            CnTextField(label: 'Confirm New Password', controller: confirmCtrl, obscureText: true),
+            CnTextField(
+                label: 'Confirm New Password',
+                controller: confirmCtrl,
+                obscureText: true),
             const SizedBox(height: 20),
             CnPrimaryButton(
               label: 'Update Password',
@@ -244,7 +305,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 if (newCtrl.text != confirmCtrl.text) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password updated!'), backgroundColor: AppColors.primary),
+                  const SnackBar(
+                      content: Text('Password updated!'),
+                      backgroundColor: AppColors.primary),
                 );
               },
             ),

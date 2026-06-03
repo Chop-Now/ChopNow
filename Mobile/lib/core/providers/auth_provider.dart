@@ -9,16 +9,29 @@ import '../services/notification_service.dart';
 import '../models/user_model.dart';
 
 // ── Auth States ───────────────────────────────────────────────────────────────
-sealed class AuthState { const AuthState(); }
-class AuthInitial extends AuthState { const AuthInitial(); }
-class AuthLoading extends AuthState { const AuthLoading(); }
+sealed class AuthState {
+  const AuthState();
+}
+
+class AuthInitial extends AuthState {
+  const AuthInitial();
+}
+
+class AuthLoading extends AuthState {
+  const AuthLoading();
+}
+
 class AuthAuthenticated extends AuthState {
   final AppUser user;
   final String token;
   const AuthAuthenticated({required this.user, required this.token});
   String get activeRole => user.activeRole;
 }
-class AuthUnauthenticated extends AuthState { const AuthUnauthenticated(); }
+
+class AuthUnauthenticated extends AuthState {
+  const AuthUnauthenticated();
+}
+
 class AuthError extends AuthState {
   final String message;
   const AuthError(this.message);
@@ -26,7 +39,9 @@ class AuthError extends AuthState {
 
 // ── Auth Notifier ─────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthInitial()) { _checkExistingAuth(); }
+  AuthNotifier() : super(const AuthInitial()) {
+    _checkExistingAuth();
+  }
 
   /// Clear error state (e.g., when user starts retyping)
   void clearError() {
@@ -36,7 +51,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _checkExistingAuth() async {
-    if (!await AuthService.hasToken()) { state = const AuthUnauthenticated(); return; }
+    if (!await AuthService.hasToken()) {
+      state = const AuthUnauthenticated();
+      return;
+    }
     try {
       final response = await ApiClient.instance.get(AppEndpoints.profile);
       final user = AppUser.fromJson(_extractUser(response.data));
@@ -96,13 +114,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     // 1. Register as consumer
     await register(
-        firstName: firstName, lastName: lastName,
-        email: email, password: password, phone: phone);
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: password,
+        phone: phone);
     if (state is! AuthAuthenticated) return;
     // 2. Add business_owner role
     try {
-      final res = await ApiClient.instance.post(AppEndpoints.addRole,
-          data: {'role': 'business_owner'});
+      final res = await ApiClient.instance
+          .post(AppEndpoints.addRole, data: {'role': 'business_owner'});
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
@@ -110,11 +131,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (_) {}
   }
 
-  Future<void> loginWithOtp({required String phone, required String otp}) async {
+  Future<void> loginWithOtp(
+      {required String phone, required String otp}) async {
     state = const AuthLoading();
     try {
-      final res = await ApiClient.instance.post(AppEndpoints.verifyOtp,
-          data: {'phone': phone, 'otp': otp});
+      final res = await ApiClient.instance
+          .post(AppEndpoints.verifyOtp, data: {'phone': phone, 'otp': otp});
       await _saveAndSetState(res.data);
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
@@ -124,7 +146,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> switchRole(String newRole) async {
     if (state is! AuthAuthenticated) return;
     try {
-      await ApiClient.instance.post(AppEndpoints.switchRole, data: {'role': newRole});
+      await ApiClient.instance
+          .post(AppEndpoints.switchRole, data: {'role': newRole});
       await AuthService.saveActiveRole(newRole);
       final current = state as AuthAuthenticated;
       final updatedUser = AppUser.fromJson({
@@ -147,8 +170,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> addBusinessOwnerRole() async {
     if (state is! AuthAuthenticated) return;
     try {
-      final res = await ApiClient.instance.post(AppEndpoints.addRole,
-          data: {'role': 'business_owner'});
+      final res = await ApiClient.instance
+          .post(AppEndpoints.addRole, data: {'role': 'business_owner'});
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
@@ -164,10 +187,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           data: {'role': 'rider', 'switchToNew': true});
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
-      
+
       // Update local storage active role
       await AuthService.saveActiveRole('rider');
-      
+
       state = AuthAuthenticated(user: user, token: current.token);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -197,9 +220,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<String> uploadAvatar(String filePath) async {
     try {
       final formData = FormData.fromMap({
-        'avatar': await MultipartFile.fromFile(filePath, filename: 'avatar.jpg'),
+        'avatar':
+            await MultipartFile.fromFile(filePath, filename: 'avatar.jpg'),
       });
-      final res = await ApiClient.instance.post(AppEndpoints.avatar, data: formData);
+      final res =
+          await ApiClient.instance.post(AppEndpoints.avatar, data: formData);
       final url = res.data['avatar'] ?? res.data['url'] ?? '';
       // Refresh profile
       await _refreshProfile();
@@ -211,7 +236,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> addAddress(Map<String, dynamic> addressData) async {
     try {
-      final res = await ApiClient.instance.post(AppEndpoints.addresses, data: addressData);
+      final res = await ApiClient.instance
+          .post(AppEndpoints.addresses, data: addressData);
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
@@ -220,9 +246,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> updateAddress(String addressId, Map<String, dynamic> data) async {
+  Future<void> updateAddress(
+      String addressId, Map<String, dynamic> data) async {
     try {
-      final res = await ApiClient.instance.put(AppEndpoints.address(addressId), data: data);
+      final res = await ApiClient.instance
+          .put(AppEndpoints.address(addressId), data: data);
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
@@ -233,7 +261,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> deleteAddress(String addressId) async {
     try {
-      final res = await ApiClient.instance.delete(AppEndpoints.address(addressId));
+      final res =
+          await ApiClient.instance.delete(AppEndpoints.address(addressId));
       final user = AppUser.fromJson(_extractUser(res.data));
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
@@ -293,8 +322,8 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier();
 });
 
-final isAuthenticatedProvider = Provider<bool>((ref) =>
-    ref.watch(authProvider) is AuthAuthenticated);
+final isAuthenticatedProvider =
+    Provider<bool>((ref) => ref.watch(authProvider) is AuthAuthenticated);
 
 final currentUserProvider = Provider<AppUser?>((ref) {
   final auth = ref.watch(authProvider);

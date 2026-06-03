@@ -114,8 +114,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 onTap: () => context.pop(),
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.textPrimary),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.arrow_back_rounded,
+                      size: 20, color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(height: 28),
@@ -123,26 +126,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               Container(
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(16)),
-                child: const Center(child: Text('🥗', style: TextStyle(fontSize: 28))),
+                decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(16)),
+                child: const Center(
+                    child: Text('🥗', style: TextStyle(fontSize: 28))),
               ),
               const SizedBox(height: 16),
-              const Text('Welcome back!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-              const Text('Sign in to rescue food and save planet 🌍', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              const Text('Welcome back!',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary)),
+              const Text('Sign in to rescue food and save planet 🌍',
+                  style:
+                      TextStyle(fontSize: 14, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
 
               // Tab bar
               Container(
-                decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12)),
                 child: TabBar(
                   controller: _tabController,
-                  indicator: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(10),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]),
+                  indicator: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4)
+                      ]),
                   dividerColor: Colors.transparent,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13),
                   labelColor: AppColors.primary,
                   unselectedLabelColor: AppColors.textSecondary,
-                  tabs: const [Tab(text: '📧 Email'), Tab(text: '📱 Phone OTP')],
+                  tabs: const [
+                    Tab(text: '📧 Email'),
+                    Tab(text: '📱 Phone OTP')
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -157,7 +181,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       emailCtrl: _emailCtrl,
                       passwordCtrl: _passwordCtrl,
                       obscurePassword: _obscurePassword,
-                      onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onToggleObscure: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     _OtpForm(
                       phoneCtrl: _phoneCtrl,
@@ -176,7 +201,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push('/auth/forgot-password'),
-                    child: const Text('Forgot password?', style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: const Text('Forgot password?',
+                        style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ),
 
@@ -184,11 +213,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(
+                      color: AppColors.errorSurface,
+                      borderRadius: BorderRadius.circular(10)),
                   child: Row(children: [
-                    const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                    const Icon(Icons.error_outline,
+                        color: AppColors.error, size: 18),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(error, style: const TextStyle(color: AppColors.error, fontSize: 13))),
+                    Expanded(
+                        child: Text(error,
+                            style: const TextStyle(
+                                color: AppColors.error, fontSize: 13))),
                   ]),
                 ),
               ],
@@ -206,7 +241,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 Expanded(child: Divider(color: AppColors.border)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('or', style: TextStyle(color: AppColors.textTertiary, fontSize: 13)),
+                  child: Text('or',
+                      style: TextStyle(
+                          color: AppColors.textTertiary, fontSize: 13)),
                 ),
                 Expanded(child: Divider(color: AppColors.border)),
               ]),
@@ -218,7 +255,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 icon: null,
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Google Sign-In coming soon!')),
+                    const SnackBar(
+                        content: Text('Google Sign-In coming soon!')),
                   );
                 },
               ),
@@ -227,10 +265,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Don\'t have an account? ', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                  const Text('Don\'t have an account? ',
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary)),
                   GestureDetector(
                     onTap: () => context.go('/auth/register'),
-                    child: const Text('Create one', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                    child: const Text('Create one',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
                   ),
                 ],
               ),
@@ -246,11 +290,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (_phoneCtrl.text.trim().isEmpty) return;
     setState(() => _sendingOtp = true);
     try {
-      await ApiClient.instance.post(AppEndpoints.sendOtp, data: {'phone': _phoneCtrl.text.trim()});
-      setState(() { _otpSent = true; _sendingOtp = false; });
+      await ApiClient.instance
+          .post(AppEndpoints.sendOtp, data: {'phone': _phoneCtrl.text.trim()});
+      setState(() {
+        _otpSent = true;
+        _sendingOtp = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent! Check your phone.'), backgroundColor: AppColors.primary),
+          const SnackBar(
+              content: Text('OTP sent! Check your phone.'),
+              backgroundColor: AppColors.primary),
         );
       }
     } catch (_) {
@@ -270,7 +320,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         return;
       }
       if (!_isValidEmail(email)) {
-        setState(() => _localError = 'Please enter a valid email (e.g. you@example.com).');
+        setState(() =>
+            _localError = 'Please enter a valid email (e.g. you@example.com).');
         return;
       }
       if (pass.isEmpty) {
@@ -280,7 +331,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
       ref.read(authProvider.notifier).login(email: email, password: pass);
     } else {
-      if (!_otpSent) { _sendOtp(); return; }
+      if (!_otpSent) {
+        _sendOtp();
+        return;
+      }
       final phone = _phoneCtrl.text.trim();
       final otp = _otpCtrl.text.trim();
       if (phone.isEmpty) {
@@ -301,20 +355,34 @@ class _EmailForm extends StatelessWidget {
   final TextEditingController passwordCtrl;
   final bool obscurePassword;
   final VoidCallback onToggleObscure;
-  const _EmailForm({required this.emailCtrl, required this.passwordCtrl, required this.obscurePassword, required this.onToggleObscure});
+  const _EmailForm(
+      {required this.emailCtrl,
+      required this.passwordCtrl,
+      required this.obscurePassword,
+      required this.onToggleObscure});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CnTextField(label: 'Email', controller: emailCtrl, hint: 'you@example.com', keyboardType: TextInputType.emailAddress),
+        CnTextField(
+            label: 'Email',
+            controller: emailCtrl,
+            hint: 'you@example.com',
+            keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 14),
-        CnTextField(label: 'Password',
+        CnTextField(
+          label: 'Password',
           controller: passwordCtrl,
           hint: 'Your password',
           obscureText: obscurePassword,
           suffix: IconButton(
-            icon: Icon(obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.textSecondary),
+            icon: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 20,
+                color: AppColors.textSecondary),
             onPressed: onToggleObscure,
           ),
         ),
@@ -329,16 +397,29 @@ class _OtpForm extends StatelessWidget {
   final bool otpSent;
   final bool sendingOtp;
   final VoidCallback onSendOtp;
-  const _OtpForm({required this.phoneCtrl, required this.otpCtrl, required this.otpSent, required this.sendingOtp, required this.onSendOtp});
+  const _OtpForm(
+      {required this.phoneCtrl,
+      required this.otpCtrl,
+      required this.otpSent,
+      required this.sendingOtp,
+      required this.onSendOtp});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CnTextField(label: 'Phone Number', controller: phoneCtrl, hint: '+250 7XX XXX XXX', keyboardType: TextInputType.phone),
+        CnTextField(
+            label: 'Phone Number',
+            controller: phoneCtrl,
+            hint: '+250 7XX XXX XXX',
+            keyboardType: TextInputType.phone),
         const SizedBox(height: 14),
         if (otpSent)
-          CnTextField(label: 'OTP Code', controller: otpCtrl, hint: '• • • • • •', keyboardType: TextInputType.number)
+          CnTextField(
+              label: 'OTP Code',
+              controller: otpCtrl,
+              hint: '• • • • • •',
+              keyboardType: TextInputType.number)
         else
           SizedBox(
             width: double.infinity,

@@ -5,7 +5,8 @@ import '../models/listing_model.dart';
 
 // ── Listings Provider ─────────────────────────────────────────────────────────
 // Fetch all active listings with optional filters
-final listingsProvider = FutureProvider.family<List<Listing>, Map<String, dynamic>>(
+final listingsProvider =
+    FutureProvider.family<List<Listing>, Map<String, dynamic>>(
   (ref, params) async {
     final response = await ApiClient.instance.get(
       AppEndpoints.listings,

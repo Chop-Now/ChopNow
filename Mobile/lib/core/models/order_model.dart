@@ -41,7 +41,8 @@ class Order {
           [],
       total: (json['total'] as num?)?.toDouble() ??
           (json['pricing']?['total'] as num?)?.toDouble() ??
-          (json['totalAmount'] as num?)?.toDouble() ?? 0,
+          (json['totalAmount'] as num?)?.toDouble() ??
+          0,
       paymentMethod: json['paymentMethod'],
       deliveryType: json['deliveryType'],
       business: businessMap,
@@ -55,9 +56,14 @@ class Order {
     );
   }
 
-  bool get isActive =>
-      ['pending', 'pending_payment', 'paid', 'confirmed', 'ready_for_pickup',
-       'out_for_delivery'].contains(status);
+  bool get isActive => [
+        'pending',
+        'pending_payment',
+        'paid',
+        'confirmed',
+        'ready_for_pickup',
+        'out_for_delivery'
+      ].contains(status);
 
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
@@ -107,10 +113,12 @@ class OrderItem {
 
     return OrderItem(
       id: json['_id'] ?? json['id'] ?? '',
-      listingId: listingMap?['_id'] ?? listingMap?['id'] ?? json['listingId'] ?? '',
+      listingId:
+          listingMap?['_id'] ?? listingMap?['id'] ?? json['listingId'] ?? '',
       name: listingMap?['title'] ?? listingMap?['name'] ?? json['name'] ?? '',
       price: (json['price'] as num?)?.toDouble() ??
-          (json['unitPrice'] as num?)?.toDouble() ?? 0,
+          (json['unitPrice'] as num?)?.toDouble() ??
+          0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       photo: parsedPhoto ?? json['photo']?.toString(),
     );

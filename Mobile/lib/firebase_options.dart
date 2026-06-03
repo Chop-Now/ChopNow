@@ -41,5 +41,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'chopnow-75716.firebasestorage.app',
     iosBundleId: 'com.chopnow.chopnow',
   );
-
 }

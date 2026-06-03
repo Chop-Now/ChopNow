@@ -31,7 +31,8 @@ class BiometricService {
 
   static Future<bool> get hasFaceId async {
     final types = await availableTypes;
-    return types.contains(BiometricType.face) || types.contains(BiometricType.strong);
+    return types.contains(BiometricType.face) ||
+        types.contains(BiometricType.strong);
   }
 
   // ── Preference ───────────────────────────────────────────────────────────────
@@ -41,12 +42,14 @@ class BiometricService {
   }
 
   static Future<void> setEnabled(bool enabled) async {
-    await _storage.write(key: _biometricEnabledKey, value: enabled ? 'true' : 'false');
+    await _storage.write(
+        key: _biometricEnabledKey, value: enabled ? 'true' : 'false');
   }
 
   // ── Authentication ───────────────────────────────────────────────────────────
   /// Returns true if biometric auth succeeded.
-  static Future<bool> authenticate({String reason = 'Authenticate to sign in to ChopNow'}) async {
+  static Future<bool> authenticate(
+      {String reason = 'Authenticate to sign in to ChopNow'}) async {
     try {
       return await _auth.authenticate(
         localizedReason: reason,

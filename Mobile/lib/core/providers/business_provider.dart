@@ -25,7 +25,8 @@ final myBusinessesProvider = FutureProvider<List<Business>>((ref) async {
 });
 
 // ── Single business ───────────────────────────────────────────────────────────
-final businessDetailProvider = FutureProvider.family<Business, String>((ref, id) async {
+final businessDetailProvider =
+    FutureProvider.family<Business, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.businessById(id));
   final data = res.data;
   final json = data is Map<String, dynamic>
@@ -46,7 +47,9 @@ final businessesProvider = FutureProvider<List<Business>>((ref) async {
   } else {
     items = [];
   }
-  return items.map((e) => Business.fromJson(e as Map<String, dynamic>)).toList();
+  return items
+      .map((e) => Business.fromJson(e as Map<String, dynamic>))
+      .toList();
 });
 
 // ── Business Notifier (create/update) ─────────────────────────────────────────
@@ -56,7 +59,8 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
   Future<Business> createBusiness(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
     try {
-      final res = await ApiClient.instance.post(AppEndpoints.businesses, data: data);
+      final res =
+          await ApiClient.instance.post(AppEndpoints.businesses, data: data);
       final raw = res.data;
       final json = raw is Map<String, dynamic>
           ? (raw['business'] ?? raw['data'] ?? raw) as Map<String, dynamic>
@@ -73,7 +77,8 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
 
   Future<Business> updateBusiness(String id, Map<String, dynamic> data) async {
     try {
-      final res = await ApiClient.instance.put(AppEndpoints.businessById(id), data: data);
+      final res = await ApiClient.instance
+          .put(AppEndpoints.businessById(id), data: data);
       final raw = res.data;
       final json = raw is Map<String, dynamic>
           ? (raw['business'] ?? raw['data'] ?? raw) as Map<String, dynamic>
@@ -89,23 +94,28 @@ class BusinessNotifier extends StateNotifier<AsyncValue<Business?>> {
       final formData = FormData.fromMap({
         'logo': await MultipartFile.fromFile(filePath, filename: 'logo.jpg'),
       });
-      final res = await ApiClient.instance.post(
-          AppEndpoints.businessLogo(businessId), data: formData);
+      final res = await ApiClient.instance
+          .post(AppEndpoints.businessLogo(businessId), data: formData);
       return res.data['logo']?.toString() ?? '';
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  Future<List<String>> uploadPhotos(String businessId, List<String> filePaths) async {
+  Future<List<String>> uploadPhotos(
+      String businessId, List<String> filePaths) async {
     try {
       final files = await Future.wait(filePaths.asMap().entries.map((e) async {
-        return MapEntry('photos', await MultipartFile.fromFile(e.value, filename: 'photo_${e.key}.jpg'));
+        return MapEntry(
+            'photos',
+            await MultipartFile.fromFile(e.value,
+                filename: 'photo_${e.key}.jpg'));
       }));
       final formData = FormData.fromMap(Map.fromEntries(files));
-      final res = await ApiClient.instance.post(
-          AppEndpoints.businessPhotos(businessId), data: formData);
-      return (res.data['photos'] as List?)?.map((p) => p.toString()).toList() ?? [];
+      final res = await ApiClient.instance
+          .post(AppEndpoints.businessPhotos(businessId), data: formData);
+      return (res.data['photos'] as List?)?.map((p) => p.toString()).toList() ??
+          [];
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

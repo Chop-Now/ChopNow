@@ -22,12 +22,18 @@ class ListingDetailScreen extends ConsumerWidget {
     return asyncListing.when(
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body:
+            Center(child: CircularProgressIndicator(color: AppColors.primary)),
       ),
       error: (e, _) => Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(foregroundColor: AppColors.textPrimary, backgroundColor: AppColors.surface, elevation: 0),
-        body: CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(listingDetailProvider(listingId))),
+        appBar: AppBar(
+            foregroundColor: AppColors.textPrimary,
+            backgroundColor: AppColors.surface,
+            elevation: 0),
+        body: CnErrorState(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(listingDetailProvider(listingId))),
       ),
       data: (listing) => _ListingDetailView(listing: listing),
     );
@@ -58,7 +64,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     final street = listing.business?['address']?['street']?.toString() ?? '';
     final city = listing.business?['address']?['city']?.toString() ?? '';
     final locationText = [street, city].where((s) => s.isNotEmpty).join(', ');
-    final displayLocation = locationText.isEmpty ? 'Kigali, Rwanda' : locationText;
+    final displayLocation =
+        locationText.isEmpty ? 'Kigali, Rwanda' : locationText;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -83,7 +90,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 16),
+            child: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textPrimary, size: 16),
           ),
         ),
         actions: [
@@ -102,7 +110,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.favorite_border_rounded, color: AppColors.textPrimary, size: 20),
+              child: const Icon(Icons.favorite_border_rounded,
+                  color: AppColors.textPrimary, size: 20),
             ),
           ),
         ],
@@ -113,7 +122,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
           children: [
             // Floating Image Hero with Diagonal Clipper
             _buildGallery(listing),
-            
+
             // Content Card
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
@@ -145,7 +154,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                   // Location Block
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded, color: AppColors.textSecondary, size: 16),
+                      const Icon(Icons.location_on_rounded,
+                          color: AppColors.textSecondary, size: 16),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -161,11 +171,11 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Macros Section Card
                   _buildMacroCard(listing),
                   const SizedBox(height: 24),
-                  
+
                   // Description
                   const Text(
                     'Description',
@@ -177,7 +187,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
+                    onTap: () => setState(
+                        () => _isDescriptionExpanded = !_isDescriptionExpanded),
                     child: RichText(
                       text: TextSpan(
                         style: const TextStyle(
@@ -195,7 +206,9 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                           ),
                           if (listing.description.length > 120)
                             TextSpan(
-                              text: _isDescriptionExpanded ? 'Show less' : 'Show more',
+                              text: _isDescriptionExpanded
+                                  ? 'Show less'
+                                  : 'Show more',
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w800,
@@ -252,20 +265,23 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                           ],
                         ],
                       ),
-                      
+
                       // Stepper
                       if (!listing.isSoldOut)
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            border: Border.all(color: AppColors.border, width: 1.5),
+                            border:
+                                Border.all(color: AppColors.border, width: 1.5),
                             borderRadius: BorderRadius.circular(26),
                           ),
                           child: Row(
                             children: [
                               _StepperButton(
                                 icon: Icons.remove_rounded,
-                                onTap: _qty > 1 ? () => setState(() => _qty--) : null,
+                                onTap: _qty > 1
+                                    ? () => setState(() => _qty--)
+                                    : null,
                               ),
                               SizedBox(
                                 width: 24,
@@ -281,7 +297,9 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                               ),
                               _StepperButton(
                                 icon: Icons.add_rounded,
-                                onTap: _qty < maxQty ? () => setState(() => _qty++) : null,
+                                onTap: _qty < maxQty
+                                    ? () => setState(() => _qty++)
+                                    : null,
                               ),
                             ],
                           ),
@@ -289,12 +307,15 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Allergens (if any)
                   if ((listing.allergens ?? []).isNotEmpty) ...[
                     const Text(
                       '⚠ Allergens Warning',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.warning),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.warning),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -302,15 +323,21 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                       runSpacing: 6,
                       children: listing.allergens!
                           .map((a) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(
                                   color: AppColors.warningSurface,
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.15)),
+                                  border: Border.all(
+                                      color: AppColors.warning
+                                          .withValues(alpha: 0.15)),
                                 ),
                                 child: Text(
                                   a,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.warning,
+                                      fontWeight: FontWeight.w700),
                                 ),
                               ))
                           .toList(),
@@ -321,7 +348,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                   // CO2 Pill (if any)
                   if ((listing.co2Saved ?? 0) > 0) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
                         gradient: AppColors.impactGradient,
                         borderRadius: BorderRadius.circular(100),
@@ -333,7 +361,10 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                           const SizedBox(width: 6),
                           Text(
                             'Saves ${listing.co2Saved}g CO₂ from landfill',
-                            style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -346,10 +377,12 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 12),
+        padding: EdgeInsets.fromLTRB(
+            24, 12, 24, MediaQuery.of(context).padding.bottom + 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          border: const Border(top: BorderSide(color: AppColors.border, width: 1)),
+          border:
+              const Border(top: BorderSide(color: AppColors.border, width: 1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -374,7 +407,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                       }
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('$_qty × ${listing.title} added to cart 🛒'),
+                          content:
+                              Text('$_qty × ${listing.title} added to cart 🛒'),
                           behavior: SnackBarBehavior.floating,
                           backgroundColor: AppColors.primary,
                           action: SnackBarAction(
@@ -401,11 +435,12 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary, size: 22),
+                      child: const Icon(Icons.shopping_bag_outlined,
+                          color: AppColors.textPrimary, size: 22),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Large "Buy Now" Button (Right)
                   Expanded(
                     child: CnPrimaryButton(
@@ -426,8 +461,10 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
   }
 
   Widget _buildGallery(Listing listing) {
-    final photos = listing.photos.where((p) => p.startsWith('http://') || p.startsWith('https://')).toList();
-    
+    final photos = listing.photos
+        .where((p) => p.startsWith('http://') || p.startsWith('https://'))
+        .toList();
+
     return Stack(
       children: [
         // Diagonal background split
@@ -444,7 +481,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
             ),
           ),
         ),
-        
+
         // Centered Floating Image Card
         Container(
           height: 280,
@@ -464,7 +501,8 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
             borderRadius: BorderRadius.circular(28),
             child: photos.isEmpty
                 ? const Center(
-                    child: Icon(Icons.fastfood_rounded, size: 70, color: AppColors.border),
+                    child: Icon(Icons.fastfood_rounded,
+                        size: 70, color: AppColors.border),
                   )
                 : PageView.builder(
                     itemCount: photos.length,
@@ -473,16 +511,18 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                       imageUrl: photos[i],
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      placeholder: (_, __) => Container(color: AppColors.surfaceVariant),
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.surfaceVariant),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.surfaceVariant,
-                        child: const Icon(Icons.broken_image_rounded, color: AppColors.border, size: 48),
+                        child: const Icon(Icons.broken_image_rounded,
+                            color: AppColors.border, size: 48),
                       ),
                     ),
                   ),
           ),
         ),
-        
+
         // Image Dots Indicators
         if (photos.length > 1)
           Positioned(
@@ -491,16 +531,20 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(photos.length, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: i == _imageIndex ? 20 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: i == _imageIndex ? AppColors.primary : AppColors.textTertiary,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              )),
+              children: List.generate(
+                  photos.length,
+                  (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: i == _imageIndex ? 20 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == _imageIndex
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )),
             ),
           ),
       ],
@@ -590,7 +634,9 @@ class _StepperButton extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         child: Center(
-          child: Icon(icon, size: 16, color: onTap == null ? AppColors.border : AppColors.primary),
+          child: Icon(icon,
+              size: 16,
+              color: onTap == null ? AppColors.border : AppColors.primary),
         ),
       ),
     );

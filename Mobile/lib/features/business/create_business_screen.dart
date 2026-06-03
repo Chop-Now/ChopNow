@@ -13,7 +13,8 @@ class CreateBusinessScreen extends ConsumerStatefulWidget {
   const CreateBusinessScreen({super.key});
 
   @override
-  ConsumerState<CreateBusinessScreen> createState() => _CreateBusinessScreenState();
+  ConsumerState<CreateBusinessScreen> createState() =>
+      _CreateBusinessScreenState();
 }
 
 class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
@@ -39,8 +40,11 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _descCtrl.dispose();
-    _addressCtrl.dispose(); _phoneCtrl.dispose(); _emailCtrl.dispose();
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _addressCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
@@ -49,7 +53,9 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Create Business', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: const Text('Create Business',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -77,18 +83,28 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(14),
                             child: Image.asset(_logoPath!, fit: BoxFit.cover))
-                        : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.textSecondary),
-                            SizedBox(height: 4),
-                            Text('Add Logo', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                          ]),
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                                Icon(Icons.add_photo_alternate_outlined,
+                                    size: 28, color: AppColors.textSecondary),
+                                SizedBox(height: 4),
+                                Text('Add Logo',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary)),
+                              ]),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
               // Business type
-              const Text('Business Type', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text('Business Type',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 40,
@@ -101,13 +117,25 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primarySurface : AppColors.surface,
+                          color: selected
+                              ? AppColors.primarySurface
+                              : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
-                          border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                          border: Border.all(
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.border),
                         ),
-                        child: Text(t['label']!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.textPrimary)),
+                        child: Text(t['label']!,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary)),
                       ),
                     );
                   }).toList(),
@@ -115,21 +143,35 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
               ),
               const SizedBox(height: 16),
 
-              CnTextField(label: 'Business Name *', controller: _nameCtrl, hint: 'e.g. Mama Cooks Kitchen',
-                  validator: (v) => v == null || v.trim().length < 2 ? 'Required' : null),
+              CnTextField(
+                  label: 'Business Name *',
+                  controller: _nameCtrl,
+                  hint: 'e.g. Mama Cooks Kitchen',
+                  validator: (v) =>
+                      v == null || v.trim().length < 2 ? 'Required' : null),
               const SizedBox(height: 12),
-              CnTextField(label: 'Description *', controller: _descCtrl, hint: 'Tell customers about your food…', maxLines: 3,
-                  validator: (v) => v == null || v.trim().length < 10 ? 'Too short' : null),
+              CnTextField(
+                  label: 'Description *',
+                  controller: _descCtrl,
+                  hint: 'Tell customers about your food…',
+                  maxLines: 3,
+                  validator: (v) =>
+                      v == null || v.trim().length < 10 ? 'Too short' : null),
               const SizedBox(height: 12),
-              CnTextField(label: 'Address *', controller: _addressCtrl, hint: 'KN 5 Rd, Kigali',
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+              CnTextField(
+                  label: 'Address *',
+                  controller: _addressCtrl,
+                  hint: 'KN 5 Rd, Kigali',
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Required' : null),
               const SizedBox(height: 12),
               CnTextField(
                 label: 'Business Phone *',
                 controller: _phoneCtrl,
                 hint: '+250 7XX XXX XXX',
                 keyboardType: TextInputType.phone,
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               CnTextField(
@@ -137,15 +179,20 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                 controller: _emailCtrl,
                 hint: 'info@yourbiz.com',
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) => v == null || !v.contains('@') ? 'Invalid email' : null,
+                validator: (v) =>
+                    v == null || !v.contains('@') ? 'Invalid email' : null,
               ),
 
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
-                  child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  decoration: BoxDecoration(
+                      color: AppColors.errorSurface,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text(_error!,
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 13)),
                 ),
               ],
 
@@ -153,11 +200,14 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
               // Pending notice
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.warningSurface, borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                    color: AppColors.warningSurface,
+                    borderRadius: BorderRadius.circular(10)),
                 child: const Row(children: [
                   Icon(Icons.info_outline, color: AppColors.warning, size: 18),
                   SizedBox(width: 8),
-                  Expanded(child: Text(
+                  Expanded(
+                      child: Text(
                     'Your business will be reviewed by our team before it goes live (usually 24-48 hours).',
                     style: TextStyle(fontSize: 12, color: AppColors.warning),
                   )),
@@ -192,17 +242,25 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final img =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (img != null) setState(() => _logoPath = img.path);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     HapticFeedback.mediumImpact();
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final phoneVal = _phoneCtrl.text.trim();
-      final formattedPhone = phoneVal.startsWith('+') ? phoneVal : (phoneVal.startsWith('0') ? '+250${phoneVal.substring(1)}' : phoneVal);
+      final formattedPhone = phoneVal.startsWith('+')
+          ? phoneVal
+          : (phoneVal.startsWith('0')
+              ? '+250${phoneVal.substring(1)}'
+              : phoneVal);
       final coords = await _resolveCoordinates(_addressCtrl.text.trim());
 
       final businessData = {
@@ -223,19 +281,25 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
         },
       };
 
-      final biz = await ref.read(businessNotifierProvider.notifier).createBusiness(businessData);
+      final biz = await ref
+          .read(businessNotifierProvider.notifier)
+          .createBusiness(businessData);
 
       // Upload logo if selected
       if (_logoPath != null) {
         try {
-          await ref.read(businessNotifierProvider.notifier).uploadLogo(biz.id, _logoPath!);
+          await ref
+              .read(businessNotifierProvider.notifier)
+              .uploadLogo(biz.id, _logoPath!);
         } catch (_) {}
       }
 
       HapticFeedback.heavyImpact();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Business submitted for approval! 🎉'), backgroundColor: AppColors.primary),
+          const SnackBar(
+              content: Text('Business submitted for approval! 🎉'),
+              backgroundColor: AppColors.primary),
         );
         context.go('/business/dashboard');
       }

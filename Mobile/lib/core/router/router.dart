@@ -52,7 +52,8 @@ import '../../shared/widgets/layout/consumer_shell.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
-    refreshListenable: GoRouterRefreshStream(ref.watch(authProvider.notifier).stream),
+    refreshListenable:
+        GoRouterRefreshStream(ref.watch(authProvider.notifier).stream),
     redirect: (context, state) async {
       final auth = ref.read(authProvider);
       final path = state.uri.path;
@@ -63,20 +64,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (auth is AuthUnauthenticated) {
-        final publicPaths = ['/splash', '/onboarding', '/auth/login', '/auth/register',
-          '/auth/otp', '/auth/forgot-password', '/auth/reset-password'];
+        final publicPaths = [
+          '/splash',
+          '/onboarding',
+          '/auth/login',
+          '/auth/register',
+          '/auth/otp',
+          '/auth/forgot-password',
+          '/auth/reset-password'
+        ];
         if (publicPaths.any((p) => path.startsWith(p))) return null;
         return '/auth/login';
       }
 
       if (auth is AuthAuthenticated) {
         // Already on auth screen → redirect to home by role
-        if (path == '/splash' || path == '/onboarding' || path.startsWith('/auth')) {
+        if (path == '/splash' ||
+            path == '/onboarding' ||
+            path.startsWith('/auth')) {
           return _homeForRole(auth.user.activeRole);
         }
 
         // Wrong role shell → redirect
-        if (path.startsWith('/business') && auth.user.activeRole != 'business_owner') {
+        if (path.startsWith('/business') &&
+            auth.user.activeRole != 'business_owner') {
           return '/home';
         }
         if (path.startsWith('/rider') && auth.user.activeRole != 'rider') {
@@ -88,18 +99,26 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       // ── System ──
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-      GoRoute(path: '/become-rider', builder: (_, __) => const BecomeRiderScreen()),
-      GoRoute(path: '/business/verify', builder: (_, __) => const BusinessVerificationScreen()),
-      GoRoute(path: '/business/pending-review', builder: (_, __) => const PendingReviewScreen()),
+      GoRoute(
+          path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+      GoRoute(
+          path: '/become-rider', builder: (_, __) => const BecomeRiderScreen()),
+      GoRoute(
+          path: '/business/verify',
+          builder: (_, __) => const BusinessVerificationScreen()),
+      GoRoute(
+          path: '/business/pending-review',
+          builder: (_, __) => const PendingReviewScreen()),
       GoRoute(
         path: '/listings/:id',
-        builder: (_, state) => ListingDetailScreen(listingId: state.pathParameters['id']!),
+        builder: (_, state) =>
+            ListingDetailScreen(listingId: state.pathParameters['id']!),
       ),
 
       // ── Auth ──
       GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/auth/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+          path: '/auth/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(
         path: '/auth/otp',
         builder: (_, state) {
@@ -107,8 +126,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           return OtpScreen(phone: phone);
         },
       ),
-      GoRoute(path: '/auth/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
-      GoRoute(path: '/auth/reset-password', builder: (_, __) => const ResetPasswordScreen()),
+      GoRoute(
+          path: '/auth/forgot-password',
+          builder: (_, __) => const ForgotPasswordScreen()),
+      GoRoute(
+          path: '/auth/reset-password',
+          builder: (_, __) => const ResetPasswordScreen()),
 
       // ── Consumer Shell ──
       ShellRoute(
@@ -116,39 +139,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
-          GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
+          GoRoute(
+              path: '/checkout', builder: (_, __) => const CheckoutScreen()),
           GoRoute(
             path: '/orders/:id/confirmation',
-            builder: (_, state) => OrderConfirmationScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                OrderConfirmationScreen(orderId: state.pathParameters['id']!),
           ),
           GoRoute(
             path: '/orders/:id/tracking',
-            builder: (_, state) => OrderTrackingScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                OrderTrackingScreen(orderId: state.pathParameters['id']!),
           ),
-          GoRoute(path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
+          GoRoute(
+              path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
           GoRoute(
             path: '/orders/:id',
-            builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                OrderDetailScreen(orderId: state.pathParameters['id']!),
           ),
           GoRoute(
             path: '/orders/:id/review',
-            builder: (_, state) => ReviewScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                ReviewScreen(orderId: state.pathParameters['id']!),
           ),
           GoRoute(
             path: '/orders/:id/dispute',
-            builder: (_, state) => DisputeScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                DisputeScreen(orderId: state.pathParameters['id']!),
           ),
-          GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/notifications',
+              builder: (_, __) => const NotificationsScreen()),
           GoRoute(path: '/browse', builder: (_, __) => const BrowseScreen()),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-          GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
-          GoRoute(path: '/profile/addresses', builder: (_, __) => const AddressesScreen()),
-          GoRoute(path: '/profile/favorites', builder: (_, __) => const FavoritesScreen()),
-          GoRoute(path: '/profile/settings', builder: (_, __) => const SettingsScreen()),
-          GoRoute(path: '/impact', builder: (_, __) => const ImpactDashboardScreen()),
+          GoRoute(
+              path: '/profile/edit',
+              builder: (_, __) => const EditProfileScreen()),
+          GoRoute(
+              path: '/profile/addresses',
+              builder: (_, __) => const AddressesScreen()),
+          GoRoute(
+              path: '/profile/favorites',
+              builder: (_, __) => const FavoritesScreen()),
+          GoRoute(
+              path: '/profile/settings',
+              builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: '/impact',
+              builder: (_, __) => const ImpactDashboardScreen()),
           GoRoute(
             path: '/business/:id/profile',
-            builder: (_, state) => BusinessProfileScreen(businessId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                BusinessProfileScreen(businessId: state.pathParameters['id']!),
           ),
         ],
       ),
@@ -157,10 +200,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => BusinessShell(child: child),
         routes: [
-          GoRoute(path: '/business/dashboard', builder: (_, __) => const BusinessDashboardScreen()),
-          GoRoute(path: '/business/create', builder: (_, __) => const CreateBusinessScreen()),
-          GoRoute(path: '/business/listings', builder: (_, __) => const MyListingsScreen()),
-          GoRoute(path: '/business/listings/camera', builder: (_, __) => const CreateListingCameraScreen()),
+          GoRoute(
+              path: '/business/dashboard',
+              builder: (_, __) => const BusinessDashboardScreen()),
+          GoRoute(
+              path: '/business/create',
+              builder: (_, __) => const CreateBusinessScreen()),
+          GoRoute(
+              path: '/business/listings',
+              builder: (_, __) => const MyListingsScreen()),
+          GoRoute(
+              path: '/business/listings/camera',
+              builder: (_, __) => const CreateListingCameraScreen()),
           GoRoute(
             path: '/business/listings/create',
             builder: (_, state) {
@@ -168,9 +219,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               return CreateListingDetailsScreen(imagePath: imagePath);
             },
           ),
-          GoRoute(path: '/business/orders', builder: (_, __) => const BusinessOrdersScreen()),
-          GoRoute(path: '/business/analytics', builder: (_, __) => const AnalyticsScreen()),
-          GoRoute(path: '/business/payouts', builder: (_, __) => const PayoutsScreen()),
+          GoRoute(
+              path: '/business/orders',
+              builder: (_, __) => const BusinessOrdersScreen()),
+          GoRoute(
+              path: '/business/analytics',
+              builder: (_, __) => const AnalyticsScreen()),
+          GoRoute(
+              path: '/business/payouts',
+              builder: (_, __) => const PayoutsScreen()),
           GoRoute(
             path: '/business/listings/:id/edit',
             builder: (_, state) {
@@ -185,12 +242,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => RiderShell(child: child),
         routes: [
-          GoRoute(path: '/rider/dashboard', builder: (_, __) => const RiderDashboardScreen()),
-          GoRoute(path: '/rider/earnings', builder: (_, __) => const RiderEarningsScreen()),
-          GoRoute(path: '/rider/profile', builder: (_, __) => const RiderProfileScreen()),
+          GoRoute(
+              path: '/rider/dashboard',
+              builder: (_, __) => const RiderDashboardScreen()),
+          GoRoute(
+              path: '/rider/earnings',
+              builder: (_, __) => const RiderEarningsScreen()),
+          GoRoute(
+              path: '/rider/profile',
+              builder: (_, __) => const RiderProfileScreen()),
           GoRoute(
             path: '/rider/deliveries/:id',
-            builder: (_, state) => ActiveDeliveryScreen(orderId: state.pathParameters['id']!),
+            builder: (_, state) =>
+                ActiveDeliveryScreen(orderId: state.pathParameters['id']!),
           ),
         ],
       ),

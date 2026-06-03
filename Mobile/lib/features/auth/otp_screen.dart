@@ -47,16 +47,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _verify() async {
     if (_otp.length < 6) return;
     await ref.read(authProvider.notifier).loginWithOtp(
-      phone: widget.phone,
-      otp: _otp,
-    );
+          phone: widget.phone,
+          otp: _otp,
+        );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (final f in _focusNodes) { f.dispose(); }
-    for (final c in _controllers) { c.dispose(); }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
+    for (final c in _controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -70,7 +74,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     });
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.dark),
+      value:
+          const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -78,7 +83,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           elevation: 0,
           leading: ScaleTap(
             onTap: () => context.pop(),
-            child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            child: const Icon(Icons.arrow_back_rounded,
+                color: AppColors.textPrimary),
           ),
         ),
         body: SafeArea(
@@ -89,13 +95,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               children: [
                 const SizedBox(height: 16),
                 const Text('Verify your phone 📲',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.3)),
+                    style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3)),
                 const SizedBox(height: 6),
                 Text.rich(TextSpan(
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 14, color: AppColors.textSecondary),
                   children: [
                     const TextSpan(text: 'Enter the 6-digit code sent to '),
-                    TextSpan(text: widget.phone, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    TextSpan(
+                        text: widget.phone,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary)),
                   ],
                 )),
                 const SizedBox(height: 40),
@@ -103,19 +118,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 // OTP Boxes
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(6, (i) => _OtpBox(
-                    controller: _controllers[i],
-                    focusNode: _focusNodes[i],
-                    onChanged: (v) {
-                      if (v.length == 1 && i < 5) {
-                        _focusNodes[i + 1].requestFocus();
-                      } else if (v.isEmpty && i > 0) {
-                        _focusNodes[i - 1].requestFocus();
-                      }
-                      if (_otp.length == 6) HapticFeedback.lightImpact();
-                      setState(() {});
-                    },
-                  )),
+                  children: List.generate(
+                      6,
+                      (i) => _OtpBox(
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            onChanged: (v) {
+                              if (v.length == 1 && i < 5) {
+                                _focusNodes[i + 1].requestFocus();
+                              } else if (v.isEmpty && i > 0) {
+                                _focusNodes[i - 1].requestFocus();
+                              }
+                              if (_otp.length == 6)
+                                HapticFeedback.lightImpact();
+                              setState(() {});
+                            },
+                          )),
                 ),
 
                 const SizedBox(height: 32),
@@ -132,21 +150,27 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 // Resend
                 Center(
                   child: _secondsLeft > 0
-                    ? Text(
-                        'Resend in ${_secondsLeft}s',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                      )
-                    : ScaleTap(
-                        onTap: () {
-                          for (final c in _controllers) { c.clear(); }
-                          _focusNodes[0].requestFocus();
-                          _startTimer();
-                        },
-                        child: const Text(
-                          'Resend code',
-                          style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
+                      ? Text(
+                          'Resend in ${_secondsLeft}s',
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.textSecondary),
+                        )
+                      : ScaleTap(
+                          onTap: () {
+                            for (final c in _controllers) {
+                              c.clear();
+                            }
+                            _focusNodes[0].requestFocus();
+                            _startTimer();
+                          },
+                          child: const Text(
+                            'Resend code',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
                 ),
               ],
             ),
@@ -162,7 +186,10 @@ class _OtpBox extends StatelessWidget {
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
 
-  const _OtpBox({required this.controller, required this.focusNode, required this.onChanged});
+  const _OtpBox(
+      {required this.controller,
+      required this.focusNode,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -174,16 +201,28 @@ class _OtpBox extends StatelessWidget {
         focusNode: focusNode,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
-        inputFormatters: [LengthLimitingTextInputFormatter(1), FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(1),
+          FilteringTextInputFormatter.digitsOnly
+        ],
         onChanged: onChanged,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary),
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.surface,
           counterText: '',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2)),
           contentPadding: EdgeInsets.zero,
         ),
       ),

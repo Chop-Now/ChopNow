@@ -10,7 +10,8 @@ class OrderConfirmationScreen extends StatefulWidget {
   const OrderConfirmationScreen({super.key, required this.orderId});
 
   @override
-  State<OrderConfirmationScreen> createState() => _OrderConfirmationScreenState();
+  State<OrderConfirmationScreen> createState() =>
+      _OrderConfirmationScreenState();
 }
 
 class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
@@ -26,10 +27,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     super.initState();
     HapticFeedback.heavyImpact();
 
-    _scaleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
-    _fadeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
-    _particleCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-      ..repeat();
+    _scaleCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _fadeCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _particleCtrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat();
 
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
@@ -91,7 +95,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.check_rounded, size: 64, color: Colors.white),
+                        child: const Icon(Icons.check_rounded,
+                            size: 64, color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -110,7 +115,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                     const SizedBox(height: 10),
                     const Text(
                       'Your meal rescue is on the way.\nGet ready to enjoy great food! 🍽️',
-                      style: TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                          height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 36),
@@ -142,10 +150,15 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                                   color: AppColors.primarySurface,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 20),
+                                child: const Icon(Icons.receipt_long_rounded,
+                                    color: AppColors.primary, size: 20),
                               ),
                               const SizedBox(width: 10),
-                              const Text('Order Reference', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                              const Text('Order Reference',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary)),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -175,7 +188,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("What's next?", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                          const Text("What's next?",
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary)),
                           const SizedBox(height: 16),
                           _NextStep(
                             step: '1',
@@ -204,13 +221,18 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
                     // Impact line
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.success.withValues(alpha: 0.12), AppColors.primary.withValues(alpha: 0.08)],
+                          colors: [
+                            AppColors.success.withValues(alpha: 0.12),
+                            AppColors.primary.withValues(alpha: 0.08)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         children: [
@@ -219,7 +241,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                           Expanded(
                             child: Text(
                               'You\'ve rescued food and saved CO₂ emissions!',
-                              style: TextStyle(fontSize: 13, color: AppColors.success, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -240,15 +265,25 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                           gradient: AppColors.primaryGradient,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+                            BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4)),
                           ],
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+                            Icon(Icons.location_on_rounded,
+                                color: Colors.white, size: 20),
                             SizedBox(width: 10),
-                            Text('Track My Order', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                            Text('Track My Order',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.3)),
                           ],
                         ),
                       ),
@@ -270,7 +305,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                           border: Border.all(color: AppColors.border),
                         ),
                         child: const Center(
-                          child: Text('Back to Home', style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                          child: Text('Back to Home',
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
@@ -291,7 +330,11 @@ class _NextStep extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  const _NextStep({required this.step, required this.icon, required this.title, required this.subtitle});
+  const _NextStep(
+      {required this.step,
+      required this.icon,
+      required this.title,
+      required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +349,11 @@ class _NextStep extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Center(
-            child: Text(step, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+            child: Text(step,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13)),
           ),
         ),
         const SizedBox(width: 12),
@@ -314,9 +361,15 @@ class _NextStep extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -337,20 +390,23 @@ class _NextStep extends StatelessWidget {
 class _ConfettiPainter extends CustomPainter {
   final double progress;
   static final _random = Random(42);
-  static final _particles = List.generate(30, (i) => _Particle(
-    x: _random.nextDouble(),
-    y: _random.nextDouble(),
-    size: 4 + _random.nextDouble() * 8,
-    speed: 0.3 + _random.nextDouble() * 0.7,
-    color: [
-      AppColors.primary,
-      AppColors.accent,
-      const Color(0xFFFFC107),
-      const Color(0xFF4CAF50),
-      const Color(0xFF9C27B0),
-    ][i % 5].withValues(alpha: 0.6 + _random.nextDouble() * 0.4),
-    angle: _random.nextDouble() * 2 * pi,
-  ));
+  static final _particles = List.generate(
+      30,
+      (i) => _Particle(
+            x: _random.nextDouble(),
+            y: _random.nextDouble(),
+            size: 4 + _random.nextDouble() * 8,
+            speed: 0.3 + _random.nextDouble() * 0.7,
+            color: [
+              AppColors.primary,
+              AppColors.accent,
+              const Color(0xFFFFC107),
+              const Color(0xFF4CAF50),
+              const Color(0xFF9C27B0),
+            ][i % 5]
+                .withValues(alpha: 0.6 + _random.nextDouble() * 0.4),
+            angle: _random.nextDouble() * 2 * pi,
+          ));
 
   const _ConfettiPainter(this.progress);
 
@@ -365,7 +421,10 @@ class _ConfettiPainter extends CustomPainter {
       canvas.translate(x, y);
       canvas.rotate(progress * 4 * pi * p.speed + p.angle);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size / 2), const Radius.circular(2)),
+        RRect.fromRectAndRadius(
+            Rect.fromCenter(
+                center: Offset.zero, width: p.size, height: p.size / 2),
+            const Radius.circular(2)),
         paint,
       );
       canvas.restore();
@@ -379,5 +438,11 @@ class _ConfettiPainter extends CustomPainter {
 class _Particle {
   final double x, y, size, speed, angle;
   final Color color;
-  const _Particle({required this.x, required this.y, required this.size, required this.speed, required this.color, required this.angle});
+  const _Particle(
+      {required this.x,
+      required this.y,
+      required this.size,
+      required this.speed,
+      required this.color,
+      required this.angle});
 }

@@ -8,10 +8,26 @@ class BusinessShell extends StatelessWidget {
   const BusinessShell({super.key, required this.child});
 
   static const _tabs = [
-    _BizTab(label: 'Dashboard', icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, path: '/business/dashboard'),
-    _BizTab(label: 'Listings', icon: Icons.store_outlined, activeIcon: Icons.store_rounded, path: '/business/listings'),
-    _BizTab(label: 'Orders', icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, path: '/business/orders'),
-    _BizTab(label: 'Analytics', icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart_rounded, path: '/business/analytics'),
+    _BizTab(
+        label: 'Dashboard',
+        icon: Icons.dashboard_outlined,
+        activeIcon: Icons.dashboard_rounded,
+        path: '/business/dashboard'),
+    _BizTab(
+        label: 'Listings',
+        icon: Icons.store_outlined,
+        activeIcon: Icons.store_rounded,
+        path: '/business/listings'),
+    _BizTab(
+        label: 'Orders',
+        icon: Icons.receipt_long_outlined,
+        activeIcon: Icons.receipt_long_rounded,
+        path: '/business/orders'),
+    _BizTab(
+        label: 'Analytics',
+        icon: Icons.bar_chart_outlined,
+        activeIcon: Icons.bar_chart_rounded,
+        path: '/business/analytics'),
   ];
 
   int _current(BuildContext context) {
@@ -30,8 +46,14 @@ class BusinessShell extends StatelessWidget {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          border: const Border(top: BorderSide(color: AppColors.border, width: 0.5)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4))],
+          border: const Border(
+              top: BorderSide(color: AppColors.border, width: 0.5)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, -4))
+          ],
         ),
         child: SafeArea(
           top: false,
@@ -51,9 +73,21 @@ class BusinessShell extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(active ? tab.activeIcon : tab.icon, color: active ? AppColors.primary : AppColors.textSecondary, size: 22),
+                          Icon(active ? tab.activeIcon : tab.icon,
+                              color: active
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              size: 22),
                           const SizedBox(height: 3),
-                          Text(tab.label, style: TextStyle(fontSize: 10, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textSecondary)),
+                          Text(tab.label,
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: active
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: active
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary)),
                         ],
                       ),
                     ),
@@ -71,5 +105,9 @@ class BusinessShell extends StatelessWidget {
 class _BizTab {
   final String label, path;
   final IconData icon, activeIcon;
-  const _BizTab({required this.label, required this.icon, required this.activeIcon, required this.path});
+  const _BizTab(
+      {required this.label,
+      required this.icon,
+      required this.activeIcon,
+      required this.path});
 }

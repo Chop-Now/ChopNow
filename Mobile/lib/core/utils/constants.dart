@@ -5,8 +5,8 @@ class AppConstants {
   // Development: http://10.0.2.2:5000  (Android emulator localhost)
   // Production:  https://api.chopnow.app
   // Production backend on Render (shared MongoDB Atlas DB with the web app)
-  static const String apiBaseUrl =
-      String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:5000/api/v1');
+  static const String apiBaseUrl = String.fromEnvironment('API_BASE_URL',
+      defaultValue: 'http://10.0.2.2:5000/api/v1');
 
   // Token keys for secure storage
   static const String accessTokenKey = 'chopnow_access_token';

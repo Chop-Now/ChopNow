@@ -17,10 +17,12 @@ class BusinessVerificationScreen extends ConsumerStatefulWidget {
   const BusinessVerificationScreen({super.key});
 
   @override
-  ConsumerState<BusinessVerificationScreen> createState() => _BusinessVerificationScreenState();
+  ConsumerState<BusinessVerificationScreen> createState() =>
+      _BusinessVerificationScreenState();
 }
 
-class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificationScreen> {
+class _BusinessVerificationScreenState
+    extends ConsumerState<BusinessVerificationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
@@ -90,7 +92,8 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) throw Exception('Location permission denied.');
+        if (permission == LocationPermission.denied)
+          throw Exception('Location permission denied.');
       }
 
       if (permission == LocationPermission.deniedForever) {
@@ -98,15 +101,19 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       _locationCoords = [position.longitude, position.latitude];
 
-      final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      final placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isNotEmpty) {
         final pm = placemarks.first;
-        final street = [pm.street, pm.subLocality, pm.locality].where((s) => s != null && s.isNotEmpty).join(', ');
+        final street = [pm.street, pm.subLocality, pm.locality]
+            .where((s) => s != null && s.isNotEmpty)
+            .join(', ');
         setState(() {
           _addressCtrl.text = street.isEmpty ? 'Unnamed Location' : street;
         });
@@ -120,7 +127,8 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
 
   Future<void> _pickDocument() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (file != null) {
       setState(() {
         _selectedFiles.add(file.path);
@@ -143,7 +151,8 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
       return;
     }
     if (_selectedFiles.isEmpty) {
-      setState(() => _error = 'Please upload at least one document for verification.');
+      setState(() =>
+          _error = 'Please upload at least one document for verification.');
       return;
     }
 
@@ -159,7 +168,10 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
           final query = '${_addressCtrl.text.trim()}, Kigali';
           final locations = await locationFromAddress(query);
           if (locations.isNotEmpty) {
-            _locationCoords = [locations.first.longitude, locations.first.latitude];
+            _locationCoords = [
+              locations.first.longitude,
+              locations.first.latitude
+            ];
           }
         } catch (_) {}
         _locationCoords ??= [30.0619, -1.9403]; // Fallback Kigali coords
@@ -168,17 +180,20 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
       final formData = FormData();
       formData.fields.add(MapEntry('phone', _phoneCtrl.text.trim()));
       formData.fields.add(MapEntry('address', _addressCtrl.text.trim()));
-      formData.fields.add(MapEntry('location', '{"lat": ${_locationCoords![1]}, "lng": ${_locationCoords![0]}}'));
+      formData.fields.add(MapEntry('location',
+          '{"lat": ${_locationCoords![1]}, "lng": ${_locationCoords![0]}}'));
 
       // Attach all files
       for (final filePath in _selectedFiles) {
         formData.files.add(MapEntry(
           'documents',
-          await MultipartFile.fromFile(filePath, filename: filePath.split('/').last),
+          await MultipartFile.fromFile(filePath,
+              filename: filePath.split('/').last),
         ));
       }
 
-      await ApiClient.instance.post('/api/businesses/$_businessId/kyc', data: formData);
+      await ApiClient.instance
+          .post('/api/businesses/$_businessId/kyc', data: formData);
 
       HapticFeedback.heavyImpact();
       if (mounted) {
@@ -206,14 +221,23 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Business Verification', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary, fontSize: 16)),
+        title: const Text('Business Verification',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                fontSize: 16)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           TextButton.icon(
-            icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 18),
-            label: const Text('Buyer Mode', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.shopping_bag_outlined,
+                color: AppColors.primary, size: 18),
+            label: const Text('Buyer Mode',
+                style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
             onPressed: () async {
               await ref.read(authProvider.notifier).switchRole('consumer');
               if (context.mounted) context.go('/home');
@@ -226,11 +250,18 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Sign Out?', style: TextStyle(fontWeight: FontWeight.w700)),
-                  content: const Text('You will need to sign in again to access your account.'),
+                  title: const Text('Sign Out?',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  content: const Text(
+                      'You will need to sign in again to access your account.'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign Out', style: TextStyle(color: AppColors.error))),
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Sign Out',
+                            style: TextStyle(color: AppColors.error))),
                   ],
                 ),
               );
@@ -254,22 +285,31 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
                 decoration: BoxDecoration(
                   color: AppColors.primarySurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.15)),
                 ),
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 20),
+                        Icon(Icons.verified_user_rounded,
+                            color: AppColors.primary, size: 20),
                         SizedBox(width: 8),
-                        Text('Identity & Safety Verification', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 14)),
+                        Text('Identity & Safety Verification',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                fontSize: 14)),
                       ],
                     ),
                     SizedBox(height: 8),
                     Text(
                       'To protect our community and comply with safety regulations, business owners must submit contact and food safety documents before listing rescue bags.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.5),
                     ),
                   ],
                 ),
@@ -277,7 +317,11 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
               const SizedBox(height: 20),
 
               // Inputs section
-              const Text('Contact & Store Info', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              const Text('Contact & Store Info',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 12),
 
               CnTextField(
@@ -285,7 +329,9 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
                 controller: _phoneCtrl,
                 hint: '+250 7XX XXX XXX',
                 keyboardType: TextInputType.phone,
-                validator: (v) => v == null || v.trim().length < 9 ? 'Required valid phone' : null,
+                validator: (v) => v == null || v.trim().length < 9
+                    ? 'Required valid phone'
+                    : null,
               ),
               const SizedBox(height: 12),
 
@@ -293,23 +339,39 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
                 label: 'Store Address *',
                 controller: _addressCtrl,
                 hint: 'KN 5 Rd, Kigali',
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required address' : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Required address' : null,
               ),
               const SizedBox(height: 8),
 
               TextButton.icon(
                 onPressed: _isLoadingLocation ? null : _fillWithCurrentLocation,
                 icon: _isLoadingLocation
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: AppColors.primary))
                     : const Icon(Icons.my_location, size: 16),
-                label: Text(_isLoadingLocation ? 'Locating...' : 'Autofill Current GPS Location', style: const TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(
+                    _isLoadingLocation
+                        ? 'Locating...'
+                        : 'Autofill Current GPS Location',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 20),
 
               // Document picker
-              Text('Required: $typeLabel *', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              Text('Required: $typeLabel *',
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 4),
-              const Text('Upload photo/scan of food permit, health license, or trade registry.', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              const Text(
+                  'Upload photo/scan of food permit, health license, or trade registry.',
+                  style:
+                      TextStyle(fontSize: 11, color: AppColors.textSecondary)),
               const SizedBox(height: 12),
 
               InkWell(
@@ -320,16 +382,25 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                    border: Border.all(
+                        color: AppColors.border, style: BorderStyle.solid),
                   ),
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.cloud_upload_outlined, color: AppColors.primary.withValues(alpha: 0.8), size: 36),
+                        Icon(Icons.cloud_upload_outlined,
+                            color: AppColors.primary.withValues(alpha: 0.8),
+                            size: 36),
                         const SizedBox(height: 8),
-                        const Text('Upload Certificate Document', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+                        const Text('Upload Certificate Document',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: AppColors.primary)),
                         const SizedBox(height: 4),
-                        const Text('Supported formats: JPG, PNG, PDF', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                        const Text('Supported formats: JPG, PNG, PDF',
+                            style: TextStyle(
+                                fontSize: 11, color: AppColors.textTertiary)),
                       ],
                     ),
                   ),
@@ -339,50 +410,63 @@ class _BusinessVerificationScreenState extends ConsumerState<BusinessVerificatio
 
               // Picked file list
               if (_selectedFiles.isNotEmpty) ...[
-                const Text('Uploaded Documents', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                const Text('Uploaded Documents',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: 6),
                 ..._selectedFiles.asMap().entries.map((e) => Container(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.description_outlined, size: 18, color: AppColors.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          e.value.split('/').last,
-                          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 18, color: AppColors.error),
-                        onPressed: () => _removeFile(e.key),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.description_outlined,
+                              size: 18, color: AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              e.value.split('/').last,
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.textPrimary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close,
+                                size: 18, color: AppColors.error),
+                            onPressed: () => _removeFile(e.key),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )),
+                    )),
                 const SizedBox(height: 12),
               ],
 
               if (_error != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
-                  child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  decoration: BoxDecoration(
+                      color: AppColors.errorSurface,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text(_error!,
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 13)),
                 ),
                 const SizedBox(height: 16),
               ],
 
               CnPrimaryButton(
-                label: _isLoading ? 'Submitting Verification...' : 'Submit details for Verification',
+                label: _isLoading
+                    ? 'Submitting Verification...'
+                    : 'Submit details for Verification',
                 isLoading: _isLoading,
                 onTap: _isLoading ? null : _submitVerification,
               ),

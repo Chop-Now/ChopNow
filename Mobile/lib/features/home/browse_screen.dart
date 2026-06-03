@@ -13,15 +13,19 @@ import '../../core/providers/cart_provider.dart';
 final _browseCategoryProvider = StateProvider<String>((ref) => 'All');
 final _browseSearchProvider = StateProvider<String>((ref) => '');
 
-final _browseListingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final _browseListingsProvider =
+    FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final category = ref.watch(_browseCategoryProvider);
   final search = ref.watch(_browseSearchProvider);
   final params = <String, dynamic>{'status': 'active', 'limit': 40};
-  if (category != 'All') params['category'] = category.replaceAll(RegExp(r'[^\w\s]'), '').trim();
+  if (category != 'All')
+    params['category'] = category.replaceAll(RegExp(r'[^\w\s]'), '').trim();
   if (search.isNotEmpty) params['search'] = search;
-  final res = await ApiClient.instance.get(AppEndpoints.listings, queryParameters: params);
+  final res = await ApiClient.instance
+      .get(AppEndpoints.listings, queryParameters: params);
   final data = res.data;
-  if (data is Map && data['listings'] != null) return List.from(data['listings'] as List);
+  if (data is Map && data['listings'] != null)
+    return List.from(data['listings'] as List);
   if (data is List) return List.from(data);
   return [];
 });
@@ -36,12 +40,23 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   final _searchCtrl = TextEditingController();
 
   static const _categories = [
-    'All', '🍔 Food', '🥗 Salads', '🥐 Bakery',
-    '☕ Café', '🍱 Asian', '🛒 Grocery', '🥩 Meat', '🍕 Pizza', '🍜 Noodles'
+    'All',
+    '🍔 Food',
+    '🥗 Salads',
+    '🥐 Bakery',
+    '☕ Café',
+    '🍱 Asian',
+    '🛒 Grocery',
+    '🥩 Meat',
+    '🍕 Pizza',
+    '🍜 Noodles'
   ];
 
   @override
-  void dispose() { _searchCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +78,11 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 children: [
                   Row(
                     children: [
-                      const Text('Browse', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      const Text('Browse',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary)),
                       const Spacer(),
                       ScaleTap(
                         onTap: () => context.push('/cart'),
@@ -78,17 +97,25 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              const Icon(Icons.shopping_cart_outlined, size: 20, color: AppColors.textPrimary),
+                              const Icon(Icons.shopping_cart_outlined,
+                                  size: 20, color: AppColors.textPrimary),
                               if (cartCount > 0)
                                 Positioned(
-                                  top: 6, right: 6,
+                                  top: 6,
+                                  right: 6,
                                   child: Container(
-                                    width: 12, height: 12,
-                                    decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                                    width: 12,
+                                    height: 12,
+                                    decoration: const BoxDecoration(
+                                        color: AppColors.accent,
+                                        shape: BoxShape.circle),
                                     child: Center(
                                       child: Text(
                                         '$cartCount',
-                                        style: const TextStyle(fontSize: 7, color: Colors.white, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontSize: 7,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                   ),
@@ -103,26 +130,34 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   // Search field
                   Container(
                     height: 46,
-                    decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12),
+                    decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border)),
                     child: Row(children: [
                       const SizedBox(width: 12),
-                      const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                      const Icon(Icons.search_rounded,
+                          color: AppColors.textSecondary, size: 20),
                       const SizedBox(width: 8),
-                      Expanded(child: TextField(
+                      Expanded(
+                          child: TextField(
                         controller: _searchCtrl,
                         onChanged: (v) {
                           ref.read(_browseSearchProvider.notifier).state = v;
                         },
                         decoration: const InputDecoration(
                           hintText: 'Search food, cafés, grocery...',
-                          hintStyle: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                          border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero,
+                          hintStyle: TextStyle(
+                              fontSize: 14, color: AppColors.textSecondary),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
                         ),
                       )),
                       if (_searchCtrl.text.isNotEmpty)
                         IconButton(
-                          icon: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                          icon: const Icon(Icons.close,
+                              size: 18, color: AppColors.textSecondary),
                           onPressed: () {
                             _searchCtrl.clear();
                             ref.read(_browseSearchProvider.notifier).state = '';
@@ -139,7 +174,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               height: 52,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 itemCount: _categories.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
@@ -152,14 +188,30 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: active ? AppColors.primary : AppColors.surface,
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: active ? AppColors.primary : AppColors.border),
-                        boxShadow: active ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 6)] : null,
+                        border: Border.all(
+                            color:
+                                active ? AppColors.primary : AppColors.border),
+                        boxShadow: active
+                            ? [
+                                BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.2),
+                                    blurRadius: 6)
+                              ]
+                            : null,
                       ),
-                      child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textSecondary)),
+                      child: Text(cat,
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: active
+                                  ? Colors.white
+                                  : AppColors.textSecondary)),
                     ),
                   );
                 },
@@ -174,20 +226,36 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 child: asyncListings.when(
                   loading: () => GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.70),
                     itemCount: 6,
                     itemBuilder: (_, __) => const ListingCardSkeleton(),
                   ),
-                  error: (e, _) => CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(_browseListingsProvider)),
+                  error: (e, _) => CnErrorState(
+                      message: e.toString(),
+                      onRetry: () => ref.invalidate(_browseListingsProvider)),
                   data: (listings) => listings.isEmpty
-                      ? const CnEmptyState(title: 'No deals found', subtitle: 'Try a different category or search term', icon: Icons.search_off_rounded)
+                      ? const CnEmptyState(
+                          title: 'No deals found',
+                          subtitle: 'Try a different category or search term',
+                          icon: Icons.search_off_rounded)
                       : GridView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.70),
                           itemCount: listings.length,
                           itemBuilder: (_, i) => ListingCard(
                             listing: listings[i],
-                            onTap: () => context.push('/listings/${listings[i]['_id']}'),
+                            onTap: () =>
+                                context.push('/listings/${listings[i]['_id']}'),
                             onAddToCart: () {},
                           ),
                         ),

@@ -7,7 +7,8 @@ class Business {
   final String? coverImage;
   final List<String> photos;
   final String status; // 'active', 'inactive', 'suspended'
-  final String verificationStatus; // 'unverified', 'pending', 'verified', 'approved', 'rejected', 'info_requested'
+  final String
+      verificationStatus; // 'unverified', 'pending', 'verified', 'approved', 'rejected', 'info_requested'
   final String? address;
   final String? phone;
   final String? email;
@@ -40,7 +41,9 @@ class Business {
   });
 
   bool get isPending => verificationStatus == 'pending';
-  bool get isApproved => status == 'active' && (verificationStatus == 'verified' || verificationStatus == 'approved');
+  bool get isApproved =>
+      status == 'active' &&
+      (verificationStatus == 'verified' || verificationStatus == 'approved');
   bool get isRejected => verificationStatus == 'rejected';
   bool get isSuspended => status == 'suspended';
   bool get isUnverified => verificationStatus == 'unverified';
@@ -63,7 +66,8 @@ class Business {
       description: json['description'],
       logo: json['logo'],
       coverImage: json['coverImage'],
-      photos: (json['photos'] as List?)?.map((p) => p.toString()).toList() ?? [],
+      photos:
+          (json['photos'] as List?)?.map((p) => p.toString()).toList() ?? [],
       status: json['status'] ?? 'active',
       verificationStatus: json['verification'] is Map
           ? (json['verification']['status'] ?? 'unverified')
@@ -85,18 +89,22 @@ class Business {
           ? Map<String, dynamic>.from(json['owner'] as Map)
           : (json['owner'] is String ? {'_id': json['owner']} : null),
       balance: (json['stats']?['balance'] as num?)?.toDouble() ?? 0.0,
-      stats: json['stats'] is Map ? Map<String, dynamic>.from(json['stats'] as Map) : null,
-      payoutInfo: json['payoutInfo'] is Map ? Map<String, dynamic>.from(json['payoutInfo'] as Map) : null,
+      stats: json['stats'] is Map
+          ? Map<String, dynamic>.from(json['stats'] as Map)
+          : null,
+      payoutInfo: json['payoutInfo'] is Map
+          ? Map<String, dynamic>.from(json['payoutInfo'] as Map)
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    if (type != null) 'type': type,
-    if (description != null) 'description': description,
-    if (address != null) 'address': address,
-    if (phone != null) 'phone': phone,
-    if (email != null) 'email': email,
-    if (payoutInfo != null) 'payoutInfo': payoutInfo,
-  };
+        'name': name,
+        if (type != null) 'type': type,
+        if (description != null) 'description': description,
+        if (address != null) 'address': address,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        if (payoutInfo != null) 'payoutInfo': payoutInfo,
+      };
 }

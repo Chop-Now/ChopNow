@@ -13,10 +13,12 @@ class EmailVerificationScreen extends ConsumerStatefulWidget {
   const EmailVerificationScreen({super.key, required this.email});
 
   @override
-  ConsumerState<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  ConsumerState<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen>
+class _EmailVerificationScreenState
+    extends ConsumerState<EmailVerificationScreen>
     with SingleTickerProviderStateMixin {
   bool _resending = false;
   bool _resentSuccess = false;
@@ -27,7 +29,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1500))
       ..repeat(reverse: true);
   }
 
@@ -39,14 +42,23 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
 
   Future<void> _resendEmail() async {
     if (_resending || _resendCooldown > 0) return;
-    setState(() { _resending = true; _error = null; _resentSuccess = false; });
+    setState(() {
+      _resending = true;
+      _error = null;
+      _resentSuccess = false;
+    });
     try {
-      await ApiClient.instance.post(AppEndpoints.resendVerification,
-          data: {'email': widget.email});
-      setState(() { _resentSuccess = true; _resendCooldown = 60; });
+      await ApiClient.instance
+          .post(AppEndpoints.resendVerification, data: {'email': widget.email});
+      setState(() {
+        _resentSuccess = true;
+        _resendCooldown = 60;
+      });
       _startCooldownTimer();
     } catch (e) {
-      setState(() { _error = 'Could not resend. Please try again.'; });
+      setState(() {
+        _error = 'Could not resend. Please try again.';
+      });
     } finally {
       setState(() => _resending = false);
     }
@@ -97,13 +109,19 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                     child: Text('✉️', style: TextStyle(fontSize: 52)),
                   ),
                 ),
-              ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.5, 0.5)),
+              )
+                  .animate()
+                  .fadeIn(duration: 600.ms)
+                  .scale(begin: const Offset(0.5, 0.5)),
 
               const SizedBox(height: 32),
 
               const Text(
                 'Check Your Email',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
 
@@ -112,11 +130,16 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               Text.rich(
                 TextSpan(
                   text: 'We sent a verification link to\n',
-                  style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.6),
+                  style: const TextStyle(
+                      fontSize: 15,
+                      color: AppColors.textSecondary,
+                      height: 1.6),
                   children: [
                     TextSpan(
                       text: widget.email,
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary),
                     ),
                   ],
                 ),
@@ -132,7 +155,11 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.border),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12)],
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 12)
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -153,14 +180,18 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   decoration: BoxDecoration(
                     color: AppColors.successSurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+                    border: Border.all(
+                        color: AppColors.success.withValues(alpha: 0.4)),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+                      Icon(Icons.check_circle_rounded,
+                          color: AppColors.success, size: 18),
                       SizedBox(width: 10),
                       Text('Verification email resent!',
-                          style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ).animate().fadeIn().scale(),
@@ -172,13 +203,17 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   decoration: BoxDecoration(
                     color: AppColors.errorSurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                    border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
+                      const Icon(Icons.error_outline_rounded,
+                          color: AppColors.error, size: 18),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.error))),
+                      Expanded(
+                          child: Text(_error!,
+                              style: const TextStyle(color: AppColors.error))),
                     ],
                   ),
                 ),
@@ -187,11 +222,14 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: (_resending || _resendCooldown > 0) ? null : _resendEmail,
+                  onPressed:
+                      (_resending || _resendCooldown > 0) ? null : _resendEmail,
                   icon: _resending
                       ? const SizedBox(
-                          width: 16, height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.primary))
                       : const Icon(Icons.refresh_rounded),
                   label: Text(
                     _resendCooldown > 0
@@ -201,8 +239,10 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side:
+                        const BorderSide(color: AppColors.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -224,7 +264,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               Text(
                 'Didn\'t receive the email? Check your spam folder\nor contact us at support@chopnow.app',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.textTertiary, height: 1.6),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textTertiary, height: 1.6),
               ),
             ],
           ),
@@ -248,14 +289,22 @@ class _Step extends StatelessWidget {
           Container(
             width: 32,
             height: 32,
-            decoration: const BoxDecoration(gradient: AppColors.primaryGradient, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient, shape: BoxShape.circle),
             child: Center(
               child: Text(number,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14)),
             ),
           ),
           const SizedBox(width: 14),
-          Text(text, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );

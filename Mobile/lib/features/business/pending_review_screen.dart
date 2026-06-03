@@ -15,7 +15,8 @@ class PendingReviewScreen extends ConsumerWidget {
   }
 
   void _emailSupport(BuildContext context) async {
-    final uri = Uri.parse('mailto:support@chopnow.com?subject=Vendor%20KYC%20Inquiry');
+    final uri =
+        Uri.parse('mailto:support@chopnow.com?subject=Vendor%20KYC%20Inquiry');
     if (await canLaunchUrl(uri)) launchUrl(uri);
   }
 
@@ -24,15 +25,24 @@ class PendingReviewScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Pending Review', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary, fontSize: 16)),
+        title: const Text('Pending Review',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                fontSize: 16)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         automaticallyImplyLeading: false,
         elevation: 0,
         actions: [
           TextButton.icon(
-            icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 18),
-            label: const Text('Buyer Mode', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.shopping_bag_outlined,
+                color: AppColors.primary, size: 18),
+            label: const Text('Buyer Mode',
+                style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
             onPressed: () async {
               await ref.read(authProvider.notifier).switchRole('consumer');
               if (context.mounted) context.go('/home');
@@ -45,11 +55,18 @@ class PendingReviewScreen extends ConsumerWidget {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Sign Out?', style: TextStyle(fontWeight: FontWeight.w700)),
-                  content: const Text('You will need to sign in again to access your account.'),
+                  title: const Text('Sign Out?',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  content: const Text(
+                      'You will need to sign in again to access your account.'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign Out', style: TextStyle(color: AppColors.error))),
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Sign Out',
+                            style: TextStyle(color: AppColors.error))),
                   ],
                 ),
               );
@@ -111,16 +128,19 @@ class PendingReviewScreen extends ConsumerWidget {
 
                 // Info Box
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.1)),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.access_time_rounded, color: AppColors.primary, size: 16),
+                      Icon(Icons.access_time_rounded,
+                          color: AppColors.primary, size: 16),
                       SizedBox(width: 8),
                       Text(
                         'Estimated Review Time: 2-3 business days',
@@ -164,19 +184,22 @@ class PendingReviewScreen extends ConsumerWidget {
                 _StepTile(
                   icon: Icons.search_rounded,
                   stepNumber: '1. Admin review',
-                  description: 'Our team is carefully reviewing your application and documents.',
+                  description:
+                      'Our team is carefully reviewing your application and documents.',
                 ),
                 const SizedBox(height: 14),
                 _StepTile(
                   icon: Icons.mark_email_read_rounded,
                   stepNumber: '2. Approval notification',
-                  description: 'We will notify you via push notification and email once complete.',
+                  description:
+                      'We will notify you via push notification and email once complete.',
                 ),
                 const SizedBox(height: 14),
                 _StepTile(
                   icon: Icons.dashboard_customize_rounded,
                   stepNumber: '3. Full dashboard access',
-                  description: 'Once approved, you\'ll gain full access to publish rescue bags.',
+                  description:
+                      'Once approved, you\'ll gain full access to publish rescue bags.',
                 ),
                 const SizedBox(height: 24),
                 const Divider(color: AppColors.border, height: 1),
@@ -199,7 +222,8 @@ class PendingReviewScreen extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     "Find answers in our FAQ or reach out to our team directly.",
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -209,12 +233,18 @@ class PendingReviewScreen extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _visitFaq(context),
-                        icon: const Icon(Icons.help_outline_rounded, size: 16, color: AppColors.textPrimary),
-                        label: const Text('Visit FAQ', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                        icon: const Icon(Icons.help_outline_rounded,
+                            size: 16, color: AppColors.textPrimary),
+                        label: const Text('Visit FAQ',
+                            style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -222,12 +252,18 @@ class PendingReviewScreen extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _emailSupport(context),
-                        icon: const Icon(Icons.email_outlined, size: 16, color: AppColors.textPrimary),
-                        label: const Text('Email Support', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                        icon: const Icon(Icons.email_outlined,
+                            size: 16, color: AppColors.textPrimary),
+                        label: const Text('Email Support',
+                            style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -246,7 +282,10 @@ class _StepTile extends StatelessWidget {
   final IconData icon;
   final String stepNumber;
   final String description;
-  const _StepTile({required this.icon, required this.stepNumber, required this.description});
+  const _StepTile(
+      {required this.icon,
+      required this.stepNumber,
+      required this.description});
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +317,8 @@ class _StepTile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 description,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary, height: 1.4),
               ),
             ],
           ),

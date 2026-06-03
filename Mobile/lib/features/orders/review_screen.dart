@@ -38,7 +38,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Leave a Review', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: const Text('Leave a Review',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -48,28 +50,52 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Overall Rating', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const Text('Overall Rating',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: 10),
             Center(
               child: Column(
                 children: [
-                  _StarRow(rating: _rating, size: 40, onRated: (r) => setState(() => _rating = r)),
+                  _StarRow(
+                      rating: _rating,
+                      size: 40,
+                      onRated: (r) => setState(() => _rating = r)),
                   const SizedBox(height: 6),
                   if (_rating > 0)
-                    Text(_labels[_rating - 1], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    Text(_labels[_rating - 1],
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary)),
                 ],
               ),
             ),
             const SizedBox(height: 24),
             const Divider(color: AppColors.border),
             const SizedBox(height: 16),
-            const Text('Rate specific aspects', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const Text('Rate specific aspects',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: 12),
-            _SubRating(label: '🥗 Freshness', rating: _freshness, onRated: (r) => setState(() => _freshness = r)),
+            _SubRating(
+                label: '🥗 Freshness',
+                rating: _freshness,
+                onRated: (r) => setState(() => _freshness = r)),
             const SizedBox(height: 10),
-            _SubRating(label: '💰 Value for Money', rating: _value, onRated: (r) => setState(() => _value = r)),
+            _SubRating(
+                label: '💰 Value for Money',
+                rating: _value,
+                onRated: (r) => setState(() => _value = r)),
             const SizedBox(height: 10),
-            _SubRating(label: '📦 Accuracy', rating: _accuracy, onRated: (r) => setState(() => _accuracy = r)),
+            _SubRating(
+                label: '📦 Accuracy',
+                rating: _accuracy,
+                onRated: (r) => setState(() => _accuracy = r)),
             const SizedBox(height: 20),
             const Divider(color: AppColors.border),
             const SizedBox(height: 16),
@@ -81,7 +107,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              Text(_error!,
+                  style: const TextStyle(color: AppColors.error, fontSize: 13)),
             ],
             const SizedBox(height: 24),
             CnPrimaryButton(
@@ -92,8 +119,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             if (_rating == 0)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text('Please select a star rating to continue', textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                child: Text('Please select a star rating to continue',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
               ),
             const SizedBox(height: 20),
           ],
@@ -103,7 +132,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       await ApiClient.instance.post(AppEndpoints.reviews, data: {
         'order': widget.orderId,
@@ -116,7 +148,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       HapticFeedback.heavyImpact();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review submitted! Thank you 🙏'), backgroundColor: AppColors.primary),
+          const SnackBar(
+              content: Text('Review submitted! Thank you 🙏'),
+              backgroundColor: AppColors.primary),
         );
         context.pop();
       }
@@ -132,23 +166,30 @@ class _StarRow extends StatelessWidget {
   final int rating;
   final double size;
   final void Function(int) onRated;
-  const _StarRow({required this.rating, required this.size, required this.onRated});
+  const _StarRow(
+      {required this.rating, required this.size, required this.onRated});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (i) => GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); onRated(i + 1); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(
-            i < rating ? Icons.star_rounded : Icons.star_border_rounded,
-            size: size,
-            color: i < rating ? const Color(0xFFFFC107) : AppColors.border,
-          ),
-        ),
-      )),
+      children: List.generate(
+          5,
+          (i) => GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onRated(i + 1);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    i < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    size: size,
+                    color:
+                        i < rating ? const Color(0xFFFFC107) : AppColors.border,
+                  ),
+                ),
+              )),
     );
   }
 }
@@ -157,13 +198,17 @@ class _SubRating extends StatelessWidget {
   final String label;
   final int rating;
   final void Function(int) onRated;
-  const _SubRating({required this.label, required this.rating, required this.onRated});
+  const _SubRating(
+      {required this.label, required this.rating, required this.onRated});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary))),
+        Expanded(
+            child: Text(label,
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textPrimary))),
         _StarRow(rating: rating, size: 22, onRated: onRated),
       ],
     );

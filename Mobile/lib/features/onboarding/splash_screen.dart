@@ -31,7 +31,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
     );
     _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0, 0.5, curve: Curves.easeIn)),
+      CurvedAnimation(
+          parent: _ctrl, curve: const Interval(0, 0.5, curve: Curves.easeIn)),
     );
     _ctrl.forward();
 
@@ -46,7 +47,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<void> _tryNavigate() async {
     if (!mounted || !_animationDone) return;
-    
+
     final auth = ref.read(authProvider);
     // If auth is still loading (e.g. backend offline or slow), we must wait!
     // The ref.listen in build() will call this again once auth resolves.
@@ -91,7 +92,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient, // A deep, stunning Premium green background
+          gradient: AppColors
+              .heroGradient, // A deep, stunning Premium green background
         ),
         child: Center(
           child: AnimatedBuilder(

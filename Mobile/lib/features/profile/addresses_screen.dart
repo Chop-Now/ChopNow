@@ -26,7 +26,9 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Addresses', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: const Text('My Addresses',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -35,7 +37,8 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
         onPressed: () => _showAddressSheet(context),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
-        label: const Text('Add Address', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        label: const Text('Add Address',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ),
       body: addresses.isEmpty
           ? const CnEmptyState(
@@ -49,7 +52,8 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) => _AddressCard(
                 address: addresses[i],
-                onEdit: () => _showAddressSheet(context, existing: addresses[i]),
+                onEdit: () =>
+                    _showAddressSheet(context, existing: addresses[i]),
                 onDelete: () => _deleteAddress(addresses[i].id!),
               ),
             ),
@@ -95,20 +99,25 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
 
-    final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    final placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
     if (placemarks.isNotEmpty) {
       final pm = placemarks.first;
       final street = [pm.street, pm.subLocality, pm.locality]
           .where((s) => s != null && s.isNotEmpty)
           .join(', ');
-      final city = pm.subAdministrativeArea ?? pm.administrativeArea ?? pm.locality ?? 'Kigali';
+      final city = pm.subAdministrativeArea ??
+          pm.administrativeArea ??
+          pm.locality ??
+          'Kigali';
       ss(() {
         streetCtrl.text = street.isEmpty ? 'Unnamed Street' : street;
         cityCtrl.text = city.isEmpty ? 'Kigali' : city;
       });
     } else {
       ss(() {
-        streetCtrl.text = 'Location near Lat: ${position.latitude.toStringAsFixed(4)}';
+        streetCtrl.text =
+            'Location near Lat: ${position.latitude.toStringAsFixed(4)}';
         cityCtrl.text = 'Kigali';
       });
     }
@@ -124,80 +133,133 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(builder: (ctx, ss) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(existing == null ? 'Add Address' : 'Edit Address',
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                TextButton.icon(
-                  onPressed: isLoading ? null : () async {
-                    ss(() { isLoading = true; error = null; });
-                    try {
-                      await _fillWithCurrentLocation(streetCtrl, cityCtrl, ss);
-                      HapticFeedback.selectionClick();
-                    } catch (e) {
-                      ss(() { error = e.toString().replaceAll('Exception: ', ''); });
-                    } finally {
-                      ss(() { isLoading = false; });
-                    }
-                  },
-                  icon: const Icon(Icons.my_location, size: 16, color: AppColors.primary),
-                  label: const Text('Autofill GPS', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+          builder: (ctx, ss) => Padding(
+                padding: EdgeInsets.fromLTRB(
+                    20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(existing == null ? 'Add Address' : 'Edit Address',
+                            style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary)),
+                        TextButton.icon(
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  ss(() {
+                                    isLoading = true;
+                                    error = null;
+                                  });
+                                  try {
+                                    await _fillWithCurrentLocation(
+                                        streetCtrl, cityCtrl, ss);
+                                    HapticFeedback.selectionClick();
+                                  } catch (e) {
+                                    ss(() {
+                                      error = e
+                                          .toString()
+                                          .replaceAll('Exception: ', '');
+                                    });
+                                  } finally {
+                                    ss(() {
+                                      isLoading = false;
+                                    });
+                                  }
+                                },
+                          icon: const Icon(Icons.my_location,
+                              size: 16, color: AppColors.primary),
+                          label: const Text('Autofill GPS',
+                              style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    CnTextField(
+                        label: 'Label',
+                        controller: labelCtrl,
+                        hint: 'Home, Work, Other…'),
+                    const SizedBox(height: 12),
+                    CnTextField(
+                        label: 'Street Address',
+                        controller: streetCtrl,
+                        hint: 'KN 5 Rd, Nyarugenge'),
+                    const SizedBox(height: 12),
+                    CnTextField(
+                        label: 'City', controller: cityCtrl, hint: 'Kigali'),
+                    if (error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(error!,
+                          style: const TextStyle(
+                              color: AppColors.error, fontSize: 13)),
+                    ],
+                    const SizedBox(height: 20),
+                    CnPrimaryButton(
+                      label: existing == null ? 'Add Address' : 'Save Changes',
+                      isLoading: isLoading,
+                      onTap: isLoading
+                          ? null
+                          : () async {
+                              if (streetCtrl.text.trim().isEmpty) {
+                                ss(() {
+                                  error = 'Street address is required';
+                                });
+                                return;
+                              }
+                              ss(() {
+                                isLoading = true;
+                                error = null;
+                              });
+                              try {
+                                final streetVal = streetCtrl.text.trim();
+                                final cityVal = cityCtrl.text.trim().isEmpty
+                                    ? 'Kigali'
+                                    : cityCtrl.text.trim();
+                                final coords = await _resolveCoordinates(
+                                    streetVal, cityVal);
+                                final data = {
+                                  'label': labelCtrl.text.trim().isEmpty
+                                      ? 'Home'
+                                      : labelCtrl.text.trim(),
+                                  'street': streetVal,
+                                  'city': cityVal,
+                                  'coordinates': coords,
+                                };
+                                if (existing == null) {
+                                  await ref
+                                      .read(authProvider.notifier)
+                                      .addAddress(data);
+                                } else {
+                                  await ref
+                                      .read(authProvider.notifier)
+                                      .updateAddress(existing.id!, data);
+                                }
+                                HapticFeedback.heavyImpact();
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              } catch (e) {
+                                ss(() {
+                                  error = e
+                                      .toString()
+                                      .replaceAll('Exception: ', '');
+                                  isLoading = false;
+                                });
+                              }
+                            },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            CnTextField(label: 'Label', controller: labelCtrl, hint: 'Home, Work, Other…'),
-            const SizedBox(height: 12),
-            CnTextField(label: 'Street Address', controller: streetCtrl, hint: 'KN 5 Rd, Nyarugenge'),
-            const SizedBox(height: 12),
-            CnTextField(label: 'City', controller: cityCtrl, hint: 'Kigali'),
-            if (error != null) ...[
-              const SizedBox(height: 8),
-              Text(error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
-            ],
-            const SizedBox(height: 20),
-            CnPrimaryButton(
-              label: existing == null ? 'Add Address' : 'Save Changes',
-              isLoading: isLoading,
-              onTap: isLoading ? null : () async {
-                if (streetCtrl.text.trim().isEmpty) {
-                  ss(() { error = 'Street address is required'; });
-                  return;
-                }
-                ss(() { isLoading = true; error = null; });
-                try {
-                  final streetVal = streetCtrl.text.trim();
-                  final cityVal = cityCtrl.text.trim().isEmpty ? 'Kigali' : cityCtrl.text.trim();
-                  final coords = await _resolveCoordinates(streetVal, cityVal);
-                  final data = {
-                    'label': labelCtrl.text.trim().isEmpty ? 'Home' : labelCtrl.text.trim(),
-                    'street': streetVal,
-                    'city': cityVal,
-                    'coordinates': coords,
-                  };
-                  if (existing == null) {
-                    await ref.read(authProvider.notifier).addAddress(data);
-                  } else {
-                    await ref.read(authProvider.notifier).updateAddress(existing.id!, data);
-                  }
-                  HapticFeedback.heavyImpact();
-                  if (ctx.mounted) Navigator.pop(ctx);
-                } catch (e) {
-                  ss(() { error = e.toString().replaceAll('Exception: ', ''); isLoading = false; });
-                }
-              },
-            ),
-          ],
-        ),
-      )),
+              )),
     );
   }
 
@@ -208,9 +270,13 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
         title: const Text('Delete Address'),
         content: const Text('Remove this address?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: AppColors.error))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -227,7 +293,8 @@ class _AddressCard extends StatelessWidget {
   final UserAddress address;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  const _AddressCard({required this.address, required this.onEdit, required this.onDelete});
+  const _AddressCard(
+      {required this.address, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -236,37 +303,63 @@ class _AddressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: address.isDefault ? AppColors.primary : AppColors.border, width: address.isDefault ? 1.5 : 1),
+        border: Border.all(
+            color: address.isDefault ? AppColors.primary : AppColors.border,
+            width: address.isDefault ? 1.5 : 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 20),
+            decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.location_on_rounded,
+                color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Column(
+          Expanded(
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Text(address.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text(address.label,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
                 if (address.isDefault) ...[
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(100)),
-                    child: const Text('Default', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(100)),
+                    child: const Text('Default',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700)),
                   ),
                 ],
               ]),
               const SizedBox(height: 2),
-              Text(address.street + (address.city != null ? ', ${address.city}' : ''),
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text(
+                  address.street +
+                      (address.city != null ? ', ${address.city}' : ''),
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.textSecondary)),
             ],
           )),
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20), onPressed: onEdit),
-          IconButton(icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20), onPressed: onDelete),
+          IconButton(
+              icon: const Icon(Icons.edit_outlined,
+                  color: AppColors.primary, size: 20),
+              onPressed: onEdit),
+          IconButton(
+              icon: const Icon(Icons.delete_outline_rounded,
+                  color: AppColors.error, size: 20),
+              onPressed: onDelete),
         ],
       ),
     );

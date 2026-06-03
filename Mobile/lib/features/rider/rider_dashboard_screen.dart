@@ -12,8 +12,8 @@ import '../../shared/widgets/feedback/cn_states.dart';
 
 final _availableOrdersProvider = FutureProvider<List<dynamic>>((ref) async {
   try {
-    final res = await ApiClient.instance
-        .get(AppEndpoints.orders, queryParameters: {'status': 'ready_for_pickup'});
+    final res = await ApiClient.instance.get(AppEndpoints.orders,
+        queryParameters: {'status': 'ready_for_pickup'});
     final data = res.data;
     if (data is List) return data;
     if (data is Map) return (data['orders'] ?? data['data'] ?? []) as List;
@@ -41,7 +41,8 @@ class RiderDashboardScreen extends ConsumerStatefulWidget {
   const RiderDashboardScreen({super.key});
 
   @override
-  ConsumerState<RiderDashboardScreen> createState() => _RiderDashboardScreenState();
+  ConsumerState<RiderDashboardScreen> createState() =>
+      _RiderDashboardScreenState();
 }
 
 class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
@@ -88,7 +89,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
             content: const Text('Order accepted! Head to the restaurant 🚴'),
             backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -99,7 +101,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
             content: const Text('Could not accept order. Try again.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -156,7 +159,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                                         : 'You\'re currently offline',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.white.withValues(alpha: 0.75),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.75),
                                     ),
                                   ),
                                 ],
@@ -217,11 +221,16 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         // Stats row
                         Row(
                           children: [
-                            _StatCard(emoji: '✅', label: 'Delivered', value: '24'),
+                            _StatCard(
+                                emoji: '✅', label: 'Delivered', value: '24'),
                             const SizedBox(width: 12),
-                            _StatCard(emoji: '💰', label: 'Today', value: 'RWF 4,200'),
+                            _StatCard(
+                                emoji: '💰',
+                                label: 'Today',
+                                value: 'RWF 4,200'),
                             const SizedBox(width: 12),
-                            _StatCard(emoji: '⭐', label: 'Rating', value: '4.8'),
+                            _StatCard(
+                                emoji: '⭐', label: 'Rating', value: '4.8'),
                           ],
                         ),
                       ],
@@ -240,9 +249,10 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                   unselectedLabelColor: AppColors.textSecondary,
                   indicatorColor: AppColors.primary,
                   indicatorWeight: 3,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  unselectedLabelStyle:
-                      const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 13),
                   tabs: [
                     Tab(
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -334,15 +344,13 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                 // ── My Deliveries Tab ─────────────────────────────────────────
                 RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: () async =>
-                      ref.invalidate(_myDeliveriesProvider),
+                  onRefresh: () async => ref.invalidate(_myDeliveriesProvider),
                   child: asyncMyDeliveries.when(
                     loading: () => const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
                     ),
-                    error: (e, _) =>
-                        CnErrorState(message: e.toString()),
+                    error: (e, _) => CnErrorState(message: e.toString()),
                     data: (orders) => orders.isEmpty
                         ? const CnEmptyState(
                             title: 'No active deliveries',
@@ -395,8 +403,7 @@ class _StatCard extends StatelessWidget {
                   color: Colors.white)),
           Text(label,
               style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white.withValues(alpha: 0.7))),
+                  fontSize: 10, color: Colors.white.withValues(alpha: 0.7))),
         ]),
       ),
     );
@@ -408,8 +415,7 @@ class _StatCard extends StatelessWidget {
 class _AvailableOrderCard extends StatefulWidget {
   final dynamic order;
   final VoidCallback onAccept;
-  const _AvailableOrderCard(
-      {required this.order, required this.onAccept});
+  const _AvailableOrderCard({required this.order, required this.onAccept});
 
   @override
   State<_AvailableOrderCard> createState() => _AvailableOrderCardState();
@@ -423,10 +429,10 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
   @override
   void initState() {
     super.initState();
-    _ctrl =
-        AnimationController(duration: const Duration(milliseconds: 120), vsync: this);
-    _scale = Tween<double>(begin: 1.0, end: 0.97).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl = AnimationController(
+        duration: const Duration(milliseconds: 120), vsync: this);
+    _scale = Tween<double>(begin: 1.0, end: 0.97)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -438,7 +444,8 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
   @override
   Widget build(BuildContext context) {
     final biz = widget.order['business'] is Map ? widget.order['business'] : {};
-    final items = widget.order['items'] is List ? widget.order['items'] as List : [];
+    final items =
+        widget.order['items'] is List ? widget.order['items'] as List : [];
     final total = widget.order['total'] ?? 0;
 
     return ScaleTransition(
@@ -452,15 +459,15 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+            border:
+                Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
             boxShadow: [
               BoxShadow(
                   color: AppColors.primary.withValues(alpha: 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4)),
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8),
+                  color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
             ],
           ),
           child: Column(
@@ -504,8 +511,8 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
                   ),
                   // Earnings badge
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
                       borderRadius: BorderRadius.circular(100),
@@ -651,8 +658,8 @@ class _MyDeliveryCard extends StatelessWidget {
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: _statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(100),

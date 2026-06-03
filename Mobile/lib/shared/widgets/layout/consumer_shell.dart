@@ -12,11 +12,31 @@ class ConsumerShell extends ConsumerWidget {
   const ConsumerShell({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home_rounded, path: '/home'),
-    _TabItem(label: 'Browse', icon: Icons.search_outlined, activeIcon: Icons.search_rounded, path: '/browse'),
-    _TabItem(label: 'Cart', icon: Icons.shopping_cart_outlined, activeIcon: Icons.shopping_cart_rounded, path: '/cart'),
-    _TabItem(label: 'Orders', icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, path: '/orders'),
-    _TabItem(label: 'Profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, path: '/profile'),
+    _TabItem(
+        label: 'Home',
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
+        path: '/home'),
+    _TabItem(
+        label: 'Browse',
+        icon: Icons.search_outlined,
+        activeIcon: Icons.search_rounded,
+        path: '/browse'),
+    _TabItem(
+        label: 'Cart',
+        icon: Icons.shopping_cart_outlined,
+        activeIcon: Icons.shopping_cart_rounded,
+        path: '/cart'),
+    _TabItem(
+        label: 'Orders',
+        icon: Icons.receipt_long_outlined,
+        activeIcon: Icons.receipt_long_rounded,
+        path: '/orders'),
+    _TabItem(
+        label: 'Profile',
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
+        path: '/profile'),
   ];
 
   int _currentIndex(BuildContext context) {
@@ -75,7 +95,9 @@ class ConsumerShell extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: AppColors.surface.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(34),
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1),
+                      border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.8),
+                          width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Row(
@@ -96,10 +118,14 @@ class ConsumerShell extends ConsumerWidget {
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeInOut,
-                                margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
-                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 3, vertical: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: isActive ? AppColors.primary : Colors.transparent,
+                                  color: isActive
+                                      ? AppColors.primary
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(26),
                                 ),
                                 child: Column(
@@ -109,12 +135,20 @@ class ConsumerShell extends ConsumerWidget {
                                       clipBehavior: Clip.none,
                                       children: [
                                         AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 200),
-                                          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          transitionBuilder: (child, anim) =>
+                                              ScaleTransition(
+                                                  scale: anim, child: child),
                                           child: Icon(
-                                            isActive ? tab.activeIcon : tab.icon,
-                                            key: ValueKey('${tab.path}_$isActive'),
-                                            color: isActive ? Colors.white : AppColors.textSecondary,
+                                            isActive
+                                                ? tab.activeIcon
+                                                : tab.icon,
+                                            key: ValueKey(
+                                                '${tab.path}_$isActive'),
+                                            color: isActive
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
                                             size: 21,
                                           ),
                                         ),
@@ -129,12 +163,20 @@ class ConsumerShell extends ConsumerWidget {
                                               decoration: BoxDecoration(
                                                 color: AppColors.accent,
                                                 shape: BoxShape.circle,
-                                                border: Border.all(color: AppColors.surface, width: 1.5),
+                                                border: Border.all(
+                                                    color: AppColors.surface,
+                                                    width: 1.5),
                                               ),
                                               child: Center(
                                                 child: Text(
-                                                  cartCount > 9 ? '9+' : '$cartCount',
-                                                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white),
+                                                  cartCount > 9
+                                                      ? '9+'
+                                                      : '$cartCount',
+                                                  style: const TextStyle(
+                                                      fontSize: 8,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white),
                                                 ),
                                               ),
                                             ),
@@ -143,11 +185,16 @@ class ConsumerShell extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     AnimatedDefaultTextStyle(
-                                      duration: const Duration(milliseconds: 200),
+                                      duration:
+                                          const Duration(milliseconds: 200),
                                       style: TextStyle(
                                         fontSize: 10,
-                                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                                        color: isActive ? Colors.white : AppColors.textSecondary,
+                                        fontWeight: isActive
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isActive
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
                                       ),
                                       child: Text(tab.label),
                                     ),
@@ -175,5 +222,9 @@ class _TabItem {
   final IconData icon;
   final IconData activeIcon;
   final String path;
-  const _TabItem({required this.label, required this.icon, required this.activeIcon, required this.path});
+  const _TabItem(
+      {required this.label,
+      required this.icon,
+      required this.activeIcon,
+      required this.path});
 }

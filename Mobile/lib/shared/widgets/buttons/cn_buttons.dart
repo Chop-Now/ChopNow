@@ -46,14 +46,16 @@ class CnPrimaryButton extends StatelessWidget {
             gradient: disabled ? null : AppColors.primaryGradient,
             color: disabled ? AppColors.surfaceVariant : null,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: disabled ? null : [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.35),
-                blurRadius: 18,
-                spreadRadius: -4,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: disabled
+                ? null
+                : [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
           ),
           child: Center(
             child: isLoading
@@ -226,16 +228,21 @@ class _GooglePainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
     // Simplified Google G colors
     paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height), -0.35, 2.25, true, paint);
+    canvas.drawArc(
+        Rect.fromLTWH(0, 0, size.width, size.height), -0.35, 2.25, true, paint);
     paint.color = const Color(0xFF34A853);
-    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height), 1.9, 1.48, true, paint);
+    canvas.drawArc(
+        Rect.fromLTWH(0, 0, size.width, size.height), 1.9, 1.48, true, paint);
     paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height), 3.38, 0.74, true, paint);
+    canvas.drawArc(
+        Rect.fromLTWH(0, 0, size.width, size.height), 3.38, 0.74, true, paint);
     paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height), 4.12, 1.23, true, paint);
+    canvas.drawArc(
+        Rect.fromLTWH(0, 0, size.width, size.height), 4.12, 1.23, true, paint);
     // White center
     paint.color = Colors.white;
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width * 0.33, paint);
+    canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2), size.width * 0.33, paint);
   }
 
   @override

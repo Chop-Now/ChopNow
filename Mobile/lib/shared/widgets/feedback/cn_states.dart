@@ -51,7 +51,8 @@ class CnEmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textSecondary, height: 1.5),
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
@@ -59,7 +60,8 @@ class CnEmptyState extends StatelessWidget {
               ScaleTap(
                 onTap: onAction,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(100),
@@ -111,25 +113,31 @@ class CnErrorState extends StatelessWidget {
                 color: AppColors.errorSurface,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.wifi_off_rounded, size: 32, color: AppColors.error),
+              child: const Icon(Icons.wifi_off_rounded,
+                  size: 32, color: AppColors.error),
             ),
             const SizedBox(height: 16),
             const Text(
               'Oops, something went wrong',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary),
             ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.textSecondary, height: 1.5),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 20),
               ScaleTap(
                 onTap: onRetry,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(100),
@@ -137,7 +145,10 @@ class CnErrorState extends StatelessWidget {
                   ),
                   child: const Text(
                     'Try again',
-                    style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -155,7 +166,8 @@ class CnStatusPill extends StatelessWidget {
   final Color color;
   final Color? bgColor;
 
-  const CnStatusPill({super.key, required this.label, required this.color, this.bgColor});
+  const CnStatusPill(
+      {super.key, required this.label, required this.color, this.bgColor});
 
   factory CnStatusPill.fromStatus(String status) {
     Color color;
@@ -190,14 +202,29 @@ class CnStatusPill extends StatelessWidget {
     }
     String label;
     switch (status) {
-      case 'pending_payment': label = 'Pending'; break;
-      case 'paid': label = 'Paid'; break;
-      case 'confirmed': label = 'Confirmed'; break;
-      case 'ready_for_pickup': label = 'Ready'; break;
-      case 'out_for_delivery': label = 'On the way'; break;
-      case 'completed': label = 'Completed'; break;
-      case 'cancelled': label = 'Cancelled'; break;
-      default: label = status;
+      case 'pending_payment':
+        label = 'Pending';
+        break;
+      case 'paid':
+        label = 'Paid';
+        break;
+      case 'confirmed':
+        label = 'Confirmed';
+        break;
+      case 'ready_for_pickup':
+        label = 'Ready';
+        break;
+      case 'out_for_delivery':
+        label = 'On the way';
+        break;
+      case 'completed':
+        label = 'Completed';
+        break;
+      case 'cancelled':
+        label = 'Cancelled';
+        break;
+      default:
+        label = status;
     }
     return CnStatusPill(label: label, color: color, bgColor: bg);
   }

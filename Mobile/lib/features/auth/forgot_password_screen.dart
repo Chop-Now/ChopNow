@@ -16,7 +16,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -46,10 +47,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       setState(() => _error = 'Please enter a valid email address');
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      await ApiClient.instance.post(AppEndpoints.forgotPassword, data: {'email': email});
-      setState(() { _email = email; _step = 1; _resendCooldown = 60; });
+      await ApiClient.instance
+          .post(AppEndpoints.forgotPassword, data: {'email': email});
+      setState(() {
+        _email = email;
+        _step = 1;
+        _resendCooldown = 60;
+      });
       _startCooldown();
     } catch (e) {
       setState(() => _error = _parseError(e));
@@ -65,7 +74,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       return;
     }
     // OTP is validated in step 3 when setting password
-    setState(() { _step = 2; _error = null; });
+    setState(() {
+      _step = 2;
+      _error = null;
+    });
   }
 
   Future<void> _resetPassword() async {
@@ -79,7 +91,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       setState(() => _error = 'Passwords do not match');
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await ApiClient.instance.post(AppEndpoints.resetPassword, data: {
         'email': _email,
@@ -107,18 +122,24 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72, height: 72,
-              decoration: const BoxDecoration(gradient: AppColors.primaryGradient, shape: BoxShape.circle),
-              child: const Center(child: Icon(Icons.check_rounded, color: Colors.white, size: 36)),
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                  gradient: AppColors.primaryGradient, shape: BoxShape.circle),
+              child: const Center(
+                  child:
+                      Icon(Icons.check_rounded, color: Colors.white, size: 36)),
             ),
             const SizedBox(height: 16),
-            const Text('Password Reset!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+            const Text('Password Reset!',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
             const SizedBox(height: 8),
             const Text('Your password has been updated successfully.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
             const SizedBox(height: 20),
-            CnPrimaryButton(label: 'Back to Login', onTap: () => context.go('/login')),
+            CnPrimaryButton(
+                label: 'Back to Login', onTap: () => context.go('/login')),
           ],
         ),
       ),
@@ -136,7 +157,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   String _parseError(dynamic e) {
     final msg = e.toString();
-    if (msg.contains('404') || msg.contains('not found')) return 'No account found with this email.';
+    if (msg.contains('404') || msg.contains('not found'))
+      return 'No account found with this email.';
     if (msg.contains('expired')) return 'Code has expired. Request a new one.';
     if (msg.contains('invalid')) return 'Invalid code. Please try again.';
     return msg.replaceAll('Exception: ', '');
@@ -148,7 +170,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Reset Password',
-            style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textPrimary, fontSize: 18)),
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+                fontSize: 18)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -178,11 +203,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               resendCooldown: _resendCooldown,
                               onResend: () async {
                                 if (_resendCooldown > 0) return;
-                                setState(() { _loading = true; _error = null; });
+                                setState(() {
+                                  _loading = true;
+                                  _error = null;
+                                });
                                 try {
-                                  await ApiClient.instance.post(AppEndpoints.forgotPassword,
+                                  await ApiClient.instance.post(
+                                      AppEndpoints.forgotPassword,
                                       data: {'email': _email});
-                                  setState(() { _resendCooldown = 60; });
+                                  setState(() {
+                                    _resendCooldown = 60;
+                                  });
                                   _startCooldown();
                                 } catch (e) {
                                   setState(() => _error = _parseError(e));
@@ -205,13 +236,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.errorSurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                    border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
+                      const Icon(Icons.error_outline_rounded,
+                          color: AppColors.error, size: 18),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13))),
+                      Expanded(
+                          child: Text(_error!,
+                              style: const TextStyle(
+                                  color: AppColors.error, fontSize: 13))),
                     ],
                   ),
                 ),
@@ -241,8 +277,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 const SizedBox(height: 12),
                 Center(
                   child: TextButton(
-                    onPressed: () => setState(() { _step--; _error = null; }),
-                    child: const Text('← Go Back', style: TextStyle(color: AppColors.textSecondary)),
+                    onPressed: () => setState(() {
+                      _step--;
+                      _error = null;
+                    }),
+                    child: const Text('← Go Back',
+                        style: TextStyle(color: AppColors.textSecondary)),
                   ),
                 ),
               ],
@@ -277,17 +317,22 @@ class _StepIndicator extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        gradient: (done || active) ? AppColors.primaryGradient : null,
-                        color: (done || active) ? null : AppColors.surfaceVariant,
+                        gradient:
+                            (done || active) ? AppColors.primaryGradient : null,
+                        color:
+                            (done || active) ? null : AppColors.surfaceVariant,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: done
-                            ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                            ? const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 16)
                             : Text('${i + 1}',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    color: active ? Colors.white : AppColors.textSecondary,
+                                    color: active
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
                                     fontSize: 13)),
                       ),
                     ),
@@ -295,8 +340,11 @@ class _StepIndicator extends StatelessWidget {
                     Text(_labels[i],
                         style: TextStyle(
                             fontSize: 10,
-                            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                            color: active ? AppColors.primary : AppColors.textSecondary)),
+                            fontWeight:
+                                active ? FontWeight.w700 : FontWeight.w400,
+                            color: active
+                                ? AppColors.primary
+                                : AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -324,10 +372,15 @@ class _EmailStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Forgot your password?',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary)),
         const SizedBox(height: 8),
-        const Text('Enter your email address and we\'ll send you a 6-digit reset code.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+        const Text(
+            'Enter your email address and we\'ll send you a 6-digit reset code.',
+            style: TextStyle(
+                fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
         const SizedBox(height: 24),
         CnTextField(
           controller: ctrl,
@@ -347,17 +400,26 @@ class _OtpStep extends StatelessWidget {
   final String email;
   final int resendCooldown;
   final VoidCallback onResend;
-  const _OtpStep({required this.ctrl, required this.email, required this.resendCooldown, required this.onResend});
+  const _OtpStep(
+      {required this.ctrl,
+      required this.email,
+      required this.resendCooldown,
+      required this.onResend});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Enter the code', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+        const Text('Enter the code',
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         Text('We sent a 6-digit code to $email',
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+            style: const TextStyle(
+                fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
         const SizedBox(height: 24),
         CnTextField(
           controller: ctrl,
@@ -371,7 +433,9 @@ class _OtpStep extends StatelessWidget {
         TextButton.icon(
           onPressed: resendCooldown > 0 ? null : onResend,
           icon: const Icon(Icons.refresh_rounded, size: 16),
-          label: Text(resendCooldown > 0 ? 'Resend in ${resendCooldown}s' : 'Resend Code'),
+          label: Text(resendCooldown > 0
+              ? 'Resend in ${resendCooldown}s'
+              : 'Resend Code'),
           style: TextButton.styleFrom(foregroundColor: AppColors.primary),
         ),
       ],
@@ -392,10 +456,15 @@ class _NewPasswordStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Set new password', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+        const Text('Set new password',
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         const Text('Choose a strong password with at least 8 characters.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+            style: TextStyle(
+                fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
         const SizedBox(height: 24),
         CnTextField(
           controller: newCtrl,

@@ -32,13 +32,13 @@ class AppNotification {
   }
 
   String get icon => switch (type) {
-    'order_placed' => '🛍',
-    'order_confirmed' => '✅',
-    'order_ready' => '🎉',
-    'order_cancelled' => '❌',
-    'payment' => '💰',
-    'business' => '🏪',
-    'impact' => '🌿',
-    _ => '🔔',
-  };
+        'order_placed' => '🛍',
+        'order_confirmed' => '✅',
+        'order_ready' => '🎉',
+        'order_cancelled' => '❌',
+        'payment' => '💰',
+        'business' => '🏪',
+        'impact' => '🌿',
+        _ => '🔔',
+      };
 }

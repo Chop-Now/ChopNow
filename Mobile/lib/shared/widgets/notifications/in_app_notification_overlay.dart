@@ -278,10 +278,12 @@ class _InAppBannerState extends State<_InAppBanner>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 7, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: _accentColor.withValues(alpha: 0.2),
+                                      color:
+                                          _accentColor.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(100),
                                       border: Border.all(
-                                        color: _accentColor.withValues(alpha: 0.4),
+                                        color:
+                                            _accentColor.withValues(alpha: 0.4),
                                       ),
                                     ),
                                     child: Text(

@@ -14,12 +14,13 @@ class ApiException implements Exception {
       final data = error.response?.data;
       if (data is Map) {
         var msg = data['message'] ?? data['error'];
-        
+
         // Append specific validation error if present
         if (data['errors'] is List && (data['errors'] as List).isNotEmpty) {
           final firstError = data['errors'][0];
           if (firstError is Map && firstError['msg'] != null) {
-            msg = msg != null ? '$msg: ${firstError['msg']}' : firstError['msg'];
+            msg =
+                msg != null ? '$msg: ${firstError['msg']}' : firstError['msg'];
           }
         }
 
@@ -49,7 +50,8 @@ class ApiException implements Exception {
     if (type.contains('connectionTimeout') || type.contains('connectTimeout')) {
       return 'Connection timed out. Check your internet.';
     }
-    if (type.contains('receiveTimeout')) return 'Server took too long to respond.';
+    if (type.contains('receiveTimeout'))
+      return 'Server took too long to respond.';
     if (type.contains('connectionError') || type.contains('unknown')) {
       return 'No internet connection. Please try again.';
     }

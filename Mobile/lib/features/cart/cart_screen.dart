@@ -23,10 +23,17 @@ class CartScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('My Cart', style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textPrimary, fontSize: 20)),
+            const Text('My Cart',
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    fontSize: 20)),
             if (items.isNotEmpty)
               Text('${items.length} item${items.length == 1 ? '' : 's'}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500)),
           ],
         ),
         backgroundColor: AppColors.surface,
@@ -40,24 +47,34 @@ class CartScreen extends ConsumerWidget {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    title: const Text('Clear Cart', style: TextStyle(fontWeight: FontWeight.w800)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    title: const Text('Clear Cart',
+                        style: TextStyle(fontWeight: FontWeight.w800)),
                     content: const Text('Remove all items from your cart?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel')),
                       TextButton(
                         onPressed: () {
                           ref.read(cartProvider.notifier).clear();
                           Navigator.pop(context);
                         },
-                        child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+                        child: const Text('Clear',
+                            style: TextStyle(color: AppColors.error)),
                       ),
                     ],
                   ),
                 );
               },
-              icon: const Icon(Icons.delete_sweep_outlined, size: 17, color: AppColors.error),
-              label: const Text('Clear', style: TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
+              icon: const Icon(Icons.delete_sweep_outlined,
+                  size: 17, color: AppColors.error),
+              label: const Text('Clear',
+                  style: TextStyle(
+                      color: AppColors.error,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
             ),
         ],
         bottom: items.isNotEmpty
@@ -70,7 +87,8 @@ class CartScreen extends ConsumerWidget {
       body: items.isEmpty
           ? CnEmptyState(
               title: 'Your cart is empty',
-              subtitle: 'Find discounted meals near you\nand rescue them from waste!',
+              subtitle:
+                  'Find discounted meals near you\nand rescue them from waste!',
               icon: Icons.shopping_bag_outlined,
               actionLabel: 'Browse Deals',
               onAction: () => context.go('/home'),
@@ -80,13 +98,18 @@ class CartScreen extends ConsumerWidget {
                 // Impact callout
                 Container(
                   margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.success.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.06)],
+                      colors: [
+                        AppColors.success.withValues(alpha: 0.1),
+                        AppColors.primary.withValues(alpha: 0.06)
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.25)),
+                    border: Border.all(
+                        color: AppColors.success.withValues(alpha: 0.25)),
                   ),
                   child: const Row(
                     children: [
@@ -95,7 +118,10 @@ class CartScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           'These items are rescued from food waste — thank you!',
-                          style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -114,35 +140,51 @@ class CartScreen extends ConsumerWidget {
 
                 // Order Summary footer
                 Container(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 12),
+                  padding: EdgeInsets.fromLTRB(
+                      20, 16, 20, MediaQuery.of(context).padding.bottom + 12),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, -4)),
                     ],
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Drag handle
                       Container(
-                        width: 36, height: 4,
+                        width: 36,
+                        height: 4,
                         margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                        decoration: BoxDecoration(
+                            color: AppColors.border,
+                            borderRadius: BorderRadius.circular(2)),
                       ),
 
                       // Price breakdown
-                      _PriceLine(label: 'Subtotal', value: 'RWF ${total.toStringAsFixed(0)}'),
+                      _PriceLine(
+                          label: 'Subtotal',
+                          value: 'RWF ${total.toStringAsFixed(0)}'),
                       const SizedBox(height: 8),
                       _PriceLine(
                         label: 'Service Fee',
                         value: 'Free',
                         valueColor: AppColors.success,
-                        valueStyle: const TextStyle(fontSize: 13, color: AppColors.success, fontWeight: FontWeight.w700),
+                        valueStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
-                      _PriceLine(label: 'Estimated Savings', value: '~RWF ${(total * 0.7).toStringAsFixed(0)}', valueColor: AppColors.primary),
+                      _PriceLine(
+                          label: 'Estimated Savings',
+                          value: '~RWF ${(total * 0.7).toStringAsFixed(0)}',
+                          valueColor: AppColors.primary),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(color: AppColors.border),
@@ -152,16 +194,24 @@ class CartScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                          const Text('Total',
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary)),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               gradient: AppColors.primaryGradient,
                               borderRadius: BorderRadius.circular(100),
                             ),
                             child: Text(
                               'RWF ${total.toStringAsFixed(0)}',
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white),
+                              style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white),
                             ),
                           ),
                         ],
@@ -190,14 +240,20 @@ class _PriceLine extends StatelessWidget {
   final String value;
   final Color? valueColor;
   final TextStyle? valueStyle;
-  const _PriceLine({required this.label, required this.value, this.valueColor, this.valueStyle});
+  const _PriceLine(
+      {required this.label,
+      required this.value,
+      this.valueColor,
+      this.valueStyle});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         Text(value,
             style: valueStyle ??
                 TextStyle(
@@ -225,7 +281,12 @@ class _CartItemCard extends ConsumerWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Row(
         children: [
@@ -235,17 +296,22 @@ class _CartItemCard extends ConsumerWidget {
             child: SizedBox(
               width: 80,
               height: 80,
-              child: listing.firstPhoto != null && (listing.firstPhoto!.startsWith('http://') || listing.firstPhoto!.startsWith('https://'))
+              child: listing.firstPhoto != null &&
+                      (listing.firstPhoto!.startsWith('http://') ||
+                          listing.firstPhoto!.startsWith('https://'))
                   ? CachedNetworkImage(
                       imageUrl: listing.firstPhoto!,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppColors.surfaceVariant),
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.surfaceVariant),
                       errorWidget: (_, __, ___) => Container(
                           color: AppColors.surfaceVariant,
-                          child: const Icon(Icons.fastfood_rounded, color: AppColors.border, size: 30)))
+                          child: const Icon(Icons.fastfood_rounded,
+                              color: AppColors.border, size: 30)))
                   : Container(
                       color: AppColors.surfaceVariant,
-                      child: const Icon(Icons.fastfood_rounded, color: AppColors.border, size: 30)),
+                      child: const Icon(Icons.fastfood_rounded,
+                          color: AppColors.border, size: 30)),
             ),
           ),
           const SizedBox(width: 12),
@@ -258,10 +324,15 @@ class _CartItemCard extends ConsumerWidget {
                 Text(listing.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.3)),
                 const SizedBox(height: 4),
                 Text('RWF ${listing.offerPrice.toStringAsFixed(0)} each',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -275,7 +346,10 @@ class _CartItemCard extends ConsumerWidget {
                     ),
                     const Spacer(),
                     Text('RWF ${item.subtotal.toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary)),
                   ],
                 ),
               ],
@@ -295,7 +369,8 @@ class _CartItemCard extends ConsumerWidget {
                 color: AppColors.errorSurface,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
+              child: const Icon(Icons.delete_outline_rounded,
+                  color: AppColors.error, size: 18),
             ),
           ),
         ],
@@ -308,7 +383,8 @@ class _SmallStepper extends StatelessWidget {
   final int qty;
   final VoidCallback onDecrement;
   final VoidCallback? onIncrement;
-  const _SmallStepper({required this.qty, required this.onDecrement, this.onIncrement});
+  const _SmallStepper(
+      {required this.qty, required this.onDecrement, this.onIncrement});
 
   @override
   Widget build(BuildContext context) {
@@ -330,15 +406,21 @@ class _SmallStepper extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 color: AppColors.primarySurface,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(9)),
+                borderRadius:
+                    const BorderRadius.horizontal(left: Radius.circular(9)),
               ),
-              child: const Icon(Icons.remove_rounded, size: 15, color: AppColors.primary),
+              child: const Icon(Icons.remove_rounded,
+                  size: 15, color: AppColors.primary),
             ),
           ),
           Container(
             width: 36,
             alignment: Alignment.center,
-            child: Text('$qty', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            child: Text('$qty',
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary)),
           ),
           GestureDetector(
             onTap: onIncrement == null
@@ -351,11 +433,17 @@ class _SmallStepper extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: onIncrement == null ? AppColors.surfaceVariant : AppColors.primarySurface,
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(9)),
+                color: onIncrement == null
+                    ? AppColors.surfaceVariant
+                    : AppColors.primarySurface,
+                borderRadius:
+                    const BorderRadius.horizontal(right: Radius.circular(9)),
               ),
-              child: Icon(Icons.add_rounded, size: 15,
-                  color: onIncrement == null ? AppColors.border : AppColors.primary),
+              child: Icon(Icons.add_rounded,
+                  size: 15,
+                  color: onIncrement == null
+                      ? AppColors.border
+                      : AppColors.primary),
             ),
           ),
         ],

@@ -14,11 +14,18 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final asyncImpact = ref.watch(userImpactProvider);
-    final mealsRescued = asyncImpact.value?['mealsRescued'] ?? asyncImpact.value?['totalMeals'] ?? 0;
-    final co2SavedRaw = asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
+    final mealsRescued = asyncImpact.value?['mealsRescued'] ??
+        asyncImpact.value?['totalMeals'] ??
+        0;
+    final co2SavedRaw =
+        asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
     final co2Saved = co2SavedRaw is num ? co2SavedRaw.toDouble() : 0.0;
-    final co2String = co2Saved >= 1.0 ? '${co2Saved.toStringAsFixed(1)} kg' : '${(co2Saved * 1000).toStringAsFixed(0)}g';
-    final moneySavedRaw = asyncImpact.value?['moneySaved'] ?? asyncImpact.value?['totalSavings'] ?? 0;
+    final co2String = co2Saved >= 1.0
+        ? '${co2Saved.toStringAsFixed(1)} kg'
+        : '${(co2Saved * 1000).toStringAsFixed(0)}g';
+    final moneySavedRaw = asyncImpact.value?['moneySaved'] ??
+        asyncImpact.value?['totalSavings'] ??
+        0;
     final moneySaved = moneySavedRaw is num ? moneySavedRaw.toDouble() : 0.0;
     final user = auth is AuthAuthenticated ? auth.user : null;
     final name = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
@@ -57,7 +64,11 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           const Text(
                             'My Profile',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.3),
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.3),
                           ),
                           ScaleTap(
                             onTap: () => context.push('/profile/edit'),
@@ -66,9 +77,12 @@ class ProfileScreen extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                                border: Border.all(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.25)),
                               ),
-                              child: const Icon(Icons.edit_rounded, size: 18, color: Colors.white),
+                              child: const Icon(Icons.edit_rounded,
+                                  size: 18, color: Colors.white),
                             ),
                           ),
                         ],
@@ -83,12 +97,18 @@ class ProfileScreen extends ConsumerWidget {
                             padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  width: 2),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 4)),
+                                BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4)),
                               ],
                             ),
-                            child: _Avatar(url: avatarUrl, name: name, size: 72),
+                            child:
+                                _Avatar(url: avatarUrl, name: name, size: 72),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -97,15 +117,26 @@ class ProfileScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   name.isEmpty ? 'ChopNow User' : name,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white),
                                 ),
                                 if (email.isNotEmpty) ...[
                                   const SizedBox(height: 3),
-                                  Text(email, style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
+                                  Text(email,
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.white
+                                              .withValues(alpha: 0.75))),
                                 ],
                                 if (phone.isNotEmpty) ...[
                                   const SizedBox(height: 2),
-                                  Text(phone, style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
+                                  Text(phone,
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.white
+                                              .withValues(alpha: 0.75))),
                                 ],
                                 const SizedBox(height: 8),
                                 _RoleBadge(role: role),
@@ -122,15 +153,25 @@ class ProfileScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           children: [
-                            Expanded(child: _StatItem(value: '$mealsRescued', label: 'Rescues')),
+                            Expanded(
+                                child: _StatItem(
+                                    value: '$mealsRescued', label: 'Rescues')),
                             const _Divider(),
-                            Expanded(child: _StatItem(value: co2String, label: 'CO₂ Saved')),
+                            Expanded(
+                                child: _StatItem(
+                                    value: co2String, label: 'CO₂ Saved')),
                             const _Divider(),
-                            Expanded(child: _StatItem(value: moneySaved >= 1000 ? 'RWF ${(moneySaved / 1000).toStringAsFixed(0)}K' : 'RWF ${moneySaved.toStringAsFixed(0)}', label: 'Saved')),
+                            Expanded(
+                                child: _StatItem(
+                                    value: moneySaved >= 1000
+                                        ? 'RWF ${(moneySaved / 1000).toStringAsFixed(0)}K'
+                                        : 'RWF ${moneySaved.toStringAsFixed(0)}',
+                                    label: 'Saved')),
                           ],
                         ),
                       ),
@@ -148,20 +189,35 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
 
                 _Section(title: 'Account', tiles: [
-                  _Tile(icon: Icons.person_outline_rounded, label: 'Edit Profile',
-                      subtitle: 'Update your personal info', onTap: () => context.push('/profile/edit')),
-                  _Tile(icon: Icons.location_on_outlined, label: 'My Addresses',
-                      subtitle: 'Manage saved locations', onTap: () => context.push('/profile/addresses')),
-                  _Tile(icon: Icons.receipt_long_outlined, label: 'Order History',
-                      subtitle: 'View past & active orders', onTap: () => context.go('/orders')),
-                  _Tile(icon: Icons.favorite_border_rounded, label: 'Favorites',
-                      subtitle: 'Saved restaurants & deals', onTap: () {}),
+                  _Tile(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Edit Profile',
+                      subtitle: 'Update your personal info',
+                      onTap: () => context.push('/profile/edit')),
+                  _Tile(
+                      icon: Icons.location_on_outlined,
+                      label: 'My Addresses',
+                      subtitle: 'Manage saved locations',
+                      onTap: () => context.push('/profile/addresses')),
+                  _Tile(
+                      icon: Icons.receipt_long_outlined,
+                      label: 'Order History',
+                      subtitle: 'View past & active orders',
+                      onTap: () => context.go('/orders')),
+                  _Tile(
+                      icon: Icons.favorite_border_rounded,
+                      label: 'Favorites',
+                      subtitle: 'Saved restaurants & deals',
+                      onTap: () {}),
                 ]),
                 const SizedBox(height: 12),
 
                 _Section(title: 'ChopNow', tiles: [
-                  _Tile(icon: Icons.eco_outlined, label: 'My Impact',
-                      subtitle: 'View your environmental footprint', iconColor: AppColors.success,
+                  _Tile(
+                      icon: Icons.eco_outlined,
+                      label: 'My Impact',
+                      subtitle: 'View your environmental footprint',
+                      iconColor: AppColors.success,
                       onTap: () => context.go('/impact')),
                   if (user != null && user.roles.length > 1)
                     _Tile(
@@ -186,15 +242,27 @@ class ProfileScreen extends ConsumerWidget {
                       iconColor: AppColors.accent,
                       onTap: () => context.push('/become-rider'),
                     ),
-                  _Tile(icon: Icons.settings_outlined, label: 'Settings',
-                      subtitle: 'Notifications, privacy & more', onTap: () => context.push('/profile/settings')),
+                  _Tile(
+                      icon: Icons.settings_outlined,
+                      label: 'Settings',
+                      subtitle: 'Notifications, privacy & more',
+                      onTap: () => context.push('/profile/settings')),
                 ]),
                 const SizedBox(height: 12),
 
                 _Section(title: 'Support', tiles: [
-                  _Tile(icon: Icons.help_outline_rounded, label: 'Help & FAQ', onTap: () {}),
-                  _Tile(icon: Icons.info_outline_rounded, label: 'About ChopNow', onTap: () {}),
-                  _Tile(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () {}),
+                  _Tile(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Help & FAQ',
+                      onTap: () {}),
+                  _Tile(
+                      icon: Icons.info_outline_rounded,
+                      label: 'About ChopNow',
+                      onTap: () {}),
+                  _Tile(
+                      icon: Icons.privacy_tip_outlined,
+                      label: 'Privacy Policy',
+                      onTap: () {}),
                 ]),
                 const SizedBox(height: 20),
 
@@ -207,9 +275,12 @@ class ProfileScreen extends ConsumerWidget {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w800)),
-                          content: const Text('Are you sure you want to sign out?'),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          title: const Text('Sign Out',
+                              style: TextStyle(fontWeight: FontWeight.w800)),
+                          content:
+                              const Text('Are you sure you want to sign out?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -217,7 +288,8 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Sign Out', style: TextStyle(color: AppColors.error)),
+                              child: const Text('Sign Out',
+                                  style: TextStyle(color: AppColors.error)),
                             ),
                           ],
                         ),
@@ -232,14 +304,20 @@ class ProfileScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: AppColors.errorSurface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+                          Icon(Icons.logout_rounded,
+                              color: AppColors.error, size: 20),
                           SizedBox(width: 8),
-                          Text('Sign Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 15)),
+                          Text('Sign Out',
+                              style: TextStyle(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15)),
                         ],
                       ),
                     ),
@@ -248,9 +326,13 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 const Center(
-                  child: Text('ChopNow v1.0.0 · Rescue food. Save money.\nSustain tomorrow. 🌍',
+                  child: Text(
+                      'ChopNow v1.0.0 · Rescue food. Save money.\nSustain tomorrow. 🌍',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 11, color: AppColors.textTertiary, height: 1.6)),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
+                          height: 1.6)),
                 ),
                 const SizedBox(height: 32),
               ],
@@ -262,42 +344,55 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   static String _roleLabel(String role) => switch (role) {
-    'business_owner' => 'Business Owner',
-    'rider' => 'Rider',
-    _ => 'Consumer',
-  };
+        'business_owner' => 'Business Owner',
+        'rider' => 'Rider',
+        _ => 'Consumer',
+      };
 
-  void _showRoleSwitcher(BuildContext context, WidgetRef ref, appUser, String current) {
+  void _showRoleSwitcher(
+      BuildContext context, WidgetRef ref, appUser, String current) {
     final roles = (appUser?.roles as List<String>?) ?? ['consumer'];
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            const Text('Switch Role', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Switch Role',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 16),
             ...roles.map((r) => ListTile(
-              leading: Icon(r == current ? Icons.radio_button_checked : Icons.radio_button_off, color: AppColors.primary),
-              title: Text(_roleLabel(r), style: const TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () async {
-                await ref.read(authProvider.notifier).switchRole(r);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  final target = switch (r) {
-                    'business_owner' => '/business/dashboard',
-                    'rider' => '/rider/dashboard',
-                    _ => '/home',
-                  };
-                  context.go(target);
-                }
-              },
-            )),
+                  leading: Icon(
+                      r == current
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: AppColors.primary),
+                  title: Text(_roleLabel(r),
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () async {
+                    await ref.read(authProvider.notifier).switchRole(r);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      final target = switch (r) {
+                        'business_owner' => '/business/dashboard',
+                        'rider' => '/rider/dashboard',
+                        _ => '/home',
+                      };
+                      context.go(target);
+                    }
+                  },
+                )),
             const SizedBox(height: 8),
           ],
         ),
@@ -316,9 +411,17 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: Colors.white)),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.7), fontWeight: FontWeight.w500)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -327,8 +430,8 @@ class _StatItem extends StatelessWidget {
 class _Divider extends StatelessWidget {
   const _Divider();
   @override
-  Widget build(BuildContext context) =>
-      Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.2));
+  Widget build(BuildContext context) => Container(
+      width: 1, height: 36, color: Colors.white.withValues(alpha: 0.2));
 }
 
 class _Avatar extends StatelessWidget {
@@ -340,14 +443,28 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initials = name.isNotEmpty
-        ? name.split(' ').take(2).map((w) => w.isEmpty ? '' : w[0].toUpperCase()).join()
+        ? name
+            .split(' ')
+            .take(2)
+            .map((w) => w.isEmpty ? '' : w[0].toUpperCase())
+            .join()
         : '?';
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: Colors.white.withValues(alpha: 0.2),
-      backgroundImage: url != null && url!.isNotEmpty && (url!.startsWith('http://') || url!.startsWith('https://')) ? NetworkImage(url!) : null,
-      child: url == null || url!.isEmpty || !(url!.startsWith('http://') || url!.startsWith('https://'))
-          ? Text(initials, style: TextStyle(fontSize: size * 0.35, fontWeight: FontWeight.w800, color: Colors.white))
+      backgroundImage: url != null &&
+              url!.isNotEmpty &&
+              (url!.startsWith('http://') || url!.startsWith('https://'))
+          ? NetworkImage(url!)
+          : null,
+      child: url == null ||
+              url!.isEmpty ||
+              !(url!.startsWith('http://') || url!.startsWith('https://'))
+          ? Text(initials,
+              style: TextStyle(
+                  fontSize: size * 0.35,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white))
           : null,
     );
   }
@@ -371,7 +488,9 @@ class _RoleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
         border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+      child: Text(label,
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
     );
   }
 }
@@ -390,7 +509,10 @@ class _Section extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -399,7 +521,11 @@ class _Section extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
             child: Text(title.toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.8)),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.8)),
           ),
           ...tiles,
         ],
@@ -414,7 +540,12 @@ class _Tile extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onTap;
   final Color? iconColor;
-  const _Tile({required this.icon, required this.label, required this.onTap, this.subtitle, this.iconColor});
+  const _Tile(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.subtitle,
+      this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -442,15 +573,22 @@ class _Tile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary)),
                     if (subtitle != null) ...[
                       const SizedBox(height: 1),
-                      Text(subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      Text(subtitle!,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.textSecondary)),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),

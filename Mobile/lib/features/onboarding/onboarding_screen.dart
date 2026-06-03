@@ -78,7 +78,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: ScaleTap(
                     onTap: _complete,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceVariant,
                         borderRadius: BorderRadius.circular(100),
@@ -139,7 +140,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   onTap: _page == 0
                                       ? null
                                       : () => _ctrl.previousPage(
-                                            duration: const Duration(milliseconds: 350),
+                                            duration: const Duration(
+                                                milliseconds: 350),
                                             curve: Curves.easeOut,
                                           ),
                                 ),

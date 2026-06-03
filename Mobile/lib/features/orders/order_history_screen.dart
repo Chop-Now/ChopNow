@@ -38,7 +38,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textPrimary, fontSize: 20)),
+        title: const Text('My Orders',
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+                fontSize: 20)),
         backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -53,17 +57,25 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
               labelColor: AppColors.primary,
               unselectedLabelColor: AppColors.textSecondary,
               indicator: BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.primary, width: 2.5)),
+                border: Border(
+                    bottom: BorderSide(color: AppColors.primary, width: 2.5)),
               ),
-              labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-              tabs: const [Tab(text: 'Active'), Tab(text: 'Completed'), Tab(text: 'Cancelled')],
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              tabs: const [
+                Tab(text: 'Active'),
+                Tab(text: 'Completed'),
+                Tab(text: 'Cancelled')
+              ],
             ),
           ),
         ),
       ),
       body: asyncOrders.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => CnErrorState(
           message: e.toString(),
           onRetry: () => ref.invalidate(ordersProvider),
@@ -75,9 +87,18 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _OrderList(orders: active, emptyTitle: 'No active orders', emptySubtitle: 'Your active orders will appear here'),
-              _OrderList(orders: completed, emptyTitle: 'No completed orders', emptySubtitle: 'Your order history will appear here'),
-              _OrderList(orders: cancelled, emptyTitle: 'No cancelled orders', emptySubtitle: 'Cancelled orders will appear here'),
+              _OrderList(
+                  orders: active,
+                  emptyTitle: 'No active orders',
+                  emptySubtitle: 'Your active orders will appear here'),
+              _OrderList(
+                  orders: completed,
+                  emptyTitle: 'No completed orders',
+                  emptySubtitle: 'Your order history will appear here'),
+              _OrderList(
+                  orders: cancelled,
+                  emptyTitle: 'No cancelled orders',
+                  emptySubtitle: 'Cancelled orders will appear here'),
             ],
           );
         },
@@ -90,7 +111,10 @@ class _OrderList extends StatelessWidget {
   final List<Order> orders;
   final String emptyTitle;
   final String emptySubtitle;
-  const _OrderList({required this.orders, required this.emptyTitle, required this.emptySubtitle});
+  const _OrderList(
+      {required this.orders,
+      required this.emptyTitle,
+      required this.emptySubtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +155,12 @@ class _OrderCard extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3))
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,12 +177,16 @@ class _OrderCard extends StatelessWidget {
                         color: AppColors.primarySurface,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.receipt_long_rounded, size: 18, color: AppColors.primary),
+                      child: const Icon(Icons.receipt_long_rounded,
+                          size: 18, color: AppColors.primary),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       'Order #${order.id.substring(order.id.length > 8 ? order.id.length - 8 : 0).toUpperCase()}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -165,10 +198,14 @@ class _OrderCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.storefront_outlined, size: 14, color: AppColors.textSecondary),
+                  const Icon(Icons.storefront_outlined,
+                      size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 5),
                   Text('${order.business!['name'] ?? ''}',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500)),
                 ],
               ),
             ],
@@ -183,23 +220,29 @@ class _OrderCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.shopping_bag_outlined, size: 14, color: AppColors.textSecondary),
+                    const Icon(Icons.shopping_bag_outlined,
+                        size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 5),
                     Text(
                       '${order.items.length} item${order.items.length == 1 ? '' : 's'}',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
                     'RWF ${order.total.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary),
                   ),
                 ),
               ],
@@ -215,11 +258,14 @@ class _OrderCard extends StatelessWidget {
                     context.push('/orders/${order.id}/tracking');
                   },
                   icon: const Icon(Icons.my_location_rounded, size: 15),
-                  label: const Text('Track Order', style: TextStyle(fontWeight: FontWeight.w700)),
+                  label: const Text('Track Order',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side:
+                        const BorderSide(color: AppColors.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
