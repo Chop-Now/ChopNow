@@ -21,9 +21,13 @@ class UserAddress {
     List<double>? coords;
     final loc = json['location'];
     if (loc is Map && loc['coordinates'] is List) {
-      coords = (loc['coordinates'] as List).map((e) => (e as num).toDouble()).toList();
+      coords = (loc['coordinates'] as List)
+          .map((e) => (e as num).toDouble())
+          .toList();
     } else if (json['coordinates'] is List) {
-      coords = (json['coordinates'] as List).map((e) => (e as num).toDouble()).toList();
+      coords = (json['coordinates'] as List)
+          .map((e) => (e as num).toDouble())
+          .toList();
     }
     return UserAddress(
       id: json['_id'] ?? json['id'],
@@ -37,13 +41,13 @@ class UserAddress {
   }
 
   Map<String, dynamic> toJson() => {
-    'label': label,
-    'street': street,
-    if (city != null) 'city': city,
-    if (country != null) 'country': country,
-    'isDefault': isDefault,
-    if (coordinates != null) 'coordinates': coordinates,
-  };
+        'label': label,
+        'street': street,
+        if (city != null) 'city': city,
+        if (country != null) 'country': country,
+        'isDefault': isDefault,
+        if (coordinates != null) 'coordinates': coordinates,
+      };
 }
 
 class AppUser {
@@ -87,7 +91,8 @@ class AppUser {
       email: json['email'] ?? '',
       phone: json['phone'],
       avatar: json['avatar'],
-      roles: (json['roles'] as List?)?.map((r) => r.toString()).toList() ?? ['consumer'],
+      roles: (json['roles'] as List?)?.map((r) => r.toString()).toList() ??
+          ['consumer'],
       activeRole: json['activeRole'] ?? 'consumer',
       addresses: (json['addresses'] as List?)
               ?.map((a) => UserAddress.fromJson(a as Map<String, dynamic>))
@@ -96,18 +101,20 @@ class AppUser {
       isEmailVerified: json['isEmailVerified'] == true,
       isActive: json['isActive'] != false,
       riderStatus: json['riderStatus'] ?? 'none',
-      riderDetails: json['riderDetails'] is Map ? Map<String, dynamic>.from(json['riderDetails'] as Map) : null,
+      riderDetails: json['riderDetails'] is Map
+          ? Map<String, dynamic>.from(json['riderDetails'] as Map)
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'firstName': firstName,
-    'lastName': lastName,
-    'email': email,
-    if (phone != null) 'phone': phone,
-    'riderStatus': riderStatus,
-    if (riderDetails != null) 'riderDetails': riderDetails,
-  };
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        if (phone != null) 'phone': phone,
+        'riderStatus': riderStatus,
+        if (riderDetails != null) 'riderDetails': riderDetails,
+      };
 
   bool get isBusinessOwner => roles.contains('business_owner');
   bool get isRider => roles.contains('rider');

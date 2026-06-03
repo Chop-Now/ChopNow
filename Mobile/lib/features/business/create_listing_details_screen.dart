@@ -14,13 +14,16 @@ import 'my_listings_screen.dart';
 class CreateListingDetailsScreen extends ConsumerStatefulWidget {
   final String imagePath;
   final String? listingId;
-  const CreateListingDetailsScreen({super.key, this.imagePath = '', this.listingId});
+  const CreateListingDetailsScreen(
+      {super.key, this.imagePath = '', this.listingId});
 
   @override
-  ConsumerState<CreateListingDetailsScreen> createState() => _CreateListingDetailsScreenState();
+  ConsumerState<CreateListingDetailsScreen> createState() =>
+      _CreateListingDetailsScreenState();
 }
 
-class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetailsScreen> {
+class _CreateListingDetailsScreenState
+    extends ConsumerState<CreateListingDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _originalPriceCtrl = TextEditingController();
@@ -36,7 +39,16 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
   String? _businessId;
   String? _existingImageUrl;
 
-  final List<String> _allAllergens = ['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Fish', 'Shellfish', 'Sesame'];
+  final List<String> _allAllergens = [
+    'Gluten',
+    'Dairy',
+    'Nuts',
+    'Soy',
+    'Eggs',
+    'Fish',
+    'Shellfish',
+    'Sesame'
+  ];
   final Set<String> _selectedAllergens = {};
 
   static const _categories = [
@@ -62,7 +74,8 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
   Future<void> _loadListingDetails() async {
     setState(() => _isLoading = true);
     try {
-      final res = await ApiClient.instance.get(AppEndpoints.listingById(widget.listingId!));
+      final res = await ApiClient.instance
+          .get(AppEndpoints.listingById(widget.listingId!));
       final raw = res.data;
       final json = raw is Map<String, dynamic>
           ? (raw['listing'] ?? raw['data'] ?? raw) as Map<String, dynamic>
@@ -76,12 +89,15 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
       double parsedOfferPrice = 0;
       final rawPricing = json['pricing'];
       if (rawPricing is Map) {
-        parsedPrice = (rawPricing['originalPrice'] as num?)?.toDouble() ?? 
-                      (rawPricing['price'] as num?)?.toDouble() ?? 0;
-        parsedOfferPrice = (rawPricing['price'] as num?)?.toDouble() ?? parsedPrice;
+        parsedPrice = (rawPricing['originalPrice'] as num?)?.toDouble() ??
+            (rawPricing['price'] as num?)?.toDouble() ??
+            0;
+        parsedOfferPrice =
+            (rawPricing['price'] as num?)?.toDouble() ?? parsedPrice;
       } else {
         parsedPrice = (json['price'] as num?)?.toDouble() ?? 0;
-        parsedOfferPrice = (json['offerPrice'] as num?)?.toDouble() ?? parsedPrice;
+        parsedOfferPrice =
+            (json['offerPrice'] as num?)?.toDouble() ?? parsedPrice;
       }
 
       _originalPriceCtrl.text = parsedPrice.toStringAsFixed(0);
@@ -99,10 +115,12 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
       final timeWindow = json['timeWindow'] as Map?;
       if (timeWindow != null) {
         if (timeWindow['availableFrom'] != null) {
-          _availableFrom = DateTime.parse(timeWindow['availableFrom'].toString()).toLocal();
+          _availableFrom =
+              DateTime.parse(timeWindow['availableFrom'].toString()).toLocal();
         }
         if (timeWindow['availableUntil'] != null) {
-          _availableUntil = DateTime.parse(timeWindow['availableUntil'].toString()).toLocal();
+          _availableUntil =
+              DateTime.parse(timeWindow['availableUntil'].toString()).toLocal();
         }
       }
 
@@ -183,7 +201,8 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
     if (time == null) return;
 
     setState(() {
-      final fullDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      final fullDateTime =
+          DateTime(date.year, date.month, date.day, time.hour, time.minute);
       if (isFrom) {
         _availableFrom = fullDateTime;
         if (_availableUntil.isBefore(_availableFrom)) {
@@ -198,7 +217,8 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
   Future<void> _publishListing() async {
     if (!_formKey.currentState!.validate()) return;
     if (_businessId == null) {
-      setState(() => _error = 'No business profile loaded. Make sure you have setup your business.');
+      setState(() => _error =
+          'No business profile loaded. Make sure you have setup your business.');
       return;
     }
     if (widget.listingId == null && widget.imagePath.isEmpty) {
@@ -235,29 +255,36 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
 
       final String listingId;
       if (widget.listingId != null) {
-        await ApiClient.instance.put(AppEndpoints.listingById(widget.listingId!), data: payload);
+        await ApiClient.instance
+            .put(AppEndpoints.listingById(widget.listingId!), data: payload);
         listingId = widget.listingId!;
       } else {
-        final res = await ApiClient.instance.post(AppEndpoints.listings, data: payload);
+        final res =
+            await ApiClient.instance.post(AppEndpoints.listings, data: payload);
         final createdData = res.data;
         final rawListing = createdData is Map<String, dynamic>
-            ? (createdData['listing'] ?? createdData['data'] ?? createdData) as Map<String, dynamic>
+            ? (createdData['listing'] ?? createdData['data'] ?? createdData)
+                as Map<String, dynamic>
             : createdData as Map<String, dynamic>;
         listingId = rawListing['_id'] ?? rawListing['id'];
       }
 
       if (widget.imagePath.isNotEmpty) {
         final formData = FormData.fromMap({
-          'photos': await MultipartFile.fromFile(widget.imagePath, filename: 'photo.jpg'),
+          'photos': await MultipartFile.fromFile(widget.imagePath,
+              filename: 'photo.jpg'),
         });
-        await ApiClient.instance.post('/api/listings/$listingId/photos', data: formData);
+        await ApiClient.instance
+            .post('/api/listings/$listingId/photos', data: formData);
       }
       ref.invalidate(myListingsProvider);
       HapticFeedback.heavyImpact();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.listingId != null ? 'Listing updated successfully! 🎉' : 'Listing published successfully! 🎉'),
+            content: Text(widget.listingId != null
+                ? 'Listing updated successfully! 🎉'
+                : 'Listing published successfully! 🎉'),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -277,7 +304,10 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.listingId != null ? 'Edit Listing' : 'Listing Details', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        title: Text(
+            widget.listingId != null ? 'Edit Listing' : 'Listing Details',
+            style: const TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -306,16 +336,24 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                             ? Image.network(
                                 _existingImageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 50, color: AppColors.textSecondary),
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.broken_image,
+                                    size: 50,
+                                    color: AppColors.textSecondary),
                               )
-                            : const Icon(Icons.broken_image, size: 50, color: AppColors.textSecondary)),
+                            : const Icon(Icons.broken_image,
+                                size: 50, color: AppColors.textSecondary)),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Category selector
-              const Text('Category', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text('Category',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 40,
@@ -324,17 +362,30 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                   children: _categories.map((c) {
                     final selected = _selectedCategory == c['key'];
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = c['key']!),
+                      onTap: () =>
+                          setState(() => _selectedCategory = c['key']!),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primarySurface : AppColors.surface,
+                          color: selected
+                              ? AppColors.primarySurface
+                              : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
-                          border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                          border: Border.all(
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.border),
                         ),
-                        child: Text(c['label']!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.textPrimary)),
+                        child: Text(c['label']!,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary)),
                       ),
                     );
                   }).toList(),
@@ -346,10 +397,12 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                 label: 'Food Name / Title *',
                 controller: _titleCtrl,
                 hint: 'e.g. Fresh Avocado rescue box',
-                validator: (v) => v == null || v.trim().length < 3 ? 'Required (min 3 chars)' : null,
+                validator: (v) => v == null || v.trim().length < 3
+                    ? 'Required (min 3 chars)'
+                    : null,
               ),
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -358,7 +411,11 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                       controller: _originalPriceCtrl,
                       hint: 'e.g. 5000',
                       keyboardType: TextInputType.number,
-                      validator: (v) => v == null || double.tryParse(v) == null || double.parse(v) <= 0 ? 'Invalid price' : null,
+                      validator: (v) => v == null ||
+                              double.tryParse(v) == null ||
+                              double.parse(v) <= 0
+                          ? 'Invalid price'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -369,7 +426,9 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                       hint: 'e.g. 2000',
                       keyboardType: TextInputType.number,
                       validator: (v) {
-                        if (v == null || double.tryParse(v) == null || double.parse(v) <= 0) {
+                        if (v == null ||
+                            double.tryParse(v) == null ||
+                            double.parse(v) <= 0) {
                           return 'Invalid price';
                         }
                         if (_originalPriceCtrl.text.isNotEmpty) {
@@ -391,7 +450,10 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                 controller: _quantityCtrl,
                 hint: 'e.g. 3',
                 keyboardType: TextInputType.number,
-                validator: (v) => v == null || int.tryParse(v) == null || int.parse(v) < 1 ? 'Invalid quantity' : null,
+                validator: (v) =>
+                    v == null || int.tryParse(v) == null || int.parse(v) < 1
+                        ? 'Invalid quantity'
+                        : null,
               ),
               const SizedBox(height: 12),
 
@@ -400,12 +462,18 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                 controller: _descCtrl,
                 hint: 'Specify allergens, freshness, pickup notes…',
                 maxLines: 3,
-                validator: (v) => v == null || v.trim().length < 10 ? 'Describe in at least 10 chars' : null,
+                validator: (v) => v == null || v.trim().length < 10
+                    ? 'Describe in at least 10 chars'
+                    : null,
               ),
               const SizedBox(height: 16),
 
               // Allergens Selection Chips
-              const Text('Allergens', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text('Allergens',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -425,18 +493,26 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.warningSurface : AppColors.surface,
+                        color: isSelected
+                            ? AppColors.warningSurface
+                            : AppColors.surface,
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: isSelected ? AppColors.warning : AppColors.border),
+                        border: Border.all(
+                            color: isSelected
+                                ? AppColors.warning
+                                : AppColors.border),
                       ),
                       child: Text(
                         allergen,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColors.warning : AppColors.textPrimary,
+                          color: isSelected
+                              ? AppColors.warning
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -446,7 +522,11 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
               const SizedBox(height: 16),
 
               // Time windows
-              const Text('Pickup Window', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text('Pickup Window',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -455,7 +535,8 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                       onTap: () => _selectDateTime(context, true),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(12),
@@ -464,11 +545,17 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Available From', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                            const Text('Available From',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary)),
                             const SizedBox(height: 4),
                             Text(
                               '${_availableFrom.day}/${_availableFrom.month} at ${_availableFrom.hour.toString().padLeft(2, '0')}:${_availableFrom.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary),
                             ),
                           ],
                         ),
@@ -481,7 +568,8 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                       onTap: () => _selectDateTime(context, false),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(12),
@@ -490,11 +578,17 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Available Until', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                            const Text('Available Until',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary)),
                             const SizedBox(height: 4),
                             Text(
                               '${_availableUntil.day}/${_availableUntil.month} at ${_availableUntil.hour.toString().padLeft(2, '0')}:${_availableUntil.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary),
                             ),
                           ],
                         ),
@@ -508,8 +602,12 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
               if (_error != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
-                  child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  decoration: BoxDecoration(
+                      color: AppColors.errorSurface,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text(_error!,
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 13)),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -517,7 +615,9 @@ class _CreateListingDetailsScreenState extends ConsumerState<CreateListingDetail
               CnPrimaryButton(
                 label: _isLoading
                     ? (widget.listingId != null ? 'Saving...' : 'Publishing...')
-                    : (widget.listingId != null ? 'Save Changes' : 'Publish Listing'),
+                    : (widget.listingId != null
+                        ? 'Save Changes'
+                        : 'Publish Listing'),
                 isLoading: _isLoading,
                 onTap: _isLoading ? null : _publishListing,
               ),

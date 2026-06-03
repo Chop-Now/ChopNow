@@ -25,8 +25,12 @@ class FavoritesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Favourites ❤️', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-        backgroundColor: AppColors.surface, elevation: 0, automaticallyImplyLeading: false,
+        title: const Text('Favourites ❤️',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: RefreshIndicator(
         color: AppColors.primary,
@@ -34,20 +38,31 @@ class FavoritesScreen extends ConsumerWidget {
         child: async.when(
           loading: () => GridView.builder(
             padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.70),
             itemCount: 4,
             itemBuilder: (_, __) => const ListingCardSkeleton(),
           ),
-          error: (e, _) => CnErrorState(message: e.toString(), onRetry: () => ref.invalidate(_favoritesProvider)),
+          error: (e, _) => CnErrorState(
+              message: e.toString(),
+              onRetry: () => ref.invalidate(_favoritesProvider)),
           data: (favs) => favs.isEmpty
               ? const CnEmptyState(
                   title: 'No favourites yet',
-                  subtitle: 'Tap the ❤️ on any listing to save it here for quick access',
+                  subtitle:
+                      'Tap the ❤️ on any listing to save it here for quick access',
                   icon: Icons.favorite_border_rounded,
                 )
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.70),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.70),
                   itemCount: favs.length,
                   itemBuilder: (_, i) {
                     final listing = favs[i]['listing'] ?? favs[i];

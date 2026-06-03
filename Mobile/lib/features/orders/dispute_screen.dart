@@ -66,7 +66,8 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Dispute submitted! Our team will review it shortly.'),
+            content:
+                Text('Dispute submitted! Our team will review it shortly.'),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -86,7 +87,8 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       appBar: AppBar(
         title: const Text(
           'Report an Issue',
-          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+          style: TextStyle(
+              fontWeight: FontWeight.w800, color: AppColors.textPrimary),
         ),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
@@ -232,7 +234,8 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
                 child: Text(
                   'Select a reason and write at least 20 characters to continue',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ),
 

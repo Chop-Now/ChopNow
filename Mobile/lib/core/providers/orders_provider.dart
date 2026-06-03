@@ -21,7 +21,8 @@ final ordersProvider = FutureProvider<List<Order>>((ref) async {
 });
 
 // ── Single order detail ───────────────────────────────────────────────────────
-final orderDetailProvider = FutureProvider.family<Order, String>((ref, id) async {
+final orderDetailProvider =
+    FutureProvider.family<Order, String>((ref, id) async {
   final response = await ApiClient.instance.get(AppEndpoints.orderById(id));
   final data = response.data;
   final json = data is Map<String, dynamic>

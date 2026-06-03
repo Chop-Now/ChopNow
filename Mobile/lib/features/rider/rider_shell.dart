@@ -125,10 +125,8 @@ class _NavItem extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight:
-                      isActive ? FontWeight.w700 : FontWeight.w400,
-                  color:
-                      isActive ? AppColors.primary : AppColors.textTertiary,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                  color: isActive ? AppColors.primary : AppColors.textTertiary,
                 ),
                 child: Text(label),
               ),

@@ -157,41 +157,79 @@ const createOrder = async (req, res) => {
       session.endSession();
     }
 
-    // --- Post-transaction: notifications and emails (non-critical, outside transaction) ---
+    // --- Post-transaction: notifications and emails ---
+    const isCashOrder = order.payment?.paymentMethod === 'cash';
 
-    // Get business info for notifications
-    const businessForNotif = await Business.findById(listingDoc.business._id).populate('owner');
+    if (isCashOrder) {
+      // Send vendor notifications and customer emails immediately
+      await sendNewOrderNotifications(order._id);
+    } else {
+      // For mobile money/card, just notify customer of order placement pending payment
+      try {
+        const io = socketManager.getIO();
+        io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
+      } catch (socketErr) {
+        logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
+      }
+    }
+
+    res.status(201).json(order);
+  } catch (error) {
+    logger.error({ err: error }, 'Create order failed');
+    const statusCode = error.message === 'Not enough stock available' ? 400 : 500;
+    res.status(statusCode).json({ message: error.message });
+  }
+};
+
+/**
+ * Reusable helper to send all vendor & customer notifications once an order is valid/paid
+ */
+const sendNewOrderNotifications = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate('listing');
+    if (!order) {
+      logger.error({ orderId }, 'sendNewOrderNotifications failed: Order not found');
+      return;
+    }
+
+    const listingDoc = order.listing;
+    const businessForNotif = await Business.findById(order.business).populate('owner');
+    const customer = await User.findById(order.customer);
+    if (!customer) return;
+
     const customerName =
-      `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Customer';
+      `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer';
     const deliveryAddr =
-      fulfillmentType === 'delivery' && deliveryDetails?.address
-        ? `${deliveryDetails.address.street || ''}, ${deliveryDetails.address.city || ''}`.trim()
+      order.fulfillmentType === 'delivery' && order.deliveryDetails?.address
+        ? typeof order.deliveryDetails.address === 'string'
+          ? order.deliveryDetails.address
+          : `${order.deliveryDetails.address.street || ''}, ${order.deliveryDetails.address.city || ''}`.trim()
         : null;
 
-    // Create notification for customer with rich metadata
+    // 1. Create notification for customer with rich metadata
     await Notification.createNotification({
-      user: req.user._id,
+      user: customer._id,
       title: 'Order Confirmed',
       message: `Your order #${order.orderNumber} has been placed successfully`,
       type: 'order_confirmed',
       relatedOrder: order._id,
-      relatedBusiness: listingDoc.business._id,
+      relatedBusiness: order.business,
       link: '/my-orders',
       metadata: {
         orderNumber: order.orderNumber,
         orderTotal: order.pricing.total,
         currency: order.pricing.currency,
-        fulfillmentType,
+        fulfillmentType: order.fulfillmentType,
         pickupCode: order.pickupDetails?.pickupCode,
         deliveryAddress: deliveryAddr,
         businessName: businessForNotif?.name || 'Vendor',
         businessLogo: businessForNotif?.media?.logo,
-        listingTitle: listingDoc.title,
-        listingImage: listingDoc.photos?.[0],
+        listingTitle: listingDoc?.title,
+        listingImage: listingDoc?.photos?.[0],
       },
     });
 
-    // Create notification for vendor with rich metadata
+    // 2. Create notification for vendor with rich metadata
     if (businessForNotif && businessForNotif.owner) {
       await Notification.createNotification({
         user: businessForNotif.owner._id,
@@ -205,26 +243,25 @@ const createOrder = async (req, res) => {
           orderNumber: order.orderNumber,
           orderTotal: order.pricing.total,
           currency: order.pricing.currency,
-          fulfillmentType,
+          fulfillmentType: order.fulfillmentType,
           deliveryAddress: deliveryAddr,
           customerName,
-          listingTitle: listingDoc.title,
-          listingImage: listingDoc.photos?.[0],
+          listingTitle: listingDoc?.title,
+          listingImage: listingDoc?.photos?.[0],
           actionLabel: 'View Order',
           actionUrl: '/dashboard',
         },
       });
     }
 
-    // EMAIL: Order confirmation to customer (serves as receipt + pickup code)
-    const customer = await User.findById(req.user._id);
-    if (customer && customer.preferences?.notifications?.email) {
+    // 3. EMAIL: Order confirmation to customer
+    if (customer.preferences?.notifications?.email) {
       sendOrderConfirmationEmail(customer.email, customerName, order).catch((err) =>
         logger.error({ err }, 'Failed to send order confirmation email')
       );
     }
 
-    // EMAIL: Vendor notification — they may not be watching the dashboard
+    // 4. EMAIL: Vendor notification
     if (businessForNotif && businessForNotif.owner) {
       const vendorUser = await User.findById(businessForNotif.owner._id)
         .select('email preferences')
@@ -236,7 +273,7 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // --- WebSockets: Emit new order to vendor ---
+    // 5. --- WebSockets: Emit new order to vendor ---
     try {
       const io = socketManager.getIO();
       if (businessForNotif) {
@@ -245,12 +282,8 @@ const createOrder = async (req, res) => {
     } catch (socketErr) {
       logger.error({ err: socketErr }, 'Failed to emit socket new_order event');
     }
-
-    res.status(201).json(order);
   } catch (error) {
-    logger.error({ err: error }, 'Create order failed');
-    const statusCode = error.message === 'Not enough stock available' ? 400 : 500;
-    res.status(statusCode).json({ message: error.message });
+    logger.error({ err: error, orderId }, 'Error running sendNewOrderNotifications helper');
   }
 };
 
@@ -742,4 +775,5 @@ module.exports = {
   cancelOrder,
   verifyPickupCode,
   getAdminOrders,
+  sendNewOrderNotifications,
 };

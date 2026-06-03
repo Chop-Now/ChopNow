@@ -51,12 +51,15 @@ class Listing {
     double parsedOfferPrice = 0;
     final rawPricing = json['pricing'];
     if (rawPricing is Map) {
-      parsedPrice = (rawPricing['originalPrice'] as num?)?.toDouble() ?? 
-                    (rawPricing['price'] as num?)?.toDouble() ?? 0;
-      parsedOfferPrice = (rawPricing['price'] as num?)?.toDouble() ?? parsedPrice;
+      parsedPrice = (rawPricing['originalPrice'] as num?)?.toDouble() ??
+          (rawPricing['price'] as num?)?.toDouble() ??
+          0;
+      parsedOfferPrice =
+          (rawPricing['price'] as num?)?.toDouble() ?? parsedPrice;
     } else {
       parsedPrice = (json['price'] as num?)?.toDouble() ?? 0;
-      parsedOfferPrice = (json['offerPrice'] as num?)?.toDouble() ?? parsedPrice;
+      parsedOfferPrice =
+          (json['offerPrice'] as num?)?.toDouble() ?? parsedPrice;
     }
 
     // 2. Parse inventory quantity (support nested "inventory" map or flat fields)
@@ -86,8 +89,10 @@ class Listing {
     // 4. Parse availableUntil / timeWindow
     final parsedAvailableUntil = json['availableUntil'] != null
         ? DateTime.tryParse(json['availableUntil'].toString())
-        : (json['timeWindow'] is Map && (json['timeWindow'] as Map)['availableUntil'] != null
-            ? DateTime.tryParse((json['timeWindow'] as Map)['availableUntil'].toString())
+        : (json['timeWindow'] is Map &&
+                (json['timeWindow'] as Map)['availableUntil'] != null
+            ? DateTime.tryParse(
+                (json['timeWindow'] as Map)['availableUntil'].toString())
             : null);
 
     // 5. Parse business info safely
@@ -106,7 +111,9 @@ class Listing {
     if (rawAllergens is List) {
       allergensList = rawAllergens.map((e) => e.toString()).toList();
     } else if (rawNutritional is Map && rawNutritional['allergens'] is List) {
-      allergensList = (rawNutritional['allergens'] as List).map((e) => e.toString()).toList();
+      allergensList = (rawNutritional['allergens'] as List)
+          .map((e) => e.toString())
+          .toList();
     }
 
     // 7. Parse co2Saved (from flat or nested stats/nutritionalInfo if present)

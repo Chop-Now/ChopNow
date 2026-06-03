@@ -32,8 +32,10 @@ class AppColors {
 
   // ── Text ──
   static const Color textPrimary = Color(0xFF1E2923);
-  static const Color textSecondary = Color(0xFF526359); // Slate Green (~5.1:1 on white, WCAG AA compliant)
-  static const Color primaryTextLink = Color(0xFF007A4B); // Dark Green (~5.5:1 on white, WCAG AA compliant)
+  static const Color textSecondary =
+      Color(0xFF526359); // Slate Green (~5.1:1 on white, WCAG AA compliant)
+  static const Color primaryTextLink =
+      Color(0xFF007A4B); // Dark Green (~5.5:1 on white, WCAG AA compliant)
   static const Color textTertiary = Color(0xFFB0BDB5);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   static const Color textOnAccent = Color(0xFFFFFFFF);
@@ -95,7 +97,7 @@ class AppColors {
 
   // ── Overlay ──
   static const Color overlayLight = Color(0x33000000); // 20%
-  static const Color overlayDark = Color(0x99000000);  // 60%
+  static const Color overlayDark = Color(0x99000000); // 60%
   static const Color shimmerBase = Color(0xFFF1F5F3);
   static const Color shimmerHighlight = Color(0xFFFFFFFF);
 }

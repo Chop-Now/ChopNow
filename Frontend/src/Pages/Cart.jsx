@@ -16,6 +16,9 @@ import {
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
+import api from '../services/api';
+import socketService from '../services/socket';
+import { toast } from 'react-hot-toast';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -27,6 +30,21 @@ const Cart = () => {
   const [deliveryLocation, setDeliveryLocation] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [showMapEdit, setShowMapEdit] = useState(false);
+
+  const { user } = useAppContext();
+  const [paymentMethod, setPaymentMethod] = useState('momo'); // 'momo', 'airtel', 'cash'
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentPhoneNumber, setPaymentPhoneNumber] = useState('');
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentStatusText, setPaymentStatusText] = useState('');
+  const [activeOrder, setActiveOrder] = useState(null);
+
+  useEffect(() => {
+    if (user && user.phone) {
+      setPaymentPhoneNumber(user.phone);
+    }
+  }, [user]);
 
   // Get vendor address from the first product in cart (products should be from same vendor)
   const getVendorInfo = () => {
@@ -105,6 +123,108 @@ const Cart = () => {
   const openInGoogleMaps = () => {
     const coords = vendorAddress.coordinates;
     window.open(`https://www.google.com/maps?q=${coords.lat},${coords.lng}`, '_blank');
+  };
+
+  const handleInitiateMobileMoney = async (order) => {
+    if (!paymentPhoneNumber) {
+      setPaymentError('Phone number is required');
+      return;
+    }
+
+    let formattedPhone = paymentPhoneNumber.replace(/[\s+]/g, '');
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '250' + formattedPhone.substring(1);
+    }
+    if (!formattedPhone.startsWith('250') || formattedPhone.length !== 12) {
+      setPaymentError('Please enter a valid Rwandan number (e.g. 078xxxxxxx)');
+      return;
+    }
+
+    setIsPaymentLoading(true);
+    setPaymentError('');
+    setPaymentStatusText('Initiating payment...');
+
+    try {
+      const response = await api.post('/api/payments/deposit', {
+        orderId: order._id,
+        phoneNumber: formattedPhone,
+        correspondent: paymentMethod === 'momo' ? 'MTN_MOMO_RWA' : 'AIRTEL_RWA',
+      });
+
+      if (response.data && response.data.success) {
+        setPaymentStatusText('Prompt sent! Enter PIN on your phone...');
+
+        // Connect socket listener
+        socketService.connect();
+        let socketVerified = false;
+
+        const handleStatusUpdate = (updatedOrder) => {
+          if (
+            updatedOrder._id === order._id &&
+            (updatedOrder.status === 'paid' || updatedOrder.status === 'confirmed')
+          ) {
+            socketVerified = true;
+            handlePaymentSuccess();
+          }
+        };
+
+        socketService.on('order_status_updated', handleStatusUpdate);
+
+        // Start polling fallback
+        let pollCount = 0;
+        const maxPolls = 20; // 60 seconds total (3s interval)
+        const pollInterval = setInterval(async () => {
+          if (socketVerified) {
+            clearInterval(pollInterval);
+            return;
+          }
+          pollCount++;
+
+          try {
+            const statusRes = await api.get(`/api/payments/status/${order._id}`);
+            if (statusRes.data && statusRes.data.status === 'completed') {
+              clearInterval(pollInterval);
+              socketVerified = true;
+              socketService.off('order_status_updated', handleStatusUpdate);
+              handlePaymentSuccess();
+            } else if (statusRes.data && statusRes.data.status === 'failed') {
+              clearInterval(pollInterval);
+              socketVerified = true;
+              socketService.off('order_status_updated', handleStatusUpdate);
+              setIsPaymentLoading(false);
+              const failDesc = statusRes.data.failureReason?.description || 'Transaction failed';
+              setPaymentError(`Payment failed: ${failDesc}`);
+            }
+          } catch {
+            // Ignore polling errors
+          }
+
+          if (pollCount >= maxPolls && !socketVerified) {
+            clearInterval(pollInterval);
+            socketService.off('order_status_updated', handleStatusUpdate);
+            setIsPaymentLoading(false);
+            setPaymentError(
+              'Payment confirmation timed out. Check your transaction status on your device.'
+            );
+          }
+        }, 3000);
+      } else {
+        setIsPaymentLoading(false);
+        setPaymentError('Payment initiation failed');
+      }
+    } catch (err) {
+      setIsPaymentLoading(false);
+      setPaymentError(err.response?.data?.message || err.message || 'Payment initiation failed');
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentStatusText('Payment successful! Redirecting...');
+    toast.success('Payment completed successfully!');
+    setTimeout(() => {
+      setShowPaymentModal(false);
+      navigate('/my-orders');
+    }, 2000);
   };
 
   return (
@@ -393,6 +513,91 @@ const Cart = () => {
                 )}
               </div>
 
+              {/* 3. Payment Method */}
+              <div className="p-5 rounded-xl border mb-6" style={{ borderColor: '#E5E5E5' }}>
+                <h3
+                  className="text-base font-semibold mb-4"
+                  style={{ color: 'var(--color-textColor)' }}
+                >
+                  3. Payment Method
+                </h3>
+                <div className="space-y-3">
+                  <label
+                    className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === 'momo'
+                        ? 'border-amber-400 bg-amber-50/50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setPaymentMethod('momo')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">📱</span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">MTN Mobile Money</p>
+                        <p className="text-xs text-gray-500">Pay securely with MoMo</p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      checked={paymentMethod === 'momo'}
+                      onChange={() => setPaymentMethod('momo')}
+                      className="w-4 h-4 accent-amber-500"
+                    />
+                  </label>
+
+                  <label
+                    className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === 'airtel'
+                        ? 'border-red-400 bg-red-50/50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setPaymentMethod('airtel')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">📲</span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">Airtel Money</p>
+                        <p className="text-xs text-gray-500">Pay securely with Airtel</p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      checked={paymentMethod === 'airtel'}
+                      onChange={() => setPaymentMethod('airtel')}
+                      className="w-4 h-4 accent-red-500"
+                    />
+                  </label>
+
+                  <label
+                    className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === 'cash'
+                        ? 'border-emerald-400 bg-emerald-50/50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">💵</span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {fulfillmentMethod === 'Delivery' ? 'Cash on Delivery' : 'Cash on Pickup'}
+                        </p>
+                        <p className="text-xs text-gray-500">Pay in person</p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      checked={paymentMethod === 'cash'}
+                      onChange={() => setPaymentMethod('cash')}
+                      className="w-4 h-4 accent-emerald-500"
+                    />
+                  </label>
+                </div>
+              </div>
+
               {/* Order Summary */}
               <div
                 className="p-5 rounded-xl border"
@@ -453,16 +658,10 @@ const Cart = () => {
                   onClick={async () => {
                     try {
                       if (getTotalCartItems() === 0) {
-                        // Cart is empty
                         return;
                       }
 
-                      // Using first item as primary listing ref
                       const primaryItem = cartArray[0];
-
-                      // Ensure delivery details are valid
-                      // If delivery address is empty, maybe throw error or just send 'Not Provided'
-                      // The backend requires address for delivery orders.
 
                       const orderData = {
                         listing: primaryItem._id,
@@ -477,7 +676,7 @@ const Cart = () => {
                           fulfillmentMethod === 'Delivery'
                             ? {
                                 address: deliveryAddress || 'Address not specified',
-                                location: deliveryLocation || { lat: -1.9441, lng: 30.0619 }, // Default to Kigali if missing
+                                location: deliveryLocation || { lat: -1.9441, lng: 30.0619 },
                               }
                             : undefined,
                         pickupDetails:
@@ -487,15 +686,21 @@ const Cart = () => {
                               }
                             : undefined,
                         payment: {
-                          method: 'cod',
-                          status: 'pending',
+                          paymentMethod: paymentMethod === 'cash' ? 'cash' : 'mobile_money',
+                          paymentStatus: 'pending',
                         },
                       };
 
-                      await placeOrder(orderData);
-                      // Using a small timeout to let toast show before nav navigating?
-                      // Actually placeOrder awaits so it's fine.
-                      navigate('/myorders');
+                      const order = await placeOrder(orderData);
+
+                      if (paymentMethod === 'cash') {
+                        navigate('/myorders');
+                      } else {
+                        setActiveOrder(order);
+                        setShowPaymentModal(true);
+                        // Trigger immediate payment initiation
+                        handleInitiateMobileMoney(order);
+                      }
                     } catch (error) {
                       console.error('Checkout execution failed', error);
                     }
@@ -510,6 +715,103 @@ const Cart = () => {
           </div>
         )}
       </div>
+
+      {/* pawaPay Mobile Money Checkout Modal */}
+      {showPaymentModal && activeOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-gray-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            {!isPaymentLoading && (
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  navigate('/myorders');
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Provider Logo Header */}
+            <div className="mb-4 mt-2">
+              {paymentMethod === 'momo' ? (
+                <div className="w-16 h-16 rounded-2xl bg-amber-400 flex items-center justify-center text-2xl font-black text-blue-900 shadow-md">
+                  MoMo
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center text-2xl font-black text-white shadow-md">
+                  Airtel
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-800 mb-1">
+              {paymentMethod === 'momo' ? 'MTN Mobile Money' : 'Airtel Money'} Payment
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Complete your rescue order for a total of{' '}
+              <strong className="text-gray-800">RWF {total.toLocaleString()}</strong>
+            </p>
+
+            {isPaymentLoading ? (
+              <div className="py-8 flex flex-col items-center gap-4 w-full">
+                <div
+                  className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin animate-infinite"
+                  style={{
+                    borderColor: 'var(--color-solid) transparent var(--color-solid) transparent',
+                  }}
+                ></div>
+                <p className="text-sm font-semibold text-gray-700">{paymentStatusText}</p>
+                <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+                  Please check your phone for a PIN prompt to authorize the transaction of RWF{' '}
+                  {total.toLocaleString()}.
+                </p>
+              </div>
+            ) : (
+              <div className="w-full space-y-4">
+                <div className="text-left">
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="078xxxxxxx"
+                    value={paymentPhoneNumber}
+                    onChange={(e) => setPaymentPhoneNumber(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:border-amber-400 font-medium"
+                  />
+                </div>
+
+                {paymentError && (
+                  <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-semibold text-left flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{paymentError}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleInitiateMobileMoney(activeOrder)}
+                  className="w-full py-3 rounded-xl text-white font-semibold shadow-md transition-all hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: paymentMethod === 'momo' ? '#EAB308' : '#DC2626' }}
+                >
+                  Confirm & Pay RWF {total.toLocaleString()}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    navigate('/myorders');
+                  }}
+                  className="w-full py-3 rounded-xl border border-gray-200 text-gray-500 font-semibold hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Pay Later from History
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

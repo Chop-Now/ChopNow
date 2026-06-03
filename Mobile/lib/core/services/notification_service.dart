@@ -24,7 +24,8 @@ class NotificationService {
   final _streamController = StreamController<NotificationPayload>.broadcast();
 
   /// Stream of in-app notification payloads for the overlay widget.
-  Stream<NotificationPayload> get notificationStream => _streamController.stream;
+  Stream<NotificationPayload> get notificationStream =>
+      _streamController.stream;
 
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
@@ -78,7 +79,8 @@ class NotificationService {
     await LocalNotificationService.instance.initialize();
 
     // ── 10. Listen for local notification taps ────────────────────────────────
-    LocalNotificationService.instance.tapStream.listen(_handleLocalNotificationTap);
+    LocalNotificationService.instance.tapStream
+        .listen(_handleLocalNotificationTap);
   }
 
   /// Registers the FCM token with the ChopNow backend so the server can push
@@ -179,7 +181,8 @@ class LocalNotificationService {
   static const _channelDesc = 'Order updates, delivery alerts, and promotions';
 
   Future<void> initialize() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -204,7 +207,8 @@ class LocalNotificationService {
     );
 
     await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
   }
 

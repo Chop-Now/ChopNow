@@ -83,7 +83,8 @@ class RiderProfileScreen extends ConsumerWidget {
                                 color: AppColors.primary.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(100),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.4),
                                 ),
                               ),
                               child: const Row(
@@ -122,10 +123,8 @@ class RiderProfileScreen extends ConsumerWidget {
                   // ── Stats Summary ──────────────────────────────────────────
                   _SectionCard(
                     child: Row(children: [
-                      _MiniStat(
-                          emoji: '🚴', label: 'Deliveries', value: '87'),
-                      _MiniStat(
-                          emoji: '⭐', label: 'Rating', value: '4.8'),
+                      _MiniStat(emoji: '🚴', label: 'Deliveries', value: '87'),
+                      _MiniStat(emoji: '⭐', label: 'Rating', value: '4.8'),
                       _MiniStat(
                           emoji: '💰', label: 'Total', value: 'RWF 48.5K'),
                     ]),
@@ -374,7 +373,8 @@ class _TappableRow extends StatelessWidget {
           Expanded(
             child: Text(label,
                 style: const TextStyle(
-                    fontSize: 13, color: AppColors.textPrimary,
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500)),
           ),
           const Icon(Icons.chevron_right,

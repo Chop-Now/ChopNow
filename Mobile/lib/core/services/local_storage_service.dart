@@ -54,7 +54,8 @@ class LocalStorageService {
     await prefs.setBool('${_prefsNotifPrefsKey}_$key', value);
   }
 
-  static Future<bool> loadNotifPref(String key, {bool defaultValue = true}) async {
+  static Future<bool> loadNotifPref(String key,
+      {bool defaultValue = true}) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('${_prefsNotifPrefsKey}_$key') ?? defaultValue;
   }

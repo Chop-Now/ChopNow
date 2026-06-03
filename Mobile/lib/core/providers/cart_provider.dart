@@ -51,21 +51,25 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
 
   void clear() => state = [];
 
-  double get total =>
-      state.fold(0, (sum, item) => sum + item.subtotal);
+  double get total => state.fold(0, (sum, item) => sum + item.subtotal);
 
   int get itemCount => state.fold(0, (sum, item) => sum + item.quantity);
 
-  int quantityOf(String listingId) =>
-      state.firstWhere((i) => i.listing.id == listingId,
-          orElse: () => const CartItem(
-              listing: _dummyListing, quantity: 0)).quantity;
+  int quantityOf(String listingId) => state
+      .firstWhere((i) => i.listing.id == listingId,
+          orElse: () => const CartItem(listing: _dummyListing, quantity: 0))
+      .quantity;
 }
 
 // placeholder to satisfy orElse
 const _dummyListing = Listing(
-  id: '', title: '', description: '', price: 0, offerPrice: 0,
-  quantity: 0, photos: [],
+  id: '',
+  title: '',
+  description: '',
+  price: 0,
+  offerPrice: 0,
+  quantity: 0,
+  photos: [],
 );
 
 final cartProvider = StateNotifierProvider<CartNotifier, List<CartItem>>((ref) {

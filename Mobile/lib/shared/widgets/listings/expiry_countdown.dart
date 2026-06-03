@@ -83,7 +83,8 @@ class _ExpiryCountdownState extends State<ExpiryCountdown> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_off_outlined, color: AppColors.error, size: 14),
+          const Icon(Icons.timer_off_outlined,
+              color: AppColors.error, size: 14),
           const SizedBox(width: 4),
           Text(
             'Expired',
@@ -124,7 +125,8 @@ class _ExpiryCountdownState extends State<ExpiryCountdown> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.access_time_filled_rounded, color: AppColors.warning, size: 14),
+          const Icon(Icons.access_time_filled_rounded,
+              color: AppColors.warning, size: 14),
           const SizedBox(width: 4),
           Text(
             'Ends in ${hours}h ${minutes}m',
@@ -143,7 +145,9 @@ class _ExpiryCountdownState extends State<ExpiryCountdown> {
     final seconds = _timeLeft.inSeconds.remainder(60);
 
     return Container(
-      padding: widget.compact ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: widget.compact
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: widget.compact
           ? null
           : BoxDecoration(

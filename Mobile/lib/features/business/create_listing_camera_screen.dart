@@ -17,7 +17,8 @@ class CreateListingCameraScreen extends StatelessWidget {
       );
       if (image != null) {
         if (context.mounted) {
-          context.push('/business/listings/create?imagePath=${Uri.encodeComponent(image.path)}');
+          context.push(
+              '/business/listings/create?imagePath=${Uri.encodeComponent(image.path)}');
         }
       }
     } catch (e) {
@@ -43,7 +44,8 @@ class CreateListingCameraScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            child:
+                const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
         ],
       ),
@@ -58,13 +60,15 @@ class CreateListingCameraScreen extends StatelessWidget {
                 border: Border.all(color: AppColors.primary, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.camera_alt_rounded, color: Colors.white54, size: 64),
+              child: const Icon(Icons.camera_alt_rounded,
+                  color: Colors.white54, size: 64),
             ),
             const SizedBox(height: 20),
             const Text(
               'Take a LIVE photo of your food\nNo gallery uploads allowed',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
+              style:
+                  TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
@@ -74,8 +78,10 @@ class CreateListingCameraScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],

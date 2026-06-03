@@ -80,32 +80,44 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 onTap: () => context.pop(),
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.textPrimary),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.arrow_back_rounded,
+                      size: 20, color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(height: 28),
               // Header
-              const Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              const Text('Create Account',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 4),
-              const Text('Join ChopNow and rescue food today 🌿', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              const Text('Join ChopNow and rescue food today 🌿',
+                  style:
+                      TextStyle(fontSize: 14, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
 
               // Role picker
               Row(
                 children: [
-                  Expanded(child: _RolePill(
+                  Expanded(
+                      child: _RolePill(
                     label: '🛍 Consumer',
                     subtitle: 'Buy food',
                     selected: _selectedRole == 'consumer',
                     onTap: () => setState(() => _selectedRole = 'consumer'),
                   )),
                   const SizedBox(width: 12),
-                  Expanded(child: _RolePill(
+                  Expanded(
+                      child: _RolePill(
                     label: '🏪 Business',
                     subtitle: 'Sell food',
                     selected: _selectedRole == 'business_owner',
-                    onTap: () => setState(() => _selectedRole = 'business_owner'),
+                    onTap: () =>
+                        setState(() => _selectedRole = 'business_owner'),
                   )),
                 ],
               ),
@@ -118,18 +130,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   children: [
                     Row(
                       children: [
-                        Expanded(child: CnTextField(
+                        Expanded(
+                            child: CnTextField(
                           label: 'First Name',
                           controller: _firstNameCtrl,
                           hint: 'Jane',
-                          validator: (v) => v == null || v.trim().length < 2 ? 'Required' : null,
+                          validator: (v) => v == null || v.trim().length < 2
+                              ? 'Required'
+                              : null,
                         )),
                         const SizedBox(width: 12),
-                        Expanded(child: CnTextField(
+                        Expanded(
+                            child: CnTextField(
                           label: 'Last Name',
                           controller: _lastNameCtrl,
                           hint: 'Doe',
-                          validator: (v) => v == null || v.trim().length < 2 ? 'Required' : null,
+                          validator: (v) => v == null || v.trim().length < 2
+                              ? 'Required'
+                              : null,
                         )),
                       ],
                     ),
@@ -159,12 +177,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       hint: 'Min 8 characters',
                       obscureText: _obscurePassword,
                       suffix: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            size: 20, color: AppColors.textSecondary),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                            color: AppColors.textSecondary),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                       validator: (v) {
-                        if (v == null || v.length < 8) return 'Min 8 characters';
+                        if (v == null || v.length < 8)
+                          return 'Min 8 characters';
                         return null;
                       },
                     ),
@@ -179,16 +203,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           height: 24,
                           child: Checkbox(
                             value: _agreedToTerms,
-                            onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                            onChanged: (v) =>
+                                setState(() => _agreedToTerms = v ?? false),
                             activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4)),
                           ),
                         ),
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
                             'I agree to the Terms of Service and Privacy Policy',
-                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                height: 1.4),
                           ),
                         ),
                       ],
@@ -201,12 +230,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.errorSurface, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(
+                      color: AppColors.errorSurface,
+                      borderRadius: BorderRadius.circular(10)),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                      const Icon(Icons.error_outline,
+                          color: AppColors.error, size: 18),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(error, style: const TextStyle(color: AppColors.error, fontSize: 13))),
+                      Expanded(
+                          child: Text(error,
+                              style: const TextStyle(
+                                  color: AppColors.error, fontSize: 13))),
                     ],
                   ),
                 ),
@@ -214,7 +249,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
               const SizedBox(height: 20),
               CnPrimaryButton(
-                label: _selectedRole == 'business_owner' ? 'Create Business Account' : 'Create Account',
+                label: _selectedRole == 'business_owner'
+                    ? 'Create Business Account'
+                    : 'Create Account',
                 isLoading: isLoading,
                 onTap: (!_agreedToTerms || isLoading) ? null : _submit,
               ),
@@ -224,10 +261,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Already have an account? ', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                  const Text('Already have an account? ',
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary)),
                   GestureDetector(
                     onTap: () => context.go('/auth/login'),
-                    child: const Text('Sign In', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                    child: const Text('Sign In',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
                   ),
                 ],
               ),
@@ -244,20 +287,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     HapticFeedback.mediumImpact();
     if (_selectedRole == 'business_owner') {
       await ref.read(authProvider.notifier).registerAsBusinessOwner(
-        firstName: _firstNameCtrl.text.trim(),
-        lastName: _lastNameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-      );
+            firstName: _firstNameCtrl.text.trim(),
+            lastName: _lastNameCtrl.text.trim(),
+            email: _emailCtrl.text.trim(),
+            password: _passwordCtrl.text,
+            phone:
+                _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+          );
     } else {
       await ref.read(authProvider.notifier).register(
-        firstName: _firstNameCtrl.text.trim(),
-        lastName: _lastNameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-      );
+            firstName: _firstNameCtrl.text.trim(),
+            lastName: _lastNameCtrl.text.trim(),
+            email: _emailCtrl.text.trim(),
+            password: _passwordCtrl.text,
+            phone:
+                _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+          );
     }
   }
 }
@@ -267,7 +312,11 @@ class _RolePill extends StatelessWidget {
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
-  const _RolePill({required this.label, required this.subtitle, required this.selected, required this.onTap});
+  const _RolePill(
+      {required this.label,
+      required this.subtitle,
+      required this.selected,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -279,13 +328,22 @@ class _RolePill extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primarySurface : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: 1.5),
+          border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+              width: 1.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: selected ? AppColors.primary : AppColors.textPrimary)),
-            Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        selected ? AppColors.primary : AppColors.textPrimary)),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.textSecondary)),
           ],
         ),
       ),

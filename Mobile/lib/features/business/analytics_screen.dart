@@ -7,7 +7,8 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 
 // ── Analytics Riverpod Provider ───────────────────────────────────────────────
-final _businessAnalyticsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _businessAnalyticsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   try {
     final res = await ApiClient.instance.get(AppEndpoints.businessAnalytics);
     final data = res.data;
@@ -183,7 +184,7 @@ class _AnalyticsBody extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // ── KPI Quick Cards Row 2 ──
                 Row(
                   children: [
@@ -390,7 +391,8 @@ class _AnalyticsBody extends StatelessWidget {
         barGroups: List.generate(
           trend.length,
           (i) {
-            final salesVal = ((trend[i] as Map)['sales'] as num? ?? 0.0).toDouble();
+            final salesVal =
+                ((trend[i] as Map)['sales'] as num? ?? 0.0).toDouble();
             return BarChartGroupData(
               x: i,
               barRods: [
@@ -405,7 +407,8 @@ class _AnalyticsBody extends StatelessWidget {
                     end: Alignment.bottomCenter,
                   ),
                   width: 28,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(8)),
                 ),
               ],
             );

@@ -9,11 +9,15 @@ class SocketService {
   SocketService._internal();
 
   io.Socket? _socket;
-  final _orderStatusController = StreamController<Map<String, dynamic>>.broadcast();
-  final _newOrderController = StreamController<Map<String, dynamic>>.broadcast();
-  final _locationController = StreamController<Map<String, dynamic>>.broadcast();
+  final _orderStatusController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _newOrderController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _locationController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
-  Stream<Map<String, dynamic>> get orderStatusStream => _orderStatusController.stream;
+  Stream<Map<String, dynamic>> get orderStatusStream =>
+      _orderStatusController.stream;
   Stream<Map<String, dynamic>> get newOrderStream => _newOrderController.stream;
   Stream<Map<String, dynamic>> get locationStream => _locationController.stream;
 
@@ -25,7 +29,7 @@ class SocketService {
     try {
       // Connect to the base URL without /api/v1
       final baseUrl = AppConstants.apiBaseUrl.replaceAll('/api/v1', '');
-      
+
       _socket = io.io(
         baseUrl,
         io.OptionBuilder()
@@ -62,7 +66,6 @@ class SocketService {
         debugPrint('Live rider location update received via Socket!');
         _locationController.add(Map<String, dynamic>.from(data));
       });
-
     } catch (e) {
       debugPrint('Socket connection error: $e');
     }

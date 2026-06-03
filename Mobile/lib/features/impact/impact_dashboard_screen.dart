@@ -25,7 +25,11 @@ class ImpactDashboardScreen extends ConsumerWidget {
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF00C97F), Color(0xFF00A86B), Color(0xFF005936)],
+                    colors: [
+                      Color(0xFF00C97F),
+                      Color(0xFF00A86B),
+                      Color(0xFF005936)
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -34,9 +38,11 @@ class ImpactDashboardScreen extends ConsumerWidget {
                   children: [
                     // Decorative blobs
                     Positioned(
-                      top: -40, right: -40,
+                      top: -40,
+                      right: -40,
                       child: Container(
-                        width: 180, height: 180,
+                        width: 180,
+                        height: 180,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withValues(alpha: 0.07),
@@ -44,9 +50,11 @@ class ImpactDashboardScreen extends ConsumerWidget {
                       ),
                     ),
                     Positioned(
-                      bottom: -30, left: -30,
+                      bottom: -30,
+                      left: -30,
                       child: Container(
-                        width: 140, height: 140,
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withValues(alpha: 0.05),
@@ -59,13 +67,25 @@ class ImpactDashboardScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('🌍 My Impact', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+                            const Text('🌍 My Impact',
+                                style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
                             const Text('Your Food Rescue Journey',
-                                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.3)),
                             const Spacer(),
-                            const Text('Every meal you rescue makes a difference for our planet! 🌿',
-                                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                            const Text(
+                                'Every meal you rescue makes a difference for our planet! 🌿',
+                                style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                    height: 1.4)),
                           ],
                         ),
                       ),
@@ -85,7 +105,9 @@ class ImpactDashboardScreen extends ConsumerWidget {
               child: asyncImpact.when(
                 loading: () => const Padding(
                   padding: EdgeInsets.only(top: 60),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                  child: Center(
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary)),
                 ),
                 error: (e, _) => Padding(
                   padding: const EdgeInsets.only(top: 60),
@@ -112,14 +134,16 @@ class _ImpactContent extends StatefulWidget {
   State<_ImpactContent> createState() => _ImpactContentState();
 }
 
-class _ImpactContentState extends State<_ImpactContent> with SingleTickerProviderStateMixin {
+class _ImpactContentState extends State<_ImpactContent>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _animCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
   }
@@ -132,9 +156,12 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
 
   @override
   Widget build(BuildContext context) {
-    final mealsRescued = widget.impact['mealsRescued'] ?? widget.impact['totalMeals'] ?? 0;
-    final co2Saved = widget.impact['co2Saved'] ?? widget.impact['totalCo2'] ?? 0;
-    final moneySaved = widget.impact['moneySaved'] ?? widget.impact['totalSavings'] ?? 0;
+    final mealsRescued =
+        widget.impact['mealsRescued'] ?? widget.impact['totalMeals'] ?? 0;
+    final co2Saved =
+        widget.impact['co2Saved'] ?? widget.impact['totalCo2'] ?? 0;
+    final moneySaved =
+        widget.impact['moneySaved'] ?? widget.impact['totalSavings'] ?? 0;
     final streak = widget.impact['currentStreak'] ?? 0;
     final totalOrders = widget.impact['totalOrders'] ?? 0;
 
@@ -148,11 +175,26 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
             // ── Big 3 Stats ──
             Row(
               children: [
-                Expanded(child: _BigStatCard(emoji: '🍱', value: '$mealsRescued', label: 'Meals Rescued', color: AppColors.primary)),
+                Expanded(
+                    child: _BigStatCard(
+                        emoji: '🍱',
+                        value: '$mealsRescued',
+                        label: 'Meals Rescued',
+                        color: AppColors.primary)),
                 const SizedBox(width: 10),
-                Expanded(child: _BigStatCard(emoji: '🌿', value: '${co2Saved}g', label: 'CO₂ Saved', color: AppColors.success)),
+                Expanded(
+                    child: _BigStatCard(
+                        emoji: '🌿',
+                        value: '${co2Saved}g',
+                        label: 'CO₂ Saved',
+                        color: AppColors.success)),
                 const SizedBox(width: 10),
-                Expanded(child: _BigStatCard(emoji: '💰', value: 'RWF\n${_fmt(moneySaved as num)}', label: 'Money Saved', color: AppColors.accent)),
+                Expanded(
+                    child: _BigStatCard(
+                        emoji: '💰',
+                        value: 'RWF\n${_fmt(moneySaved as num)}',
+                        label: 'Money Saved',
+                        color: AppColors.accent)),
               ],
             ),
             const SizedBox(height: 14),
@@ -177,9 +219,14 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
                         const Text('📦', style: TextStyle(fontSize: 28)),
                         const SizedBox(height: 6),
                         Text('$totalOrders',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary)),
+                            style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary)),
                         const SizedBox(height: 2),
-                        const Text('Total Orders', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        const Text('Total Orders',
+                            style: TextStyle(
+                                fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
@@ -203,7 +250,11 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
                     children: [
                       Text('🎯', style: TextStyle(fontSize: 20)),
                       SizedBox(width: 8),
-                      Text('Next Goal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      Text('Next Goal',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -228,7 +279,11 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
                     children: [
                       Text('🏆', style: TextStyle(fontSize: 20)),
                       SizedBox(width: 8),
-                      Text('Badges', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      Text('Badges',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -236,7 +291,9 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
                     spacing: 8,
                     runSpacing: 8,
                     children: _badgesForCount(mealsRescued)
-                        .map((b) => _BadgePill(label: b['label'] as String, earned: b['earned'] as bool))
+                        .map((b) => _BadgePill(
+                            label: b['label'] as String,
+                            earned: b['earned'] as bool))
                         .toList(),
                   ),
                 ],
@@ -249,20 +306,30 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.success.withValues(alpha: 0.08)],
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.08),
+                    AppColors.success.withValues(alpha: 0.08)
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                border:
+                    Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('💡 Did you know?',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary)),
                   const SizedBox(height: 8),
                   Text(
                     _contextMessage(co2Saved as num),
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.6),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.6),
                   ),
                 ],
               ),
@@ -280,18 +347,20 @@ class _ImpactContentState extends State<_ImpactContent> with SingleTickerProvide
   }
 
   static String _contextMessage(num co2) {
-    if (co2 <= 0) return 'Every meal you rescue keeps food out of landfill and CO₂ out of the atmosphere. Start ordering to see your impact!';
-    if (co2 < 500) return 'You\'ve saved ${co2}g of CO₂ — that\'s like not driving a car for ${(co2 / 120).toStringAsFixed(1)} km!';
+    if (co2 <= 0)
+      return 'Every meal you rescue keeps food out of landfill and CO₂ out of the atmosphere. Start ordering to see your impact!';
+    if (co2 < 500)
+      return 'You\'ve saved ${co2}g of CO₂ — that\'s like not driving a car for ${(co2 / 120).toStringAsFixed(1)} km!';
     return 'Amazing! You\'ve saved ${(co2 / 1000).toStringAsFixed(2)}kg of CO₂ — equivalent to planting ${(co2 / 600).round()} trees!';
   }
 
   static List<Map<String, dynamic>> _badgesForCount(int count) => [
-    {'label': '🌱 First Rescue', 'earned': count >= 1},
-    {'label': '🥗 5 Meals', 'earned': count >= 5},
-    {'label': '🌍 Food Hero', 'earned': count >= 10},
-    {'label': '🏆 Champion', 'earned': count >= 25},
-    {'label': '⭐ Legend', 'earned': count >= 50},
-  ];
+        {'label': '🌱 First Rescue', 'earned': count >= 1},
+        {'label': '🥗 5 Meals', 'earned': count >= 5},
+        {'label': '🌍 Food Hero', 'earned': count >= 10},
+        {'label': '🏆 Champion', 'earned': count >= 25},
+        {'label': '⭐ Legend', 'earned': count >= 50},
+      ];
 }
 
 class _BigStatCard extends StatelessWidget {
@@ -299,7 +368,11 @@ class _BigStatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
-  const _BigStatCard({required this.emoji, required this.value, required this.label, required this.color});
+  const _BigStatCard(
+      {required this.emoji,
+      required this.value,
+      required this.label,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -316,11 +389,16 @@ class _BigStatCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(value,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, height: 1.2)),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                  height: 1.2)),
           const SizedBox(height: 3),
           Text(label,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, height: 1.2)),
+              style: const TextStyle(
+                  fontSize: 10, color: AppColors.textSecondary, height: 1.2)),
         ],
       ),
     );
@@ -337,13 +415,19 @@ class _StreakCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: streak > 0
-            ? const LinearGradient(colors: [Color(0xFFFF7043), Color(0xFFFF5722)])
+            ? const LinearGradient(
+                colors: [Color(0xFFFF7043), Color(0xFFFF5722)])
             : null,
         color: streak == 0 ? AppColors.surface : null,
         borderRadius: BorderRadius.circular(16),
         border: streak == 0 ? Border.all(color: AppColors.border) : null,
         boxShadow: streak > 0
-            ? [BoxShadow(color: const Color(0xFFFF5722).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]
+            ? [
+                BoxShadow(
+                    color: const Color(0xFFFF5722).withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4))
+              ]
             : null,
       ),
       child: Column(
@@ -352,11 +436,15 @@ class _StreakCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text('$streak',
               style: TextStyle(
-                  fontSize: 24, fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
                   color: streak > 0 ? Colors.white : AppColors.textSecondary)),
           const SizedBox(height: 2),
           Text('Day Streak',
-              style: TextStyle(fontSize: 12, color: streak > 0 ? Colors.white70 : AppColors.textSecondary)),
+              style: TextStyle(
+                  fontSize: 12,
+                  color:
+                      streak > 0 ? Colors.white70 : AppColors.textSecondary)),
         ],
       ),
     );
@@ -368,7 +456,14 @@ class _GoalProgress extends StatelessWidget {
   const _GoalProgress({required this.mealsRescued});
 
   static const _milestones = [1, 5, 10, 25, 50, 100];
-  static const _labels = ['First Rescue', '5 Meals', 'Food Hero', 'Champion', 'Legend', 'Master'];
+  static const _labels = [
+    'First Rescue',
+    '5 Meals',
+    'Food Hero',
+    'Champion',
+    'Legend',
+    'Master'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -387,9 +482,13 @@ class _GoalProgress extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('$mealsRescued meals rescued',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary)),
             Text('Goal: $nextGoal (${_labels[nextIdx]})',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary)),
           ],
         ),
         const SizedBox(height: 10),
@@ -405,7 +504,10 @@ class _GoalProgress extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           '${nextGoal - mealsRescued} more to reach ${_labels[nextIdx]}!',
-          style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -424,7 +526,8 @@ class _BadgePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: earned ? AppColors.primarySurface : AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: earned ? AppColors.primary : AppColors.border),
+        border:
+            Border.all(color: earned ? AppColors.primary : AppColors.border),
       ),
       child: Text(
         earned ? label : '🔒 ${label.split(' ').skip(1).join(' ')}',

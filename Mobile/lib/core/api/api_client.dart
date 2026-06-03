@@ -52,7 +52,8 @@ class ApiClient {
                 if (newToken != null) {
                   await AuthService.saveAccessToken(newToken);
                   // Retry original request with new token
-                  error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+                  error.requestOptions.headers['Authorization'] =
+                      'Bearer $newToken';
                   final retryResponse = await dio.fetch(error.requestOptions);
                   return handler.resolve(retryResponse);
                 }
@@ -78,9 +79,9 @@ class ApiResponse<T> {
   final bool success;
 
   const ApiResponse.success(this.data)
-    : error = null,
-      success = true;
+      : error = null,
+        success = true;
   const ApiResponse.failure(this.error)
-    : data = null,
-      success = false;
+      : data = null,
+        success = false;
 }

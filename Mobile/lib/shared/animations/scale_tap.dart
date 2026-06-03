@@ -20,7 +20,8 @@ class ScaleTap extends StatefulWidget {
   State<ScaleTap> createState() => _ScaleTapState();
 }
 
-class _ScaleTapState extends State<ScaleTap> with SingleTickerProviderStateMixin {
+class _ScaleTapState extends State<ScaleTap>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
 
@@ -50,7 +51,8 @@ class _ScaleTapState extends State<ScaleTap> with SingleTickerProviderStateMixin
       onTapCancel: () => _ctrl.reverse(),
       child: AnimatedBuilder(
         animation: _scale,
-        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        builder: (_, child) =>
+            Transform.scale(scale: _scale.value, child: child),
         child: widget.child,
       ),
     );
@@ -85,7 +87,8 @@ class FadeSlideIn extends StatefulWidget {
   State<FadeSlideIn> createState() => _FadeSlideInState();
 }
 
-class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStateMixin {
+class _FadeSlideInState extends State<FadeSlideIn>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
   late final Animation<double> _slide;
@@ -122,7 +125,8 @@ class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStat
       animation: _ctrl,
       builder: (_, child) => Opacity(
         opacity: _fade.value,
-        child: Transform.translate(offset: Offset(0, _slide.value), child: child),
+        child:
+            Transform.translate(offset: Offset(0, _slide.value), child: child),
       ),
       child: widget.child,
     );

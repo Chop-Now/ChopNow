@@ -115,7 +115,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
       distanceFilter: 10, // Update location every 10 meters
     );
 
-    _locationSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+    _locationSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
       (Position position) {
         if (!mounted) return;
         setState(() {
@@ -123,7 +124,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
         });
 
         // Emit location via Socket
-        SocketService().updateRiderLocation(widget.orderId, position.latitude, position.longitude);
+        SocketService().updateRiderLocation(
+            widget.orderId, position.latitude, position.longitude);
       },
       onError: (e) {
         debugPrint('Error in location tracking stream: $e');
@@ -185,8 +187,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.bestForNavigation),
+        locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.bestForNavigation),
       );
 
       if (mounted) {
@@ -242,7 +244,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
             DeliveryPhase.completed => DeliveryPhase.completed,
           };
         });
-        
+
         if (_phase == DeliveryPhase.completed) {
           _stopLocationTracking();
         }
@@ -305,7 +307,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
   }
 
   void _openNavigation() async {
-    final pin = _phase == DeliveryPhase.delivering ? _customerPin : _restaurantPin;
+    final pin =
+        _phase == DeliveryPhase.delivering ? _customerPin : _restaurantPin;
     final uri = Uri.parse(
         'https://www.google.com/maps/dir/?api=1&destination=${pin.latitude},${pin.longitude}&travelmode=bicycling');
     if (await canLaunchUrl(uri)) launchUrl(uri);
@@ -314,7 +317,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
   @override
   Widget build(BuildContext context) {
     final markers = _buildMarkers();
-    final biz = _orderData['business'] is Map ? _orderData['business'] as Map : {};
+    final biz =
+        _orderData['business'] is Map ? _orderData['business'] as Map : {};
     final customer = _orderData['user'] is Map ? _orderData['user'] as Map : {};
 
     return Scaffold(
@@ -392,8 +396,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
               : FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
-                    initialCenter:
-                        _currentPosition ?? _restaurantPin,
+                    initialCenter: _currentPosition ?? _restaurantPin,
                     initialZoom: 15.0,
                     interactionOptions: const InteractionOptions(
                       flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -433,8 +436,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                 ],
               ),
               child: IconButton(
-                icon:
-                    const Icon(Icons.my_location, color: AppColors.primary),
+                icon: const Icon(Icons.my_location, color: AppColors.primary),
                 onPressed: _determinePosition,
               ),
             ),
@@ -514,8 +516,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                                   'Delivery address')
                               : (biz['address'] ?? 'Restaurant address'),
                           onPhone: customer['phone'] != null
-                              ? () => _callNumber(
-                                  customer['phone'] as String)
+                              ? () => _callNumber(customer['phone'] as String)
                               : null,
                         ),
                         const SizedBox(height: 16),
@@ -539,8 +540,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.primary,
                                           fontSize: 15)),
-                                  Text(
-                                      'Your earnings have been credited.',
+                                  Text('Your earnings have been credited.',
                                       style: TextStyle(
                                           color: AppColors.textSecondary,
                                           fontSize: 12)),
@@ -620,8 +620,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
             decoration: const BoxDecoration(
                 color: AppColors.primary, shape: BoxShape.circle),
             child: const Center(
-              child: Icon(Icons.navigation_rounded,
-                  color: Colors.white, size: 16),
+              child:
+                  Icon(Icons.navigation_rounded, color: Colors.white, size: 16),
             ),
           ),
         ),
@@ -646,8 +646,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                   blurRadius: 12)
             ],
           ),
-          child: const Center(
-              child: Text('🏪', style: TextStyle(fontSize: 20))),
+          child:
+              const Center(child: Text('🏪', style: TextStyle(fontSize: 20))),
         ),
         Container(
           width: 2,
@@ -683,8 +683,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                     blurRadius: 12)
               ],
             ),
-            child: const Center(
-                child: Text('🏠', style: TextStyle(fontSize: 20))),
+            child:
+                const Center(child: Text('🏠', style: TextStyle(fontSize: 20))),
           ),
           Container(width: 2, height: 10, color: AppColors.primary),
           Container(
@@ -744,8 +744,7 @@ class _PhaseProgressBar extends StatelessWidget {
                 height: 2,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color:
-                      done ? AppColors.primary : AppColors.border,
+                  color: done ? AppColors.primary : AppColors.border,
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
@@ -775,8 +774,7 @@ class _PhaseProgressBar extends StatelessWidget {
                 child: Center(
                   child: isDone
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text(phase.emoji,
-                          style: const TextStyle(fontSize: 14)),
+                      : Text(phase.emoji, style: const TextStyle(fontSize: 14)),
                 ),
               ),
               const SizedBox(height: 4),

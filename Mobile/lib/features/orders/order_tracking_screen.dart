@@ -14,10 +14,12 @@ import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/animations/scale_tap.dart';
 
-final _trackingOrderProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+final _trackingOrderProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.orderById(id));
   final data = res.data;
-  if (data is Map<String, dynamic>) return (data['order'] ?? data['data'] ?? data) as Map<String, dynamic>;
+  if (data is Map<String, dynamic>)
+    return (data['order'] ?? data['data'] ?? data) as Map<String, dynamic>;
   return {} as Map<String, dynamic>;
 });
 
@@ -25,7 +27,8 @@ class OrderTrackingScreen extends ConsumerStatefulWidget {
   final String orderId;
   const OrderTrackingScreen({super.key, required this.orderId});
   @override
-  ConsumerState<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
+  ConsumerState<OrderTrackingScreen> createState() =>
+      _OrderTrackingScreenState();
 }
 
 class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
@@ -46,7 +49,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
       ..repeat(reverse: true);
   }
 
@@ -68,7 +72,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
 
       _locationSubscription = socketService.locationStream.listen((data) {
         if (!mounted) return;
-        debugPrint("Live tracking coordinate received in consumer screen: $data");
+        debugPrint(
+            "Live tracking coordinate received in consumer screen: $data");
         if (data['orderId'] == widget.orderId || data['riderId'] != null) {
           setState(() {
             _riderPosition = LatLng(
@@ -99,7 +104,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     return null;
   }
 
-  Widget _buildMapCard(Map<String, dynamic> order, Map<String, dynamic> delivery) {
+  Widget _buildMapCard(
+      Map<String, dynamic> order, Map<String, dynamic> delivery) {
     final pickup = delivery['pickupLocation'] as Map<String, dynamic>?;
     final dropoff = delivery['dropoffLocation'] as Map<String, dynamic>?;
 
@@ -108,15 +114,19 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     final currentCoords = _riderPosition ?? _parseCoords(delivery);
 
     final markers = <Marker>[];
-    
+
     if (pickupCoords != null) {
       markers.add(Marker(
         point: pickupCoords,
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-          child: const Center(child: Text('🏪', style: TextStyle(fontSize: 16))),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+          child:
+              const Center(child: Text('🏪', style: TextStyle(fontSize: 16))),
         ),
       ));
     }
@@ -127,8 +137,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-          child: const Center(child: Text('🏠', style: TextStyle(fontSize: 16))),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+          child:
+              const Center(child: Text('🏠', style: TextStyle(fontSize: 16))),
         ),
       ));
     }
@@ -139,8 +153,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 6)]),
-          child: const Center(child: Text('🏍️', style: TextStyle(fontSize: 18))),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 6)]),
+          child:
+              const Center(child: Text('🏍️', style: TextStyle(fontSize: 18))),
         ),
       ));
     }
@@ -170,7 +188,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         ),
         children: [
           TileLayer(
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            urlTemplate:
+                'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
             subdomains: const ['a', 'b', 'c', 'd'],
             userAgentPackageName: 'com.chopnow.app',
           ),
@@ -187,7 +206,11 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Track Order', style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textPrimary, fontSize: 18)),
+        title: const Text('Track Order',
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+                fontSize: 18)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -205,26 +228,34 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 color: AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 20),
+              child: const Icon(Icons.refresh_rounded,
+                  color: AppColors.primary, size: 20),
             ),
           ),
         ],
       ),
       body: asyncOrder.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => CnErrorState(
             message: e.toString(),
-            onRetry: () => ref.invalidate(_trackingOrderProvider(widget.orderId))),
+            onRetry: () =>
+                ref.invalidate(_trackingOrderProvider(widget.orderId))),
         data: (order) {
           final status = order['status']?.toString() ?? 'pending';
           final currentStep = _steps.indexWhere((s) => s.key == status);
           final isActive = status != 'completed' && status != 'cancelled';
-          final isDelivery = order['fulfillmentType']?.toString().toLowerCase() == 'delivery';
+          final isDelivery =
+              order['fulfillmentType']?.toString().toLowerCase() == 'delivery';
           final delivery = order['delivery'] as Map<String, dynamic>?;
 
           // Enable live location socket tracking for active delivery statuses
-          if (isDelivery && delivery != null && 
-              (status == 'out_for_delivery' || status == 'delivering' || status == 'picked_up' || status == 'in_transit')) {
+          if (isDelivery &&
+              delivery != null &&
+              (status == 'out_for_delivery' ||
+                  status == 'delivering' ||
+                  status == 'picked_up' ||
+                  status == 'in_transit')) {
             _setupSocketTracking();
           }
 
@@ -239,12 +270,18 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     gradient: status == 'cancelled'
-                        ? LinearGradient(colors: [AppColors.error, AppColors.error.withValues(alpha: 0.8)])
+                        ? LinearGradient(colors: [
+                            AppColors.error,
+                            AppColors.error.withValues(alpha: 0.8)
+                          ])
                         : AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: (status == 'cancelled' ? AppColors.error : AppColors.primary).withValues(alpha: 0.3),
+                        color: (status == 'cancelled'
+                                ? AppColors.error
+                                : AppColors.primary)
+                            .withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       )
@@ -256,7 +293,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                       AnimatedBuilder(
                         animation: _pulseCtrl,
                         builder: (_, child) => Transform.scale(
-                          scale: isActive ? (1.0 + _pulseCtrl.value * 0.08) : 1.0,
+                          scale:
+                              isActive ? (1.0 + _pulseCtrl.value * 0.08) : 1.0,
                           child: child,
                         ),
                         child: Text(
@@ -267,18 +305,26 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                       const SizedBox(height: 10),
                       Text(
                         _statusLabel(status),
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white),
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 5),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: Text(
                           'Order #${order['_id']?.toString().substring(0, 8).toUpperCase() ?? '...'}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1),
                         ),
                       ),
                     ],
@@ -287,8 +333,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 const SizedBox(height: 20),
 
                 // ── Live Rider Map Tracking ──
-                if (isDelivery && delivery != null && 
-                    (status == 'out_for_delivery' || status == 'delivering' || status == 'picked_up' || status == 'in_transit'))
+                if (isDelivery &&
+                    delivery != null &&
+                    (status == 'out_for_delivery' ||
+                        status == 'delivering' ||
+                        status == 'picked_up' ||
+                        status == 'in_transit'))
                   _buildMapCard(order, delivery),
                 const SizedBox(height: 20),
 
@@ -302,12 +352,17 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                         decoration: BoxDecoration(
                           color: AppColors.successSurface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.success.withValues(alpha: 0.4), width: 1.5),
+                          border: Border.all(
+                              color: AppColors.success.withValues(alpha: 0.4),
+                              width: 1.5),
                         ),
                         child: Column(
                           children: [
                             const Text('🎫 Your Pickup Code',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.success)),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.success)),
                             const SizedBox(height: 10),
                             Text(
                               '${order['pickupCode']}',
@@ -320,7 +375,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                             ),
                             const SizedBox(height: 6),
                             const Text('Show this code at the counter',
-                                style: TextStyle(fontSize: 12, color: AppColors.success)),
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.success)),
                           ],
                         ),
                       ),
@@ -335,13 +391,21 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppColors.border),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2))
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('Order Progress',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary)),
                       const SizedBox(height: 16),
                       ..._steps.asMap().entries.map((entry) {
                         final i = entry.key;
@@ -362,7 +426,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 const SizedBox(height: 20),
 
                 // ── Order Items ──
-                if (order['items'] != null && (order['items'] as List).isNotEmpty)
+                if (order['items'] != null &&
+                    (order['items'] as List).isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -374,13 +439,18 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Order Items',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary)),
                         const SizedBox(height: 12),
-                        ...((order['items'] as List).map((item) => _OrderItem(item: item))),
+                        ...((order['items'] as List)
+                            .map((item) => _OrderItem(item: item))),
                         const SizedBox(height: 10),
                         // Total
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             color: AppColors.primarySurface,
                             borderRadius: BorderRadius.circular(12),
@@ -389,9 +459,15 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text('Total Paid',
-                                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary)),
-                              Text('RWF ${order['total'] ?? order['totalAmount'] ?? 0}',
-                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.primary)),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary)),
+                              Text(
+                                  'RWF ${order['total'] ?? order['totalAmount'] ?? 0}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 18,
+                                      color: AppColors.primary)),
                             ],
                           ),
                         ),
@@ -403,7 +479,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                   const SizedBox(height: 16),
                   CnPrimaryButton(
                     label: 'Write a Review ⭐',
-                    onTap: () => context.push('/orders/${widget.orderId}/review'),
+                    onTap: () =>
+                        context.push('/orders/${widget.orderId}/review'),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -416,15 +493,22 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   }
 
   String _statusEmoji(String s) => switch (s) {
-    'confirmed' => '✅', 'preparing' => '👨‍🍳', 'ready_for_pickup' => '🎉',
-    'completed' => '🏆', 'cancelled' => '❌', _ => '⏳',
-  };
+        'confirmed' => '✅',
+        'preparing' => '👨‍🍳',
+        'ready_for_pickup' => '🎉',
+        'completed' => '🏆',
+        'cancelled' => '❌',
+        _ => '⏳',
+      };
 
   String _statusLabel(String s) => switch (s) {
-    'confirmed' => 'Order Confirmed!', 'preparing' => 'Being Prepared',
-    'ready_for_pickup' => 'Ready for Pickup! 🎉', 'completed' => 'Order Completed!',
-    'cancelled' => 'Order Cancelled', _ => 'Order Placed',
-  };
+        'confirmed' => 'Order Confirmed!',
+        'preparing' => 'Being Prepared',
+        'ready_for_pickup' => 'Ready for Pickup! 🎉',
+        'completed' => 'Order Completed!',
+        'cancelled' => 'Order Cancelled',
+        _ => 'Order Placed',
+      };
 }
 
 class _Step {
@@ -442,8 +526,11 @@ class _TimelineStep extends StatelessWidget {
   final bool isLast;
   final Animation<double>? pulseAnim;
   const _TimelineStep({
-    required this.step, required this.isDone, required this.isCurrent,
-    required this.isLast, this.pulseAnim,
+    required this.step,
+    required this.isDone,
+    required this.isCurrent,
+    required this.isLast,
+    this.pulseAnim,
   });
 
   @override
@@ -457,7 +544,9 @@ class _TimelineStep extends StatelessWidget {
             AnimatedBuilder(
               animation: pulseAnim ?? const AlwaysStoppedAnimation(0),
               builder: (_, child) => Transform.scale(
-                scale: isCurrent && pulseAnim != null ? (1.0 + pulseAnim!.value * 0.12) : 1.0,
+                scale: isCurrent && pulseAnim != null
+                    ? (1.0 + pulseAnim!.value * 0.12)
+                    : 1.0,
                 child: child,
               ),
               child: Container(
@@ -467,15 +556,23 @@ class _TimelineStep extends StatelessWidget {
                   gradient: isDone ? AppColors.primaryGradient : null,
                   color: isDone ? null : AppColors.surfaceVariant,
                   shape: BoxShape.circle,
-                  border: isCurrent ? Border.all(color: AppColors.primary, width: 2.5) : null,
+                  border: isCurrent
+                      ? Border.all(color: AppColors.primary, width: 2.5)
+                      : null,
                   boxShadow: isCurrent
-                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)]
+                      ? [
+                          BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              spreadRadius: 2)
+                        ]
                       : null,
                 ),
                 child: Center(
                   child: isDone
                       ? Text(step.emoji, style: const TextStyle(fontSize: 18))
-                      : Icon(step.icon, size: 18, color: AppColors.textSecondary),
+                      : Icon(step.icon,
+                          size: 18, color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -486,8 +583,13 @@ class _TimelineStep extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   gradient: isDone
-                      ? LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.3)])
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                              AppColors.primary,
+                              AppColors.primary.withValues(alpha: 0.3)
+                            ])
                       : null,
                   color: isDone ? null : AppColors.border,
                   borderRadius: BorderRadius.circular(1),
@@ -505,10 +607,16 @@ class _TimelineStep extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
-                    color: isDone ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: isDone
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                   )),
               if (isCurrent)
-                const Text('In progress...', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                const Text('In progress...',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -537,10 +645,16 @@ class _OrderItem extends StatelessWidget {
               child: listing['photos'] != null &&
                       (listing['photos'] as List).isNotEmpty &&
                       (listing['photos'][0].toString().startsWith('http://') ||
-                          listing['photos'][0].toString().startsWith('https://'))
-                  ? Image.network(listing['photos'][0].toString(), fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary))
-                  : const Icon(Icons.fastfood_outlined, color: AppColors.textSecondary),
+                          listing['photos'][0]
+                              .toString()
+                              .startsWith('https://'))
+                  ? Image.network(listing['photos'][0].toString(),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.fastfood_outlined,
+                          color: AppColors.textSecondary))
+                  : const Icon(Icons.fastfood_outlined,
+                      color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(width: 12),
@@ -549,15 +663,22 @@ class _OrderItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(listing['title'] ?? item['name'] ?? 'Item',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: 2),
                 Text('× ${item['quantity']}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
               ],
             ),
           ),
           Text('RWF ${item['price'] ?? 0}',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.primary)),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.primary)),
         ],
       ),
     );

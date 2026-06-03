@@ -22,7 +22,9 @@ class NotificationPayload {
       type: type,
       targetRoute: map['route'] as String?,
       data: Map<String, String>.from(
-        (map['data'] as Map?)?.map((k, v) => MapEntry(k.toString(), v.toString())) ?? {},
+        (map['data'] as Map?)
+                ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+            {},
       ),
     );
   }

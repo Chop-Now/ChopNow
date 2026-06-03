@@ -22,7 +22,8 @@ class AppEndpoints {
   static const String addRole = '/users/add-role';
   static const String sessions = '/users/sessions';
   static const String logoutAll = '/users/logout-all';
-  static const String passwordRequestOtp = '/users/profile/password/request-otp';
+  static const String passwordRequestOtp =
+      '/users/profile/password/request-otp';
   static const String changePassword = '/users/profile/password';
 
   // ── Listings ──────────────────────────────────────────────────────────────

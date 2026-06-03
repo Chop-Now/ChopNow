@@ -16,13 +16,15 @@ import '../../core/providers/cart_provider.dart';
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final response = await ApiClient.instance.get(AppEndpoints.listings, queryParameters: {
+  final response =
+      await ApiClient.instance.get(AppEndpoints.listings, queryParameters: {
     'status': 'active',
     'sort': 'offerPrice',
     'limit': 20,
   });
   final data = response.data;
-  if (data is Map && data['listings'] != null) return List.from(data['listings']);
+  if (data is Map && data['listings'] != null)
+    return List.from(data['listings']);
   if (data is List) return List.from(data);
   return [];
 });
@@ -41,7 +43,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
 
-  static const _categories = ['All', '🍔 Food', '🛒 Grocery', '🥗 Salads', '🥐 Bakery', '🍱 Asian', '🥩 Meat'];
+  static const _categories = [
+    'All',
+    '🍔 Food',
+    '🛒 Grocery',
+    '🥗 Salads',
+    '🥐 Bakery',
+    '🍱 Asian',
+    '🥩 Meat'
+  ];
 
   @override
   void dispose() {
@@ -56,327 +66,425 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = auth is AuthAuthenticated ? auth.user : null;
     final selectedCat = ref.watch(selectedCategoryProvider);
     final asyncImpact = ref.watch(userImpactProvider);
-    final mealsRescued = asyncImpact.value?['mealsRescued'] ?? asyncImpact.value?['totalMeals'] ?? 0;
-    final co2SavedRaw = asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
+    final mealsRescued = asyncImpact.value?['mealsRescued'] ??
+        asyncImpact.value?['totalMeals'] ??
+        0;
+    final co2SavedRaw =
+        asyncImpact.value?['co2Saved'] ?? asyncImpact.value?['totalCo2'] ?? 0.0;
     final co2Saved = co2SavedRaw is num ? co2SavedRaw.toDouble() : 0.0;
-    final co2String = co2Saved >= 1.0 ? '${co2Saved.toStringAsFixed(1)} kg' : '${(co2Saved * 1000).toStringAsFixed(0)}g';
+    final co2String = co2Saved >= 1.0
+        ? '${co2Saved.toStringAsFixed(1)} kg'
+        : '${(co2Saved * 1000).toStringAsFixed(0)}g';
     final cartCount = ref.watch(cartCountProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
+      value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: CustomScrollView(
-            slivers: [
-              // ── Premium Vibe Header (Web Parity) ──
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 380, // Taller header to fit blobs
-                  child: Stack(
-                    children: [
-                      // Organic Blob 1: Primary Green
-                      Positioned(
-                        top: -50,
-                        right: -80,
-                        child: Container(
-                          width: 300,
-                          height: 300,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 100,
-                                spreadRadius: 50,
-                              ),
-                            ],
-                          ),
+          slivers: [
+            // ── Premium Vibe Header (Web Parity) ──
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 380, // Taller header to fit blobs
+                child: Stack(
+                  children: [
+                    // Organic Blob 1: Primary Green
+                    Positioned(
+                      top: -50,
+                      right: -80,
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 100,
+                              spreadRadius: 50,
+                            ),
+                          ],
                         ),
                       ),
-                      // Organic Blob 2: Orange Accent
-                      Positioned(
-                        top: 150,
-                        left: -100,
-                        child: Container(
-                          width: 250,
-                          height: 250,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.accent.withValues(alpha: 0.10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.15),
-                                blurRadius: 80,
-                                spreadRadius: 40,
-                              ),
-                            ],
-                          ),
+                    ),
+                    // Organic Blob 2: Orange Accent
+                    Positioned(
+                      top: 150,
+                      left: -100,
+                      child: Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.accent.withValues(alpha: 0.10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: 0.15),
+                              blurRadius: 80,
+                              spreadRadius: 40,
+                            ),
+                          ],
                         ),
                       ),
-                      
-                      // Foreground Content
-                      SafeArea(
-                        bottom: false,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Top row: greeting + notification bell
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _greeting(),
-                                          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-                                        ),
-                                        Text(
-                                          user != null ? '${user.firstName} 👋' : 'Food Rescuer 👋',
-                                          style: const TextStyle(
-                                            fontSize: 28, // Bigger
-                                            fontWeight: FontWeight.w900, // Heavier
-                                            color: AppColors.textPrimary,
-                                            letterSpacing: -0.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  ScaleTap(
-                                    onTap: () => context.push('/cart'),
-                                    child: Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: AppColors.border, width: 1.5),
-                                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
-                                      ),
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          const Icon(Icons.shopping_cart_outlined, size: 22, color: AppColors.textPrimary),
-                                          if (cartCount > 0)
-                                            Positioned(
-                                              top: 8, right: 8,
-                                              child: Container(
-                                                width: 14, height: 14,
-                                                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                                                child: Center(
-                                                  child: Text(
-                                                    '$cartCount',
-                                                    style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  ScaleTap(
-                                    onTap: () => context.push('/notifications'),
-                                    child: Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: AppColors.border, width: 1.5),
-                                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
-                                      ),
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          const Icon(Icons.notifications_rounded, size: 22, color: AppColors.textPrimary),
-                                          Positioned(
-                                            top: 10, right: 10,
-                                            child: Container(
-                                              width: 10, height: 10,
-                                              decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle, border: Border.all(color: AppColors.surface, width: 2)),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-        
-                              // Search bar
-                              CnSearchBar(
-                                hint: 'Search deals near you…',
-                                onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
-                                onFilterTap: () {},
-                              ),
-                              const SizedBox(height: 24),
-        
-                              // Impact strip
-                              ScaleTap(
-                                onTap: () => context.go('/impact'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
-                                  ),
-                                  child: Row(
+                    ),
+
+                    // Foreground Content
+                    SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Top row: greeting + notification bell
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const DefaultTextStyle(style: TextStyle(fontSize: 28), child: Text('🌍')),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('You\'ve rescued $mealsRescued ${mealsRescued == 1 ? 'meal' : 'meals'}', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-                                            const SizedBox(height: 2),
-                                            Text('Saving $co2String CO₂ — keep going!', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                                          ],
+                                      Text(
+                                        _greeting(),
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                      Text(
+                                        user != null
+                                            ? '${user.firstName} 👋'
+                                            : 'Food Rescuer 👋',
+                                        style: const TextStyle(
+                                          fontSize: 28, // Bigger
+                                          fontWeight:
+                                              FontWeight.w900, // Heavier
+                                          color: AppColors.textPrimary,
+                                          letterSpacing: -0.5,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── Category filter chips ──
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 38,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final cat = _categories[i];
-                      final active = cat == selectedCat;
-                      return ScaleTap(
-                        onTap: () => ref.read(selectedCategoryProvider.notifier).state = cat,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: active ? AppColors.primary : AppColors.surface,
-                            borderRadius: BorderRadius.circular(100),
-                            border: Border.all(color: active ? AppColors.primary : AppColors.border),
-                            boxShadow: active ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 2))] : null,
-                          ),
-                          child: Text(
-                            cat,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: active ? Colors.white : AppColors.textSecondary,
+                                ScaleTap(
+                                  onTap: () => context.push('/cart'),
+                                  child: Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: AppColors.border, width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.05),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4))
+                                      ],
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        const Icon(Icons.shopping_cart_outlined,
+                                            size: 22,
+                                            color: AppColors.textPrimary),
+                                        if (cartCount > 0)
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              width: 14,
+                                              height: 14,
+                                              decoration: const BoxDecoration(
+                                                  color: AppColors.accent,
+                                                  shape: BoxShape.circle),
+                                              child: Center(
+                                                child: Text(
+                                                  '$cartCount',
+                                                  style: const TextStyle(
+                                                      fontSize: 8,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                ScaleTap(
+                                  onTap: () => context.push('/notifications'),
+                                  child: Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: AppColors.border, width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.05),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4))
+                                      ],
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        const Icon(Icons.notifications_rounded,
+                                            size: 22,
+                                            color: AppColors.textPrimary),
+                                        Positioned(
+                                          top: 10,
+                                          right: 10,
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                                color: AppColors.accent,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: AppColors.surface,
+                                                    width: 2)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 24),
+
+                            // Search bar
+                            CnSearchBar(
+                              hint: 'Search deals near you…',
+                              onChanged: (v) => ref
+                                  .read(searchQueryProvider.notifier)
+                                  .state = v,
+                              onFilterTap: () {},
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Impact strip
+                            ScaleTap(
+                              onTap: () => context.go('/impact'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 16),
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.primaryGradient,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.35),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6))
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    const DefaultTextStyle(
+                                        style: TextStyle(fontSize: 28),
+                                        child: Text('🌍')),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                              'You\'ve rescued $mealsRescued ${mealsRescued == 1 ? 'meal' : 'meals'}',
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w800)),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                              'Saving $co2String CO₂ — keep going!',
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // ── Flash Deals header ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      const Text('⚡ Flash Deals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                      const Spacer(),
-                      ScaleTap(
-                        onTap: () {},
-                        child: const Text('See all', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              // ── Listings grid ──
-              listingsAsync.when(
-                loading: () => SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.70,
                     ),
-                    itemCount: 6,
-                    itemBuilder: (_, __) => const ListingCardSkeleton(),
-                  ),
+                  ],
                 ),
-                error: (e, _) => SliverFillRemaining(
-                  child: CnErrorState(
-                    message: e.toString(),
-                    onRetry: () => ref.refresh(listingsProvider),
-                  ),
-                ),
-                data: (listings) => listings.isEmpty
-                    ? const SliverFillRemaining(
-                        child: CnEmptyState(
-                          title: 'No deals near you yet',
-                          subtitle: 'We\'re expanding across Africa — check back soon!',
-                          icon: Icons.fastfood_outlined,
+              ),
+            ),
+
+            // ── Category filter chips ──
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 38,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final cat = _categories[i];
+                    final active = cat == selectedCat;
+                    return ScaleTap(
+                      onTap: () => ref
+                          .read(selectedCategoryProvider.notifier)
+                          .state = cat,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: active ? AppColors.primary : AppColors.surface,
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                              color: active
+                                  ? AppColors.primary
+                                  : AppColors.border),
+                          boxShadow: active
+                              ? [
+                                  BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.25),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2))
+                                ]
+                              : null,
                         ),
-                      )
-                    : SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                        sliver: SliverGrid.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.70,
+                        child: Text(
+                          cat,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                active ? Colors.white : AppColors.textSecondary,
                           ),
-                           itemCount: listings.length,
-                           itemBuilder: (_, i) {
-                             final rawListing = listings[i];
-                             return ListingCard(
-                               listing: rawListing,
-                               onTap: () => context.push('/listings/${rawListing['_id']}'),
-                               onAddToCart: () {
-                                 final listingModel = Listing.fromJson(rawListing);
-                                 ref.read(cartProvider.notifier).addItem(listingModel);
-                                 HapticFeedback.lightImpact();
-                                 ScaffoldMessenger.of(context).showSnackBar(
-                                   SnackBar(
-                                     content: Text('${listingModel.title} added to cart 🛒'),
-                                     behavior: SnackBarBehavior.floating,
-                                     backgroundColor: AppColors.primary,
-                                     duration: const Duration(seconds: 2),
-                                   ),
-                                 );
-                               },
-                             );
-                           },
                         ),
                       ),
+                    );
+                  },
+                ),
               ),
-            ],
-          ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ── Flash Deals header ──
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Text('⚡ Flash Deals',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary)),
+                    const Spacer(),
+                    ScaleTap(
+                      onTap: () {},
+                      child: const Text('See all',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ── Listings grid ──
+            listingsAsync.when(
+              loading: () => SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.70,
+                  ),
+                  itemCount: 6,
+                  itemBuilder: (_, __) => const ListingCardSkeleton(),
+                ),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: CnErrorState(
+                  message: e.toString(),
+                  onRetry: () => ref.refresh(listingsProvider),
+                ),
+              ),
+              data: (listings) => listings.isEmpty
+                  ? const SliverFillRemaining(
+                      child: CnEmptyState(
+                        title: 'No deals near you yet',
+                        subtitle:
+                            'We\'re expanding across Africa — check back soon!',
+                        icon: Icons.fastfood_outlined,
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      sliver: SliverGrid.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.70,
+                        ),
+                        itemCount: listings.length,
+                        itemBuilder: (_, i) {
+                          final rawListing = listings[i];
+                          return ListingCard(
+                            listing: rawListing,
+                            onTap: () =>
+                                context.push('/listings/${rawListing['_id']}'),
+                            onAddToCart: () {
+                              final listingModel = Listing.fromJson(rawListing);
+                              ref
+                                  .read(cartProvider.notifier)
+                                  .addItem(listingModel);
+                              HapticFeedback.lightImpact();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      '${listingModel.title} added to cart 🛒'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppColors.primary,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+            ),
+          ],
         ),
+      ),
     );
   }
 

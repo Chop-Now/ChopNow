@@ -104,7 +104,9 @@ class _CnTextFieldState extends State<CnTextField> {
             counterText: '',
             labelStyle: TextStyle(
               fontSize: 14,
-              color: _errorText != null ? AppColors.error : AppColors.textSecondary,
+              color: _errorText != null
+                  ? AppColors.error
+                  : AppColors.textSecondary,
               fontWeight: FontWeight.w400,
             ),
             floatingLabelStyle: TextStyle(
@@ -115,12 +117,15 @@ class _CnTextFieldState extends State<CnTextField> {
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, size: 18, color: AppColors.textSecondary)
+                ? Icon(widget.prefixIcon,
+                    size: 18, color: AppColors.textSecondary)
                 : null,
             suffixIcon: widget.showPasswordToggle
                 ? IconButton(
                     icon: Icon(
-                      _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       size: 18,
                       color: AppColors.textSecondary,
                     ),
@@ -137,7 +142,8 @@ class _CnTextFieldState extends State<CnTextField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -148,7 +154,8 @@ class _CnTextFieldState extends State<CnTextField> {
               borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
             errorText: null, // We handle error display manually below
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
         if (_errorText != null) ...[
@@ -207,11 +214,12 @@ class CnSearchBar extends StatelessWidget {
           Expanded(
             child: TextField(
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style:
+                  const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle:
-                    const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                hintStyle: const TextStyle(
+                    fontSize: 14, color: AppColors.textSecondary),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -226,7 +234,8 @@ class CnSearchBar extends StatelessWidget {
             ),
             IconButton(
               onPressed: onFilterTap,
-              icon: const Icon(Icons.tune, size: 18, color: AppColors.textSecondary),
+              icon: const Icon(Icons.tune,
+                  size: 18, color: AppColors.textSecondary),
               tooltip: 'Filter',
             ),
           ] else

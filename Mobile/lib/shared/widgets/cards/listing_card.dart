@@ -32,15 +32,17 @@ class ListingCard extends StatelessWidget {
     double offerPrice = 0;
     final rawPricing = listing['pricing'];
     if (rawPricing is Map) {
-      price = (rawPricing['originalPrice'] as num?)?.toDouble() ?? 
-              (rawPricing['price'] as num?)?.toDouble() ?? 0;
+      price = (rawPricing['originalPrice'] as num?)?.toDouble() ??
+          (rawPricing['price'] as num?)?.toDouble() ??
+          0;
       offerPrice = (rawPricing['price'] as num?)?.toDouble() ?? price;
     } else {
       price = (listing['price'] as num?)?.toDouble() ?? 0;
       offerPrice = (listing['offerPrice'] as num?)?.toDouble() ?? price;
     }
 
-    final discount = price > 0 ? ((price - offerPrice) / price * 100).round() : 0;
+    final discount =
+        price > 0 ? ((price - offerPrice) / price * 100).round() : 0;
 
     // 2. Parse inventory quantity (support nested "inventory" map or flat fields)
     int qty = 0;
@@ -94,14 +96,17 @@ class ListingCard extends StatelessWidget {
             ),
           ],
         ),
-        child: variant == CardVariant.grid 
-            ? _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) 
-            : _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance),
+        child: variant == CardVariant.grid
+            ? _buildGrid(img, name, business, price, offerPrice, discount, qty,
+                isLowStock, distance)
+            : _buildList(img, name, business, price, offerPrice, discount, qty,
+                isLowStock, distance),
       ),
     );
   }
 
-  Widget _buildGrid(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) {
+  Widget _buildGrid(img, name, business, price, offerPrice, discount, qty,
+      isLowStock, distance) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,7 +117,9 @@ class ListingCard extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 1.5,
-                child: img != null && (img.startsWith('http://') || img.startsWith('https://'))
+                child: img != null &&
+                        (img.startsWith('http://') ||
+                            img.startsWith('https://'))
                     ? CachedNetworkImage(
                         imageUrl: img,
                         fit: BoxFit.cover,
@@ -154,25 +161,40 @@ class ListingCard extends StatelessWidget {
                       business,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ),
                   if (distance != null) ...[
-                    const Text(' • ', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                    const Text(' • ',
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 11)),
                     Text(
                       '${distance}km',
-                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500),
                     ),
                   ],
                 ],
               ),
               const SizedBox(height: 4),
-              ExpiryCountdown(availableUntil: listing['availableUntil']?.toString() ?? (listing['timeWindow'] is Map ? (listing['timeWindow'] as Map)['availableUntil']?.toString() : null), compact: true),
+              ExpiryCountdown(
+                  availableUntil: listing['availableUntil']?.toString() ??
+                      (listing['timeWindow'] is Map
+                          ? (listing['timeWindow'] as Map)['availableUntil']
+                              ?.toString()
+                          : null),
+                  compact: true),
               if (isLowStock) ...[
                 const SizedBox(height: 4),
                 Text(
                   '⚠ Only $qty left',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent),
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent),
                 ),
               ],
               const SizedBox(height: 6),
@@ -204,12 +226,14 @@ class ListingCard extends StatelessWidget {
                   ScaleTap(
                     onTap: onAddToCart,
                     child: Container(
-                      constraints: const BoxConstraints(minWidth: 56, minHeight: 34),
+                      constraints:
+                          const BoxConstraints(minWidth: 56, minHeight: 34),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(20), // Premium pill shape
+                        borderRadius:
+                            BorderRadius.circular(20), // Premium pill shape
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.2),
@@ -237,15 +261,18 @@ class ListingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildList(img, name, business, price, offerPrice, discount, qty, isLowStock, distance) {
+  Widget _buildList(img, name, business, price, offerPrice, discount, qty,
+      isLowStock, distance) {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+          borderRadius:
+              const BorderRadius.horizontal(left: Radius.circular(12)),
           child: SizedBox(
             width: 90,
             height: 90,
-            child: img != null && (img.startsWith('http://') || img.startsWith('https://'))
+            child: img != null &&
+                    (img.startsWith('http://') || img.startsWith('https://'))
                 ? CachedNetworkImage(
                     imageUrl: img,
                     fit: BoxFit.cover,
@@ -262,22 +289,38 @@ class ListingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+                  Expanded(
+                      child: Text(name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary))),
                   if (discount > 0) _DiscountBadge(discount: discount),
                 ]),
                 const SizedBox(height: 2),
-                Text(business, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(business,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary)),
                 const SizedBox(height: 4),
-                ExpiryCountdown(availableUntil: listing['availableUntil']?.toString(), compact: true),
+                ExpiryCountdown(
+                    availableUntil: listing['availableUntil']?.toString(),
+                    compact: true),
                 const SizedBox(height: 4),
                 Row(children: [
                   Text('RWF ${offerPrice.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary)),
                   if (price > offerPrice) ...[
                     const SizedBox(width: 6),
                     Text('RWF ${price.toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
+                        style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            decoration: TextDecoration.lineThrough)),
                   ],
                 ]),
               ],
@@ -320,7 +363,8 @@ class _DiscountBadge extends StatelessWidget {
       ),
       child: Text(
         '-$discount%',
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+        style: const TextStyle(
+            fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
       ),
     );
   }
@@ -356,11 +400,16 @@ class ListingCardSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 12, width: double.infinity, color: AppColors.shimmerBase),
+                  Container(
+                      height: 12,
+                      width: double.infinity,
+                      color: AppColors.shimmerBase),
                   const SizedBox(height: 6),
-                  Container(height: 10, width: 100, color: AppColors.shimmerBase),
+                  Container(
+                      height: 10, width: 100, color: AppColors.shimmerBase),
                   const SizedBox(height: 10),
-                  Container(height: 12, width: 80, color: AppColors.shimmerBase),
+                  Container(
+                      height: 12, width: 80, color: AppColors.shimmerBase),
                 ],
               ),
             ),
