@@ -77,15 +77,14 @@ const initiatePayment = async (req, res) => {
       depositId: depositId,
       amount: String(order.pricing.total),
       currency: order.pricing.currency || 'RWF',
-      country: 'RWA',
-      correspondent: correspondent,
       payer: {
-        address: {
-          value: formattedPhone,
+        type: 'MMO',
+        accountDetails: {
+          phoneNumber: formattedPhone,
+          provider: correspondent,
         },
       },
-      customerTimestamp: new Date().toISOString(),
-      statementDescription: `ChopNow-${order.orderNumber.slice(-8)}`,
+      customerMessage: `ChopNow ${order.orderNumber.slice(-8)}`,
     };
 
     logger.debug({ payload }, 'Initiating pawaPay deposit request');
