@@ -430,6 +430,100 @@ const getPaymentStatus = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // --- Active status check fallback ---
+    // If the local status is still pending, we actively fetch the latest status from pawaPay
+    // to handle webhook delivery delays, missing webhook configurations, or signature verification mismatches.
+    if (payment.status === 'pending') {
+      const isProduction = process.env.PAWAPAY_ENVIRONMENT === 'production';
+      const baseUrl = isProduction ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
+      const apiKey = process.env.PAWAPAY_API_KEY;
+
+      if (apiKey) {
+        try {
+          const response = await axios.get(`${baseUrl}/v2/deposits/${payment.depositId}`, {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+            timeout: 5000,
+          });
+
+          if (response.data && response.data.status === 'FOUND' && response.data.data) {
+            const remoteStatus = response.data.data.status;
+            if (remoteStatus === 'COMPLETED') {
+              payment.status = 'completed';
+              payment.providerTransactionId = response.data.data.providerTransactionId;
+              await payment.save();
+
+              if (order && order.status !== 'paid') {
+                order.status = 'paid';
+                order.payment.paymentStatus = 'completed';
+                if (!order.statusTimestamps.paidAt) {
+                  order.statusTimestamps.paidAt = new Date();
+                }
+                await order.save();
+
+                // Trigger vendor/customer notifications
+                sendNewOrderNotifications(order._id).catch((err) =>
+                  logger.error(
+                    { err },
+                    'Failed to send paid order notifications in status check fallback'
+                  )
+                );
+
+                // Notify frontend via socket
+                try {
+                  const io = socketManager.getIO();
+                  io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
+                } catch (socketErr) {
+                  logger.warn({ err: socketErr.message }, 'Socket emit in fallback failed');
+                }
+              }
+            } else if (remoteStatus === 'FAILED' || remoteStatus === 'REJECTED') {
+              payment.status = 'failed';
+              if (response.data.data.failureReason) {
+                payment.failureReason = {
+                  code: response.data.data.failureReason.code,
+                  description: response.data.data.failureReason.description,
+                };
+              }
+              await payment.save();
+
+              if (order && order.status !== 'cancelled') {
+                order.status = 'cancelled';
+                order.payment.paymentStatus = 'failed';
+                if (!order.statusTimestamps.cancelledAt) {
+                  order.statusTimestamps.cancelledAt = new Date();
+                }
+                await order.save();
+
+                // Release stock reservation
+                const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                const listing = await Listing.findById(order.listing);
+                if (listing) {
+                  listing.inventory.quantity += totalQuantity;
+                  listing.inventory.reserved -= totalQuantity;
+                  if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
+                    listing.status = 'active';
+                  }
+                  await listing.save();
+                }
+
+                // Notify frontend via socket
+                try {
+                  const io = socketManager.getIO();
+                  io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
+                } catch (socketErr) {
+                  logger.warn({ err: socketErr.message }, 'Socket emit in fallback failed');
+                }
+              }
+            }
+          }
+        } catch (apiErr) {
+          logger.error({ err: apiErr.message }, 'Failed to check status from pawaPay directly');
+        }
+      }
+    }
+
     return res.status(200).json({
       status: payment.status,
       depositId: payment.depositId,
