@@ -666,10 +666,11 @@ const Cart = () => {
                       const orderData = {
                         listing: primaryItem._id,
                         items: cartArray.map((item) => ({
+                          listing: item._id,
+                          title: item.name,
                           quantity: item.cartQuantity,
                           unitPrice: item.offerPrice,
-                          name: item.name,
-                          productId: item._id,
+                          subtotal: item.offerPrice * item.cartQuantity,
                         })),
                         fulfillmentType: fulfillmentMethod.toLowerCase(),
                         deliveryDetails:
