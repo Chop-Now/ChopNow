@@ -169,7 +169,7 @@ class Listing {
   }
 
   bool get isLowStock => quantity > 0 && quantity <= 3;
-  bool get isSoldOut => quantity <= 0;
+  bool get isSoldOut => quantity <= 0 || status == 'sold_out';
 
   String get businessName =>
       business?['name'] ?? business?['businessName'] ?? '';

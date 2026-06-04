@@ -52,6 +52,7 @@ class AppEndpoints {
   static String orderStatus(String id) => '/orders/$id/status';
   static String cancelOrder(String id) => '/orders/$id/cancel';
   static String verifyPickup(String id) => '/orders/$id/verify-pickup';
+  static const String verifyPickupDirect = '/orders/verify-pickup-code';
 
   // ── Cart ──────────────────────────────────────────────────────────────────
   static const String cart = '/cart';

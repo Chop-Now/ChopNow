@@ -226,14 +226,16 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle: 'Current: ${_roleLabel(role)}',
                       onTap: () => _showRoleSwitcher(context, ref, user, role),
                     ),
-                  if (user != null && !user.isBusinessOwner)
-                    _Tile(
-                      icon: Icons.storefront_rounded,
-                      label: 'Sell on ChopNow',
-                      subtitle: 'Register your food business',
-                      iconColor: AppColors.primary,
-                      onTap: () => context.push('/business/create'),
-                    ),
+                  // COMMENTED OUT: Business registration should go through the dedicated
+                  // business registration route, not from buyer profile.
+                  // if (user != null && !user.isBusinessOwner)
+                  //   _Tile(
+                  //     icon: Icons.storefront_rounded,
+                  //     label: 'Sell on ChopNow',
+                  //     subtitle: 'Register your food business',
+                  //     iconColor: AppColors.primary,
+                  //     onTap: () => context.push('/business/create'),
+                  //   ),
                   if (user != null && !user.isRider)
                     _Tile(
                       icon: Icons.directions_bike_rounded,

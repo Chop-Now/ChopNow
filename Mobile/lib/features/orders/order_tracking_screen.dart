@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
@@ -343,46 +344,24 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 const SizedBox(height: 20),
 
                 // ── Pickup Code ──
-                if (status == 'ready_for_pickup' && order['pickupCode'] != null)
-                  Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.successSurface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppColors.success.withValues(alpha: 0.4),
-                              width: 1.5),
-                        ),
-                        child: Column(
-                          children: [
-                            const Text('🎫 Your Pickup Code',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.success)),
-                            const SizedBox(height: 10),
-                            Text(
-                              '${order['pickupCode']}',
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.success,
-                                letterSpacing: 10,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text('Show this code at the counter',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.success)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                if (order['pickupCode'] != null &&
+                    (status == 'confirmed' ||
+                        status == 'preparing' ||
+                        status == 'ready_for_pickup'))
+                  _PickupCodeCard(
+                    code: order['pickupCode'].toString(),
+                    isReady: status == 'ready_for_pickup',
+                    pulseAnimation: _pulseCtrl,
                   ),
+
+                // ── Store Info (Pickup Only) ──
+                if (order['fulfillmentType']?.toString().toLowerCase() ==
+                        'pickup' &&
+                    order['business'] != null &&
+                    (status == 'confirmed' ||
+                        status == 'preparing' ||
+                        status == 'ready_for_pickup'))
+                  _StoreInfoCard(business: order['business']),
 
                 // ── Order Progress Timeline ──
                 Container(
@@ -681,6 +660,358 @@ class _OrderItem extends StatelessWidget {
                   color: AppColors.primary)),
         ],
       ),
+    );
+  }
+}
+
+class _PickupCodeCard extends StatelessWidget {
+  final String code;
+  final bool isReady;
+  final Animation<double> pulseAnimation;
+  const _PickupCodeCard({
+    required this.code,
+    required this.isReady,
+    required this.pulseAnimation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: pulseAnimation,
+          builder: (_, child) => Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.successSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isReady
+                    ? AppColors.success
+                    : AppColors.success.withValues(alpha: 0.4),
+                width: isReady ? 2.5 : 1.5,
+              ),
+              boxShadow: isReady
+                  ? [
+                      BoxShadow(
+                        color: AppColors.success.withValues(
+                            alpha: 0.15 + pulseAnimation.value * 0.15),
+                        blurRadius: 16 + pulseAnimation.value * 8,
+                        spreadRadius: pulseAnimation.value * 4,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: child,
+          ),
+          child: Column(
+            children: [
+              Text(
+                isReady ? '🎉 Your Order is Ready!' : '🎫 Your Pickup Code',
+                style: TextStyle(
+                  fontSize: isReady ? 15 : 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                code,
+                style: TextStyle(
+                  fontSize: isReady ? 48 : 40,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.success,
+                  letterSpacing: 10,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Show this code at the counter',
+                style: TextStyle(fontSize: 12, color: AppColors.success),
+              ),
+              const SizedBox(height: 14),
+              ScaleTap(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Clipboard.setData(ClipboardData(text: code));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Pickup code copied!'),
+                      backgroundColor: AppColors.success,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppColors.success.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.copy_rounded,
+                          size: 16, color: AppColors.success),
+                      SizedBox(width: 8),
+                      Text(
+                        'Copy Code',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+}
+
+class _StoreInfoCard extends StatelessWidget {
+  final Map<String, dynamic> business;
+  const _StoreInfoCard({required this.business});
+
+  String? get _storeName =>
+      business['name']?.toString() ??
+      business['businessName']?.toString();
+
+  String? get _storeAddress =>
+      business['address']?.toString() ??
+      (business['location'] is Map
+          ? (business['location'] as Map)['address']?.toString()
+          : null);
+
+  String? get _storePhone => business['phone']?.toString();
+
+  List<double>? get _coordinates {
+    final location = business['location'];
+    if (location is Map && location['coordinates'] is List) {
+      final coords = location['coordinates'] as List;
+      if (coords.length >= 2) {
+        return [
+          (coords[1] as num).toDouble(), // lat
+          (coords[0] as num).toDouble(), // lng
+        ];
+      }
+    }
+    return null;
+  }
+
+  Future<void> _callStore() async {
+    final phone = _storePhone;
+    if (phone == null) return;
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _getDirections() async {
+    final coords = _coordinates;
+    if (coords == null) return;
+    final lat = coords[0];
+    final lng = coords[1];
+    final uri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _storeName;
+    final address = _storeAddress;
+    final phone = _storePhone;
+    final coords = _coordinates;
+
+    if (name == null && address == null) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.store_rounded,
+                      size: 20, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'Pickup Location',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (name != null)
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              if (address != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.location_on_outlined,
+                        size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        address,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (phone != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.phone_outlined,
+                        size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      phone,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (phone != null)
+                    Expanded(
+                      child: ScaleTap(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _callStore();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySurface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: AppColors.primary
+                                    .withValues(alpha: 0.2)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.phone_rounded,
+                                  size: 16, color: AppColors.primary),
+                              SizedBox(width: 6),
+                              Text(
+                                'Call Store',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (phone != null && coords != null)
+                    const SizedBox(width: 10),
+                  if (coords != null)
+                    Expanded(
+                      child: ScaleTap(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _getDirections();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.directions_rounded,
+                                  size: 16, color: Colors.white),
+                              SizedBox(width: 6),
+                              Text(
+                                'Get Directions',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
