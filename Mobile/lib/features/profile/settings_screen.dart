@@ -119,15 +119,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _NavTile(
               icon: Icons.privacy_tip_outlined,
               label: 'Privacy Policy',
-              onTap: () {}),
+              onTap: () => _showPrivacyPolicy(context)),
           _NavTile(
               icon: Icons.assignment_outlined,
               label: 'Terms of Service',
-              onTap: () {}),
+              onTap: () => _showTerms(context)),
           _NavTile(
               icon: Icons.bug_report_outlined,
               label: 'Report a Problem',
-              onTap: () {}),
+              onTap: () => _showReportProblem(context)),
 
           const SizedBox(height: 8),
           // Danger zone
@@ -211,6 +211,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: const Text('Cool!'))
               ],
             ));
+  }
+
+  void _showPrivacyPolicy(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+          'We value your privacy. ChopNow secure-stores only data needed to complete your orders, match delivery partners, and ensure safety. Your private info is never sold.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
+
+  void _showTerms(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Terms of Service', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+          'By using ChopNow, you agree to our terms. ChopNow is a platform connecting users with merchants selling surplus food. All sales are final once verified via pickup code. Please treat all partners with respect.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
+
+  void _showReportProblem(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Report a Problem', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+          'Encountered an issue? We\'re here to help! Please email us at support@chopnow.app with details of the problem and we will get back to you as soon as possible.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {

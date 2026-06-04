@@ -208,7 +208,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.favorite_border_rounded,
                       label: 'Favorites',
                       subtitle: 'Saved restaurants & deals',
-                      onTap: () {}),
+                      onTap: () => context.push('/profile/favorites')),
                 ]),
                 const SizedBox(height: 12),
 
@@ -256,15 +256,15 @@ class ProfileScreen extends ConsumerWidget {
                   _Tile(
                       icon: Icons.help_outline_rounded,
                       label: 'Help & FAQ',
-                      onTap: () {}),
+                      onTap: () => _showHelpFAQ(context)),
                   _Tile(
                       icon: Icons.info_outline_rounded,
                       label: 'About ChopNow',
-                      onTap: () {}),
+                      onTap: () => _showAboutDialog(context)),
                   _Tile(
                       icon: Icons.privacy_tip_outlined,
                       label: 'Privacy Policy',
-                      onTap: () {}),
+                      onTap: () => _showPrivacyPolicy(context)),
                 ]),
                 const SizedBox(height: 20),
 
@@ -340,6 +340,76 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpFAQ(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Help & FAQ',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        content: const Text(
+          'Frequently Asked Questions:\n\n'
+          'Q: What is ChopNow?\n'
+          'A: ChopNow helps you rescue surplus food from local restaurants and cafés at a discount, saving money and reducing waste.\n\n'
+          'Q: How do I collect my order?\n'
+          'A: Show the 6-digit pickup code on your tracking screen to the vendor at the counter.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('About ChopNow',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        content: const Text(
+          'ChopNow is dedicated to eliminating food waste while making premium food affordable for everyone. Join us in sustaining tomorrow, one meal at a time. 🌿',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cool!', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyPolicy(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Privacy Policy',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        content: const Text(
+          'We value your privacy. ChopNow secure-stores only data needed to complete your orders, match delivery partners, and ensure safety. Your private info is never sold.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          )
         ],
       ),
     );
