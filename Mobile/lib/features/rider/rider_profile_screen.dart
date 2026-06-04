@@ -188,13 +188,13 @@ class RiderProfileScreen extends ConsumerWidget {
                         _TappableRow(
                           icon: Icons.help_outline_rounded,
                           label: 'Help Center',
-                          onTap: () {},
+                          onTap: () => _showHelpCenter(context),
                         ),
                         const Divider(height: 1, color: AppColors.border),
                         _TappableRow(
                           icon: Icons.policy_outlined,
                           label: 'Terms & Conditions',
-                          onTap: () {},
+                          onTap: () => _showTerms(context),
                         ),
                       ],
                     ),
@@ -264,6 +264,54 @@ class RiderProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpCenter(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Rider Help Center',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        content: const Text(
+          'Rider FAQs:\n\n'
+          '1. How do I get paid?\n'
+          'Earnings are credited to your wallet immediately after a successful delivery confirmation.\n\n'
+          '2. What if I can\'t reach the customer?\n'
+          'Call the customer using the phone button on the active delivery screen, or contact dispatch support.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showTerms(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Terms & Conditions',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        content: const Text(
+          'As a ChopNow delivery partner, you agree to deliver orders safely, securely, and in a timely manner. Respect consumer privacy and restaurant policies.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          )
         ],
       ),
     );

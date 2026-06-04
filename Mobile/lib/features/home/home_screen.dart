@@ -401,7 +401,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: AppColors.textPrimary)),
                     const Spacer(),
                     ScaleTap(
-                      onTap: () {},
+                      onTap: () => context.go('/browse'),
                       child: const Text('See all',
                           style: TextStyle(
                               fontSize: 13,
