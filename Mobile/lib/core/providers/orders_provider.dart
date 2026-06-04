@@ -5,7 +5,7 @@ import '../models/order_model.dart';
 
 // ── Orders list provider ──────────────────────────────────────────────────────
 final ordersProvider = FutureProvider<List<Order>>((ref) async {
-  final response = await ApiClient.instance.get(AppEndpoints.orders);
+  final response = await ApiClient.instance.get('${AppEndpoints.orders}?role=consumer');
   final data = response.data;
   final List items;
   if (data is List) {

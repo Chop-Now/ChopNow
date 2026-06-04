@@ -71,6 +71,16 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showQuickVerifyDialog(),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+        label: const Text('Quick Verify',
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 13)),
+      ),
       body: asyncOrders.when(
         loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.primary)),
@@ -97,16 +107,19 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
                 _OrderList(
                     orders: newOrders,
                     emptyMessage: 'No new orders',
-                    onUpdate: (id, status) => _updateStatus(id, status)),
+                    onUpdate: (id, status) => _updateStatus(id, status),
+                    onVerifyPickup: (id) => _showVerifyPickupDialog(id)),
                 _OrderList(
                     orders: activeOrders,
                     emptyMessage: 'No active orders',
-                    onUpdate: (id, status) => _updateStatus(id, status)),
+                    onUpdate: (id, status) => _updateStatus(id, status),
+                    onVerifyPickup: (id) => _showVerifyPickupDialog(id)),
                 _OrderList(
                     orders: doneOrders,
                     emptyMessage: 'No completed orders',
                     showActions: false,
-                    onUpdate: (_, __) {}),
+                    onUpdate: (_, __) {},
+                    onVerifyPickup: (_) {}),
               ],
             ),
           );
@@ -130,45 +143,346 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
       }
     } on Exception catch (e) {
       final msg = e is ApiException ? e.message : 'Failed to update order';
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+      }
+    }
+  }
+
+  Future<void> _showVerifyPickupDialog(String orderId) async {
+    final code = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PickupCodeDialog(
+        title: 'Verify Pickup Code',
+        subtitle:
+            'Order #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
+      ),
+    );
+    if (code == null || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    try {
+      await ApiClient.instance
+          .post(AppEndpoints.verifyPickup(orderId), data: {'code': code});
+      ref.invalidate(_businessOrdersProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Pickup verified for #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}'),
+              backgroundColor: AppColors.primary),
+        );
+      }
+    } on Exception catch (e) {
+      final msg = e is ApiException ? e.message : 'Verification failed';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+      }
+    }
+  }
+
+  Future<void> _showQuickVerifyDialog() async {
+    final code = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _PickupCodeDialog(
+        title: 'Quick Verify Pickup Code',
+        subtitle: 'Enter the customer\'s 6-digit code',
+      ),
+    );
+    if (code == null || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    try {
+      final res = await ApiClient.instance
+          .post(AppEndpoints.verifyPickupDirect, data: {'code': code});
+      ref.invalidate(_businessOrdersProvider);
+      final orderId = res.data is Map
+          ? (res.data['order']?['_id'] ?? res.data['_id'] ?? '').toString()
+          : '';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(orderId.isNotEmpty
+                  ? 'Pickup verified for #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}'
+                  : 'Pickup verified successfully'),
+              backgroundColor: AppColors.primary),
+        );
+      }
+    } on Exception catch (e) {
+      final msg = e is ApiException ? e.message : 'Verification failed';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+      }
     }
   }
 }
+
+// ── Pickup Code Dialog ─────────────────────────────────────────────────────
+
+class _PickupCodeDialog extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  const _PickupCodeDialog({required this.title, required this.subtitle});
+
+  @override
+  State<_PickupCodeDialog> createState() => _PickupCodeDialogState();
+}
+
+class _PickupCodeDialogState extends State<_PickupCodeDialog> {
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  String get _code => _controllers.map((c) => c.text).join();
+  bool get _isComplete => _code.length == 6;
+
+  void _onChanged(int index, String value) {
+    if (_error != null) setState(() => _error = null);
+
+    if (value.length == 1 && index < 5) {
+      _focusNodes[index + 1].requestFocus();
+    }
+    // Handle paste: if multiple characters entered, fill remaining fields
+    if (value.length > 1) {
+      final chars = value.split('');
+      for (var i = 0; i < chars.length && (index + i) < 6; i++) {
+        _controllers[index + i].text = chars[i];
+      }
+      final nextIdx = (index + chars.length).clamp(0, 5);
+      _focusNodes[nextIdx].requestFocus();
+    }
+    setState(() {});
+  }
+
+  void _onBackspace(int index) {
+    if (_controllers[index].text.isEmpty && index > 0) {
+      _controllers[index - 1].clear();
+      _focusNodes[index - 1].requestFocus();
+      setState(() {});
+    }
+  }
+
+  void _submit() {
+    if (!_isComplete) {
+      setState(() => _error = 'Please enter all 6 digits');
+      return;
+    }
+    setState(() => _isLoading = true);
+    Navigator.of(context).pop(_code);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: AppColors.primarySurface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.verified_user_rounded,
+                  color: AppColors.primary, size: 32),
+            ),
+            const SizedBox(height: 16),
+            Text(widget.title,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary)),
+            const SizedBox(height: 4),
+            Text(widget.subtitle,
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textSecondary)),
+            const SizedBox(height: 24),
+
+            // 6-digit PIN input
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(6, (i) {
+                return Container(
+                  width: 44,
+                  height: 52,
+                  margin: EdgeInsets.only(right: i < 5 ? 8 : 0),
+                  child: KeyboardListener(
+                    focusNode: FocusNode(),
+                    onKeyEvent: (event) {
+                      if (event is KeyDownEvent &&
+                          event.logicalKey == LogicalKeyboardKey.backspace) {
+                        _onBackspace(i);
+                      }
+                    },
+                    child: TextField(
+                      controller: _controllers[i],
+                      focusNode: _focusNodes[i],
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      maxLength: 1,
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        counterText: '',
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 12),
+                        filled: true,
+                        fillColor: AppColors.background,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: _error != null
+                                  ? AppColors.error
+                                  : AppColors.border,
+                              width: 1.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: AppColors.primary, width: 2),
+                        ),
+                      ),
+                      onChanged: (v) => _onChanged(i, v),
+                    ),
+                  ),
+                );
+              }),
+            ),
+
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!,
+                  style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+            ],
+
+            const SizedBox(height: 24),
+
+            // Verify button
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                onTap: _isLoading ? null : _submit,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _isComplete
+                        ? AppColors.primary
+                        : AppColors.primary.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5))
+                        : const Text('Verify Pickup',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15)),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Cancel button
+            GestureDetector(
+              onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 6),
+                child: Text('Cancel',
+                    style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Order List ─────────────────────────────────────────────────────────────
 
 class _OrderList extends StatelessWidget {
   final List<dynamic> orders;
   final String emptyMessage;
   final bool showActions;
   final void Function(String id, String status) onUpdate;
+  final void Function(String id) onVerifyPickup;
   const _OrderList(
       {required this.orders,
       required this.emptyMessage,
       required this.onUpdate,
+      required this.onVerifyPickup,
       this.showActions = true});
 
   @override
   Widget build(BuildContext context) {
-    if (orders.isEmpty)
+    if (orders.isEmpty) {
       return CnEmptyState(
           title: emptyMessage, icon: Icons.receipt_long_outlined);
+    }
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: orders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) => _BusinessOrderCard(
-          order: orders[i], showActions: showActions, onUpdate: onUpdate),
+          order: orders[i],
+          showActions: showActions,
+          onUpdate: onUpdate,
+          onVerifyPickup: onVerifyPickup),
     );
   }
 }
+
+// ── Order Card ─────────────────────────────────────────────────────────────
 
 class _BusinessOrderCard extends StatelessWidget {
   final dynamic order;
   final bool showActions;
   final void Function(String id, String status) onUpdate;
+  final void Function(String id) onVerifyPickup;
   const _BusinessOrderCard(
-      {required this.order, required this.showActions, required this.onUpdate});
+      {required this.order,
+      required this.showActions,
+      required this.onUpdate,
+      required this.onVerifyPickup});
 
   @override
   Widget build(BuildContext context) {
@@ -265,12 +579,14 @@ class _BusinessOrderCard extends StatelessWidget {
           label: '🎉 Mark as Ready',
           onTap: () => onUpdate(orderId, 'ready_for_pickup')),
       'ready_for_pickup' => _FilledBtn(
-          label: '✅ Mark Completed',
-          onTap: () => onUpdate(orderId, 'completed')),
+          label: '🔐 Verify & Complete',
+          onTap: () => onVerifyPickup(orderId)),
       _ => const SizedBox.shrink(),
     };
   }
 }
+
+// ── Status Badge ───────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final String status;
@@ -308,6 +624,8 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 }
+
+// ── Button Widgets ─────────────────────────────────────────────────────────
 
 class _FilledBtn extends StatelessWidget {
   final String label;
