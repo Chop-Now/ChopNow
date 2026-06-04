@@ -9,6 +9,7 @@ import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../core/providers/cart_provider.dart';
+import '../../core/models/listing_model.dart';
 
 final _browseCategoryProvider = StateProvider<String>((ref) => 'All');
 final _browseSearchProvider = StateProvider<String>((ref) => '');
@@ -256,7 +257,19 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                             listing: listings[i],
                             onTap: () =>
                                 context.push('/listings/${listings[i]['_id']}'),
-                            onAddToCart: () {},
+                            onAddToCart: () {
+                              final listingModel = Listing.fromJson(listings[i] as Map<String, dynamic>);
+                              ref.read(cartProvider.notifier).addItem(listingModel);
+                              HapticFeedback.lightImpact();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${listingModel.title} added to cart 🛒'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppColors.primary,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
                           ),
                         ),
                 ),

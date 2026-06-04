@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
@@ -6,6 +7,8 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/widgets/cards/listing_card.dart';
+import '../../core/models/listing_model.dart';
+import '../../core/providers/cart_provider.dart';
 
 final _favoritesProvider = FutureProvider<List<dynamic>>((ref) async {
   final res = await ApiClient.instance.get(AppEndpoints.favorites);
@@ -69,7 +72,19 @@ class FavoritesScreen extends ConsumerWidget {
                     return ListingCard(
                       listing: listing,
                       onTap: () => context.push('/listings/${listing['_id']}'),
-                      onAddToCart: () {},
+                      onAddToCart: () {
+                        final listingModel = Listing.fromJson(listing as Map<String, dynamic>);
+                        ref.read(cartProvider.notifier).addItem(listingModel);
+                        HapticFeedback.lightImpact();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${listingModel.title} added to cart 🛒'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: AppColors.primary,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

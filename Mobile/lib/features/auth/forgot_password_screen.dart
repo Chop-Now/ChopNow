@@ -139,7 +139,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
             const SizedBox(height: 20),
             CnPrimaryButton(
-                label: 'Back to Login', onTap: () => context.go('/login')),
+                label: 'Back to Login', onTap: () => context.go('/auth/login')),
           ],
         ),
       ),

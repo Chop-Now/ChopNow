@@ -255,7 +255,7 @@ class _EmailVerificationScreenState
                 label: 'Back to Login',
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  context.go('/login');
+                  context.go('/auth/login');
                 },
               ),
 
