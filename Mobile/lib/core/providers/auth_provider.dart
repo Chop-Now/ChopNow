@@ -68,12 +68,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    String? preferredRole,
+  }) async {
     state = const AuthLoading();
     try {
       final res = await ApiClient.instance.post(AppEndpoints.login,
           data: {'email': email, 'password': password});
-      await _saveAndSetState(res.data);
+      await _saveAndSetState(res.data, preferredRole: preferredRole);
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
     } catch (e) {
@@ -128,18 +132,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
       await AuthService.saveActiveRole('business_owner');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to add business_owner role: $e');
+    }
   }
 
-  Future<void> loginWithOtp(
-      {required String phone, required String otp}) async {
+  Future<void> loginWithOtp({
+    required String phone,
+    required String otp,
+    String? preferredRole,
+  }) async {
     state = const AuthLoading();
     try {
       final res = await ApiClient.instance
           .post(AppEndpoints.verifyOtp, data: {'phone': phone, 'otp': otp});
-      await _saveAndSetState(res.data);
+      await _saveAndSetState(res.data, preferredRole: preferredRole);
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
+    } catch (e) {
+      state = AuthError(e.toString());
     }
   }
 
@@ -164,7 +175,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'isEmailVerified': current.user.isEmailVerified,
       });
       state = AuthAuthenticated(user: updatedUser, token: current.token);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to switch role: $e');
+      rethrow;
+    }
   }
 
   Future<void> addBusinessOwnerRole() async {
@@ -284,15 +298,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final res = await ApiClient.instance.get(AppEndpoints.profile);
       final user = AppUser.fromJson(_extractUser(res.data));
+      if (state is! AuthAuthenticated) return;
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to refresh profile: $e');
+    }
   }
 
-  Future<void> _saveAndSetState(dynamic responseData) async {
+  Future<void> _saveAndSetState(
+    dynamic responseData, {
+    String? preferredRole,
+  }) async {
     final token = responseData['token'] as String?;
     final refreshToken = responseData['refreshToken'] as String?;
-    final user = AppUser.fromJson(_extractUser(responseData));
+    AppUser user = AppUser.fromJson(_extractUser(responseData));
+
     if (token != null) {
       await AuthService.saveAuthData(
         accessToken: token,
@@ -301,6 +322,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
         activeRole: user.activeRole,
       );
     }
+
+    // If caller requested a specific role, switch to it when the user holds that
+    // role but it isn't already the active role.
+    if (preferredRole != null &&
+        preferredRole.isNotEmpty &&
+        user.activeRole != preferredRole &&
+        user.roles.contains(preferredRole)) {
+      try {
+        final switchRes = await ApiClient.instance
+            .post(AppEndpoints.switchRole, data: {'role': preferredRole});
+        // Backend returns updated user on switch-role
+        final switchedUser = AppUser.fromJson(_extractUser(switchRes.data));
+        await AuthService.saveActiveRole(preferredRole);
+        user = switchedUser;
+      } catch (_) {
+        // If switch fails silently, continue with original role
+      }
+    }
+
     state = AuthAuthenticated(user: user, token: token ?? '');
     if (token != null && token.isNotEmpty) {
       SocketService().connect(token);

@@ -152,7 +152,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               content: Text('Review submitted! Thank you 🙏'),
               backgroundColor: AppColors.primary),
         );
-        context.pop();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/orders');
+        }
       }
     } catch (e) {
       setState(() => _error = 'Could not submit — please try again.');

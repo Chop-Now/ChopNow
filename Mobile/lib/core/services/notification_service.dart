@@ -94,10 +94,17 @@ class NotificationService {
 
   /// Removes the FCM token from the backend on logout.
   Future<void> unregisterToken() async {
+    // Run unregistration in the background with a timeout to prevent emulator hangs
     try {
-      await ApiClient.instance.delete(AppEndpoints.fcmToken);
+      await ApiClient.instance.delete(AppEndpoints.fcmToken).timeout(
+        const Duration(milliseconds: 500),
+      );
     } catch (_) {}
-    await _messaging.deleteToken();
+    try {
+      await _messaging.deleteToken().timeout(
+        const Duration(milliseconds: 500),
+      );
+    } catch (_) {}
     _fcmToken = null;
   }
 

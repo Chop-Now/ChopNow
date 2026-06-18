@@ -78,9 +78,11 @@ final cartProvider = StateNotifierProvider<CartNotifier, List<CartItem>>((ref) {
 
 // Convenience selectors
 final cartTotalProvider = Provider<double>((ref) {
-  return ref.watch(cartProvider.notifier).total;
+  final items = ref.watch(cartProvider);
+  return items.fold(0, (sum, item) => sum + item.subtotal);
 });
 
 final cartCountProvider = Provider<int>((ref) {
-  return ref.watch(cartProvider.notifier).itemCount;
+  final items = ref.watch(cartProvider);
+  return items.fold(0, (sum, item) => sum + item.quantity);
 });

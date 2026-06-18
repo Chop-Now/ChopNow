@@ -1606,6 +1606,61 @@ const reviewRider = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get rider online availability status
+ * @route   GET /api/v1/rider/availability
+ * @access  Private (Rider)
+ */
+const getRiderAvailability = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      success: true,
+      isOnline: user.riderDetails?.isOnline === true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Update rider online availability status
+ * @route   PUT /api/v1/rider/availability
+ * @access  Private (Rider)
+ */
+const updateRiderAvailability = async (req, res) => {
+  try {
+    const { isOnline } = req.body;
+    if (isOnline === undefined) {
+      return res.status(400).json({ message: 'isOnline is required' });
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.riderDetails) {
+      user.riderDetails = {};
+    }
+    user.riderDetails.isOnline = isOnline === true;
+    await user.save();
+
+    res.json({
+      success: true,
+      isOnline: user.riderDetails.isOnline,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -1643,4 +1698,6 @@ module.exports = {
   applyRider,
   getRidersForAdmin,
   reviewRider,
+  getRiderAvailability,
+  updateRiderAvailability,
 };

@@ -36,17 +36,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     try {
       await ApiClient.instance.post(AppEndpoints.resetPassword,
           data: {'token': _tokenCtrl.text.trim(), 'password': _passCtrl.text});
-      if (mounted)
+      if (mounted) {
         setState(() {
           _done = true;
           _loading = false;
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'Invalid or expired reset token.';
           _loading = false;
         });
+      }
     }
   }
 
@@ -66,7 +68,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: ScaleTap(
-            onTap: () => context.pop(),
+            onTap: () => context.canPop() ? context.pop() : context.go('/auth/login'),
             child: const Icon(Icons.arrow_back_rounded,
                 color: AppColors.textPrimary)),
       ),

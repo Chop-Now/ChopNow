@@ -19,14 +19,16 @@ final _browseListingsProvider =
   final category = ref.watch(_browseCategoryProvider);
   final search = ref.watch(_browseSearchProvider);
   final params = <String, dynamic>{'status': 'active', 'limit': 40};
-  if (category != 'All')
+  if (category != 'All') {
     params['category'] = category.replaceAll(RegExp(r'[^\w\s]'), '').trim();
+  }
   if (search.isNotEmpty) params['search'] = search;
   final res = await ApiClient.instance
       .get(AppEndpoints.listings, queryParameters: params);
   final data = res.data;
-  if (data is Map && data['listings'] != null)
+  if (data is Map && data['listings'] != null) {
     return List.from(data['listings'] as List);
+  }
   if (data is List) return List.from(data);
   return [];
 });

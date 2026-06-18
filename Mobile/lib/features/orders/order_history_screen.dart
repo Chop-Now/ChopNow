@@ -56,7 +56,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
               controller: _tabController,
               labelColor: AppColors.primary,
               unselectedLabelColor: AppColors.textSecondary,
-              indicator: BoxDecoration(
+              indicator: const BoxDecoration(
                 border: Border(
                     bottom: BorderSide(color: AppColors.primary, width: 2.5)),
               ),

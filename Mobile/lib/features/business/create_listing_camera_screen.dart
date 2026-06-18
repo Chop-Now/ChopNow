@@ -43,7 +43,7 @@ class CreateListingCameraScreen extends StatelessWidget {
         title: const Text('Take Live Photo'),
         actions: [
           TextButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/business/dashboard'),
             child:
                 const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),

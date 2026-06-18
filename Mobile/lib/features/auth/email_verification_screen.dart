@@ -161,7 +161,7 @@ class _EmailVerificationScreenState
                         blurRadius: 12)
                   ],
                 ),
-                child: Column(
+                child: const Column(
                   children: [
                     _Step(number: '1', text: 'Open your email app'),
                     _Step(number: '2', text: 'Click the verification link'),
@@ -261,10 +261,10 @@ class _EmailVerificationScreenState
 
               const SizedBox(height: 24),
 
-              Text(
+              const Text(
                 'Didn\'t receive the email? Check your spam folder\nor contact us at support@chopnow.app',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12, color: AppColors.textTertiary, height: 1.6),
               ),
             ],

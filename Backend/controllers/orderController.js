@@ -52,7 +52,10 @@ const createOrder = async (req, res) => {
     // Calculate totals
     let subtotal = 0;
     for (const item of items) {
-      subtotal += item.quantity * item.unitPrice;
+      item.title = item.title || item.name || listingDoc.title;
+      item.unitPrice = item.unitPrice !== undefined ? item.unitPrice : listingDoc.pricing.price;
+      item.subtotal = item.subtotal !== undefined ? item.subtotal : item.quantity * item.unitPrice;
+      subtotal += item.subtotal;
     }
 
     let deliveryFee = 0;

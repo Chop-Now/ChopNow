@@ -91,13 +91,18 @@ class AppUser {
       email: json['email'] ?? '',
       phone: json['phone'],
       avatar: json['avatar'],
-      roles: (json['roles'] as List?)?.map((r) => r.toString()).toList() ??
-          ['consumer'],
+      roles: json['roles'] is List
+          ? (json['roles'] as List).map((r) => r.toString()).toList()
+          : (json['roles'] != null
+              ? [json['roles'].toString()]
+              : const ['consumer']),
       activeRole: json['activeRole'] ?? 'consumer',
-      addresses: (json['addresses'] as List?)
-              ?.map((a) => UserAddress.fromJson(a as Map<String, dynamic>))
-              .toList() ??
-          [],
+      addresses: (json['addresses'] is List)
+          ? (json['addresses'] as List)
+              .whereType<Map>()
+              .map((a) => UserAddress.fromJson(Map<String, dynamic>.from(a)))
+              .toList()
+          : const [],
       isEmailVerified: json['isEmailVerified'] == true,
       isActive: json['isActive'] != false,
       riderStatus: json['riderStatus'] ?? 'none',

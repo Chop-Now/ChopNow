@@ -224,6 +224,10 @@ const userSchema = new Schema(
         type: String,
         trim: true,
       },
+      isOnline: {
+        type: Boolean,
+        default: false,
+      },
       appliedAt: Date,
       reviewedAt: Date,
     },

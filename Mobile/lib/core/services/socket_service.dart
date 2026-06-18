@@ -27,8 +27,7 @@ class SocketService {
     if (_socket != null && _socket!.connected) return;
 
     try {
-      // Connect to the base URL without /api/v1
-      final baseUrl = AppConstants.apiBaseUrl.replaceAll('/api/v1', '');
+      const baseUrl = AppConstants.socketUrl;
 
       _socket = io.io(
         baseUrl,

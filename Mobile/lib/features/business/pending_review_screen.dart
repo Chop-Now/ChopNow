@@ -181,21 +181,21 @@ class PendingReviewScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                _StepTile(
+                const _StepTile(
                   icon: Icons.search_rounded,
                   stepNumber: '1. Admin review',
                   description:
                       'Our team is carefully reviewing your application and documents.',
                 ),
                 const SizedBox(height: 14),
-                _StepTile(
+                const _StepTile(
                   icon: Icons.mark_email_read_rounded,
                   stepNumber: '2. Approval notification',
                   description:
                       'We will notify you via push notification and email once complete.',
                 ),
                 const SizedBox(height: 14),
-                _StepTile(
+                const _StepTile(
                   icon: Icons.dashboard_customize_rounded,
                   stepNumber: '3. Full dashboard access',
                   description:

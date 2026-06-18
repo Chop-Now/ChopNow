@@ -10,8 +10,9 @@ final _businessProfileProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.businessById(id));
   final data = res.data;
-  if (data is Map<String, dynamic>)
+  if (data is Map<String, dynamic>) {
     return (data['business'] ?? data['data'] ?? data) as Map<String, dynamic>;
+  }
   return data as Map<String, dynamic>;
 });
 

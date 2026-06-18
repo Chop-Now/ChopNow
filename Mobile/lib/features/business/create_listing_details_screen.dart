@@ -275,7 +275,7 @@ class _CreateListingDetailsScreenState
               filename: 'photo.jpg'),
         });
         await ApiClient.instance
-            .post('/api/listings/$listingId/photos', data: formData);
+            .post(AppEndpoints.listingPhotos(listingId), data: formData);
       }
       ref.invalidate(myListingsProvider);
       HapticFeedback.heavyImpact();

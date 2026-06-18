@@ -32,13 +32,13 @@ class DefaultFirebaseOptions {
     projectId: 'chopnow-75716',
     storageBucket: 'chopnow-75716.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA2O7mTC2gR-6kiTyhPxEgOZ7RvPrQdzmk',
     appId: '1:369024297315:ios:6dd48dcf3cf6e5f2248b56',
     messagingSenderId: '369024297315',
     projectId: 'chopnow-75716',
     storageBucket: 'chopnow-75716.firebasestorage.app',
+    iosClientId: '369024297315-vbs41mq0fj07ej14oqm39u6lr7p12f1p.apps.googleusercontent.com',
     iosBundleId: 'com.chopnow.chopnow',
   );
 }

@@ -77,7 +77,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               const SizedBox(height: 24),
               // Back button
               GestureDetector(
-                onTap: () => context.pop(),
+                onTap: () => context.canPop() ? context.pop() : context.go('/auth/login'),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -187,8 +187,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             () => _obscurePassword = !_obscurePassword),
                       ),
                       validator: (v) {
-                        if (v == null || v.length < 8)
+                        if (v == null || v.length < 8) {
                           return 'Min 8 characters';
+                        }
                         return null;
                       },
                     ),

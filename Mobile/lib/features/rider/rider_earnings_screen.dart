@@ -271,7 +271,7 @@ class _EarningsBody extends StatelessWidget {
                           barRods: [
                             BarChartRodData(
                               toY: weeklyData[i],
-                              gradient: LinearGradient(
+                              gradient: const LinearGradient(
                                 colors: [
                                   AppColors.primaryLight,
                                   AppColors.primary,
@@ -326,13 +326,13 @@ class _EarningsBody extends StatelessWidget {
 
                 // Demo payout entries
                 ...[
-                  _PayoutEntry(
+                  const _PayoutEntry(
                       date: 'May 28, 2026', amount: 8400, status: 'Completed'),
-                  _PayoutEntry(
+                  const _PayoutEntry(
                       date: 'May 21, 2026', amount: 11200, status: 'Completed'),
-                  _PayoutEntry(
+                  const _PayoutEntry(
                       date: 'May 14, 2026', amount: 9600, status: 'Completed'),
-                  _PayoutEntry(
+                  const _PayoutEntry(
                       date: 'May 7, 2026', amount: 7800, status: 'Completed'),
                 ].map((p) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),

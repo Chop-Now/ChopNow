@@ -38,6 +38,19 @@ class BusinessDashboardScreen extends ConsumerWidget {
         automaticallyImplyLeading: false,
         elevation: 0,
         actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.shopping_bag_outlined,
+                color: AppColors.primary, size: 18),
+            label: const Text('Buyer Mode',
+                style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
+            onPressed: () async {
+              await ref.read(authProvider.notifier).switchRole('consumer');
+              if (context.mounted) context.go('/home');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: AppColors.textPrimary),
@@ -251,13 +264,13 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      'approved' => AppColors.success,
+      'active' || 'approved' => AppColors.success,
       'rejected' => AppColors.error,
       'suspended' => AppColors.warning,
       _ => AppColors.warning,
     };
     final label = switch (status) {
-      'approved' => '✅ Active',
+      'active' || 'approved' => '✅ Active',
       'rejected' => '❌ Rejected',
       'suspended' => '⚠ Suspended',
       _ => '⏳ Pending',

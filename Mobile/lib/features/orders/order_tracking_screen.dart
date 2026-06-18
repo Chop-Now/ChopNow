@@ -19,8 +19,9 @@ final _trackingOrderProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   final res = await ApiClient.instance.get(AppEndpoints.orderById(id));
   final data = res.data;
-  if (data is Map<String, dynamic>)
+  if (data is Map<String, dynamic>) {
     return (data['order'] ?? data['data'] ?? data) as Map<String, dynamic>;
+  }
   return {} as Map<String, dynamic>;
 });
 
@@ -39,13 +40,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   LatLng? _riderPosition;
   bool _socketInitialized = false;
 
-  static const _steps = [
-    _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
-    _Step('Confirmed', 'confirmed', Icons.check_circle_outline, '✅'),
-    _Step('Preparing', 'preparing', Icons.restaurant_outlined, '👨‍🍳'),
-    _Step('Ready', 'ready_for_pickup', Icons.inventory_2_outlined, '🎉'),
-    _Step('Completed', 'completed', Icons.celebration_outlined, '🏆'),
-  ];
+
 
   @override
   void initState() {
@@ -243,11 +238,34 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
             onRetry: () =>
                 ref.invalidate(_trackingOrderProvider(widget.orderId))),
         data: (order) {
-          final status = order['status']?.toString() ?? 'pending';
-          final currentStep = _steps.indexWhere((s) => s.key == status);
-          final isActive = status != 'completed' && status != 'cancelled';
+          var status = order['status']?.toString() ?? 'pending';
           final isDelivery =
               order['fulfillmentType']?.toString().toLowerCase() == 'delivery';
+          final steps = isDelivery
+              ? const [
+                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
+                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline, '✅'),
+                  _Step('Preparing', 'preparing', Icons.restaurant_outlined, '👨‍🍳'),
+                  _Step('Out for Delivery', 'out_for_delivery', Icons.delivery_dining_outlined, '🚴'),
+                  _Step('Completed', 'completed', Icons.celebration_outlined, '🏆'),
+                ]
+              : const [
+                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
+                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline, '✅'),
+                  _Step('Preparing', 'preparing', Icons.restaurant_outlined, '👨‍🍳'),
+                  _Step('Ready for Pickup', 'ready_for_pickup', Icons.inventory_2_outlined, '🎉'),
+                  _Step('Completed', 'completed', Icons.celebration_outlined, '🏆'),
+                ];
+
+          if (isDelivery &&
+              (status == 'picked_up' ||
+                  status == 'in_transit' ||
+                  status == 'delivering')) {
+            status = 'out_for_delivery';
+          }
+
+          final currentStep = steps.indexWhere((s) => s.key == status);
+          final isActive = status != 'completed' && status != 'cancelled';
           final delivery = order['delivery'] as Map<String, dynamic>?;
 
           // Enable live location socket tracking for active delivery statuses
@@ -386,7 +404,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                               fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 16),
-                      ..._steps.asMap().entries.map((entry) {
+                      ...steps.asMap().entries.map((entry) {
                         final i = entry.key;
                         final step = entry.value;
                         final isDone = i <= currentStep;
@@ -395,7 +413,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                           step: step,
                           isDone: isDone,
                           isCurrent: isCurrent,
-                          isLast: i == _steps.length - 1,
+                          isLast: i == steps.length - 1,
                           pulseAnim: isCurrent ? _pulseCtrl : null,
                         );
                       }),
@@ -475,6 +493,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         'confirmed' => '✅',
         'preparing' => '👨‍🍳',
         'ready_for_pickup' => '🎉',
+        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => '🚴',
         'completed' => '🏆',
         'cancelled' => '❌',
         _ => '⏳',
@@ -484,6 +503,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         'confirmed' => 'Order Confirmed!',
         'preparing' => 'Being Prepared',
         'ready_for_pickup' => 'Ready for Pickup! 🎉',
+        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => 'Out for Delivery! 🚴',
         'completed' => 'Order Completed!',
         'cancelled' => 'Order Cancelled',
         _ => 'Order Placed',
@@ -833,6 +853,18 @@ class _StoreInfoCard extends StatelessWidget {
     }
   }
 
+  Future<void> _getWazeDirections() async {
+    final coords = _coordinates;
+    if (coords == null) return;
+    final lat = coords[0];
+    final lng = coords[1];
+    final uri = Uri.parse(
+        'https://waze.com/ul?ll=$lat,$lng&navigate=yes');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = _storeName;
@@ -965,7 +997,7 @@ class _StoreInfoCard extends StatelessWidget {
                     ),
                   if (phone != null && coords != null)
                     const SizedBox(width: 10),
-                  if (coords != null)
+                  if (coords != null) ...[
                     Expanded(
                       child: ScaleTap(
                         onTap: () {
@@ -993,7 +1025,7 @@ class _StoreInfoCard extends StatelessWidget {
                                   size: 16, color: Colors.white),
                               SizedBox(width: 6),
                               Text(
-                                'Get Directions',
+                                'Google Maps',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -1005,6 +1037,49 @@ class _StoreInfoCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ScaleTap(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _getWazeDirections();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: AppColors.primary
+                                    .withValues(alpha: 0.2)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.navigation_rounded,
+                                  size: 16, color: AppColors.primary),
+                              SizedBox(width: 6),
+                              Text(
+                                'Waze',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

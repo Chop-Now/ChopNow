@@ -10,6 +10,17 @@ class ApiException implements Exception {
   String toString() => message;
 
   static ApiException fromDioError(dynamic error) {
+    // Guard: if it's not a DioException, return a generic message
+    if (error is! Exception || error.runtimeType.toString() != 'DioException') {
+      try {
+        // Still try to access .response for Dio-like objects
+        final data = error.response?.data;
+        if (data is Map && data['message'] is String) {
+          return ApiException(data['message']);
+        }
+      } catch (_) {}
+      return ApiException(error.toString().replaceAll('Exception: ', ''));
+    }
     try {
       final data = error.response?.data;
       if (data is Map) {
@@ -50,8 +61,9 @@ class ApiException implements Exception {
     if (type.contains('connectionTimeout') || type.contains('connectTimeout')) {
       return 'Connection timed out. Check your internet.';
     }
-    if (type.contains('receiveTimeout'))
+    if (type.contains('receiveTimeout')) {
       return 'Server took too long to respond.';
+    }
     if (type.contains('connectionError') || type.contains('unknown')) {
       return 'No internet connection. Please try again.';
     }

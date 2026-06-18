@@ -121,7 +121,7 @@ class RiderProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Stats Summary ──────────────────────────────────────────
-                  _SectionCard(
+                  const _SectionCard(
                     child: Row(children: [
                       _MiniStat(emoji: '🚴', label: 'Deliveries', value: '87'),
                       _MiniStat(emoji: '⭐', label: 'Rating', value: '4.8'),
@@ -159,7 +159,7 @@ class RiderProfileScreen extends ConsumerWidget {
                           value: email,
                         ),
                         const Divider(height: 1, color: AppColors.border),
-                        _ProfileRow(
+                        const _ProfileRow(
                           icon: Icons.motorcycle_rounded,
                           label: 'Vehicle',
                           value: 'Motorcycle',

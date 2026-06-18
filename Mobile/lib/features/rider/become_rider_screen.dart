@@ -79,8 +79,9 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
           });
         }
         if (details['nationalId'] != null) _idCtrl.text = details['nationalId'];
-        if (details['licensePlate'] != null)
+        if (details['licensePlate'] != null) {
           _plateCtrl.text = details['licensePlate'];
+        }
       }
     });
   }
@@ -310,7 +311,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
               Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                     color: AppColors.warningSurface, shape: BoxShape.circle),
                 child: const Icon(Icons.hourglass_empty_rounded,
                     color: AppColors.warning, size: 40),

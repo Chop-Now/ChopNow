@@ -61,26 +61,26 @@ class ImpactDashboardScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    SafeArea(
+                    const SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                        padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('🌍 My Impact',
+                            Text('🌍 My Impact',
                                 style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 4),
-                            const Text('Your Food Rescue Journey',
+                            SizedBox(height: 4),
+                            Text('Your Food Rescue Journey',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: -0.3)),
-                            const Spacer(),
-                            const Text(
+                            Spacer(),
+                            Text(
                                 'Every meal you rescue makes a difference for our planet! 🌿',
                                 style: TextStyle(
                                     color: Colors.white70,
@@ -347,10 +347,12 @@ class _ImpactContentState extends State<_ImpactContent>
   }
 
   static String _contextMessage(num co2) {
-    if (co2 <= 0)
+    if (co2 <= 0) {
       return 'Every meal you rescue keeps food out of landfill and CO₂ out of the atmosphere. Start ordering to see your impact!';
-    if (co2 < 500)
+    }
+    if (co2 < 500) {
       return 'You\'ve saved ${co2}g of CO₂ — that\'s like not driving a car for ${(co2 / 120).toStringAsFixed(1)} km!';
+    }
     return 'Amazing! You\'ve saved ${(co2 / 1000).toStringAsFixed(2)}kg of CO₂ — equivalent to planting ${(co2 / 600).round()} trees!';
   }
 
