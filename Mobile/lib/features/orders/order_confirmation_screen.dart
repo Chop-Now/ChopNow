@@ -185,29 +185,29 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: Column(
+                      child: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("What's next?",
+                          Text("What's next?",
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textPrimary)),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           _NextStep(
                             step: '1',
                             icon: Icons.storefront_outlined,
                             title: 'Vendor prepares your order',
                             subtitle: 'You\'ll be notified when it\'s ready',
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           _NextStep(
                             step: '2',
                             icon: Icons.qr_code_rounded,
                             title: 'Get your pickup code',
                             subtitle: 'Show it at the restaurant counter',
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           _NextStep(
                             step: '3',
                             icon: Icons.celebration_rounded,
@@ -344,7 +344,7 @@ class _NextStep extends StatelessWidget {
         Container(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
             shape: BoxShape.circle,
           ),

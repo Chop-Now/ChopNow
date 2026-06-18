@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -272,7 +273,15 @@ String _homeForRole(String role) {
 
 /// Adapter to make Riverpod stream compatible with GoRouter's refreshListenable
 class GoRouterRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<dynamic> _sub;
+
   GoRouterRefreshStream(Stream<dynamic> stream) {
-    stream.listen((_) => notifyListeners());
+    _sub = stream.listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }

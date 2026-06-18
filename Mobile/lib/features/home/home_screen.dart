@@ -13,6 +13,7 @@ import '../../shared/widgets/inputs/cn_text_field.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../core/providers/cart_provider.dart';
+import '../../core/providers/notifications_provider.dart';
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
@@ -23,8 +24,9 @@ final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
     'limit': 20,
   });
   final data = response.data;
-  if (data is Map && data['listings'] != null)
+  if (data is Map && data['listings'] != null) {
     return List.from(data['listings']);
+  }
   if (data is List) return List.from(data);
   return [];
 });
@@ -76,6 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? '${co2Saved.toStringAsFixed(1)} kg'
         : '${(co2Saved * 1000).toStringAsFixed(0)}g';
     final cartCount = ref.watch(cartCountProvider);
+    final unreadCount = ref.watch(unreadCountProvider).value ?? 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -245,20 +248,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         const Icon(Icons.notifications_rounded,
                                             size: 22,
                                             color: AppColors.textPrimary),
-                                        Positioned(
-                                          top: 10,
-                                          right: 10,
-                                          child: Container(
-                                            width: 10,
-                                            height: 10,
-                                            decoration: BoxDecoration(
-                                                color: AppColors.accent,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                    color: AppColors.surface,
-                                                    width: 2)),
+                                        if (unreadCount > 0)
+                                          Positioned(
+                                            top: 10,
+                                            right: 10,
+                                            child: Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: BoxDecoration(
+                                                  color: AppColors.accent,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: AppColors.surface,
+                                                      width: 2)),
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),

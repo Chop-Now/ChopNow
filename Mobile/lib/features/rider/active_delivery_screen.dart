@@ -10,7 +10,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/api/api_exception.dart';
 import '../../core/services/socket_service.dart';
+import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/widgets/layout/glass_box.dart';
 
 // ── Delivery Phases ───────────────────────────────────────────────────────────
@@ -81,10 +83,45 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
   DeliveryPhase _phase = DeliveryPhase.headingToRestaurant;
   Map<String, dynamic> _orderData = {};
   StreamSubscription<Position>? _locationSubscription;
+  String? _fetchError;
 
-  // Kigali demo coordinates (used when real order coords aren't available)
-  static const _restaurantPin = LatLng(-1.9441, 30.0619);
-  static const _customerPin = LatLng(-1.9578, 30.0925);
+  // Kigali city center — only used as last-resort fallback
+  static const _kigaliCenter = LatLng(-1.9441, 30.0619);
+
+  /// Restaurant coordinates parsed from order data
+  LatLng get _restaurantPin {
+    final biz = _orderData['business'] as Map? ?? {};
+    final loc = biz['location'] as Map? ?? {};
+    final coords = loc['coordinates'] as List?;
+    if (coords != null && coords.length >= 2) {
+      return LatLng(
+        (coords[1] as num).toDouble(),
+        (coords[0] as num).toDouble(),
+      );
+    }
+    return _kigaliCenter;
+  }
+
+  /// Customer delivery coordinates parsed from order data
+  LatLng get _customerPin {
+    final delivery = _orderData['deliveryAddress'] as Map? ?? {};
+    final loc = delivery['location'] as Map? ?? {};
+    // Try GeoJSON coordinates array first
+    final coords = loc['coordinates'] as List?;
+    if (coords != null && coords.length >= 2) {
+      return LatLng(
+        (coords[1] as num).toDouble(),
+        (coords[0] as num).toDouble(),
+      );
+    }
+    // Try flat lat/lng fields
+    final lat = (loc['lat'] ?? loc['latitude']) as num?;
+    final lng = (loc['lng'] ?? loc['longitude']) as num?;
+    if (lat != null && lng != null) {
+      return LatLng(lat.toDouble(), lng.toDouble());
+    }
+    return const LatLng(-1.9578, 30.0925); // Default south Kigali
+  }
 
   late AnimationController _phaseAnim;
   late Animation<double> _phaseFade;
@@ -147,21 +184,44 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
         setState(() {
           _orderData =
               data is Map<String, dynamic> ? data : (data['order'] ?? {});
-          // Determine current phase from backend status
-          final status = _orderData['status']?.toString() ?? '';
-          _phase = switch (status) {
-            'delivering' => DeliveryPhase.headingToRestaurant,
-            'picked_up' => DeliveryPhase.delivering,
-            'delivered' || 'completed' => DeliveryPhase.completed,
-            _ => DeliveryPhase.headingToRestaurant,
-          };
+          
+          final deliveryStatus = _orderData['delivery'] is Map
+              ? _orderData['delivery']['status']?.toString()
+              : null;
+          
+          if (deliveryStatus != null) {
+            _phase = switch (deliveryStatus) {
+              'assigned' => DeliveryPhase.headingToRestaurant,
+              'picked_up' => DeliveryPhase.pickingUp,
+              'in_transit' => DeliveryPhase.delivering,
+              'delivered' => DeliveryPhase.completed,
+              _ => DeliveryPhase.headingToRestaurant,
+            };
+          } else {
+            // Fallback to order status
+            final status = _orderData['status']?.toString() ?? '';
+            _phase = switch (status) {
+              'accepted' || 'heading_to_restaurant' => DeliveryPhase.headingToRestaurant,
+              'at_restaurant' || 'picked_up'         => DeliveryPhase.pickingUp,
+              'delivering' || 'out_for_delivery'     => DeliveryPhase.delivering,
+              'delivered' || 'completed'             => DeliveryPhase.completed,
+              _                                      => DeliveryPhase.headingToRestaurant,
+            };
+          }
+          _fetchError = null;
         });
 
         if (_phase != DeliveryPhase.completed) {
           _startLocationTracking();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _fetchError = ApiException.fromDioError(e).message;
+        });
+      }
+    }
   }
 
   Future<void> _determinePosition() async {
@@ -223,15 +283,33 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
       // Map phase to API status
       final newStatus = switch (_phase) {
         DeliveryPhase.headingToRestaurant => 'picked_up',
-        DeliveryPhase.pickingUp => 'out_for_delivery',
+        DeliveryPhase.pickingUp => 'in_transit',
         DeliveryPhase.delivering => 'delivered',
         DeliveryPhase.completed => 'delivered',
       };
 
-      await ApiClient.instance.put(
-        AppEndpoints.orderStatus(widget.orderId),
-        data: {'status': newStatus},
-      );
+      final deliveryId = _orderData['delivery'] is Map
+          ? _orderData['delivery']['_id']?.toString()
+          : _orderData['delivery']?.toString();
+
+      if (deliveryId != null && deliveryId.isNotEmpty) {
+        await ApiClient.instance.patch(
+          AppEndpoints.deliveryStatus(deliveryId),
+          data: {'status': newStatus},
+        );
+      } else {
+        // Fallback to order status PUT
+        final fallbackOrderStatus = switch (_phase) {
+          DeliveryPhase.headingToRestaurant => 'picked_up',
+          DeliveryPhase.pickingUp => 'out_for_delivery',
+          DeliveryPhase.delivering => 'completed',
+          DeliveryPhase.completed => 'completed',
+        };
+        await ApiClient.instance.put(
+          AppEndpoints.orderStatus(widget.orderId),
+          data: {'status': fallbackOrderStatus},
+        );
+      }
 
       // Animate phase transition
       await _phaseAnim.reverse();
@@ -259,7 +337,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Could not update delivery status'),
+            content: Text(ApiException.fromDioError(e).message),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -316,6 +394,19 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_fetchError != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: CnErrorState(
+          message: _fetchError!,
+          onRetry: () {
+            setState(() => _fetchError = null);
+            _fetchOrder();
+          },
+        ),
+      );
+    }
+
     final markers = _buildMarkers();
     final biz =
         _orderData['business'] is Map ? _orderData['business'] as Map : {};
@@ -329,7 +420,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.canPop() ? context.pop() : context.go('/rider/dashboard'),
             child: Container(
               width: 40,
               height: 40,

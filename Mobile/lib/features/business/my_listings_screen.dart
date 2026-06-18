@@ -169,7 +169,15 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
                 backgroundColor: AppColors.error),
           );
         }
-      } catch (_) {}
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to delete: ${e.toString().replaceAll('Exception: ', '')}'),
+                backgroundColor: AppColors.error),
+          );
+        }
+      }
     }
   }
 }

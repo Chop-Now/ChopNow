@@ -11,7 +11,7 @@ import '../../shared/widgets/buttons/cn_buttons.dart';
 
 final payoutsHistoryProvider =
     FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final res = await ApiClient.instance.get('/api/payouts/me');
+  final res = await ApiClient.instance.get(AppEndpoints.payoutsMe);
   final data = res.data;
   if (data is List) return data;
   if (data is Map) return (data['payouts'] ?? data['data'] ?? []) as List;
@@ -182,7 +182,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
 
     try {
       await ApiClient.instance.post(
-        '/api/payouts/request',
+        AppEndpoints.payoutsRequest,
         data: {
           'amount': amount,
           'method': _preferredMethod,
@@ -244,12 +244,14 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                   hint: 'Min 5,000 RWF',
                   keyboardType: TextInputType.number,
                   validator: (v) {
-                    if (v == null || double.tryParse(v) == null)
+                    if (v == null || double.tryParse(v) == null) {
                       return 'Enter a valid amount';
+                    }
                     final amt = double.parse(v);
                     if (amt < 5000) return 'Minimum withdrawal is 5,000 RWF';
-                    if (amt > _balance)
+                    if (amt > _balance) {
                       return 'Amount exceeds available balance';
+                    }
                     return null;
                   },
                 ),
@@ -627,7 +629,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       padding: EdgeInsets.all(20),
                       child:
                           CircularProgressIndicator(color: AppColors.primary))),
-              error: (e, _) => Center(child: Text(e.toString())),
+              error: (e, _) => Center(child: Text(ApiException.fromDioError(e).message)),
               data: (payouts) {
                 if (payouts.isEmpty) {
                   return Container(

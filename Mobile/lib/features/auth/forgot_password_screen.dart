@@ -157,8 +157,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   String _parseError(dynamic e) {
     final msg = e.toString();
-    if (msg.contains('404') || msg.contains('not found'))
+    if (msg.contains('404') || msg.contains('not found')) {
       return 'No account found with this email.';
+    }
     if (msg.contains('expired')) return 'Code has expired. Request a new one.';
     if (msg.contains('invalid')) return 'Invalid code. Please try again.';
     return msg.replaceAll('Exception: ', '');

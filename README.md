@@ -1,4 +1,4 @@
-# ChopNow - Surplus Food Marketplace
+@a# ChopNow - Surplus Food Marketplace
 
 <p align="center">
   <strong>Connecting businesses with surplus food to conscious consumers</strong>

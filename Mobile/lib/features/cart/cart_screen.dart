@@ -171,11 +171,11 @@ class CartScreen extends ConsumerWidget {
                           label: 'Subtotal',
                           value: 'RWF ${total.toStringAsFixed(0)}'),
                       const SizedBox(height: 8),
-                      _PriceLine(
+                      const _PriceLine(
                         label: 'Service Fee',
                         value: 'Free',
                         valueColor: AppColors.success,
-                        valueStyle: const TextStyle(
+                        valueStyle: TextStyle(
                             fontSize: 13,
                             color: AppColors.success,
                             fontWeight: FontWeight.w700),
@@ -404,10 +404,10 @@ class _SmallStepper extends StatelessWidget {
             child: Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primarySurface,
                 borderRadius:
-                    const BorderRadius.horizontal(left: Radius.circular(9)),
+                    BorderRadius.horizontal(left: Radius.circular(9)),
               ),
               child: const Icon(Icons.remove_rounded,
                   size: 15, color: AppColors.primary),

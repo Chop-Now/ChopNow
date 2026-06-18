@@ -8,6 +8,9 @@ class AppConstants {
   static const String apiBaseUrl = String.fromEnvironment('API_BASE_URL',
       defaultValue: 'http://10.0.2.2:5000/api/v1');
 
+  static const String socketUrl = String.fromEnvironment('SOCKET_URL',
+      defaultValue: 'http://10.0.2.2:5000');
+
   // Token keys for secure storage
   static const String accessTokenKey = 'chopnow_access_token';
   static const String refreshTokenKey = 'chopnow_refresh_token';

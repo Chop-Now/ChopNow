@@ -32,9 +32,10 @@ const seedData = async () => {
         firstName: 'John',
         lastName: 'Doe',
         email: 'consumer@example.com',
-        phone: '+250700000001',
+        phone: '+250794758542',
         passwordHash: consumerPassword,
-        role: 'consumer',
+        roles: ['consumer'],
+        activeRole: 'consumer',
         emailVerified: true,
       },
       {
@@ -43,7 +44,8 @@ const seedData = async () => {
         email: 'jane@example.com',
         phone: '+250700000002',
         passwordHash: consumerPassword,
-        role: 'consumer',
+        roles: ['consumer'],
+        activeRole: 'consumer',
         emailVerified: true,
       },
     ]);
@@ -57,7 +59,8 @@ const seedData = async () => {
       email: 'bakery@example.com',
       phone: '+250700000003',
       passwordHash: ownerPassword,
-      role: 'business_owner',
+      roles: ['consumer', 'business_owner'],
+      activeRole: 'business_owner',
       emailVerified: true,
     });
 
@@ -72,6 +75,9 @@ const seedData = async () => {
         city: 'Kigali',
         location: { type: 'Point', coordinates: [30.0619, -1.9441] }, // Example coords
       },
+      verification: {
+        status: 'approved',
+      },
       status: 'active',
     });
 
@@ -81,7 +87,8 @@ const seedData = async () => {
       email: 'restaurant@example.com',
       phone: '+250700000004',
       passwordHash: ownerPassword,
-      role: 'business_owner',
+      roles: ['consumer', 'business_owner'],
+      activeRole: 'business_owner',
       emailVerified: true,
     });
 
@@ -96,9 +103,34 @@ const seedData = async () => {
         city: 'Kigali',
         location: { type: 'Point', coordinates: [30.0588, -1.9495] },
       },
+      verification: {
+        status: 'approved',
+      },
       status: 'active',
     });
     console.log('Created businesses.');
+
+    // Create Rider
+    const riderPassword = await bcrypt.hash('Rider123!', 12);
+    const rider1 = await User.create({
+      firstName: 'Robert',
+      lastName: 'Rider',
+      email: 'rider@example.com',
+      phone: '+250700000005',
+      passwordHash: riderPassword,
+      roles: ['consumer', 'rider'],
+      activeRole: 'rider',
+      riderStatus: 'approved',
+      riderDetails: {
+        vehicleType: 'motorcycle',
+        licensePlate: 'RA 123 A',
+        nationalId: '1199580001234567',
+        phone: '+250700000005',
+        isOnline: true,
+      },
+      emailVerified: true,
+    });
+    console.log('Created rider:', rider1.email);
 
     // Create Listings
     await Listing.create([
@@ -106,9 +138,9 @@ const seedData = async () => {
         business: bakery._id,
         title: 'Surplus Croissants Bag',
         description: 'A bag of 5 delicious croissants baked this morning.',
-        category: 'baked_goods',
-        pricing: { originalPrice: 5000, rescuePrice: 2500, currency: 'RWF' },
-        inventory: { quantityAvailable: 10 },
+        category: 'baked-goods',
+        pricing: { originalPrice: 5000, price: 2500, currency: 'RWF' },
+        inventory: { quantity: 10 },
         timeWindow: {
           availableFrom: new Date(),
           availableUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -119,9 +151,9 @@ const seedData = async () => {
         business: restaurant._id,
         title: 'Lunch Buffet Leftovers',
         description: 'High quality rice, beans, and grilled chicken.',
-        category: 'ready_meals',
-        pricing: { originalPrice: 4000, rescuePrice: 2000, currency: 'RWF' },
-        inventory: { quantityAvailable: 5 },
+        category: 'meals',
+        pricing: { originalPrice: 4000, price: 2000, currency: 'RWF' },
+        inventory: { quantity: 5 },
         timeWindow: {
           availableFrom: new Date(),
           availableUntil: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours

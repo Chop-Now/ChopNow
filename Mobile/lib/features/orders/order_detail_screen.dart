@@ -193,9 +193,10 @@ class _OrderDetailView extends StatelessWidget {
 
   LinearGradient _gradientForStatus(String status) {
     if (status == 'completed') return AppColors.primaryGradient;
-    if (status == 'cancelled')
+    if (status == 'cancelled') {
       return const LinearGradient(
           colors: [Color(0xFFE53935), Color(0xFFEF5350)]);
+    }
     return const LinearGradient(colors: [Color(0xFF00897B), Color(0xFF26A69A)]);
   }
 

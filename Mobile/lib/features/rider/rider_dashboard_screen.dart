@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 
@@ -12,26 +13,60 @@ import '../../shared/widgets/feedback/cn_states.dart';
 
 final _availableOrdersProvider = FutureProvider<List<dynamic>>((ref) async {
   try {
-    final res = await ApiClient.instance.get(AppEndpoints.orders,
-        queryParameters: {'status': 'ready_for_pickup'});
+    final res = await ApiClient.instance.get(AppEndpoints.availableDeliveries);
     final data = res.data;
-    if (data is List) return data;
-    if (data is Map) return (data['orders'] ?? data['data'] ?? []) as List;
-    return [];
-  } catch (_) {
-    return [];
+    final List rawList;
+    if (data is List) {
+      rawList = data;
+    } else if (data is Map) {
+      rawList = data['deliveries'] ?? data['data'] ?? [];
+    } else {
+      rawList = [];
+    }
+
+    // Map Delivery objects to look like what the widget expects
+    return rawList.map((d) {
+      final order = d['order'] ?? {};
+      return {
+        '_id': d['_id']?.toString() ?? '', // deliveryId
+        'orderId': order['_id']?.toString() ?? '',
+        'business': {
+          'name': d['pickupLocation']?['businessName'] ?? 'Restaurant',
+          'address': d['pickupLocation']?['address'] ?? '',
+        },
+        'total': d['deliveryFee'] ?? order['pricing']?['deliveryFee'] ?? 0,
+        'items': [], // no items in available deliveries list
+      };
+    }).toList();
+  } catch (e) {
+    throw ApiException.fromDioError(e);
   }
 });
 
 final _myDeliveriesProvider = FutureProvider<List<dynamic>>((ref) async {
   try {
-    final res = await ApiClient.instance.get(AppEndpoints.myOrders);
+    final res = await ApiClient.instance.get(AppEndpoints.myDeliveries);
     final data = res.data;
-    if (data is List) return data;
-    if (data is Map) return (data['orders'] ?? data['data'] ?? []) as List;
-    return [];
-  } catch (_) {
-    return [];
+    final List rawList;
+    if (data is List) {
+      rawList = data;
+    } else if (data is Map) {
+      rawList = data['deliveries'] ?? data['data'] ?? [];
+    } else {
+      rawList = [];
+    }
+
+    return rawList.map((d) {
+      final order = d['order'] ?? {};
+      return {
+        '_id': order['_id']?.toString() ?? '', // orderId for navigation
+        'deliveryId': d['_id']?.toString() ?? '',
+        'status': order['status'] ?? d['status'] ?? '',
+        'total': d['deliveryFee'] ?? 0,
+      };
+    }).toList();
+  } catch (e) {
+    throw ApiException.fromDioError(e);
   }
 });
 
@@ -55,6 +90,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
+    _loadAvailability();
   }
 
   @override
@@ -63,22 +99,46 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
     super.dispose();
   }
 
+  Future<void> _loadAvailability() async {
+    try {
+      final res = await ApiClient.instance.get(AppEndpoints.riderAvailability);
+      if (mounted) {
+        setState(() => _isOnline = res.data['isOnline'] == true);
+      }
+    } catch (_) {
+      // Default to true if API unavailable
+    }
+  }
+
   Future<void> _toggleOnline() async {
     HapticFeedback.mediumImpact();
     setState(() => _isTogglingOnline = true);
-    await Future.delayed(const Duration(milliseconds: 400));
-    setState(() {
-      _isOnline = !_isOnline;
-      _isTogglingOnline = false;
-    });
-  }
-
-  Future<void> _acceptDelivery(String orderId) async {
-    HapticFeedback.mediumImpact();
     try {
       await ApiClient.instance.put(
-        AppEndpoints.orderStatus(orderId),
-        data: {'status': 'delivering'},
+        AppEndpoints.riderAvailability,
+        data: {'isOnline': !_isOnline},
+      );
+      setState(() => _isOnline = !_isOnline);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update availability: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isTogglingOnline = false);
+    }
+  }
+
+  Future<void> _acceptDelivery(String deliveryId) async {
+    HapticFeedback.mediumImpact();
+    try {
+      await ApiClient.instance.patch(
+        AppEndpoints.assignDelivery(deliveryId),
       );
       ref.invalidate(_availableOrdersProvider);
       ref.invalidate(_myDeliveriesProvider);
@@ -94,11 +154,11 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
           ),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Could not accept order. Try again.'),
+            content: Text(ApiException.fromDioError(e).message),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -219,16 +279,16 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         ),
                         const SizedBox(height: 20),
                         // Stats row
-                        Row(
+                        const Row(
                           children: [
                             _StatCard(
                                 emoji: '✅', label: 'Delivered', value: '24'),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             _StatCard(
                                 emoji: '💰',
                                 label: 'Today',
                                 value: 'RWF 4,200'),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             _StatCard(
                                 emoji: '⭐', label: 'Rating', value: '4.8'),
                           ],
@@ -350,7 +410,10 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                       child:
                           CircularProgressIndicator(color: AppColors.primary),
                     ),
-                    error: (e, _) => CnErrorState(message: e.toString()),
+                    error: (e, _) => CnErrorState(
+                      message: e.toString(),
+                      onRetry: () => ref.invalidate(_myDeliveriesProvider),
+                    ),
                     data: (orders) => orders.isEmpty
                         ? const CnEmptyState(
                             title: 'No active deliveries',
@@ -549,7 +612,7 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => context
-                        .push('/rider/deliveries/${widget.order['_id']}'),
+                        .push('/rider/deliveries/${widget.order['orderId']}'),
                     icon: const Icon(Icons.map_outlined, size: 16),
                     label: const Text('View Route'),
                     style: OutlinedButton.styleFrom(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/models/user_model.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -41,14 +42,14 @@ class ProfileScreen extends ConsumerWidget {
           // ── Premium Gradient Hero Header ──
           SliverToBoxAdapter(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.primary,
                     AppColors.primaryDark,
-                    const Color(0xFF1A3A2A),
+                    Color(0xFF1A3A2A),
                   ],
                 ),
               ),
@@ -422,8 +423,9 @@ class ProfileScreen extends ConsumerWidget {
       };
 
   void _showRoleSwitcher(
-      BuildContext context, WidgetRef ref, appUser, String current) {
-    final roles = (appUser?.roles as List<String>?) ?? ['consumer'];
+      BuildContext context, WidgetRef ref, AppUser? appUser, String current) {
+    final List<String> roles =
+        (appUser?.roles ?? const ['consumer']).map((e) => e.toString()).toList();
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,

@@ -92,8 +92,9 @@ class _BusinessVerificationScreenState
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied)
+        if (permission == LocationPermission.denied) {
           throw Exception('Location permission denied.');
+        }
       }
 
       if (permission == LocationPermission.deniedForever) {
@@ -193,7 +194,7 @@ class _BusinessVerificationScreenState
       }
 
       await ApiClient.instance
-          .post('/api/businesses/$_businessId/kyc', data: formData);
+          .post(AppEndpoints.businessKyc(_businessId!), data: formData);
 
       HapticFeedback.heavyImpact();
       if (mounted) {

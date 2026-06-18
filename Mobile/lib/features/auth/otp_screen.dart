@@ -82,7 +82,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           backgroundColor: AppColors.background,
           elevation: 0,
           leading: ScaleTap(
-            onTap: () => context.pop(),
+            onTap: () => context.canPop() ? context.pop() : context.go('/auth/login'),
             child: const Icon(Icons.arrow_back_rounded,
                 color: AppColors.textPrimary),
           ),
@@ -129,8 +129,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                               } else if (v.isEmpty && i > 0) {
                                 _focusNodes[i - 1].requestFocus();
                               }
-                              if (_otp.length == 6)
+                              if (_otp.length == 6) {
                                 HapticFeedback.lightImpact();
+                              }
                               setState(() {});
                             },
                           )),

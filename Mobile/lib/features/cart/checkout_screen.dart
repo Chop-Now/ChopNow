@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
 import '../../core/services/socket_service.dart';
 import '../../core/models/order_model.dart';
 import '../../core/providers/cart_provider.dart';
@@ -138,9 +139,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                     HapticFeedback.selectionClick();
                                   } catch (e) {
                                     ss(() {
-                                      addError = e
-                                          .toString()
-                                          .replaceAll('Exception: ', '');
+                                      final str = e.toString().toLowerCase();
+                                      if (str.contains('permissiondenied') || str.contains('permission denied')) {
+                                        addError = 'Location permission denied. Please allow location access to autofill.';
+                                      } else if (str.contains('permanently denied')) {
+                                        addError = 'Location permissions are permanently denied. Please enable them in app settings.';
+                                      } else if (str.contains('disabled') || str.contains('services are disabled')) {
+                                        addError = 'Location services (GPS) are disabled. Please enable them in settings.';
+                                      } else if (str.contains('timeout')) {
+                                        addError = 'Location request timed out. Please try again.';
+                                      } else {
+                                        addError = e.toString().replaceAll('Exception: ', '');
+                                      }
                                     });
                                   } finally {
                                     ss(() {
@@ -318,7 +328,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                   color: AppColors.primary,
                                   shape: BoxShape.circle),
                             ),
@@ -622,17 +632,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       Map<String, dynamic>? deliveryDetails;
       if (_deliveryType == 'delivery') {
         final user = ref.read(currentUserProvider);
-        final addr =
-            user?.addresses.firstWhere((a) => a.id == _selectedAddressId);
+        // Use where+firstOrNull to avoid StateError if selection is stale
+        final addr = user?.addresses
+            .where((a) => a.id == _selectedAddressId)
+            .firstOrNull;
         if (addr == null) {
-          throw Exception('Please add or select a delivery address');
+          throw Exception('Please add or select a delivery address.');
         }
         deliveryDetails = {
           'address': '${addr.street}, ${addr.city ?? 'Kigali'}',
           'location': {
             'lat': addr.coordinates != null && addr.coordinates!.length > 1
                 ? addr.coordinates![1]
-                : -1.9441,
+                : throw Exception(
+                    'Your saved address has no GPS coordinates. Please re-add it using the GPS button.'),
             'lng': addr.coordinates != null && addr.coordinates!.isNotEmpty
                 ? addr.coordinates![0]
                 : 30.0619,
@@ -648,7 +661,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   'quantity': i.quantity,
                   'unitPrice': i.listing.offerPrice,
                   'name': i.listing.title,
+                  'title': i.listing.title,
                   'productId': i.listing.id,
+                  'subtotal': i.quantity * i.listing.offerPrice,
                 })
             .toList(),
         fulfillmentType: _deliveryType,
@@ -657,11 +672,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
 
       HapticFeedback.heavyImpact();
-      ref.read(cartProvider.notifier).clear();
+      // Cart is cleared after payment is confirmed (in payment sheet or COD)
       if (mounted) {
         if (_paymentMethod == 'momo' || _paymentMethod == 'airtel') {
           _showMobileMoneyPaymentBottomSheet(context, order);
         } else {
+          ref.read(cartProvider.notifier).clear();
           context.pushReplacement('/orders/${order.id}/confirmation');
         }
       }
@@ -723,7 +739,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
               try {
                 final response = await ApiClient.instance
-                    .post('/api/payments/deposit', data: {
+                    .post(AppEndpoints.paymentDeposit, data: {
                   'orderId': order.id,
                   'phoneNumber': formattedPhone,
                   'correspondent': isMomo ? 'MTN_MOMO_RWA' : 'AIRTEL_RWA',
@@ -749,6 +765,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Future.delayed(const Duration(seconds: 2), () {
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
+                          ref.read(cartProvider.notifier).clear();
                           context.pushReplacement(
                               '/orders/${order.id}/confirmation');
                         }
@@ -769,7 +786,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
                     try {
                       final statusRes = await ApiClient.instance
-                          .get('/api/payments/status/${order.id}');
+                          .get(AppEndpoints.paymentStatus(order.id));
                       if (statusRes.data != null &&
                           statusRes.data['status'] == 'completed') {
                         timer.cancel();
@@ -781,6 +798,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         Future.delayed(const Duration(seconds: 2), () {
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
+                            ref.read(cartProvider.notifier).clear();
                             context.pushReplacement(
                                 '/orders/${order.id}/confirmation');
                           }

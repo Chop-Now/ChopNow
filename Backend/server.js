@@ -29,6 +29,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const riderRoutes = require('./routes/riderRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -290,6 +291,7 @@ app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/deliveries', deliveryRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/rider', riderRoutes);
 
 // Backward compatibility: redirect /api/* to /api/v1/*
 app.use('/api/users', userRoutes);
@@ -306,6 +308,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/rider', riderRoutes);
 
 // Database connection and server start
 const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');

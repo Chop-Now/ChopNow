@@ -83,7 +83,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
           ),
         ),
         leading: ScaleTap(
-          onTap: () => context.pop(),
+          onTap: () => context.canPop() ? context.pop() : context.go('/home'),
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: const BoxDecoration(

@@ -88,6 +88,8 @@ class AppEndpoints {
 
   // ── Payouts ──────────────────────────────────────────────────────────────
   static const String payouts = '/payouts';
+  static const String payoutsMe = '/payouts/me';
+  static const String payoutsRequest = '/payouts/request';
 
   // ── Settings ─────────────────────────────────────────────────────────────
   static const String settings = '/settings';
@@ -102,4 +104,18 @@ class AppEndpoints {
   static String riderAcceptOrder(String id) => '/orders/$id/accept';
   static String riderCompleteDelivery(String id) => '/orders/$id/complete';
   static const String applyRider = '/users/apply-rider';
+  static const String riderAvailability = '/rider/availability';
+
+  // ── Deliveries ────────────────────────────────────────────────────────────
+  static const String availableDeliveries = '/deliveries/available';
+  static const String myDeliveries = '/deliveries/my';
+  static String assignDelivery(String id) => '/deliveries/$id/assign';
+  static String deliveryStatus(String id) => '/deliveries/$id/status';
+  static String deliveryLocation(String id) => '/deliveries/$id/location';
+  static String deliveryProof(String id) => '/deliveries/$id/proof';
+  static String deliveryByOrderId(String orderId) => '/deliveries/order/$orderId';
+
+  // ── Payments ──────────────────────────────────────────────────────────────
+  static const String paymentDeposit = '/payments/deposit';
+  static String paymentStatus(String orderId) => '/payments/status/$orderId';
 }
