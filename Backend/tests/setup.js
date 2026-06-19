@@ -46,13 +46,15 @@ jest.mock('../utils/emailService', () => ({
 // ── Connect to test database before the suite runs ──
 beforeAll(async () => {
   const uri = process.env.MONGO_URI;
-  
+
   // Safety guard: Check if uri points to production Atlas instance
   if (uri && (uri.includes('mongodb.net') || uri.includes('replicaSet') || !uri.includes('test'))) {
-    console.error('❌ FATAL ERROR: Attempting to run tests against a non-test or production database: ' + uri);
+    console.error(
+      '❌ FATAL ERROR: Attempting to run tests against a non-test or production database: ' + uri
+    );
     process.exit(1);
   }
-  
+
   // Disconnect first if already connected (e.g. app preloaded connection)
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();

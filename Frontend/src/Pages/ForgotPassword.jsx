@@ -25,7 +25,7 @@ const ForgotPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Resend cooldown timer
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef(null);
@@ -83,7 +83,7 @@ const ForgotPassword = () => {
       toast.error('Please enter your email address');
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await authService.forgotPassword(email);
@@ -167,7 +167,7 @@ const ForgotPassword = () => {
   // Handle digit inputs inside separate blocks
   const handleOtpChange = (index, value) => {
     if (/[^0-9]/.test(value)) return; // Only numbers allowed
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -208,7 +208,7 @@ const ForgotPassword = () => {
             alt="Branding background"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-solid/90 via-solid/80 to-tertiary/90"></div>
-          
+
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center w-full p-12 text-white">
             <div className="mb-8">
               <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
@@ -232,13 +232,13 @@ const ForgotPassword = () => {
           </div>
 
           <div className="border border-gray-500/20 bg-slate-900/40 backdrop-blur-md rounded-2xl p-8 md:p-12 w-full max-w-lg shadow-xl shadow-black/20">
-            
             {/* Step 1: Email Request */}
             {step === 1 && (
               <form onSubmit={handleRequestOtp} className="flex flex-col">
                 <h2 className="text-3xl font-bold text-white mb-2">Reset Password</h2>
                 <p className="text-sm text-slate-400 mb-8">
-                  Enter your email address below. We'll send you a 6-digit verification code to reset your password.
+                  Enter your email address below. We'll send you a 6-digit verification code to
+                  reset your password.
                 </p>
 
                 <div className="flex items-center w-full bg-slate-800/50 border border-slate-700 h-14 rounded-xl overflow-hidden px-4 gap-3 mb-6 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
@@ -285,7 +285,8 @@ const ForgotPassword = () => {
               <form onSubmit={handleVerifyOtp} className="flex flex-col">
                 <h2 className="text-3xl font-bold text-white mb-2">Verify OTP</h2>
                 <p className="text-sm text-slate-400 mb-8">
-                  We've sent a 6-digit verification code to <span className="text-white font-medium">{email}</span>.
+                  We've sent a 6-digit verification code to{' '}
+                  <span className="text-white font-medium">{email}</span>.
                 </p>
 
                 <div className="flex justify-between gap-2 mb-6" onPaste={handleOtpPaste}>
@@ -394,7 +395,11 @@ const ForgotPassword = () => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="text-slate-500 hover:text-slate-300"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
 
@@ -468,10 +473,11 @@ const ForgotPassword = () => {
                 <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6 text-green-500 animate-bounce">
                   <KeyRound className="w-10 h-10" />
                 </div>
-                
+
                 <h2 className="text-3xl font-bold text-white mb-2">Password Reset!</h2>
                 <p className="text-sm text-slate-400 mb-8">
-                  Your password has been successfully updated. You can now log in using your new credentials.
+                  Your password has been successfully updated. You can now log in using your new
+                  credentials.
                 </p>
 
                 <Link
@@ -482,7 +488,6 @@ const ForgotPassword = () => {
                 </Link>
               </div>
             )}
-
           </div>
         </div>
       </div>

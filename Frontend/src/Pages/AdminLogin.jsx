@@ -231,7 +231,10 @@ const AdminLogin = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-slate-300">Password</label>
-                <Link to="/forgot-password" className="text-sm text-solid hover:text-tertiary transition-colors">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-solid hover:text-tertiary transition-colors"
+                >
                   Forgot password?
                 </Link>
               </div>
