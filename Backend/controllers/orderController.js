@@ -104,8 +104,12 @@ const createOrder = async (req, res) => {
 
         // Create order
         const isTestMode = process.env.PAYMENT_TEST_MODE !== 'false';
-        const initialStatus = (payment?.paymentMethod === 'card' && isTestMode) ? 'paid' : 'pending_payment';
-        const initialPaymentStatus = (payment?.paymentMethod === 'card' && isTestMode) ? 'completed' : (payment?.paymentStatus || 'pending');
+        const initialStatus =
+          payment?.paymentMethod === 'card' && isTestMode ? 'paid' : 'pending_payment';
+        const initialPaymentStatus =
+          payment?.paymentMethod === 'card' && isTestMode
+            ? 'completed'
+            : payment?.paymentStatus || 'pending';
 
         const orderData = {
           customer: req.user._id,
@@ -127,11 +131,7 @@ const createOrder = async (req, res) => {
             fulfillmentType === 'pickup'
               ? {
                   ...pickupDetails,
-                  pickupCode: crypto
-                    .randomBytes(4)
-                    .toString('hex')
-                    .substring(0, 6)
-                    .toUpperCase(),
+                  pickupCode: crypto.randomBytes(4).toString('hex').substring(0, 6).toUpperCase(),
                 }
               : undefined,
           status: initialStatus,
@@ -147,10 +147,7 @@ const createOrder = async (req, res) => {
           };
         }
 
-        [order] = await Order.create(
-          [orderData],
-          { session }
-        );
+        [order] = await Order.create([orderData], { session });
 
         // Update user stats
         await User.findByIdAndUpdate(

@@ -511,10 +511,13 @@ const forgotPassword = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordToken +resetPasswordExpires');
-    
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      '+resetPasswordToken +resetPasswordExpires'
+    );
+
     // Generic message to prevent email enumeration
-    const successMessage = 'If your email is registered, we have sent a 6-digit verification code to it.';
+    const successMessage =
+      'If your email is registered, we have sent a 6-digit verification code to it.';
 
     if (!user) {
       logger.info({ email: normalizedEmail }, 'Password reset requested for non-existent email');
@@ -538,7 +541,9 @@ const forgotPassword = async (req, res) => {
       res.json({ message: successMessage });
     } else {
       logger.error({ email: normalizedEmail }, 'Failed to send password reset OTP email');
-      res.status(500).json({ message: 'Failed to send password reset code. Please try again later.' });
+      res
+        .status(500)
+        .json({ message: 'Failed to send password reset code. Please try again later.' });
     }
   } catch (error) {
     logger.error({ err: error }, 'Forgot password error');
@@ -608,7 +613,9 @@ const resetPassword = async (req, res) => {
       query.email = email.toLowerCase().trim();
     }
 
-    const user = await User.findOne(query).select('+passwordHash +resetPasswordToken +resetPasswordExpires');
+    const user = await User.findOne(query).select(
+      '+passwordHash +resetPasswordToken +resetPasswordExpires'
+    );
 
     if (!user) {
       logger.warn({ token, email }, 'Password reset failed - invalid or expired token/code');

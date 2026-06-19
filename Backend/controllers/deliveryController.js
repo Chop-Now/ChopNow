@@ -686,7 +686,7 @@ const getRiderDashboardStats = async (req, res) => {
     // Count total deliveries delivered by this rider
     const totalDeliveries = await Delivery.countDocuments({
       rider: riderId,
-      status: 'delivered'
+      status: 'delivered',
     });
 
     // Sum today's earnings
@@ -696,8 +696,10 @@ const getRiderDashboardStats = async (req, res) => {
     const todayDeliveries = await Delivery.find({
       rider: riderId,
       status: 'delivered',
-      'statusTimestamps.deliveredAt': { $gte: startOfToday }
-    }).select('deliveryFee').lean();
+      'statusTimestamps.deliveredAt': { $gte: startOfToday },
+    })
+      .select('deliveryFee')
+      .lean();
 
     const todayEarnings = todayDeliveries.reduce((sum, del) => sum + (del.deliveryFee || 0), 0);
 
@@ -706,8 +708,8 @@ const getRiderDashboardStats = async (req, res) => {
       stats: {
         totalDeliveries,
         todayEarnings,
-        rating: 4.9
-      }
+        rating: 4.9,
+      },
     });
   } catch (error) {
     logger.error({ err: error }, 'Get rider dashboard stats failed');
@@ -748,8 +750,10 @@ const getRiderEarnings = async (req, res) => {
     const todayDeliveries = await Delivery.find({
       rider: riderId,
       status: 'delivered',
-      'statusTimestamps.deliveredAt': { $gte: startOfToday }
-    }).select('deliveryFee').lean();
+      'statusTimestamps.deliveredAt': { $gte: startOfToday },
+    })
+      .select('deliveryFee')
+      .lean();
 
     const today = todayDeliveries.reduce((sum, del) => sum + (del.deliveryFee || 0), 0);
 
