@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 // ── Set required env vars for the app to load without crashing ──
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'test-jwt-secret-that-is-at-least-32-characters-long';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chopnow-test';
+process.env.MONGO_URI = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/chopnow-test';
 process.env.NODE_ENV = 'test';
 
 // ── Mock the logger so tests produce no pino output ──
@@ -46,6 +46,13 @@ jest.mock('../utils/emailService', () => ({
 // ── Connect to test database before the suite runs ──
 beforeAll(async () => {
   const uri = process.env.MONGO_URI;
+  
+  // Safety guard: Check if uri points to production Atlas instance
+  if (uri && (uri.includes('mongodb.net') || uri.includes('replicaSet') || !uri.includes('test'))) {
+    console.error('❌ FATAL ERROR: Attempting to run tests against a non-test or production database: ' + uri);
+    process.exit(1);
+  }
+  
   // Disconnect first if already connected (e.g. app preloaded connection)
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();

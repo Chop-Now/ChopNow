@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
@@ -6,6 +7,7 @@ import '../api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/socket_service.dart';
 import '../services/notification_service.dart';
+import '../services/biometric_service.dart';
 import '../models/user_model.dart';
 
 // ── Auth States ───────────────────────────────────────────────────────────────
@@ -78,6 +80,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final res = await ApiClient.instance.post(AppEndpoints.login,
           data: {'email': email, 'password': password});
       await _saveAndSetState(res.data, preferredRole: preferredRole);
+      // Save credentials for quick biometric sign-in
+      await BiometricService.saveCredentials(email, password);
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
     } catch (e) {
@@ -133,7 +137,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthAuthenticated(user: user, token: current.token);
       await AuthService.saveActiveRole('business_owner');
     } catch (e) {
-      debugPrint('Failed to add business_owner role: $e');
+      if (kDebugMode) debugPrint('Failed to add business_owner role: $e');
     }
   }
 
@@ -176,7 +180,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       state = AuthAuthenticated(user: updatedUser, token: current.token);
     } catch (e) {
-      debugPrint('Failed to switch role: $e');
+      if (kDebugMode) debugPrint('Failed to switch role: $e');
       rethrow;
     }
   }
@@ -302,7 +306,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final current = state as AuthAuthenticated;
       state = AuthAuthenticated(user: user, token: current.token);
     } catch (e) {
-      debugPrint('Failed to refresh profile: $e');
+      if (kDebugMode) debugPrint('Failed to refresh profile: $e');
     }
   }
 

@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 /// Unified exception for all API errors.
 /// Parses the backend's { message, statusCode } response shape.
 class ApiException implements Exception {
@@ -10,19 +12,21 @@ class ApiException implements Exception {
   String toString() => message;
 
   static ApiException fromDioError(dynamic error) {
-    // Guard: if it's not a DioException, return a generic message
-    if (error is! Exception || error.runtimeType.toString() != 'DioException') {
+    if (error is! DioException) {
       try {
-        // Still try to access .response for Dio-like objects
-        final data = error.response?.data;
+        final dynamic dynamicError = error;
+        final data = dynamicError.response?.data;
         if (data is Map && data['message'] is String) {
           return ApiException(data['message']);
         }
       } catch (_) {}
       return ApiException(error.toString().replaceAll('Exception: ', ''));
     }
+
+    final DioException dioError = error;
+
     try {
-      final data = error.response?.data;
+      final data = dioError.response?.data;
       if (data is Map) {
         var msg = data['message'] ?? data['error'];
 
@@ -36,12 +40,12 @@ class ApiException implements Exception {
         }
 
         if (msg is String && msg.isNotEmpty) {
-          return ApiException(msg, statusCode: error.response?.statusCode);
+          return ApiException(msg, statusCode: dioError.response?.statusCode);
         }
       }
     } catch (_) {}
 
-    final statusCode = error.response?.statusCode;
+    final statusCode = dioError.response?.statusCode;
     final message = switch (statusCode) {
       400 => 'Invalid request. Please check your input.',
       401 => 'Session expired. Please log in again.',
@@ -51,20 +55,22 @@ class ApiException implements Exception {
       422 => 'Validation failed. Please check your input.',
       429 => 'Too many requests. Please wait a moment.',
       500 || 502 || 503 => 'Server error. Please try again shortly.',
-      _ => _messageFromType(error),
+      _ => _messageFromType(dioError),
     };
     return ApiException(message, statusCode: statusCode);
   }
 
-  static String _messageFromType(dynamic error) {
-    final type = error.type?.toString() ?? '';
-    if (type.contains('connectionTimeout') || type.contains('connectTimeout')) {
+  static String _messageFromType(DioException error) {
+    final type = error.type;
+    if (type == DioExceptionType.connectionTimeout ||
+        type == DioExceptionType.sendTimeout) {
       return 'Connection timed out. Check your internet.';
     }
-    if (type.contains('receiveTimeout')) {
+    if (type == DioExceptionType.receiveTimeout) {
       return 'Server took too long to respond.';
     }
-    if (type.contains('connectionError') || type.contains('unknown')) {
+    if (type == DioExceptionType.connectionError ||
+        type == DioExceptionType.cancel) {
       return 'No internet connection. Please try again.';
     }
     return 'Something went wrong. Please try again.';

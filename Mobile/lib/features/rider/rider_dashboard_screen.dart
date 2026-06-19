@@ -70,6 +70,19 @@ final _myDeliveriesProvider = FutureProvider<List<dynamic>>((ref) async {
   }
 });
 
+final _riderStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  try {
+    final res = await ApiClient.instance.get(AppEndpoints.riderStats);
+    final data = res.data;
+    if (data is Map && data['success'] == true) {
+      return data['stats'] is Map ? Map<String, dynamic>.from(data['stats']) : {};
+    }
+    return data is Map<String, dynamic> ? data : {};
+  } catch (e) {
+    throw ApiException.fromDioError(e);
+  }
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class RiderDashboardScreen extends ConsumerStatefulWidget {
@@ -97,6 +110,16 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
   void dispose() {
     _tabs.dispose();
     super.dispose();
+  }
+
+  String _fmt(int value) {
+    final s = value.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 
   Future<void> _loadAvailability() async {
@@ -174,6 +197,13 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
     final user = ref.watch(currentUserProvider);
     final asyncAvailable = ref.watch(_availableOrdersProvider);
     final asyncMyDeliveries = ref.watch(_myDeliveriesProvider);
+    final asyncStats = ref.watch(_riderStatsProvider);
+
+    final stats = asyncStats.value ?? {};
+    final totalDeliveries = stats['totalDeliveries']?.toString() ?? '-';
+    final todayEarningsVal = stats['todayEarnings'];
+    final todayEarnings = todayEarningsVal is num ? 'RWF ${_fmt(todayEarningsVal.toInt())}' : '-';
+    final rating = stats['rating']?.toString() ?? '4.9';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -279,18 +309,18 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         ),
                         const SizedBox(height: 20),
                         // Stats row
-                        const Row(
+                        Row(
                           children: [
                             _StatCard(
-                                emoji: '✅', label: 'Delivered', value: '24'),
-                            SizedBox(width: 12),
+                                emoji: '✅', label: 'Delivered', value: totalDeliveries),
+                            const SizedBox(width: 12),
                             _StatCard(
                                 emoji: '💰',
                                 label: 'Today',
-                                value: 'RWF 4,200'),
-                            SizedBox(width: 12),
+                                value: todayEarnings),
+                            const SizedBox(width: 12),
                             _StatCard(
-                                emoji: '⭐', label: 'Rating', value: '4.8'),
+                                emoji: '⭐', label: 'Rating', value: rating),
                           ],
                         ),
                       ],
@@ -362,8 +392,10 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                 _isOnline
                     ? RefreshIndicator(
                         color: AppColors.primary,
-                        onRefresh: () async =>
-                            ref.invalidate(_availableOrdersProvider),
+                        onRefresh: () async {
+                          ref.invalidate(_availableOrdersProvider);
+                          ref.invalidate(_riderStatsProvider);
+                        },
                         child: asyncAvailable.when(
                           loading: () => const Center(
                             child: CircularProgressIndicator(
@@ -404,7 +436,10 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                 // ── My Deliveries Tab ─────────────────────────────────────────
                 RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: () async => ref.invalidate(_myDeliveriesProvider),
+                  onRefresh: () async {
+                    ref.invalidate(_myDeliveriesProvider);
+                    ref.invalidate(_riderStatsProvider);
+                  },
                   child: asyncMyDeliveries.when(
                     loading: () => const Center(
                       child:

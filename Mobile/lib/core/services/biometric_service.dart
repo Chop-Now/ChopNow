@@ -44,6 +44,36 @@ class BiometricService {
   static Future<void> setEnabled(bool enabled) async {
     await _storage.write(
         key: _biometricEnabledKey, value: enabled ? 'true' : 'false');
+    if (!enabled) {
+      await clearCredentials();
+    }
+  }
+
+  // ── Credentials Storage ──────────────────────────────────────────────────────
+  static const _biometricEmailKey = 'chopnow_biometric_email';
+  static const _biometricPasswordKey = 'chopnow_biometric_password';
+
+  static Future<void> saveCredentials(String email, String password) async {
+    await Future.wait([
+      _storage.write(key: _biometricEmailKey, value: email),
+      _storage.write(key: _biometricPasswordKey, value: password),
+    ]);
+  }
+
+  static Future<Map<String, String>?> getCredentials() async {
+    final email = await _storage.read(key: _biometricEmailKey);
+    final password = await _storage.read(key: _biometricPasswordKey);
+    if (email != null && password != null) {
+      return {'email': email, 'password': password};
+    }
+    return null;
+  }
+
+  static Future<void> clearCredentials() async {
+    await Future.wait([
+      _storage.delete(key: _biometricEmailKey),
+      _storage.delete(key: _biometricPasswordKey),
+    ]);
   }
 
   // ── Authentication ───────────────────────────────────────────────────────────

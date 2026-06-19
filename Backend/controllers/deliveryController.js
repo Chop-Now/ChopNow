@@ -674,6 +674,135 @@ const getRiderStats = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get rider stats for mobile dashboard
+ * @route   GET /api/v1/rider/stats
+ * @access  Private (Rider)
+ */
+const getRiderDashboardStats = async (req, res) => {
+  try {
+    const riderId = req.user._id;
+
+    // Count total deliveries delivered by this rider
+    const totalDeliveries = await Delivery.countDocuments({
+      rider: riderId,
+      status: 'delivered'
+    });
+
+    // Sum today's earnings
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const todayDeliveries = await Delivery.find({
+      rider: riderId,
+      status: 'delivered',
+      'statusTimestamps.deliveredAt': { $gte: startOfToday }
+    }).select('deliveryFee').lean();
+
+    const todayEarnings = todayDeliveries.reduce((sum, del) => sum + (del.deliveryFee || 0), 0);
+
+    res.json({
+      success: true,
+      stats: {
+        totalDeliveries,
+        todayEarnings,
+        rating: 4.9
+      }
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Get rider dashboard stats failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get rider earnings details for earnings screen
+ * @route   GET /api/v1/rider/earnings
+ * @access  Private (Rider)
+ */
+const getRiderEarnings = async (req, res) => {
+  try {
+    const riderId = req.user._id;
+
+    // Sum total earnings and count total trips from delivered orders
+    const statsResult = await Delivery.aggregate([
+      { $match: { rider: riderId, status: 'delivered' } },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: { $sum: '$deliveryFee' },
+          totalTrips: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalEarnings = statsResult[0]?.totalEarnings || 0;
+    const totalDeliveries = statsResult[0]?.totalTrips || 0;
+
+    // Today's earnings
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const todayDeliveries = await Delivery.find({
+      rider: riderId,
+      status: 'delivered',
+      'statusTimestamps.deliveredAt': { $gte: startOfToday }
+    }).select('deliveryFee').lean();
+
+    const today = todayDeliveries.reduce((sum, del) => sum + (del.deliveryFee || 0), 0);
+
+    // Get weekly earnings data for the past 7 days (grouped by day of week Mon-Sun)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const weeklyDeliveries = await Delivery.find({
+      rider: riderId,
+      status: 'delivered',
+      'statusTimestamps.deliveredAt': { $gte: sevenDaysAgo },
+    })
+      .select('deliveryFee statusTimestamps.deliveredAt')
+      .lean();
+
+    const daysOfWeekMap = {
+      1: 0, // Mon
+      2: 1, // Tue
+      3: 2, // Wed
+      4: 3, // Thu
+      5: 4, // Fri
+      6: 5, // Sat
+      0: 6, // Sun
+    };
+
+    const weeklyData = [0, 0, 0, 0, 0, 0, 0];
+    let thisWeek = 0;
+    weeklyDeliveries.forEach((del) => {
+      const deliveredDate = del.statusTimestamps?.deliveredAt
+        ? new Date(del.statusTimestamps.deliveredAt)
+        : new Date(del.updatedAt);
+      const dayIndex = deliveredDate.getDay();
+      const targetIndex = daysOfWeekMap[dayIndex];
+      weeklyData[targetIndex] += del.deliveryFee || 0;
+      thisWeek += del.deliveryFee || 0;
+    });
+
+    res.json({
+      totalEarnings,
+      thisWeek,
+      today,
+      totalDeliveries,
+      averageRating: 4.9,
+      weeklyData,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Get rider earnings failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   createDelivery,
   getDeliveryByOrder,
@@ -685,4 +814,6 @@ module.exports = {
   uploadProofOfDelivery,
   getAllDeliveries,
   getRiderStats,
+  getRiderDashboardStats,
+  getRiderEarnings,
 };

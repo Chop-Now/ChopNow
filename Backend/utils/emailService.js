@@ -138,6 +138,29 @@ const sendPasswordResetEmail = async (email, name, resetToken) => {
 };
 
 /**
+ * Send OTP for password reset
+ */
+const sendPasswordResetOTPEmail = async (email, name, otpCode) => {
+  const content = `
+    <p>Hello ${name},</p>
+    <p>We received a request to reset your password. Use the verification code below to complete the reset process:</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background: white; border: 2px solid #00A86B; border-radius: 8px; padding: 20px; display: inline-block;">
+        <div style="font-size: 32px; font-weight: bold; color: #00A86B; letter-spacing: 8px;">${otpCode}</div>
+      </div>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">This verification code will expire in 15 minutes.</p>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+  `;
+
+  return sendEmail(
+    email,
+    'Reset your ChopNow password - Verification Code',
+    emailTemplate('Password Reset Request', content)
+  );
+};
+
+/**
  * Send OTP for email login
  */
 const sendOTPEmail = async (email, name, otpCode) => {
@@ -699,6 +722,7 @@ const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
+  sendPasswordResetOTPEmail,
   sendOTPEmail,
   sendPasswordChangeOTP,
   sendSensitiveChangeOTP,

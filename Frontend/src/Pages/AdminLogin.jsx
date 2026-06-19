@@ -3,7 +3,7 @@ import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from 'lucide-reac
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { userService } from '../services';
 
@@ -231,9 +231,9 @@ const AdminLogin = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-slate-300">Password</label>
-                <a href="#" className="text-sm text-solid hover:text-tertiary transition-colors">
+                <Link to="/forgot-password" className="text-sm text-solid hover:text-tertiary transition-colors">
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />

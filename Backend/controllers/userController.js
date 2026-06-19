@@ -510,29 +510,72 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email }).select('+resetPasswordToken +resetPasswordExpires');
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordToken +resetPasswordExpires');
+    
+    // Generic message to prevent email enumeration
+    const successMessage = 'If your email is registered, we have sent a 6-digit verification code to it.';
+
     if (!user) {
-      // Don't reveal if user exists for security
-      return res.json({ message: 'If that email exists, a password reset link has been sent' });
+      logger.info({ email: normalizedEmail }, 'Password reset requested for non-existent email');
+      return res.json({ message: successMessage });
     }
 
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate 6-digit numeric OTP code
+    const resetOtp = crypto.randomInt(100000, 999999).toString();
+    user.resetPasswordToken = resetOtp;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save();
 
-    const sent = await sendPasswordResetEmail(
+    const sent = await sendPasswordResetOTPEmail(
       user.email,
       `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
-      resetToken
+      resetOtp
     );
 
     if (sent) {
-      res.json({ message: 'If that email exists, a password reset link has been sent' });
+      logger.info({ email: normalizedEmail }, 'Password reset OTP code sent successfully');
+      res.json({ message: successMessage });
     } else {
-      res.status(500).json({ message: 'Failed to send password reset email' });
+      logger.error({ email: normalizedEmail }, 'Failed to send password reset OTP email');
+      res.status(500).json({ message: 'Failed to send password reset code. Please try again later.' });
     }
   } catch (error) {
+    logger.error({ err: error }, 'Forgot password error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Verify reset OTP code
+ * @route   POST /api/users/verify-reset-otp
+ * @access  Public
+ */
+const verifyResetOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({
+      email: normalizedEmail,
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      logger.warn({ email: normalizedEmail, otp }, 'Invalid or expired OTP verification attempt');
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
+    }
+
+    logger.info({ email: normalizedEmail }, 'Password reset OTP verified successfully');
+    res.json({ message: 'Verification code verified successfully' });
+  } catch (error) {
+    logger.error({ err: error }, 'Verify reset OTP error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
@@ -546,32 +589,50 @@ const forgotPassword = async (req, res) => {
  */
 const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { token, password, email } = req.body;
     if (!token || !password) {
-      return res.status(400).json({ message: 'Token and password are required' });
+      return res.status(400).json({ message: 'Token/OTP and password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
-    const user = await User.findOne({
+    // Query construction
+    const query = {
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
-    }).select('+passwordHash +resetPasswordToken +resetPasswordExpires');
+    };
 
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    if (email) {
+      query.email = email.toLowerCase().trim();
     }
 
+    const user = await User.findOne(query).select('+passwordHash +resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      logger.warn({ token, email }, 'Password reset failed - invalid or expired token/code');
+      return res.status(400).json({ message: 'Invalid or expired reset token/code' });
+    }
+
+    // Update password
     const salt = await bcrypt.genSalt(12);
     user.passwordHash = await bcrypt.hash(password, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
 
+    logger.info({ email: user.email, userId: user._id }, 'Password reset completed successfully');
+
+    // Send confirmation email in background
+    sendPasswordChangedConfirmation(
+      user.email,
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    ).catch((err) => logger.error({ err }, 'Failed to send password reset confirmation email'));
+
     res.json({ message: 'Password reset successful' });
   } catch (error) {
+    logger.error({ err: error }, 'Reset password error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
@@ -1683,6 +1744,7 @@ module.exports = {
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
+  verifyResetOTP,
   resetPassword,
   sendOTP,
   verifyOTP,

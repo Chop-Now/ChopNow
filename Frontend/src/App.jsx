@@ -30,6 +30,7 @@ const PrivacyPolicy = lazy(() => import('./Pages/PrivacyPolicy'));
 const Dashboard = lazy(() => import('./admin/Dashboard'));
 const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('./Pages/AdminLogin'));
+const ForgotPassword = lazy(() => import('./Pages/ForgotPassword'));
 const NotFound = lazy(() => import('./Components/NotFound'));
 
 const App = () => {
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/:category" element={<CategoryPage />} />
             <Route path="/shop/:category/:id" element={<ProductDetails />} />

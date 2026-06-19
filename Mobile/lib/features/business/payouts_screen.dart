@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -108,7 +109,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
         if (mounted) setState(() {});
       }
     } catch (e) {
-      debugPrint('Error fetching business payout info: $e');
+      if (kDebugMode) debugPrint('Error fetching business payout info: $e');
     }
   }
 
@@ -505,7 +506,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                     const SizedBox(height: 16),
                     if (_preferredMethod == 'mobile') ...[
                       DropdownButtonFormField<String>(
-                        value: _mobileProvider,
+                        initialValue: _mobileProvider,
                         decoration: InputDecoration(
                           labelText: 'Mobile Money Provider *',
                           labelStyle: const TextStyle(

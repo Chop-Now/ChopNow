@@ -22,6 +22,7 @@ const {
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
+  verifyResetOTP,
   resetPassword,
   sendOTP,
   verifyOTP,
@@ -46,6 +47,7 @@ const {
   validateLogin,
   validateResetPassword,
   validateForgotPassword,
+  validateVerifyResetOTP,
 } = require('../middleware/validation');
 const { checkRegistrationAllowed } = require('../middleware/platformSettings');
 
@@ -120,6 +122,7 @@ router.post('/resend-verification', resendVerificationEmail);
 
 // Password reset
 router.post('/forgot-password', validateForgotPassword, forgotPassword);
+router.post('/verify-reset-otp', validateVerifyResetOTP, verifyResetOTP);
 router.post('/reset-password', validateResetPassword, resetPassword);
 
 // OTP login

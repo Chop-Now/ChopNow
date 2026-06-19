@@ -178,6 +178,7 @@ const orderSchema = new Schema(
         'pending_payment',
         'paid',
         'confirmed',
+        'preparing',
         'ready_for_pickup',
         'out_for_delivery',
         'completed',

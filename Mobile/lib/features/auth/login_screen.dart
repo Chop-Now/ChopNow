@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/services/biometric_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
@@ -40,6 +42,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   // Local validation error (shown instead of / alongside auth error)
   String? _localError;
 
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  String _biometricIcon = '🔑';
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +57,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _passwordCtrl.addListener(_clearErrors);
     _phoneCtrl.addListener(_clearErrors);
     _otpCtrl.addListener(_clearErrors);
+
+    _checkBiometricStatus();
+  }
+
+  Future<void> _checkBiometricStatus() async {
+    final available = await BiometricService.isAvailable;
+    final enabled = await BiometricService.isEnabled;
+    final icon = await BiometricService.biometricIcon;
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = enabled;
+        _biometricIcon = icon;
+      });
+    }
+  }
+
+  Future<void> _loginWithBiometrics() async {
+    HapticFeedback.mediumImpact();
+    
+    // Clear any previous error
+    _clearErrors();
+
+    final authenticated = await BiometricService.authenticate(
+        reason: 'Authenticate to sign in to ChopNow');
+    if (!authenticated) return;
+
+    final credentials = await BiometricService.getCredentials();
+    if (credentials == null) {
+      setState(() => _localError = 'No saved biometric credentials. Please sign in with password first.');
+      return;
+    }
+
+    final email = credentials['email']!;
+    final password = credentials['password']!;
+
+    // Auto-fill fields for visual feedback
+    _emailCtrl.text = email;
+    _passwordCtrl.text = password;
+
+    // Map role choice to preferred backend role
+    final preferredRole =
+        _selectedRole == _LoginRole.business ? 'business_owner' : 'consumer';
+
+    ref
+        .read(authProvider.notifier)
+        .login(email: email, password: password, preferredRole: preferredRole);
   }
 
   void _clearErrors() {
@@ -183,6 +236,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     error: error,
                     onBack: _handleBack,
                     onSubmit: isLoading ? null : _submit,
+                    biometricAvailable: _biometricAvailable,
+                    biometricEnabled: _biometricEnabled,
+                    biometricIcon: _biometricIcon,
+                    onBiometricTap: _loginWithBiometrics,
                   ),
           ),
         ),
@@ -219,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _submit() {
-    debugPrint('[Login] _submit called. selectedRole=$_selectedRole, tabIndex=${_tabController.index}');
+    if (kDebugMode) debugPrint('[Login] _submit called. selectedRole=$_selectedRole, tabIndex=${_tabController.index}');
     HapticFeedback.mediumImpact();
 
     // Map role choice to preferred backend role
@@ -229,26 +286,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (_tabController.index == 0) {
       final email = _emailCtrl.text.trim();
       final pass = _passwordCtrl.text;
-      debugPrint('[Login] Submit with email="$email", passLength=${pass.length}');
+      if (kDebugMode) debugPrint('[Login] Submit with email="$email", passLength=${pass.length}');
 
       if (email.isEmpty) {
-        debugPrint('[Login] Email is empty');
+        if (kDebugMode) debugPrint('[Login] Email is empty');
         setState(() => _localError = 'Please enter your email address.');
         return;
       }
       if (!_isValidEmail(email)) {
-        debugPrint('[Login] Email is invalid');
+        if (kDebugMode) debugPrint('[Login] Email is invalid');
         setState(() =>
             _localError = 'Please enter a valid email (e.g. you@example.com).');
         return;
       }
       if (pass.isEmpty) {
-        debugPrint('[Login] Password is empty');
+        if (kDebugMode) debugPrint('[Login] Password is empty');
         setState(() => _localError = 'Please enter your password.');
         return;
       }
 
-      debugPrint('[Login] Calling authProvider.notifier.login...');
+      if (kDebugMode) debugPrint('[Login] Calling authProvider.notifier.login...');
       ref
           .read(authProvider.notifier)
           .login(email: email, password: pass, preferredRole: preferredRole);
@@ -465,6 +522,10 @@ class _LoginFormStep extends StatelessWidget {
   final String? error;
   final VoidCallback onBack;
   final VoidCallback? onSubmit;
+  final bool biometricAvailable;
+  final bool biometricEnabled;
+  final String biometricIcon;
+  final VoidCallback onBiometricTap;
 
   const _LoginFormStep({
     super.key,
@@ -483,6 +544,10 @@ class _LoginFormStep extends StatelessWidget {
     required this.error,
     required this.onBack,
     required this.onSubmit,
+    required this.biometricAvailable,
+    required this.biometricEnabled,
+    required this.biometricIcon,
+    required this.onBiometricTap,
   });
 
   @override
@@ -618,11 +683,44 @@ class _LoginFormStep extends StatelessWidget {
           ],
 
           const SizedBox(height: 16),
-          CnPrimaryButton(
-            label: isLoading ? 'Signing in…' : 'Sign In',
-            isLoading: isLoading,
-            onTap: onSubmit,
-          ),
+          if (tabController.index == 0 && biometricAvailable && biometricEnabled)
+            Row(
+              children: [
+                Expanded(
+                  child: CnPrimaryButton(
+                    label: isLoading ? 'Signing in…' : 'Sign In',
+                    isLoading: isLoading,
+                    onTap: onSubmit,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                InkWell(
+                  onTap: isLoading ? null : onBiometricTap,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.surface,
+                    ),
+                    child: Center(
+                      child: Text(
+                        biometricIcon,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            CnPrimaryButton(
+              label: isLoading ? 'Signing in…' : 'Sign In',
+              isLoading: isLoading,
+              onTap: onSubmit,
+            ),
           const SizedBox(height: 20),
 
           Row(
