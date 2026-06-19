@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 const {
   sendVerificationEmail,
-  sendPasswordResetEmail,
+  sendPasswordResetOTPEmail,
   sendOTPEmail,
   sendPasswordChangeOTP,
   sendPasswordChangedConfirmation,
