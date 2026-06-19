@@ -88,8 +88,14 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
             message: e.toString(),
             onRetry: () => ref.invalidate(_businessOrdersProvider)),
         data: (allOrders) {
-          final newOrders =
-              allOrders.where((o) => o['status'] == 'pending').toList();
+          final newOrders = allOrders.where((o) {
+            final status = o['status']?.toString() ?? '';
+            final payment = o['payment'] ?? {};
+            final method = payment['paymentMethod']?.toString() ?? '';
+            return status == 'pending' ||
+                status == 'paid' ||
+                (status == 'pending_payment' && method == 'cash');
+          }).toList();
           final activeOrders = allOrders
               .where((o) => ['confirmed', 'preparing', 'ready_for_pickup']
                   .contains(o['status']))
@@ -488,10 +494,13 @@ class _BusinessOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = order['status']?.toString() ?? 'pending';
     final orderId = order['_id']?.toString() ?? '';
-    final customerName = order['user'] is Map
-        ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'
+    final customerName = order['customer'] is Map
+        ? '${order['customer']['firstName'] ?? ''} ${order['customer']['lastName'] ?? ''}'
             .trim()
-        : 'Customer';
+        : order['user'] is Map
+            ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'
+                .trim()
+            : 'Customer';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -522,7 +531,7 @@ class _BusinessOrderCard extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.textSecondary)),
               ])),
-          _StatusBadge(status: status),
+          _StatusBadge(order: order),
         ]),
         const SizedBox(height: 8),
 
@@ -543,7 +552,7 @@ class _BusinessOrderCard extends StatelessWidget {
                   color: AppColors.primary,
                   fontSize: 15)),
           Text(
-              order['deliveryType'] == 'delivery' ? '🚚 Delivery' : '🏃 Pickup',
+              order['fulfillmentType'] == 'delivery' ? '🚚 Delivery' : '🏃 Pickup',
               style: const TextStyle(
                   fontSize: 12, color: AppColors.textSecondary)),
         ]),
@@ -552,26 +561,38 @@ class _BusinessOrderCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 10),
-          _actionButtons(status, orderId),
+          _actionButtons(order),
         ],
       ]),
     );
   }
 
-  Widget _actionButtons(String status, String orderId) {
+  Widget _actionButtons(dynamic order) {
+    final status = order['status']?.toString() ?? 'pending';
+    final orderId = order['_id']?.toString() ?? '';
+    final payment = order['payment'] ?? {};
+    final method = payment['paymentMethod']?.toString() ?? '';
+
+    final isNew = status == 'pending' ||
+        status == 'paid' ||
+        (status == 'pending_payment' && method == 'cash');
+
+    if (isNew) {
+      return Row(children: [
+        Expanded(
+            child: _OutlineBtn(
+                label: 'Reject',
+                color: AppColors.error,
+                onTap: () => onUpdate(orderId, 'cancelled'))),
+        const SizedBox(width: 8),
+        Expanded(
+            child: _FilledBtn(
+                label: '✅ Accept',
+                onTap: () => onUpdate(orderId, 'confirmed'))),
+      ]);
+    }
+
     return switch (status) {
-      'pending' => Row(children: [
-          Expanded(
-              child: _OutlineBtn(
-                  label: 'Reject',
-                  color: AppColors.error,
-                  onTap: () => onUpdate(orderId, 'cancelled'))),
-          const SizedBox(width: 8),
-          Expanded(
-              child: _FilledBtn(
-                  label: '✅ Accept',
-                  onTap: () => onUpdate(orderId, 'confirmed'))),
-        ]),
       'confirmed' => _FilledBtn(
           label: '👨‍🍳 Start Preparing',
           onTap: () => onUpdate(orderId, 'preparing')),
@@ -589,31 +610,48 @@ class _BusinessOrderCard extends StatelessWidget {
 // ── Status Badge ───────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
-  final String status;
-  const _StatusBadge({required this.status});
+  final dynamic order;
+  const _StatusBadge({required this.order});
   @override
   Widget build(BuildContext context) {
-    final (color, bg, label) = switch (status) {
-      'pending' => (AppColors.warning, AppColors.warningSurface, '🆕 New'),
-      'confirmed' => (
-          AppColors.primary,
-          AppColors.primarySurface,
-          '✅ Confirmed'
-        ),
-      'preparing' => (
-          AppColors.primary,
-          AppColors.primarySurface,
-          '👨‍🍳 Preparing'
-        ),
-      'ready_for_pickup' => (
-          AppColors.success,
-          AppColors.successSurface,
-          '🎉 Ready'
-        ),
-      'completed' => (AppColors.success, AppColors.successSurface, '✅ Done'),
-      'cancelled' => (AppColors.error, AppColors.errorSurface, '❌ Cancelled'),
-      _ => (AppColors.textSecondary, AppColors.surfaceVariant, status),
-    };
+    final status = order['status']?.toString() ?? 'pending';
+    final payment = order['payment'] ?? {};
+    final method = payment['paymentMethod']?.toString() ?? '';
+
+    final isNew = status == 'pending' ||
+        status == 'paid' ||
+        (status == 'pending_payment' && method == 'cash');
+
+    final (color, bg, label) = isNew
+        ? (AppColors.warning, AppColors.warningSurface, '🆕 New')
+        : switch (status) {
+            'confirmed' => (
+                AppColors.primary,
+                AppColors.primarySurface,
+                '✅ Confirmed'
+              ),
+            'preparing' => (
+                AppColors.primary,
+                AppColors.primarySurface,
+                '👨‍🍳 Preparing'
+              ),
+            'ready_for_pickup' => (
+                AppColors.success,
+                AppColors.successSurface,
+                '🎉 Ready'
+              ),
+            'completed' => (
+                AppColors.success,
+                AppColors.successSurface,
+                '✅ Done'
+              ),
+            'cancelled' => (
+                AppColors.error,
+                AppColors.errorSurface,
+                '❌ Cancelled'
+              ),
+            _ => (AppColors.textSecondary, AppColors.surfaceVariant, status),
+          };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration:

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +43,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return [locations.first.longitude, locations.first.latitude];
       }
     } catch (e) {
-      debugPrint('Geocoding failed for $street, $city: $e');
+      if (kDebugMode) debugPrint('Geocoding failed for $street, $city: $e');
     }
     return [30.0619, -1.9441]; // Default to Kigali coordinates
   }
@@ -264,12 +265,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'emoji': '📲',
       'color': 0xFFFF0000
     },
-    {
-      'key': 'card',
-      'label': 'Visa / Mastercard',
-      'emoji': '💳',
-      'color': 0xFF1A56DB
-    },
+    // {
+    //   'key': 'card',
+    //   'label': 'Visa / Mastercard',
+    //   'emoji': '💳',
+    //   'color': 0xFF1A56DB
+    // },
     {
       'key': 'cash',
       'label': 'Cash on Pickup',

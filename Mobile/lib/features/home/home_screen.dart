@@ -10,12 +10,13 @@ import '../../core/providers/impact_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/cards/listing_card.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
+import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/notifications_provider.dart';
 
-// ── Providers ──────────────────────────────────────────────────────────────────
+// ── Providers & Filters ────────────────────────────────────────────────────────
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final response =
       await ApiClient.instance.get(AppEndpoints.listings, queryParameters: {
@@ -31,8 +32,109 @@ final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   return [];
 });
 
+class ListingFilters {
+  final String sortBy; // 'price_asc', 'price_desc', 'rating', 'distance'
+  final double maxPrice;
+  final double maxDistance;
+  final List<String> selectedAllergens;
+
+  const ListingFilters({
+    this.sortBy = 'price_asc',
+    this.maxPrice = 15000.0,
+    this.maxDistance = 15.0,
+    this.selectedAllergens = const [],
+  });
+
+  ListingFilters copyWith({
+    String? sortBy,
+    double? maxPrice,
+    double? maxDistance,
+    List<String>? selectedAllergens,
+  }) {
+    return ListingFilters(
+      sortBy: sortBy ?? this.sortBy,
+      maxPrice: maxPrice ?? this.maxPrice,
+      maxDistance: maxDistance ?? this.maxDistance,
+      selectedAllergens: selectedAllergens ?? this.selectedAllergens,
+    );
+  }
+}
+
+final listingFiltersProvider = StateProvider<ListingFilters>((ref) => const ListingFilters());
 final selectedCategoryProvider = StateProvider<String>((ref) => 'All');
 final searchQueryProvider = StateProvider<String>((ref) => '');
+
+final filteredListingsProvider = Provider.autoDispose<AsyncValue<List<dynamic>>>((ref) {
+  final listingsAsync = ref.watch(listingsProvider);
+  final selectedCategory = ref.watch(selectedCategoryProvider);
+  final searchQuery = ref.watch(searchQueryProvider);
+  final filters = ref.watch(listingFiltersProvider);
+
+  return listingsAsync.whenData((rawList) {
+    // 1. Parse all to Listing models to check properties easily, keeping the raw maps
+    final parsedListingsings = rawList.map((x) {
+      final model = Listing.fromJson(x as Map<String, dynamic>);
+      return MapEntry(model, x);
+    }).toList();
+
+    // 2. Filter by category
+    final categoryFiltered = selectedCategory == 'All'
+        ? parsedListingsings
+        : parsedListingsings.where((entry) {
+            final itemCat = entry.key.category?.toLowerCase() ?? '';
+            final cleanSelectedCat = selectedCategory
+                .replaceAll(RegExp(r'[^\w\s]'), '')
+                .trim()
+                .toLowerCase();
+            return itemCat.contains(cleanSelectedCat);
+          }).toList();
+
+    // 3. Filter by search query
+    final searchFiltered = searchQuery.trim().isEmpty
+        ? categoryFiltered
+        : categoryFiltered.where((entry) {
+            final title = entry.key.title.toLowerCase();
+            final desc = entry.key.description.toLowerCase();
+            final bName = entry.key.businessName.toLowerCase();
+            final query = searchQuery.toLowerCase();
+            return title.contains(query) || desc.contains(query) || bName.contains(query);
+          }).toList();
+
+    // 4. Filter by Max Price
+    var filtered = searchFiltered.where((entry) => entry.key.offerPrice <= filters.maxPrice).toList();
+
+    // 5. Filter by Max Distance
+    if (filters.maxDistance < 15.0) {
+      filtered = filtered.where((entry) {
+        final dist = entry.key.distance ?? 0.0;
+        return dist <= filters.maxDistance;
+      }).toList();
+    }
+
+    // 6. Filter by Allergens
+    if (filters.selectedAllergens.isNotEmpty) {
+      filtered = filtered.where((entry) {
+        final itemAllergens = entry.key.allergens?.map((a) => a.toLowerCase()).toList() ?? [];
+        return !filters.selectedAllergens.any((allergen) =>
+            itemAllergens.contains(allergen.toLowerCase()));
+      }).toList();
+    }
+
+    // 7. Sort
+    if (filters.sortBy == 'price_asc') {
+      filtered.sort((a, b) => a.key.offerPrice.compareTo(b.key.offerPrice));
+    } else if (filters.sortBy == 'price_desc') {
+      filtered.sort((a, b) => b.key.offerPrice.compareTo(a.key.offerPrice));
+    } else if (filters.sortBy == 'rating') {
+      filtered.sort((a, b) => (b.key.rating ?? 0.0).compareTo(a.key.rating ?? 0.0));
+    } else if (filters.sortBy == 'distance') {
+      filtered.sort((a, b) => (a.key.distance ?? 999.0).compareTo(b.key.distance ?? 999.0));
+    }
+
+    // Return the original raw maps since ListingCard expects them
+    return filtered.map((entry) => entry.value).toList();
+  });
+});
 
 // ── Home Screen ────────────────────────────────────────────────────────────────
 class HomeScreen extends ConsumerStatefulWidget {
@@ -63,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final listingsAsync = ref.watch(listingsProvider);
+    final listingsAsync = ref.watch(filteredListingsProvider);
     final auth = ref.watch(authProvider);
     final user = auth is AuthAuthenticated ? auth.user : null;
     final selectedCat = ref.watch(selectedCategoryProvider);
@@ -277,7 +379,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               onChanged: (v) => ref
                                   .read(searchQueryProvider.notifier)
                                   .state = v,
-                              onFilterTap: () {},
+                              onFilterTap: () async {
+                                final currentFilters = ref.read(listingFiltersProvider);
+                                final newFilters = await showModalBottomSheet<ListingFilters>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => _FilterBottomSheet(initialFilters: currentFilters),
+                                );
+                                if (newFilters != null) {
+                                  ref.read(listingFiltersProvider.notifier).state = newFilters;
+                                }
+                              },
                             ),
                             const SizedBox(height: 24),
 
@@ -497,5 +610,267 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (hour < 12) return 'Good morning,';
     if (hour < 17) return 'Good afternoon,';
     return 'Good evening,';
+  }
+}
+
+class _FilterBottomSheet extends StatefulWidget {
+  final ListingFilters initialFilters;
+
+  const _FilterBottomSheet({required this.initialFilters});
+
+  @override
+  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+  late String _sortBy;
+  late double _maxPrice;
+  late double _maxDistance;
+  late List<String> _selectedAllergens;
+
+  static const _allergensList = [
+    'Gluten',
+    'Dairy',
+    'Nuts',
+    'Soy',
+    'Eggs',
+    'Fish'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _sortBy = widget.initialFilters.sortBy;
+    _maxPrice = widget.initialFilters.maxPrice;
+    _maxDistance = widget.initialFilters.maxDistance;
+    _selectedAllergens = List.from(widget.initialFilters.selectedAllergens);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filter & Sort',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _sortBy = 'price_asc';
+                    _maxPrice = 15000.0;
+                    _maxDistance = 15.0;
+                    _selectedAllergens.clear();
+                  });
+                },
+                child: const Text(
+                  'Reset All',
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(),
+          const SizedBox(height: 12),
+
+          // Sort By
+          const Text(
+            'Sort By',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildSortChip('price_asc', '💲 Price: Low-High'),
+                const SizedBox(width: 8),
+                _buildSortChip('price_desc', '💰 Price: High-Low'),
+                const SizedBox(width: 8),
+                _buildSortChip('rating', '⭐ Rating'),
+                const SizedBox(width: 8),
+                _buildSortChip('distance', '📍 Distance'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Max Price Slider
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Max Price',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                'RWF ${_maxPrice.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _maxPrice,
+            min: 500.0,
+            max: 20000.0,
+            divisions: 39,
+            activeColor: AppColors.primary,
+            inactiveColor: AppColors.border,
+            onChanged: (v) => setState(() => _maxPrice = v),
+          ),
+          const SizedBox(height: 12),
+
+          // Max Distance Slider
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Max Distance',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                '${_maxDistance.toStringAsFixed(1)} km',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _maxDistance,
+            min: 1.0,
+            max: 15.0,
+            divisions: 14,
+            activeColor: AppColors.primary,
+            inactiveColor: AppColors.border,
+            onChanged: (v) => setState(() => _maxDistance = v),
+          ),
+          const SizedBox(height: 20),
+
+          // Exclude Allergens
+          const Text(
+            'Exclude Allergens',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _allergensList.map((allergen) {
+              final active = _selectedAllergens.contains(allergen);
+              return ChoiceChip(
+                label: Text(allergen),
+                selected: active,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedAllergens.add(allergen);
+                    } else {
+                      _selectedAllergens.remove(allergen);
+                    }
+                  });
+                },
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                backgroundColor: AppColors.surface,
+                labelStyle: TextStyle(
+                  color: active ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.normal,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 32),
+
+          // Apply Button
+          SizedBox(
+            width: double.infinity,
+            child: CnPrimaryButton(
+              label: 'Apply Filters',
+              onTap: () {
+                Navigator.of(context).pop(
+                  ListingFilters(
+                    sortBy: _sortBy,
+                    maxPrice: _maxPrice,
+                    maxDistance: _maxDistance,
+                    selectedAllergens: _selectedAllergens,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortChip(String value, String label) {
+    final active = _sortBy == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: active,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _sortBy = value);
+        }
+      },
+      selectedColor: AppColors.primary.withValues(alpha: 0.15),
+      backgroundColor: AppColors.surface,
+      labelStyle: TextStyle(
+        color: active ? AppColors.primary : AppColors.textSecondary,
+        fontWeight: active ? FontWeight.w700 : FontWeight.normal,
+      ),
+    );
   }
 }

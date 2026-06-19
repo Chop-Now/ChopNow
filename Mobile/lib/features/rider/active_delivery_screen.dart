@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,7 +166,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
             widget.orderId, position.latitude, position.longitude);
       },
       onError: (e) {
-        debugPrint('Error in location tracking stream: $e');
+        if (kDebugMode) debugPrint('Error in location tracking stream: $e');
       },
     );
   }
@@ -410,7 +411,11 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
     final markers = _buildMarkers();
     final biz =
         _orderData['business'] is Map ? _orderData['business'] as Map : {};
-    final customer = _orderData['user'] is Map ? _orderData['user'] as Map : {};
+    final customer = _orderData['customer'] is Map
+        ? _orderData['customer'] as Map
+        : _orderData['user'] is Map
+            ? _orderData['user'] as Map
+            : {};
 
     return Scaffold(
       extendBodyBehindAppBar: true,

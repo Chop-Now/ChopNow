@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/models/listing_model.dart';
 import '../../core/providers/listings_provider.dart';
 import '../../core/providers/cart_provider.dart';
+import '../../core/providers/favorites_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
@@ -60,6 +61,12 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     final cartQty = cart.quantityOf(listing.id);
     final maxQty = listing.quantity - cartQty;
 
+    final isFav = ref.watch(favoritesProvider).valueOrNull?.any((f) {
+          final fav = f is Map ? f : {};
+          final id = fav['listing']?['_id'] ?? fav['listingId'] ?? fav['_id'] ?? '';
+          return id == listing.id;
+        }) ?? false;
+
     // Parse location details
     final street = listing.business?['address']?['street']?.toString() ?? '';
     final city = listing.business?['address']?['city']?.toString() ?? '';
@@ -96,11 +103,32 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
         ),
         actions: [
           ScaleTap(
-            onTap: () {
+            onTap: () async {
               HapticFeedback.lightImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to favorites!')),
-              );
+              try {
+                final added = await ref.read(favoritesProvider.notifier).toggle(listing.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(added
+                          ? 'Added to favorites! ❤️'
+                          : 'Removed from favorites! 💔'),
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update favorites: $e'),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
             },
             child: Container(
               margin: const EdgeInsets.all(8),
@@ -110,8 +138,11 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.favorite_border_rounded,
-                  color: AppColors.textPrimary, size: 20),
+              child: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: isFav ? Colors.red : AppColors.textPrimary,
+                size: 20,
+              ),
             ),
           ),
         ],

@@ -14,7 +14,7 @@ require('dotenv').config();
 // Ensure required env vars are present (setup.js sets defaults)
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'test-jwt-secret-that-is-at-least-32-characters-long';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chopnow-test';
+process.env.MONGO_URI = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/chopnow-test';
 process.env.NODE_ENV = 'test';
 
 const express = require('express');

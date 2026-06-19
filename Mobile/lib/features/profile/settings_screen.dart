@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/services/biometric_service.dart';
+import '../../core/services/local_storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/animations/scale_tap.dart';
 
@@ -17,6 +21,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _emailNotifications = true;
   bool _orderUpdates = true;
   bool _promoAlerts = false;
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
+  String _biometricLabel = 'Biometrics';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final pushPref =
+        await LocalStorageService.loadNotifPref('push', defaultValue: true);
+    final emailPref =
+        await LocalStorageService.loadNotifPref('email', defaultValue: true);
+    final orderPref =
+        await LocalStorageService.loadNotifPref('orders', defaultValue: true);
+    final promoPref =
+        await LocalStorageService.loadNotifPref('promo', defaultValue: false);
+    final bioAvailable = await BiometricService.isAvailable;
+    final bioEnabled = bioAvailable ? await BiometricService.isEnabled : false;
+    final bioLabel =
+        bioAvailable ? await BiometricService.biometricLabel : 'Biometrics';
+
+    if (mounted) {
+      setState(() {
+        _pushNotifications = pushPref;
+        _emailNotifications = emailPref;
+        _orderUpdates = orderPref;
+        _promoAlerts = promoPref;
+        _biometricAvailable = bioAvailable;
+        _biometricEnabled = bioEnabled;
+        _biometricLabel = bioLabel;
+      });
+    }
+  }
+
+  Future<void> _toggleNotifPref(
+      String key, bool value, void Function(bool) setter) async {
+    setter(value);
+    HapticFeedback.selectionClick();
+    await LocalStorageService.saveNotifPref(key, value);
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      // Verify identity before enabling
+      final authed = await BiometricService.authenticate(
+          reason: 'Verify your identity to enable quick sign-in');
+      if (!authed) return;
+    }
+    await BiometricService.setEnabled(value);
+    setState(() => _biometricEnabled = value);
+    HapticFeedback.selectionClick();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value
+              ? '$_biometricLabel enabled for quick sign-in'
+              : '$_biometricLabel disabled'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,59 +103,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          // Notifications Section
+          // ── Notifications Section ──
           const _SectionHeader('Notifications'),
           _SwitchTile(
             icon: Icons.notifications_active_outlined,
             label: 'Push Notifications',
             subtitle: 'Order updates, deals, and reminders',
             value: _pushNotifications,
-            onChanged: (v) {
-              setState(() => _pushNotifications = v);
-              HapticFeedback.selectionClick();
-            },
+            onChanged: (v) => _toggleNotifPref(
+                'push', v, (val) => setState(() => _pushNotifications = val)),
           ),
           _SwitchTile(
             icon: Icons.email_outlined,
             label: 'Email Notifications',
             subtitle: 'Receipts, newsletters and offers',
             value: _emailNotifications,
-            onChanged: (v) {
-              setState(() => _emailNotifications = v);
-              HapticFeedback.selectionClick();
-            },
+            onChanged: (v) => _toggleNotifPref(
+                'email', v, (val) => setState(() => _emailNotifications = val)),
           ),
           _SwitchTile(
             icon: Icons.receipt_long_outlined,
             label: 'Order Status Updates',
             subtitle: 'Be notified when your order changes',
             value: _orderUpdates,
-            onChanged: (v) {
-              setState(() => _orderUpdates = v);
-              HapticFeedback.selectionClick();
-            },
+            onChanged: (v) => _toggleNotifPref(
+                'orders', v, (val) => setState(() => _orderUpdates = val)),
           ),
           _SwitchTile(
             icon: Icons.local_offer_outlined,
             label: 'Promotional Alerts',
             subtitle: 'Flash deals and exclusive discounts',
             value: _promoAlerts,
-            onChanged: (v) {
-              setState(() => _promoAlerts = v);
-              HapticFeedback.selectionClick();
-            },
+            onChanged: (v) => _toggleNotifPref(
+                'promo', v, (val) => setState(() => _promoAlerts = val)),
           ),
 
           const SizedBox(height: 8),
-          // Account Section
+          // ── Security Section ──
+          const _SectionHeader('Security'),
+          if (_biometricAvailable)
+            _SwitchTile(
+              icon: Icons.fingerprint_rounded,
+              label: 'Quick Sign-In ($_biometricLabel)',
+              subtitle: 'Use $_biometricLabel to sign in faster',
+              value: _biometricEnabled,
+              onChanged: _toggleBiometric,
+            ),
+          _NavTile(
+              icon: Icons.lock_outline_rounded,
+              label: 'Change Password',
+              onTap: () => context.push('/profile/edit')),
+          _NavTile(
+              icon: Icons.devices_rounded,
+              label: 'Active Sessions',
+              onTap: () => _showActiveSessions(context)),
+
+          const SizedBox(height: 8),
+          // ── Account Section ──
           const _SectionHeader('Account'),
           _NavTile(
               icon: Icons.person_outline_rounded,
               label: 'Edit Profile',
-              onTap: () => context.push('/profile/edit')),
-          _NavTile(
-              icon: Icons.lock_outline_rounded,
-              label: 'Change Password',
               onTap: () => context.push('/profile/edit')),
           _NavTile(
               icon: Icons.location_on_outlined,
@@ -92,7 +171,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => context.push('/profile/addresses')),
 
           const SizedBox(height: 8),
-          // Vendor section (if business owner)
+          // ── Business section (conditional) ──
           Consumer(builder: (_, ref, __) {
             final user = ref.watch(currentUserProvider);
             if (user?.isBusinessOwner != true) return const SizedBox.shrink();
@@ -110,7 +189,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           }),
 
           const SizedBox(height: 8),
-          // App section
+          // ── App section ──
           const _SectionHeader('App'),
           _NavTile(
               icon: Icons.info_outline_rounded,
@@ -119,18 +198,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _NavTile(
               icon: Icons.privacy_tip_outlined,
               label: 'Privacy Policy',
-              onTap: () => _showPrivacyPolicy(context)),
+              onTap: () => _openUrl('https://chopnow.app/privacy')),
           _NavTile(
               icon: Icons.assignment_outlined,
               label: 'Terms of Service',
-              onTap: () => _showTerms(context)),
+              onTap: () => _openUrl('https://chopnow.app/terms')),
           _NavTile(
               icon: Icons.bug_report_outlined,
               label: 'Report a Problem',
-              onTap: () => _showReportProblem(context)),
+              onTap: () => _openUrl('mailto:support@chopnow.app')),
 
           const SizedBox(height: 8),
-          // Danger zone
+          // ── Danger zone ──
           const _SectionHeader('Danger Zone'),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -160,7 +239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 10),
               ScaleTap(
-                onTap: () => _showDeleteAccount(context),
+                onTap: () => _confirmDeleteAccount(context, ref),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
@@ -184,7 +263,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 8),
           const Center(
-              child: Text('ChopNow v1.0.0\nBuilt with ❤️ in Africa',
+              child: Text(
+                  'ChopNow v1.0.0${kDebugMode ? ' (debug)' : ''}\nBuilt with ❤️ in Africa',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 11,
@@ -213,49 +293,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ));
   }
 
-  void _showPrivacyPolicy(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text(
-          'We value your privacy. ChopNow secure-stores only data needed to complete your orders, match delivery partners, and ensure safety. Your private info is never sold.',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
-        ],
-      ),
-    );
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
-  void _showTerms(BuildContext context) {
+  void _showActiveSessions(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Terms of Service', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Active Sessions',
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text(
-          'By using ChopNow, you agree to our terms. ChopNow is a platform connecting users with merchants selling surplus food. All sales are final once verified via pickup code. Please treat all partners with respect.',
+          'You are currently signed in on this device. To sign out of all devices, tap "Sign Out All" below.',
           style: TextStyle(height: 1.5),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
-        ],
-      ),
-    );
-  }
-
-  void _showReportProblem(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Report a Problem', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text(
-          'Encountered an issue? We\'re here to help! Please email us at support@chopnow.app with details of the problem and we will get back to you as soon as possible.',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              ref.read(authProvider.notifier).logout();
+            },
+            child: const Text('Sign Out All',
+                style: TextStyle(color: AppColors.error)),
+          ),
         ],
       ),
     );
@@ -287,12 +353,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _showDeleteAccount(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text(
-              'Please contact support@chopnow.app to delete your account.')),
+  Future<void> _confirmDeleteAccount(
+      BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account?',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+          'This action is irreversible. All your data, orders, and impact history will be permanently deleted. Are you sure?',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete Forever',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
     );
+    if (confirm == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Please contact support@chopnow.app to complete account deletion.')),
+      );
+    }
   }
 }
 

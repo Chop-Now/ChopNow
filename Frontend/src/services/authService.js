@@ -108,10 +108,20 @@ const authService = {
     }
   },
 
-  // Reset password with token
-  resetPassword: async (token, password) => {
+  // Verify reset OTP
+  verifyResetOTP: async (email, otp) => {
     try {
-      const response = await api.post('/api/users/reset-password', { token, password });
+      const response = await api.post('/api/users/verify-reset-otp', { email, otp });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Reset password with token/OTP
+  resetPassword: async (email, token, password) => {
+    try {
+      const response = await api.post('/api/users/reset-password', { email, token, password });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

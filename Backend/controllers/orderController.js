@@ -103,38 +103,52 @@ const createOrder = async (req, res) => {
         }
 
         // Create order
+        const isTestMode = process.env.PAYMENT_TEST_MODE !== 'false';
+        const initialStatus = (payment?.paymentMethod === 'card' && isTestMode) ? 'paid' : 'pending_payment';
+        const initialPaymentStatus = (payment?.paymentMethod === 'card' && isTestMode) ? 'completed' : (payment?.paymentStatus || 'pending');
+
+        const orderData = {
+          customer: req.user._id,
+          business: listingDoc.business._id,
+          listing: listingDoc._id,
+          items,
+          pricing: {
+            subtotal,
+            deliveryFee,
+            platformFee,
+            platformFeePercent,
+            vendorAmount,
+            total,
+            currency: listingDoc.pricing.currency,
+          },
+          fulfillmentType,
+          deliveryDetails,
+          pickupDetails:
+            fulfillmentType === 'pickup'
+              ? {
+                  ...pickupDetails,
+                  pickupCode: crypto
+                    .randomBytes(4)
+                    .toString('hex')
+                    .substring(0, 6)
+                    .toUpperCase(),
+                }
+              : undefined,
+          status: initialStatus,
+          payment: {
+            paymentMethod: payment?.paymentMethod,
+            paymentStatus: initialPaymentStatus,
+          },
+        };
+
+        if (initialStatus === 'paid') {
+          orderData.statusTimestamps = {
+            paidAt: new Date(),
+          };
+        }
+
         [order] = await Order.create(
-          [
-            {
-              customer: req.user._id,
-              business: listingDoc.business._id,
-              listing: listingDoc._id,
-              items,
-              pricing: {
-                subtotal,
-                deliveryFee,
-                platformFee,
-                platformFeePercent,
-                vendorAmount,
-                total,
-                currency: listingDoc.pricing.currency,
-              },
-              fulfillmentType,
-              deliveryDetails,
-              pickupDetails:
-                fulfillmentType === 'pickup'
-                  ? {
-                      ...pickupDetails,
-                      pickupCode: crypto
-                        .randomBytes(4)
-                        .toString('hex')
-                        .substring(0, 6)
-                        .toUpperCase(),
-                    }
-                  : undefined,
-              payment,
-            },
-          ],
+          [orderData],
           { session }
         );
 
@@ -162,12 +176,13 @@ const createOrder = async (req, res) => {
 
     // --- Post-transaction: notifications and emails ---
     const isCashOrder = order.payment?.paymentMethod === 'cash';
+    const isPaidCardOrder = order.payment?.paymentMethod === 'card' && order.status === 'paid';
 
-    if (isCashOrder) {
+    if (isCashOrder || isPaidCardOrder) {
       // Send vendor notifications and customer emails immediately
       await sendNewOrderNotifications(order._id);
     } else {
-      // For mobile money/card, just notify customer of order placement pending payment
+      // For mobile money/card (pending payment), just notify customer of order placement pending payment
       try {
         const io = socketManager.getIO();
         io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
@@ -677,7 +692,7 @@ const cancelOrder = async (req, res) => {
  */
 const verifyPickupCode = async (req, res) => {
   try {
-    const { pickupCode } = req.body;
+    const pickupCode = req.body.pickupCode || req.body.code;
 
     const order = await Order.findById(req.params.id).populate('business');
 
@@ -748,7 +763,7 @@ const verifyPickupCode = async (req, res) => {
  */
 const verifyPickupCodeDirect = async (req, res) => {
   try {
-    const { pickupCode } = req.body;
+    const pickupCode = req.body.pickupCode || req.body.code;
 
     if (!pickupCode) {
       return res.status(400).json({ message: 'Please provide pickup code' });

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -236,7 +237,7 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
         return [locations.first.longitude, locations.first.latitude];
       }
     } catch (e) {
-      debugPrint('Geocoding failed for business address: $e');
+      if (kDebugMode) debugPrint('Geocoding failed for business address: $e');
     }
     return [30.0619, -1.9403]; // Default Kigali coordinates
   }

@@ -11,7 +11,7 @@ import '../models/notification_payload.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Firebase is already initialized in main.dart before this fires.
-  debugPrint('FCM Background message: ${message.messageId}');
+  if (kDebugMode) debugPrint('FCM Background message: ${message.messageId}');
   await LocalNotificationService.instance.showFromRemoteMessage(message);
 }
 
@@ -52,7 +52,7 @@ class NotificationService {
 
     // ── 4. Get & cache the FCM token ──────────────────────────────────────────
     _fcmToken = await _messaging.getToken();
-    debugPrint('FCM Token: $_fcmToken');
+    if (kDebugMode) debugPrint('FCM Token: $_fcmToken');
 
     // ── 5. Listen for token refresh ───────────────────────────────────────────
     _messaging.onTokenRefresh.listen((newToken) {
@@ -116,14 +116,14 @@ class NotificationService {
         AppEndpoints.fcmToken,
         data: {'fcmToken': token},
       );
-      debugPrint('FCM token registered with backend.');
+      if (kDebugMode) debugPrint('FCM token registered with backend.');
     } catch (e) {
-      debugPrint('Failed to register FCM token: $e');
+      if (kDebugMode) debugPrint('Failed to register FCM token: $e');
     }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('FCM Foreground: ${message.notification?.title}');
+    if (kDebugMode) debugPrint('FCM Foreground: ${message.notification?.title}');
     final payload = _buildPayload(message);
     _streamController.add(payload);
     // Also show local notification for system sound/badge

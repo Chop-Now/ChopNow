@@ -60,7 +60,12 @@ class AuthService {
 
   // ── Clear everything on logout ──
   static Future<void> clearAll() async {
-    await _storage.deleteAll();
+    await Future.wait([
+      _storage.delete(key: AppConstants.accessTokenKey),
+      _storage.delete(key: AppConstants.refreshTokenKey),
+      _storage.delete(key: AppConstants.userIdKey),
+      _storage.delete(key: AppConstants.activeRoleKey),
+    ]);
   }
 
   // ── Onboarding Status ──

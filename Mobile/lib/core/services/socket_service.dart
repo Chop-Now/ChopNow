@@ -41,46 +41,46 @@ class SocketService {
       _socket!.connect();
 
       _socket!.onConnect((_) {
-        debugPrint('Socket connected: ${_socket!.id}');
+        if (kDebugMode) debugPrint('Socket connected: ${_socket!.id}');
       });
 
       _socket!.onDisconnect((_) {
-        debugPrint('Socket disconnected');
+        if (kDebugMode) debugPrint('Socket disconnected');
       });
 
       // Listen for order status updates (for Consumers, Vendors, Riders)
       _socket!.on('order_status_updated', (data) {
-        debugPrint('Live order update received via Socket!');
+        if (kDebugMode) debugPrint('Live order update received via Socket!');
         _orderStatusController.add(Map<String, dynamic>.from(data));
       });
 
       // Listen for new orders (for Vendors)
       _socket!.on('new_order', (data) {
-        debugPrint('Live new order received via Socket!');
+        if (kDebugMode) debugPrint('Live new order received via Socket!');
         _newOrderController.add(Map<String, dynamic>.from(data));
       });
 
       // Listen for live rider location updates (for Consumers tracking their delivery)
       _socket!.on('location_update', (data) {
-        debugPrint('Live rider location update received via Socket!');
+        if (kDebugMode) debugPrint('Live rider location update received via Socket!');
         _locationController.add(Map<String, dynamic>.from(data));
       });
     } catch (e) {
-      debugPrint('Socket connection error: $e');
+      if (kDebugMode) debugPrint('Socket connection error: $e');
     }
   }
 
   /// Subscribe consumer/rider to a specific order's tracking updates room
   void trackOrder(String orderId) {
     if (_socket == null || !_socket!.connected) return;
-    debugPrint('Emitting track_order for order: $orderId');
+    if (kDebugMode) debugPrint('Emitting track_order for order: $orderId');
     _socket!.emit('track_order', orderId);
   }
 
   /// Emit location update from rider to tracking room
   void updateRiderLocation(String orderId, double lat, double lng) {
     if (_socket == null || !_socket!.connected) return;
-    debugPrint('Emitting rider_location_update: $lat, $lng');
+    if (kDebugMode) debugPrint('Emitting rider_location_update: $lat, $lng');
     _socket!.emit('rider_location_update', {
       'orderId': orderId,
       'lat': lat,

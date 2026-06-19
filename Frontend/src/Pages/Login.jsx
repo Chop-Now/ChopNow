@@ -221,13 +221,13 @@ const Login = () => {
                       Remember me
                     </label>
                   </div>
-                  <a
+                  <Link
                     className="text-sm hover:underline"
-                    href="#"
+                    to="/forgot-password"
                     style={{ color: 'var(--color-solid)' }}
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
 
                 {/* Location Section - Only for Buyers */}

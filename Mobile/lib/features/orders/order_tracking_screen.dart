@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,8 +69,10 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
 
       _locationSubscription = socketService.locationStream.listen((data) {
         if (!mounted) return;
-        debugPrint(
-            "Live tracking coordinate received in consumer screen: $data");
+        if (kDebugMode) {
+          debugPrint(
+              "Live tracking coordinate received in consumer screen: $data");
+        }
         if (data['orderId'] == widget.orderId || data['riderId'] != null) {
           setState(() {
             _riderPosition = LatLng(
@@ -362,12 +365,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 const SizedBox(height: 20),
 
                 // ── Pickup Code ──
-                if (order['pickupCode'] != null &&
+                if ((order['pickupDetails']?['pickupCode'] ?? order['pickupCode']) != null &&
                     (status == 'confirmed' ||
                         status == 'preparing' ||
                         status == 'ready_for_pickup'))
                   _PickupCodeCard(
-                    code: order['pickupCode'].toString(),
+                    code: (order['pickupDetails']?['pickupCode'] ?? order['pickupCode']).toString(),
                     isReady: status == 'ready_for_pickup',
                     pulseAnimation: _pulseCtrl,
                   ),

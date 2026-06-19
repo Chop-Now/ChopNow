@@ -166,6 +166,8 @@ const validateUpdateOrderStatus = [
   body('status')
     .isIn([
       'pending',
+      'pending_payment',
+      'paid',
       'confirmed',
       'preparing',
       'ready_for_pickup',
@@ -192,7 +194,16 @@ const validateCreateReview = [
 
 // Password reset validation
 const validateResetPassword = [
-  body('token').notEmpty().withMessage('Reset token is required'),
+  (req, res, next) => {
+    if (req.body.otp && !req.body.token) {
+      req.body.token = req.body.otp;
+    }
+    if (req.body.newPassword && !req.body.password) {
+      req.body.password = req.body.newPassword;
+    }
+    next();
+  },
+  body('token').notEmpty().withMessage('Reset token/code is required'),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
@@ -206,6 +217,19 @@ const validateResetPassword = [
 // Forgot password validation
 const validateForgotPassword = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  handleValidationErrors,
+];
+
+// Verify reset OTP validation
+const validateVerifyResetOTP = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('otp')
+    .notEmpty()
+    .withMessage('OTP code is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('OTP must be exactly 6 digits')
+    .isNumeric()
+    .withMessage('OTP must contain only numbers'),
   handleValidationErrors,
 ];
 
@@ -276,6 +300,7 @@ module.exports = {
   validateCreateReview,
   validateResetPassword,
   validateForgotPassword,
+  validateVerifyResetOTP,
   validatePayoutRequest,
   validatePayoutStatus,
   validateCreateDispute,
