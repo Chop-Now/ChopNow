@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class AppNotification {
   final String id;
   final String title;
@@ -31,14 +33,14 @@ class AppNotification {
     );
   }
 
-  String get icon => switch (type) {
-        'order_placed' => '🛍',
-        'order_confirmed' => '✅',
-        'order_ready' => '🎉',
-        'order_cancelled' => '❌',
-        'payment' => '💰',
-        'business' => '🏪',
-        'impact' => '🌿',
-        _ => '🔔',
+  IconData get iconData => switch (type) {
+        'order_placed' => Icons.shopping_bag_outlined,
+        'order_confirmed' => Icons.verified_rounded,
+        'order_ready' => Icons.stars_rounded,
+        'order_cancelled' => Icons.cancel_rounded,
+        'payment' => Icons.payments_rounded,
+        'business' => Icons.storefront_rounded,
+        'impact' => Icons.eco_rounded,
+        _ => Icons.notifications_rounded,
       };
 }

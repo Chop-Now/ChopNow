@@ -68,6 +68,7 @@ class AppEndpoints {
 
   // ── Favorites ─────────────────────────────────────────────────────────────
   static const String favorites = '/favorites';
+  static const String toggleFavorite = '/favorites/toggle';
   static String favoriteBusiness(String id) => '/favorites/$id';
 
   // ── Notifications ─────────────────────────────────────────────────────────

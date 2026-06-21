@@ -83,17 +83,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     color: AppColors.textPrimary)),
             const SizedBox(height: 12),
             _SubRating(
-                label: '🥗 Freshness',
+                label: 'Freshness',
                 rating: _freshness,
                 onRated: (r) => setState(() => _freshness = r)),
             const SizedBox(height: 10),
             _SubRating(
-                label: '💰 Value for Money',
+                label: 'Value for Money',
                 rating: _value,
                 onRated: (r) => setState(() => _value = r)),
             const SizedBox(height: 10),
             _SubRating(
-                label: '📦 Accuracy',
+                label: 'Accuracy',
                 rating: _accuracy,
                 onRated: (r) => setState(() => _accuracy = r)),
             const SizedBox(height: 20),
@@ -149,7 +149,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Review submitted! Thank you 🙏'),
+              content: Text('Review submitted! Thank you'),
               backgroundColor: AppColors.primary),
         );
         if (context.canPop()) {

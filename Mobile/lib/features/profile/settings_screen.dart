@@ -283,12 +283,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('About ChopNow',
                   style: TextStyle(fontWeight: FontWeight.w700)),
               content: const Text(
-                  'ChopNow helps you rescue surplus food from local restaurants and cafés at up to 70% off, reducing food waste and saving the planet — one meal at a time. 🌿',
+                  'ChopNow helps you rescue surplus food from local restaurants and cafés at up to 70% off, reducing food waste and saving the planet — one meal at a time.',
                   style: TextStyle(height: 1.5)),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cool!'))
+                    child: const Text('Close'))
               ],
             ));
   }

@@ -210,7 +210,7 @@ class _AnalyticsBody extends StatelessWidget {
                   children: [
                     _QuickStat(
                       label: 'Store Rating',
-                      value: '⭐ ${rating.toStringAsFixed(1)}',
+                      value: rating.toStringAsFixed(1),
                       icon: Icons.star_border_rounded,
                       color: AppColors.warning,
                     ),

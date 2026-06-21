@@ -103,7 +103,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
                     // Title
                     const Text(
-                      'Order Confirmed! 🎉',
+                      'Order Confirmed',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -114,11 +114,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Your meal rescue is on the way.\nGet ready to enjoy great food! 🍽️',
+                      'Your meal rescue is on the way.\nGet ready to enjoy great food!',
                       style: TextStyle(
                           fontSize: 15,
                           color: AppColors.textSecondary,
-                          height: 1.5),
+                          height: 1.4),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 36),

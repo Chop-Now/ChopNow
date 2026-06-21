@@ -15,6 +15,7 @@ import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/notifications_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 // ── Providers & Filters ────────────────────────────────────────────────────────
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
@@ -149,12 +150,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   static const _categories = [
     'All',
-    '🍔 Food',
-    '🛒 Grocery',
-    '🥗 Salads',
-    '🥐 Bakery',
-    '🍱 Asian',
-    '🥩 Meat'
+    'Food',
+    'Grocery',
+    'Salads',
+    'Bakery',
+    'Asian',
+    'Meat'
   ];
 
   @override
@@ -189,6 +190,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: CustomScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             // ── Premium Vibe Header (Web Parity) ──
             SliverToBoxAdapter(
@@ -273,10 +275,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         ),
                                       ),
                                     ],
-                                  ),
+                                  ).animate().fadeIn(duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic).slideY(begin: -0.1, end: 0, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic),
                                 ),
                                 ScaleTap(
-                                  onTap: () => context.push('/cart'),
+                                  onTap: () => context.go('/cart'),
                                   child: Container(
                                     width: 46,
                                     height: 46,
@@ -324,7 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ],
                                     ),
                                   ),
-                                ),
+                                ).animate().fadeIn(duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic).scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic),
                                 const SizedBox(width: 10),
                                 ScaleTap(
                                   onTap: () => context.push('/notifications'),
@@ -391,7 +393,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ref.read(listingFiltersProvider.notifier).state = newFilters;
                                 }
                               },
-                            ),
+                            ).animate().fadeIn(delay: const Duration(milliseconds: 100), duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic).slideY(begin: 0.1, end: 0, delay: const Duration(milliseconds: 100), duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic),
                             const SizedBox(height: 24),
 
                             // Impact strip
@@ -441,7 +443,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ],
                                 ),
                               ),
-                            ),
+                            ).animate().fadeIn(delay: const Duration(milliseconds: 200), duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic).slideY(begin: 0.15, end: 0, delay: const Duration(milliseconds: 200), duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic),
                           ],
                         ),
                       ),
@@ -451,7 +453,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-            // ── Category filter chips ──
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 38,
@@ -501,7 +502,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   },
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: const Duration(milliseconds: 300), duration: const Duration(milliseconds: 500), curve: Curves.easeOutCubic)
+                  .slideX(begin: 0.08, end: 0, delay: const Duration(milliseconds: 300), duration: const Duration(milliseconds: 500), curve: Curves.easeOutCubic),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
@@ -558,7 +562,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         title: 'No deals near you yet',
                         subtitle:
                             'We\'re expanding across Africa — check back soon!',
-                        icon: Icons.fastfood_outlined,
+                        imagePath: 'assets/images/empty_orders.png',
                       ),
                     )
                   : SliverPadding(
@@ -587,7 +591,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      '${listingModel.title} added to cart 🛒'),
+                                      '${listingModel.title} added to cart'),
                                   behavior: SnackBarBehavior.floating,
                                   backgroundColor: AppColors.primary,
                                   duration: const Duration(seconds: 2),
@@ -717,13 +721,13 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildSortChip('price_asc', '💲 Price: Low-High'),
+                _buildSortChip('price_asc', 'Price: Low-High'),
                 const SizedBox(width: 8),
-                _buildSortChip('price_desc', '💰 Price: High-Low'),
+                _buildSortChip('price_desc', 'Price: High-Low'),
                 const SizedBox(width: 8),
-                _buildSortChip('rating', '⭐ Rating'),
+                _buildSortChip('rating', 'Rating'),
                 const SizedBox(width: 8),
-                _buildSortChip('distance', '📍 Distance'),
+                _buildSortChip('distance', 'Distance'),
               ],
             ),
           ),

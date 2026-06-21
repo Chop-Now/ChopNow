@@ -180,7 +180,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Rider application submitted successfully! 🚴🎉'),
+            content: Text('Rider application submitted successfully!'),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -251,7 +251,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Application Approved! 🎉',
+                'Application Approved!',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -266,7 +266,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
               ),
               const SizedBox(height: 32),
               CnPrimaryButton(
-                label: 'Go to Rider Dashboard 🚴',
+                label: 'Go to Rider Dashboard',
                 onTap: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(authProvider.notifier).switchRole('rider');
@@ -406,6 +406,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -476,7 +477,7 @@ class _BecomeRiderScreenState extends ConsumerState<BecomeRiderScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Deliver Food & Fuel Change 🌍',
+                      'Deliver Food & Fuel Change',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,

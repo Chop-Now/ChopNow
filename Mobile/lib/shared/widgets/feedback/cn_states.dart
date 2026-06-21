@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../animations/scale_tap.dart';
 
@@ -7,6 +8,7 @@ class CnEmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData icon;
+  final String? imagePath;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -15,6 +17,7 @@ class CnEmptyState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.icon = Icons.inbox_outlined,
+    this.imagePath,
     this.actionLabel,
     this.onAction,
   });
@@ -27,15 +30,28 @@ class CnEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: const BoxDecoration(
-                color: AppColors.primarySurface,
-                shape: BoxShape.circle,
+            if (imagePath != null)
+              Image.asset(
+                imagePath!,
+                height: 160,
+              )
+                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                  .slideY(
+                    begin: 0,
+                    end: -0.05,
+                    duration: const Duration(milliseconds: 1500),
+                    curve: Curves.easeInOutSine,
+                  )
+            else
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySurface,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 36, color: AppColors.primary),
               ),
-              child: Icon(icon, size: 36, color: AppColors.primary),
-            ),
             const SizedBox(height: 16),
             Text(
               title,

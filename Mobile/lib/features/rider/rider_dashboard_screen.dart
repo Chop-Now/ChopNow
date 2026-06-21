@@ -169,7 +169,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
         _tabs.animateTo(1);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Order accepted! Head to the restaurant 🚴'),
+            content: const Text('Order accepted! Head to the restaurant'),
             backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -312,15 +312,15 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         Row(
                           children: [
                             _StatCard(
-                                emoji: '✅', label: 'Delivered', value: totalDeliveries),
+                                icon: Icons.check_circle_outline_rounded, label: 'Delivered', value: totalDeliveries),
                             const SizedBox(width: 12),
                             _StatCard(
-                                emoji: '💰',
+                                icon: Icons.payments_outlined,
                                 label: 'Today',
                                 value: todayEarnings),
                             const SizedBox(width: 12),
                             _StatCard(
-                                emoji: '⭐', label: 'Rating', value: rating),
+                                icon: Icons.star_rounded, label: 'Rating', value: rating),
                           ],
                         ),
                       ],
@@ -346,7 +346,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                   tabs: [
                     Tab(
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Text('📦'),
+                        const Icon(Icons.inventory_2_outlined, size: 16),
                         const SizedBox(width: 6),
                         const Text('Available'),
                         if (asyncAvailable.hasValue &&
@@ -372,7 +372,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                     ),
                     const Tab(
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text('🚴'),
+                        Icon(Icons.delivery_dining_rounded, size: 16),
                         SizedBox(width: 6),
                         Text('My Deliveries'),
                       ]),
@@ -411,7 +411,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                                   title: 'No orders nearby',
                                   subtitle:
                                       'New pickup requests will appear here',
-                                  icon: Icons.local_shipping_outlined,
+                                  imagePath: 'assets/images/empty_orders.png',
                                 )
                               : ListView.separated(
                                   padding: const EdgeInsets.all(16),
@@ -453,7 +453,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         ? const CnEmptyState(
                             title: 'No active deliveries',
                             subtitle: 'Accept an order to start delivering!',
-                            icon: Icons.delivery_dining_rounded,
+                            imagePath: 'assets/images/empty_orders.png',
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
@@ -477,9 +477,10 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
 // ── Stat Card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  final String emoji, label, value;
+  final IconData icon;
+  final String label, value;
   const _StatCard(
-      {required this.emoji, required this.label, required this.value});
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -492,7 +493,7 @@ class _StatCard extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
         child: Column(children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
+          Icon(icon, size: 18, color: Colors.white),
           const SizedBox(height: 4),
           Text(value,
               style: const TextStyle(
@@ -582,7 +583,7 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
-                        child: Text('🏪', style: TextStyle(fontSize: 22))),
+                        child: Icon(Icons.storefront_rounded, color: Colors.white, size: 22)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -703,10 +704,10 @@ class _MyDeliveryCard extends StatelessWidget {
   String get _statusLabel {
     final s = order['status']?.toString() ?? '';
     return switch (s) {
-      'delivering' => '🚴 In Transit',
-      'delivered' || 'completed' => '✅ Delivered',
-      'cancelled' => '❌ Cancelled',
-      'ready_for_pickup' => '📦 Ready for Pickup',
+      'delivering' => 'In Transit',
+      'delivered' || 'completed' => 'Delivered',
+      'cancelled' => 'Cancelled',
+      'ready_for_pickup' => 'Ready for Pickup',
       _ => s,
     };
   }
@@ -741,8 +742,8 @@ class _MyDeliveryCard extends StatelessWidget {
                 color: _statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                  child: Text('🚴', style: TextStyle(fontSize: 22))),
+              child: Center(
+                  child: Icon(Icons.delivery_dining_rounded, size: 22, color: _statusColor)),
             ),
             const SizedBox(width: 14),
             Expanded(

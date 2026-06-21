@@ -1,16 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/models/listing_model.dart';
 import '../../core/providers/listings_provider.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
-import '../../shared/animations/scale_tap.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   final String listingId;
@@ -23,18 +23,21 @@ class ListingDetailScreen extends ConsumerWidget {
     return asyncListing.when(
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
-        body:
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       ),
       error: (e, _) => Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-            foregroundColor: AppColors.textPrimary,
-            backgroundColor: AppColors.surface,
-            elevation: 0),
+          foregroundColor: AppColors.textPrimary,
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+        ),
         body: CnErrorState(
-            message: e.toString(),
-            onRetry: () => ref.invalidate(listingDetailProvider(listingId))),
+          message: e.toString(),
+          onRetry: () => ref.invalidate(listingDetailProvider(listingId)),
+        ),
       ),
       data: (listing) => _ListingDetailView(listing: listing),
     );
@@ -49,10 +52,36 @@ class _ListingDetailView extends ConsumerStatefulWidget {
   ConsumerState<_ListingDetailView> createState() => _ListingDetailViewState();
 }
 
-class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
+class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
+    with SingleTickerProviderStateMixin {
   int _qty = 1;
   int _imageIndex = 0;
   bool _isDescriptionExpanded = false;
+  late AnimationController _favAnimCtrl;
+  late Animation<double> _favScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _favAnimCtrl = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _favScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _favAnimCtrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _favAnimCtrl.dispose();
+    super.dispose();
+  }
+
+  void _triggerFavoriteAnim() {
+    _favAnimCtrl.forward(from: 0.0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,617 +103,871 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView> {
     final displayLocation =
         locationText.isEmpty ? 'Kigali, Rwanda' : locationText;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Details',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        leading: ScaleTap(
-          onTap: () => context.canPop() ? context.pop() : context.go('/home'),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textPrimary, size: 16),
-          ),
-        ),
-        actions: [
-          ScaleTap(
-            onTap: () async {
-              HapticFeedback.lightImpact();
-              try {
-                final added = await ref.read(favoritesProvider.notifier).toggle(listing.id);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(added
-                          ? 'Added to favorites! ❤️'
-                          : 'Removed from favorites! 💔'),
-                      duration: const Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to update favorites: $e'),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: isFav ? Colors.red : AppColors.textPrimary,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Floating Image Hero with Diagonal Clipper
-            _buildGallery(listing),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            // Content Card
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      body: Stack(
+        children: [
+          // ── Scrollable Body ──
+          Positioned.fill(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title Block
-                  Text(
-                    listing.title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  if (listing.businessName.isNotEmpty) ...[
-                    Text(
-                      '🏪 ${listing.businessName}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                  ],
-                  // Location Block
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded,
-                          color: AppColors.textSecondary, size: 16),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          displayLocation,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                  // Hero Image Section
+                  _buildHeroImageSection(listing),
 
-                  // Macros Section Card
-                  _buildMacroCard(listing),
-                  const SizedBox(height: 24),
-
-                  // Description
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => setState(
-                        () => _isDescriptionExpanded = !_isDescriptionExpanded),
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                          height: 1.5,
+                  // Detail Info Section
+                  Transform.translate(
+                    offset: const Offset(0, -28),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : AppColors.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
                         ),
-                        children: [
-                          TextSpan(
-                            text: _isDescriptionExpanded
-                                ? listing.description
-                                : (listing.description.length > 120
-                                    ? '${listing.description.substring(0, 120)}... '
-                                    : listing.description),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, -6),
                           ),
-                          if (listing.description.length > 120)
-                            TextSpan(
-                              text: _isDescriptionExpanded
-                                  ? 'Show less'
-                                  : 'Show more',
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Pricing & Stepper Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 140),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Category Tag & Stock Status
                           Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'RWF ${listing.offerPrice.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
                                 ),
-                              ),
-                              if (listing.price > listing.offerPrice) ...[
-                                const SizedBox(width: 8),
-                                Text(
-                                  'RWF ${listing.price.toStringAsFixed(0)}',
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                child: Text(
+                                  (listing.category ?? 'Food').toUpperCase(),
                                   style: const TextStyle(
-                                    fontSize: 15,
-                                    color: AppColors.textTertiary,
-                                    decoration: TextDecoration.lineThrough,
+                                    color: AppColors.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
-                              ],
+                              ),
+                              if (listing.isSoldOut)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: const Text(
+                                    'SOLD OUT',
+                                    style: TextStyle(
+                                      color: AppColors.error,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                )
+                              else if (listing.quantity <= 3)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: Text(
+                                    'ONLY ${listing.quantity} LEFT',
+                                    style: const TextStyle(
+                                      color: AppColors.accent,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
                             ],
-                          ),
-                          if (listing.discountPercent > 0) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              '${listing.discountPercent}% OFF Saved Deal',
-                              style: const TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                          ).animate().fadeIn(duration: 300.ms),
+                          const SizedBox(height: 16),
+
+                          // Title Block
+                          Text(
+                            listing.title,
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ).animate().fadeIn(delay: 50.ms, duration: 300.ms),
+                          const SizedBox(height: 8),
+
+                          // Vendor and distance info
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.storefront_rounded,
+                                color: isDark ? AppColors.textTertiary : AppColors.textSecondary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  listing.businessName.isNotEmpty
+                                      ? listing.businessName
+                                      : 'ChopNow Partner',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
+                          const SizedBox(height: 6),
+
+                          // Location Block
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_rounded,
+                                color: AppColors.textTertiary,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  displayLocation,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 120.ms, duration: 300.ms),
+                          const SizedBox(height: 24),
+
+                          // Nutritional Info Section
+                          _buildMacrosSection(listing, isDark)
+                              .animate()
+                              .fadeIn(delay: 150.ms, duration: 300.ms),
+                          const SizedBox(height: 28),
+
+                          // Description
+                          Text(
+                            'Description',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () => setState(
+                              () => _isDescriptionExpanded = !_isDescriptionExpanded,
+                            ),
+                            child: RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 14.5,
+                                  color: AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: _isDescriptionExpanded
+                                        ? listing.description
+                                        : (listing.description.length > 120
+                                            ? '${listing.description.substring(0, 120)}... '
+                                            : listing.description),
+                                  ),
+                                  if (listing.description.length > 120)
+                                    TextSpan(
+                                      text: _isDescriptionExpanded
+                                          ? 'Show less'
+                                          : 'Show more',
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 220.ms, duration: 300.ms),
+                          const SizedBox(height: 28),
+
+                          // Price and Stepper section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        'RWF ${listing.offerPrice.toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      if (listing.price > listing.offerPrice) ...[
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'RWF ${listing.price.toStringAsFixed(0)}',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: AppColors.textTertiary,
+                                            decoration: TextDecoration.lineThrough,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (listing.discountPercent > 0) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${listing.discountPercent}% OFF Saved Deal',
+                                      style: const TextStyle(
+                                        color: AppColors.accent,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+
+                              // Quantity selector widget
+                              if (!listing.isSoldOut)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppColors.darkSurfaceVariant : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isDark ? AppColors.darkBorder : AppColors.border,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Row(
+                                    children: [
+                                      _buildStepperButton(
+                                        icon: Icons.remove_rounded,
+                                        onTap: _qty > 1
+                                            ? () {
+                                                HapticFeedback.lightImpact();
+                                                setState(() => _qty--);
+                                              }
+                                            : null,
+                                        isDark: isDark,
+                                      ),
+                                      SizedBox(
+                                        width: 28,
+                                        child: Text(
+                                          '$_qty',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? Colors.white : AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      _buildStepperButton(
+                                        icon: Icons.add_rounded,
+                                        onTap: _qty < maxQty
+                                            ? () {
+                                                HapticFeedback.lightImpact();
+                                                setState(() => _qty++);
+                                              }
+                                            : null,
+                                        isDark: isDark,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
+                          const SizedBox(height: 28),
+
+                          // Allergens warning (if any)
+                          if ((listing.allergens ?? []).isNotEmpty) ...[
+                            const Text(
+                              '⚠ Allergens Warning',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: listing.allergens!
+                                  .map((a) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warningSurface,
+                                          borderRadius: BorderRadius.circular(100),
+                                          border: Border.all(
+                                            color: AppColors.warning.withValues(alpha: 0.15),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          a,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.warning,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // CO2 Pill (if any)
+                          if ((listing.co2Saved ?? 0) > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.impactGradient,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.15),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.eco_rounded, size: 16, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Saves ${listing.co2Saved}g CO₂ from landfill',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ],
                       ),
-
-                      // Stepper
-                      if (!listing.isSoldOut)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            border:
-                                Border.all(color: AppColors.border, width: 1.5),
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                          child: Row(
-                            children: [
-                              _StepperButton(
-                                icon: Icons.remove_rounded,
-                                onTap: _qty > 1
-                                    ? () => setState(() => _qty--)
-                                    : null,
-                              ),
-                              SizedBox(
-                                width: 24,
-                                child: Text(
-                                  '$_qty',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              _StepperButton(
-                                icon: Icons.add_rounded,
-                                onTap: _qty < maxQty
-                                    ? () => setState(() => _qty++)
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Allergens (if any)
-                  if ((listing.allergens ?? []).isNotEmpty) ...[
-                    const Text(
-                      '⚠ Allergens Warning',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.warning),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: listing.allergens!
-                          .map((a) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warningSurface,
-                                  borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(
-                                      color: AppColors.warning
-                                          .withValues(alpha: 0.15)),
-                                ),
-                                child: Text(
-                                  a,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.warning,
-                                      fontWeight: FontWeight.w700),
-                                ),
-                              ))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // CO2 Pill (if any)
-                  if ((listing.co2Saved ?? 0) > 0) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.impactGradient,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('🌿', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Saves ${listing.co2Saved}g CO₂ from landfill',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-            24, 12, 24, MediaQuery.of(context).padding.bottom + 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border:
-              const Border(top: BorderSide(color: AppColors.border, width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: listing.isSoldOut
-            ? const CnPrimaryButton(
-                label: 'Sold Out',
-                onTap: null,
-              )
-            : Row(
-                children: [
-                  // Circular Cart Button (Left)
-                  ScaleTap(
-                    onTap: () {
+          ),
+
+          // ── Glassmorphic Sticky Top Navigation Bar ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Back Button
+                _buildGlassCircularButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
+                  },
+                  isDark: isDark,
+                ),
+
+                // Favorite Button
+                ScaleTransition(
+                  scale: _favScale,
+                  child: _buildGlassCircularButton(
+                    icon: isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    iconColor: isFav ? Colors.red : (isDark ? Colors.white : AppColors.textPrimary),
+                    onTap: () async {
                       HapticFeedback.lightImpact();
-                      for (var i = 0; i < _qty; i++) {
-                        ref.read(cartProvider.notifier).addItem(listing);
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('$_qty × ${listing.title} added to cart 🛒'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: AppColors.primary,
-                          action: SnackBarAction(
-                            label: 'View Cart',
-                            textColor: Colors.white,
-                            onPressed: () => context.push('/cart'),
-                          ),
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.shopping_bag_outlined,
-                          color: AppColors.textPrimary, size: 22),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Large "Buy Now" Button (Right)
-                  Expanded(
-                    child: CnPrimaryButton(
-                      label: 'Buy Now',
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        for (var i = 0; i < _qty; i++) {
-                          ref.read(cartProvider.notifier).addItem(listing);
+                      _triggerFavoriteAnim();
+                      try {
+                        final added = await ref.read(favoritesProvider.notifier).toggle(listing.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(added ? 'Added to favorites! ❤️' : 'Removed from favorites! 💔'),
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
                         }
-                        context.push('/checkout');
-                      },
-                    ),
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to update favorites: $e'),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    isDark: isDark,
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Frosted Glass Floating Bottom Action Bar ──
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 12,
+            child: _buildBottomActionBar(listing, isDark, context),
+          ).animate().slideY(begin: 0.5, end: 0, delay: 200.ms, duration: 400.ms, curve: Curves.easeOutCubic),
+        ],
       ),
     );
   }
 
-  Widget _buildGallery(Listing listing) {
+  // Helper to build glassmorphic circular buttons
+  Widget _buildGlassCircularButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isDark,
+    Color? iconColor,
+  }) {
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.85),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: iconColor ?? (isDark ? Colors.white : AppColors.textPrimary),
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Stepper Button
+  Widget _buildStepperButton({
+    required IconData icon,
+    required VoidCallback? onTap,
+    required bool isDark,
+  }) {
+    final disabled = onTap == null;
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: disabled
+            ? Colors.transparent
+            : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white),
+        shape: BoxShape.circle,
+        boxShadow: disabled || isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Icon(
+            icon,
+            size: 18,
+            color: disabled
+                ? (isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey[350])
+                : AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Hero image gallery with indicators
+  Widget _buildHeroImageSection(Listing listing) {
     final photos = listing.photos
         .where((p) => p.startsWith('http://') || p.startsWith('https://'))
         .toList();
 
     return Stack(
       children: [
-        // Diagonal background split
-        ClipPath(
-          clipper: DiagonalClipper(),
-          child: Container(
-            height: 260,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF1E3A2F), Color(0xFF0D1E18)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-        ),
-
-        // Centered Floating Image Card
-        Container(
-          height: 280,
-          margin: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: photos.isEmpty
-                ? const Center(
-                    child: Icon(Icons.fastfood_rounded,
-                        size: 70, color: AppColors.border),
-                  )
-                : PageView.builder(
-                    itemCount: photos.length,
-                    onPageChanged: (i) => setState(() => _imageIndex = i),
-                    itemBuilder: (_, i) => CachedNetworkImage(
-                      imageUrl: photos[i],
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (_, __) =>
-                          Container(color: AppColors.surfaceVariant),
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppColors.surfaceVariant,
-                        child: const Icon(Icons.broken_image_rounded,
-                            color: AppColors.border, size: 48),
+        // Gallery PageView
+        SizedBox(
+          height: 380,
+          width: double.infinity,
+          child: photos.isEmpty
+              ? Container(
+                  color: AppColors.surfaceVariant,
+                  child: const Center(
+                    child: Icon(
+                      Icons.fastfood_rounded,
+                      size: 80,
+                      color: AppColors.border,
+                    ),
+                  ),
+                )
+              : PageView.builder(
+                  itemCount: photos.length,
+                  onPageChanged: (i) => setState(() => _imageIndex = i),
+                  itemBuilder: (context, i) => CachedNetworkImage(
+                    imageUrl: photos[i],
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkSurfaceVariant
+                          : AppColors.surfaceVariant,
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppColors.surfaceVariant,
+                      child: const Icon(
+                        Icons.broken_image_rounded,
+                        color: AppColors.border,
+                        size: 60,
                       ),
                     ),
                   ),
+                ),
+        ),
+
+        // Gradient overlay at the bottom of the image
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 80,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkBackground
+                          : AppColors.background)
+                      .withValues(alpha: 0.5),
+                  Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBackground
+                      : AppColors.background,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
         ),
 
         // Image Dots Indicators
         if (photos.length > 1)
           Positioned(
-            bottom: 16,
+            bottom: 40,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                  photos.length,
-                  (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: i == _imageIndex ? 20 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: i == _imageIndex
-                              ? AppColors.primary
-                              : AppColors.textTertiary,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      )),
+                photos.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _imageIndex ? 22 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _imageIndex ? AppColors.primary : Colors.white.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildMacroCard(Listing listing) {
-    // Fallback averages if backend data is null or empty
+  // Redesigned Macros dashboard
+  Widget _buildMacrosSection(Listing listing, bool isDark) {
     final cal = listing.calories ?? 245;
     final prot = listing.protein ?? 8.4;
     final carb = listing.carbs ?? 32.1;
     final fat = listing.fats ?? 6.8;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border, width: 1.5),
+        color: isDark ? AppColors.darkSurfaceVariant : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.border,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.02),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildMacroItem('$cal', 'kcal'),
-          _buildDivider(),
-          _buildMacroItem('${prot.toStringAsFixed(1)}g', 'proteins'),
-          _buildDivider(),
-          _buildMacroItem('${fat.toStringAsFixed(1)}g', 'fats'),
-          _buildDivider(),
-          _buildMacroItem('${carb.toStringAsFixed(1)}g', 'carbo'),
+          _buildMacroElement('$cal', 'kcal', Icons.local_fire_department_rounded, AppColors.accent, isDark),
+          _buildVerticalDivider(isDark),
+          _buildMacroElement('${prot.toStringAsFixed(1)}g', 'proteins', Icons.fitness_center_rounded, AppColors.primary, isDark),
+          _buildVerticalDivider(isDark),
+          _buildMacroElement('${fat.toStringAsFixed(1)}g', 'fats', Icons.opacity_rounded, Colors.red, isDark),
+          _buildVerticalDivider(isDark),
+          _buildMacroElement('${carb.toStringAsFixed(1)}g', 'carbohydrates', Icons.grain_rounded, Colors.orange, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildMacroItem(String value, String label) {
+  Widget _buildMacroElement(String value, String label, IconData icon, Color color, bool isDark) {
     return Expanded(
       child: Column(
         children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildVerticalDivider(bool isDark) {
     return Container(
-      width: 1.5,
-      height: 28,
-      color: AppColors.border,
+      width: 1,
+      height: 36,
+      color: isDark ? AppColors.darkBorder : AppColors.border,
     );
   }
-}
 
-class _StepperButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-  const _StepperButton({required this.icon, this.onTap});
+  // Frosted Bottom Action Bar
+  Widget _buildBottomActionBar(Listing listing, bool isDark, BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : AppColors.border.withValues(alpha: 0.5),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: listing.isSoldOut
+              ? Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkSurfaceVariant : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'SOLD OUT',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                )
+              : Row(
+                  children: [
+                    // Circular Shopping Bag / Cart Action
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          for (var i = 0; i < _qty; i++) {
+                            ref.read(cartProvider.notifier).addItem(listing);
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$_qty × ${listing.title} added to cart'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: AppColors.primary,
+                              action: SnackBarAction(
+                                label: 'View Cart',
+                                textColor: Colors.white,
+                                onPressed: () => context.go('/cart'),
+                              ),
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isDark ? AppColors.darkBorder : AppColors.border,
+                              width: 1.5,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.shopping_bag_outlined,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
 
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTap(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        child: Center(
-          child: Icon(icon,
-              size: 16,
-              color: onTap == null ? AppColors.border : AppColors.primary),
+                    // "Buy Now" Primary Action
+                    Expanded(
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              spreadRadius: -4,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.mediumImpact();
+                              for (var i = 0; i < _qty; i++) {
+                                ref.read(cartProvider.notifier).addItem(listing);
+                              }
+                              context.push('/checkout');
+                            },
+                            borderRadius: BorderRadius.circular(26),
+                            child: const Center(
+                              child: Text(
+                                'Buy Now',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
   }
-}
-
-class DiagonalClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.85);
-    path.lineTo(size.width, size.height * 0.65);
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

@@ -55,6 +55,7 @@ class _OrderDetailView extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,8 +70,8 @@ class _OrderDetailView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Text(_emojiForStatus(order.status),
-                      style: const TextStyle(fontSize: 36)),
+                  Icon(_iconForStatus(order.status),
+                      size: 40, color: Colors.white),
                   const SizedBox(height: 6),
                   Text(_labelForStatus(order.status),
                       style: const TextStyle(
@@ -138,7 +139,7 @@ class _OrderDetailView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    const Text('🌿', style: TextStyle(fontSize: 24)),
+                    const Icon(Icons.eco_rounded, size: 24, color: Colors.white),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -200,12 +201,12 @@ class _OrderDetailView extends StatelessWidget {
     return const LinearGradient(colors: [Color(0xFF00897B), Color(0xFF26A69A)]);
   }
 
-  String _emojiForStatus(String status) => switch (status) {
-        'completed' => '✅',
-        'cancelled' => '❌',
-        'ready_for_pickup' => '🛍',
-        'out_for_delivery' => '🚴',
-        _ => '⏳',
+  IconData _iconForStatus(String status) => switch (status) {
+        'completed' => Icons.check_circle_outline_rounded,
+        'cancelled' => Icons.cancel_outlined,
+        'ready_for_pickup' => Icons.shopping_bag_outlined,
+        'out_for_delivery' => Icons.delivery_dining_outlined,
+        _ => Icons.hourglass_empty_rounded,
       };
 
   String _labelForStatus(String status) => switch (status) {

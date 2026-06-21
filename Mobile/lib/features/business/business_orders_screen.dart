@@ -6,6 +6,7 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
+import '../../shared/widgets/inputs/animated_segmented_control.dart';
 
 final _businessOrdersProvider = FutureProvider<List<dynamic>>((ref) async {
   final res = await ApiClient.instance.get(AppEndpoints.orders);
@@ -30,6 +31,11 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    _tabs.addListener(() {
+      if (!_tabs.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -51,18 +57,19 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
         backgroundColor: AppColors.surface,
         automaticallyImplyLeading: false,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(text: '🔥 New'),
-            Tab(text: '⏳ Active'),
-            Tab(text: '✅ Done')
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: AnimatedSegmentedControl(
+              segments: const ['New', 'Active', 'Done'],
+              selectedIndex: _tabs.index,
+              onValueChanged: (index) {
+                _tabs.animateTo(index);
+                setState(() {});
+              },
+            ),
+          ),
         ),
         actions: [
           IconButton(
@@ -90,7 +97,7 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
         data: (allOrders) {
           final newOrders = allOrders.where((o) {
             final status = o['status']?.toString() ?? '';
-            final payment = o['payment'] ?? {};
+            final payment = o['payment'] is Map ? o['payment'] : {};
             final method = payment['paymentMethod']?.toString() ?? '';
             return status == 'pending' ||
                 status == 'paid' ||
@@ -257,7 +264,7 @@ class _PickupCodeDialogState extends State<_PickupCodeDialog> {
     super.dispose();
   }
 
-  String get _code => _controllers.map((c) => c.text).join();
+  String get _code => _controllers.map((c) => c.text.toUpperCase()).join();
   bool get _isComplete => _code.length == 6;
 
   void _onChanged(int index, String value) {
@@ -346,14 +353,17 @@ class _PickupCodeDialogState extends State<_PickupCodeDialog> {
                     child: TextField(
                       controller: _controllers[i],
                       focusNode: _focusNodes[i],
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
                       textAlign: TextAlign.center,
                       maxLength: 1,
                       style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      ],
                       decoration: InputDecoration(
                         counterText: '',
                         contentPadding:
@@ -462,9 +472,10 @@ class _OrderList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
       return CnEmptyState(
-          title: emptyMessage, icon: Icons.receipt_long_outlined);
+          title: emptyMessage, imagePath: 'assets/images/empty_orders.png');
     }
     return ListView.separated(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.all(12),
       itemCount: orders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -536,10 +547,14 @@ class _BusinessOrderCard extends StatelessWidget {
         const SizedBox(height: 8),
 
         // Items summary
-        if (order['items'] != null)
+        // Items summary
+        if (order['items'] is List)
           ...(order['items'] as List).take(2).map((item) {
-            final listing = item['listing'] ?? {};
-            return Text('${item['quantity']}x ${listing['title'] ?? 'Item'}',
+            if (item is! Map) return const SizedBox.shrink();
+            final title = item['title'] ??
+                (item['listing'] is Map ? item['listing']['title'] : null) ??
+                'Item';
+            return Text('${item['quantity']}x $title',
                 style: const TextStyle(
                     fontSize: 12, color: AppColors.textSecondary));
           }),
@@ -570,7 +585,7 @@ class _BusinessOrderCard extends StatelessWidget {
   Widget _actionButtons(dynamic order) {
     final status = order['status']?.toString() ?? 'pending';
     final orderId = order['_id']?.toString() ?? '';
-    final payment = order['payment'] ?? {};
+    final payment = order['payment'] is Map ? order['payment'] : {};
     final method = payment['paymentMethod']?.toString() ?? '';
 
     final isNew = status == 'pending' ||
@@ -587,20 +602,20 @@ class _BusinessOrderCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
             child: _FilledBtn(
-                label: '✅ Accept',
+                label: 'Accept',
                 onTap: () => onUpdate(orderId, 'confirmed'))),
       ]);
     }
 
     return switch (status) {
       'confirmed' => _FilledBtn(
-          label: '👨‍🍳 Start Preparing',
+          label: 'Start Preparing',
           onTap: () => onUpdate(orderId, 'preparing')),
       'preparing' => _FilledBtn(
-          label: '🎉 Mark as Ready',
+          label: 'Mark as Ready',
           onTap: () => onUpdate(orderId, 'ready_for_pickup')),
       'ready_for_pickup' => _FilledBtn(
-          label: '🔐 Verify & Complete',
+          label: 'Verify & Complete',
           onTap: () => onVerifyPickup(orderId)),
       _ => const SizedBox.shrink(),
     };
@@ -615,7 +630,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = order['status']?.toString() ?? 'pending';
-    final payment = order['payment'] ?? {};
+    final payment = order['payment'] is Map ? order['payment'] : {};
     final method = payment['paymentMethod']?.toString() ?? '';
 
     final isNew = status == 'pending' ||
@@ -623,32 +638,32 @@ class _StatusBadge extends StatelessWidget {
         (status == 'pending_payment' && method == 'cash');
 
     final (color, bg, label) = isNew
-        ? (AppColors.warning, AppColors.warningSurface, '🆕 New')
+        ? (AppColors.warning, AppColors.warningSurface, 'New')
         : switch (status) {
             'confirmed' => (
                 AppColors.primary,
                 AppColors.primarySurface,
-                '✅ Confirmed'
+                'Confirmed'
               ),
             'preparing' => (
                 AppColors.primary,
                 AppColors.primarySurface,
-                '👨‍🍳 Preparing'
+                'Preparing'
               ),
             'ready_for_pickup' => (
                 AppColors.success,
                 AppColors.successSurface,
-                '🎉 Ready'
+                'Ready'
               ),
             'completed' => (
                 AppColors.success,
                 AppColors.successSurface,
-                '✅ Done'
+                'Completed'
               ),
             'cancelled' => (
                 AppColors.error,
                 AppColors.errorSurface,
-                '❌ Cancelled'
+                'Cancelled'
               ),
             _ => (AppColors.textSecondary, AppColors.surfaceVariant, status),
           };

@@ -48,7 +48,7 @@ class FavoritesScreen extends ConsumerWidget {
                   title: 'No favourites yet',
                   subtitle:
                       'Tap the ❤️ on any listing to save it here for quick access',
-                  icon: Icons.favorite_border_rounded,
+                  imagePath: 'assets/images/empty_favorites.png',
                 )
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -107,7 +107,7 @@ class FavoritesScreen extends ConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content:
-                                  Text('${listingModel.title} added to cart 🛒'),
+                                  Text('${listingModel.title} added to cart'),
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: AppColors.primary,
                               duration: const Duration(seconds: 2),

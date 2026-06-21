@@ -89,7 +89,7 @@ class CartScreen extends ConsumerWidget {
               title: 'Your cart is empty',
               subtitle:
                   'Find discounted meals near you\nand rescue them from waste!',
-              icon: Icons.shopping_bag_outlined,
+              imagePath: 'assets/images/empty_cart.png',
               actionLabel: 'Browse Deals',
               onAction: () => context.go('/home'),
             )

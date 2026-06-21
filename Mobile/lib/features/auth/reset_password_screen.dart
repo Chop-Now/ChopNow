@@ -86,7 +86,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       key: _form,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 16),
-        const Text('New Password 🔑',
+        const Text('New Password',
             style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w800,
@@ -159,7 +159,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           child: const Icon(Icons.lock_open_rounded,
               size: 36, color: AppColors.primary)),
       const SizedBox(height: 24),
-      const Text('Password Updated! 🎉',
+      const Text('Password Updated',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 22,

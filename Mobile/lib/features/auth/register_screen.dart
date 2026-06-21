@@ -95,17 +95,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary)),
               const SizedBox(height: 4),
-              const Text('Join ChopNow and rescue food today 🌿',
+              const Text('Join ChopNow and rescue food today',
                   style:
                       TextStyle(fontSize: 14, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
 
-              // Role picker
               Row(
                 children: [
                   Expanded(
                       child: _RolePill(
-                    label: '🛍 Consumer',
+                    icon: Icons.shopping_bag_rounded,
+                    label: 'Consumer',
                     subtitle: 'Buy food',
                     selected: _selectedRole == 'consumer',
                     onTap: () => setState(() => _selectedRole = 'consumer'),
@@ -113,7 +113,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   const SizedBox(width: 12),
                   Expanded(
                       child: _RolePill(
-                    label: '🏪 Business',
+                    icon: Icons.storefront_rounded,
+                    label: 'Business',
                     subtitle: 'Sell food',
                     selected: _selectedRole == 'business_owner',
                     onTap: () =>
@@ -309,12 +310,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 }
 
 class _RolePill extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
   const _RolePill(
-      {required this.label,
+      {required this.icon,
+      required this.label,
       required this.subtitle,
       required this.selected,
       required this.onTap});
@@ -336,12 +339,24 @@ class _RolePill extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        selected ? AppColors.primary : AppColors.textPrimary)),
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? AppColors.primary : AppColors.textPrimary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(subtitle,
                 style: const TextStyle(
                     fontSize: 11, color: AppColors.textSecondary)),

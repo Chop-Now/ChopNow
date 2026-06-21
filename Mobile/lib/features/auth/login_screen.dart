@@ -44,7 +44,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
-  String _biometricIcon = '🔑';
+  IconData _biometricIcon = Icons.vpn_key_rounded;
 
   @override
   void initState() {
@@ -372,7 +372,7 @@ class _RoleSelectionStep extends StatelessWidget {
                 gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(16)),
             child: const Center(
-                child: Text('🥗', style: TextStyle(fontSize: 28))),
+                child: Icon(Icons.eco_rounded, size: 28, color: Colors.white)),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -524,7 +524,7 @@ class _LoginFormStep extends StatelessWidget {
   final VoidCallback? onSubmit;
   final bool biometricAvailable;
   final bool biometricEnabled;
-  final String biometricIcon;
+  final IconData biometricIcon;
   final VoidCallback onBiometricTap;
 
   const _LoginFormStep({
@@ -554,7 +554,7 @@ class _LoginFormStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBusinessRole = selectedRole == _LoginRole.business;
     final roleLabel = isBusinessRole ? 'Business' : 'Customer';
-    final roleIcon = isBusinessRole ? '🏪' : '🛒';
+    final roleIconData = isBusinessRole ? Icons.storefront_rounded : Icons.shopping_bag_rounded;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -583,7 +583,7 @@ class _LoginFormStep extends StatelessWidget {
                 gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(16)),
             child: Center(
-                child: Text(roleIcon, style: const TextStyle(fontSize: 28))),
+                child: Icon(roleIconData, size: 28, color: Colors.white)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -706,9 +706,10 @@ class _LoginFormStep extends StatelessWidget {
                       color: AppColors.surface,
                     ),
                     child: Center(
-                      child: Text(
+                      child: Icon(
                         biometricIcon,
-                        style: const TextStyle(fontSize: 24),
+                        size: 24,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
