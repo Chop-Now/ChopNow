@@ -38,6 +38,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
           // ── Premium Gradient Hero Header ──
           SliverToBoxAdapter(
@@ -330,7 +331,7 @@ class ProfileScreen extends ConsumerWidget {
 
                 const Center(
                   child: Text(
-                      'ChopNow v1.0.0 · Rescue food. Save money.\nSustain tomorrow. 🌍',
+                      'ChopNow v1.0.0 · Rescue food. Save money.\nSustain tomorrow.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 11,
@@ -381,7 +382,7 @@ class ProfileScreen extends ConsumerWidget {
         title: const Text('About ChopNow',
             style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         content: const Text(
-          'ChopNow is dedicated to eliminating food waste while making premium food affordable for everyone. Join us in sustaining tomorrow, one meal at a time. 🌿',
+          'ChopNow is dedicated to eliminating food waste while making premium food affordable for everyone. Join us in sustaining tomorrow, one meal at a time.',
           style: TextStyle(color: AppColors.textSecondary, height: 1.5),
         ),
         actions: [
@@ -550,10 +551,10 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = switch (role) {
-      'business_owner' => '🏪 Business Owner',
-      'rider' => '🚴 Rider',
-      _ => '🛍 Consumer',
+    final (icon, label) = switch (role) {
+      'business_owner' => (Icons.storefront_rounded, 'Business Owner'),
+      'rider' => (Icons.delivery_dining_rounded, 'Rider'),
+      _ => (Icons.shopping_bag_outlined, 'Consumer'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -562,9 +563,16 @@ class _RoleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
         border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
       ),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+        ],
+      ),
     );
   }
 }

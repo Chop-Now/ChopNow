@@ -246,9 +246,10 @@ class _InAppBannerState extends State<_InAppBanner>
                             ),
                           ),
                           child: Center(
-                            child: Text(
-                              widget.entry.payload.type.emoji,
-                              style: const TextStyle(fontSize: 22),
+                            child: Icon(
+                              widget.entry.payload.type.iconData,
+                              color: _accentColor,
+                              size: 20,
                             ),
                           ),
                         ),

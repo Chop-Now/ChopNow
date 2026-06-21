@@ -28,7 +28,7 @@ enum DeliveryPhase {
         DeliveryPhase.headingToRestaurant => 'Head to Restaurant',
         DeliveryPhase.pickingUp => 'Pick Up Order',
         DeliveryPhase.delivering => 'Deliver to Customer',
-        DeliveryPhase.completed => 'Delivery Complete! 🎉',
+        DeliveryPhase.completed => 'Delivery Complete',
       };
 
   String get subtitle => switch (this) {
@@ -49,11 +49,11 @@ enum DeliveryPhase {
         DeliveryPhase.completed => 'Back to Dashboard',
       };
 
-  String get emoji => switch (this) {
-        DeliveryPhase.headingToRestaurant => '🏪',
-        DeliveryPhase.pickingUp => '📦',
-        DeliveryPhase.delivering => '🏠',
-        DeliveryPhase.completed => '🎉',
+  IconData get icon => switch (this) {
+        DeliveryPhase.headingToRestaurant => Icons.storefront_rounded,
+        DeliveryPhase.pickingUp => Icons.inventory_2_rounded,
+        DeliveryPhase.delivering => Icons.home_rounded,
+        DeliveryPhase.completed => Icons.check_circle_rounded,
       };
 
   Color get color => switch (this) {
@@ -565,8 +565,8 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
-                            child: Text(_phase.emoji,
-                                style: const TextStyle(fontSize: 20)),
+                            child: Icon(_phase.icon,
+                                size: 20, color: _phase.color),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -625,7 +625,11 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Row(children: [
-                            Text('🎉', style: TextStyle(fontSize: 28)),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 28,
+                              color: AppColors.success,
+                            ),
                             SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -870,7 +874,11 @@ class _PhaseProgressBar extends StatelessWidget {
                 child: Center(
                   child: isDone
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text(phase.emoji, style: const TextStyle(fontSize: 14)),
+                      : Icon(
+                          phase.icon,
+                          color: isActive ? Colors.white : AppColors.textTertiary,
+                          size: 16,
+                        ),
                 ),
               ),
               const SizedBox(height: 4),

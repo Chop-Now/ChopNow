@@ -75,8 +75,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         child: notifications.isEmpty
             ? const CnEmptyState(
                 title: 'No notifications',
-                subtitle: 'You\'re all caught up! 🎉',
-                icon: Icons.notifications_none_rounded)
+                subtitle: 'You\'re all caught up!',
+                imagePath: 'assets/images/empty_inbox.png')
             : ListView.separated(
                 padding: const EdgeInsets.all(12),
                 itemCount: notifications.length,
@@ -151,8 +151,14 @@ class _NotifCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                    child: Text(notification.icon,
-                        style: const TextStyle(fontSize: 20))),
+                  child: Icon(
+                    notification.iconData,
+                    size: 20,
+                    color: notification.isRead
+                        ? AppColors.textSecondary
+                        : AppColors.primary,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

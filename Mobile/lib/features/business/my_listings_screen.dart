@@ -7,6 +7,7 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
+import '../../shared/widgets/inputs/animated_segmented_control.dart';
 
 import '../../core/providers/business_provider.dart';
 
@@ -36,6 +37,11 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    _tabs.addListener(() {
+      if (!_tabs.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -77,18 +83,19 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
             ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(text: '🟢 Active'),
-            Tab(text: '🔴 Expired'),
-            Tab(text: '📝 Draft')
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: AnimatedSegmentedControl(
+              segments: const ['Active', 'Expired', 'Draft'],
+              selectedIndex: _tabs.index,
+              onValueChanged: (index) {
+                _tabs.animateTo(index);
+                setState(() {});
+              },
+            ),
+          ),
         ),
       ),
       body: asyncListings.when(
@@ -198,9 +205,10 @@ class _ListingTabView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (listings.isEmpty) {
       return CnEmptyState(
-          title: emptyLabel, icon: Icons.restaurant_menu_outlined);
+          title: emptyLabel, imagePath: 'assets/images/empty_orders.png');
     }
     return ListView.separated(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.all(12),
       itemCount: listings.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -300,14 +308,14 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, bg, label) = switch (status) {
-      'active' => (AppColors.success, AppColors.successSurface, '🟢 Active'),
-      'expired' => (AppColors.error, AppColors.errorSurface, '🔴 Expired'),
+      'active' => (AppColors.success, AppColors.successSurface, 'Active'),
+      'expired' => (AppColors.error, AppColors.errorSurface, 'Expired'),
       'sold_out' => (
           AppColors.warning,
           AppColors.warningSurface,
-          '🟡 Sold Out'
+          'Sold Out'
         ),
-      _ => (AppColors.textSecondary, AppColors.surfaceVariant, '📝 Draft'),
+      _ => (AppColors.textSecondary, AppColors.surfaceVariant, 'Draft'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

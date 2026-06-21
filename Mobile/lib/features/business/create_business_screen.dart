@@ -33,11 +33,11 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
   String? _error;
 
   static const _types = [
-    {'key': 'restaurant', 'label': '🍽 Restaurant'},
-    {'key': 'bakery', 'label': '🥐 Bakery'},
-    {'key': 'cafe', 'label': '☕ Café'},
-    {'key': 'supermarket', 'label': '🛒 Supermarket'},
-    {'key': 'other', 'label': '📦 Other'},
+    {'key': 'restaurant', 'label': 'Restaurant'},
+    {'key': 'bakery', 'label': 'Bakery'},
+    {'key': 'cafe', 'label': 'Café'},
+    {'key': 'supermarket', 'label': 'Supermarket'},
+    {'key': 'other', 'label': 'Other'},
   ];
 
   @override
@@ -300,7 +300,7 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Business submitted for approval! 🎉'),
+              content: Text('Business submitted for approval'),
               backgroundColor: AppColors.primary),
         );
         context.go('/business/dashboard');

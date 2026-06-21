@@ -115,7 +115,7 @@ class OrderItem {
       id: json['_id'] ?? json['id'] ?? '',
       listingId:
           listingMap?['_id'] ?? listingMap?['id'] ?? json['listingId'] ?? '',
-      name: listingMap?['title'] ?? listingMap?['name'] ?? json['name'] ?? '',
+      name: listingMap?['title'] ?? listingMap?['name'] ?? json['name'] ?? json['title'] ?? '',
       price: (json['price'] as num?)?.toDouble() ??
           (json['unitPrice'] as num?)?.toDouble() ??
           0,

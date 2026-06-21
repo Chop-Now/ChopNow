@@ -67,11 +67,17 @@ class ImpactDashboardScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('🌍 My Impact',
-                                style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600)),
+                            Row(
+                              children: [
+                                Icon(Icons.public_rounded, size: 16, color: Colors.white70),
+                                SizedBox(width: 6),
+                                Text('My Impact',
+                                    style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
                             SizedBox(height: 4),
                             Text('Your Food Rescue Journey',
                                 style: TextStyle(
@@ -81,7 +87,7 @@ class ImpactDashboardScreen extends ConsumerWidget {
                                     letterSpacing: -0.3)),
                             Spacer(),
                             Text(
-                                'Every meal you rescue makes a difference for our planet! 🌿',
+                                'Every meal you rescue makes a difference for our planet!',
                                 style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 13,
@@ -177,21 +183,21 @@ class _ImpactContentState extends State<_ImpactContent>
               children: [
                 Expanded(
                     child: _BigStatCard(
-                        emoji: '🍱',
+                        icon: Icons.restaurant_menu_rounded,
                         value: '$mealsRescued',
                         label: 'Meals Rescued',
                         color: AppColors.primary)),
                 const SizedBox(width: 10),
                 Expanded(
                     child: _BigStatCard(
-                        emoji: '🌿',
+                        icon: Icons.eco_rounded,
                         value: '${co2Saved}g',
                         label: 'CO₂ Saved',
                         color: AppColors.success)),
                 const SizedBox(width: 10),
                 Expanded(
                     child: _BigStatCard(
-                        emoji: '💰',
+                        icon: Icons.payments_rounded,
                         value: 'RWF\n${_fmt(moneySaved as num)}',
                         label: 'Money Saved',
                         color: AppColors.accent)),
@@ -216,7 +222,7 @@ class _ImpactContentState extends State<_ImpactContent>
                     ),
                     child: Column(
                       children: [
-                        const Text('📦', style: TextStyle(fontSize: 28)),
+                        const Icon(Icons.inventory_2_rounded, size: 28, color: AppColors.primary),
                         const SizedBox(height: 6),
                         Text('$totalOrders',
                             style: const TextStyle(
@@ -248,7 +254,7 @@ class _ImpactContentState extends State<_ImpactContent>
                 children: [
                   const Row(
                     children: [
-                      Text('🎯', style: TextStyle(fontSize: 20)),
+                      Icon(Icons.track_changes_rounded, size: 20, color: AppColors.primary),
                       SizedBox(width: 8),
                       Text('Next Goal',
                           style: TextStyle(
@@ -277,7 +283,7 @@ class _ImpactContentState extends State<_ImpactContent>
                 children: [
                   const Row(
                     children: [
-                      Text('🏆', style: TextStyle(fontSize: 20)),
+                      Icon(Icons.emoji_events_rounded, size: 20, color: AppColors.primary),
                       SizedBox(width: 8),
                       Text('Badges',
                           style: TextStyle(
@@ -293,7 +299,8 @@ class _ImpactContentState extends State<_ImpactContent>
                     children: _badgesForCount(mealsRescued)
                         .map((b) => _BadgePill(
                             label: b['label'] as String,
-                            earned: b['earned'] as bool))
+                            earned: b['earned'] as bool,
+                            icon: b['icon'] as IconData))
                         .toList(),
                   ),
                 ],
@@ -318,11 +325,17 @@ class _ImpactContentState extends State<_ImpactContent>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('💡 Did you know?',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary)),
+                  const Row(
+                    children: [
+                      Icon(Icons.lightbulb_rounded, size: 16, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text('Did you know?',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary)),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     _contextMessage(co2Saved as num),
@@ -357,21 +370,21 @@ class _ImpactContentState extends State<_ImpactContent>
   }
 
   static List<Map<String, dynamic>> _badgesForCount(int count) => [
-        {'label': '🌱 First Rescue', 'earned': count >= 1},
-        {'label': '🥗 5 Meals', 'earned': count >= 5},
-        {'label': '🌍 Food Hero', 'earned': count >= 10},
-        {'label': '🏆 Champion', 'earned': count >= 25},
-        {'label': '⭐ Legend', 'earned': count >= 50},
+        {'label': 'First Rescue', 'earned': count >= 1, 'icon': Icons.eco_rounded},
+        {'label': '5 Meals', 'earned': count >= 5, 'icon': Icons.restaurant_menu_rounded},
+        {'label': 'Food Hero', 'earned': count >= 10, 'icon': Icons.public_rounded},
+        {'label': 'Champion', 'earned': count >= 25, 'icon': Icons.emoji_events_rounded},
+        {'label': 'Legend', 'earned': count >= 50, 'icon': Icons.stars_rounded},
       ];
 }
 
 class _BigStatCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String value;
   final String label;
   final Color color;
   const _BigStatCard(
-      {required this.emoji,
+      {required this.icon,
       required this.value,
       required this.label,
       required this.color});
@@ -387,7 +400,7 @@ class _BigStatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 26)),
+          Icon(icon, size: 26, color: color),
           const SizedBox(height: 6),
           Text(value,
               textAlign: TextAlign.center,
@@ -434,7 +447,9 @@ class _StreakCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 28)),
+          Icon(Icons.local_fire_department_rounded,
+              size: 28,
+              color: streak > 0 ? Colors.white : AppColors.textSecondary),
           const SizedBox(height: 6),
           Text('$streak',
               style: TextStyle(
@@ -519,7 +534,8 @@ class _GoalProgress extends StatelessWidget {
 class _BadgePill extends StatelessWidget {
   final String label;
   final bool earned;
-  const _BadgePill({required this.label, required this.earned});
+  final IconData icon;
+  const _BadgePill({required this.label, required this.earned, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -531,13 +547,24 @@ class _BadgePill extends StatelessWidget {
         border:
             Border.all(color: earned ? AppColors.primary : AppColors.border),
       ),
-      child: Text(
-        earned ? label : '🔒 ${label.split(' ').skip(1).join(' ')}',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: earned ? AppColors.primary : AppColors.textTertiary,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            earned ? icon : Icons.lock_rounded,
+            size: 14,
+            color: earned ? AppColors.primary : AppColors.textTertiary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: earned ? AppColors.primary : AppColors.textTertiary,
+            ),
+          ),
+        ],
       ),
     );
   }

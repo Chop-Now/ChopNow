@@ -164,7 +164,7 @@ class _EarningsBody extends StatelessWidget {
                     const SizedBox(width: 12),
                     _QuickStat(
                       label: 'Rating',
-                      value: '⭐ $rating',
+                      value: '$rating',
                       icon: Icons.star_rounded,
                       color: AppColors.warning,
                     ),

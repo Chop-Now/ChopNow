@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -92,11 +93,11 @@ class BiometricService {
   }
 
   // ── Icon helper ──────────────────────────────────────────────────────────────
-  static Future<String> get biometricIcon async {
+  static Future<IconData> get biometricIcon async {
     final types = await availableTypes;
-    if (types.contains(BiometricType.face)) return '🔒';
-    if (types.contains(BiometricType.fingerprint)) return '👆';
-    return '🔑';
+    if (types.contains(BiometricType.face)) return Icons.face_rounded;
+    if (types.contains(BiometricType.fingerprint)) return Icons.fingerprint_rounded;
+    return Icons.vpn_key_rounded;
   }
 
   static Future<String> get biometricLabel async {

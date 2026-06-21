@@ -41,7 +41,7 @@ void main() {
 
     // Verify error is printed if test fails
     expect(find.text('Eddy'), findsOneWidget);
-    expect(find.text('🏪 Chop Test'), findsOneWidget);
+    expect(find.text('Chop Test'), findsOneWidget);
     expect(find.text('RWF 10000'), findsOneWidget);
   });
 }

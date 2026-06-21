@@ -123,10 +123,10 @@ class RiderProfileScreen extends ConsumerWidget {
                   // ── Stats Summary ──────────────────────────────────────────
                   const _SectionCard(
                     child: Row(children: [
-                      _MiniStat(emoji: '🚴', label: 'Deliveries', value: '87'),
-                      _MiniStat(emoji: '⭐', label: 'Rating', value: '4.8'),
+                      _MiniStat(icon: Icons.directions_bike_rounded, label: 'Deliveries', value: '87'),
+                      _MiniStat(icon: Icons.star_rounded, label: 'Rating', value: '4.8'),
                       _MiniStat(
-                          emoji: '💰', label: 'Total', value: 'RWF 48.5K'),
+                          icon: Icons.payments_outlined, label: 'Total', value: 'RWF 48.5K'),
                     ]),
                   ),
 
@@ -344,9 +344,10 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  final String emoji, label, value;
+  final IconData icon;
+  final String label, value;
   const _MiniStat(
-      {required this.emoji, required this.label, required this.value});
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +355,7 @@ class _MiniStat extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Column(children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
+          Icon(icon, size: 22, color: AppColors.primary),
           const SizedBox(height: 4),
           Text(value,
               style: const TextStyle(

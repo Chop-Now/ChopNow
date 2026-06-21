@@ -134,66 +134,67 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/auth/reset-password',
           builder: (_, __) => const ResetPasswordScreen()),
 
-      // ── Consumer Shell ──
+      // ── Consumer Pages (Root Level to prevent duplicate shells & clashing keys) ──
+      GoRoute(
+          path: '/checkout', builder: (_, __) => const CheckoutScreen()),
+      GoRoute(
+        path: '/orders/:id/confirmation',
+        builder: (_, state) =>
+            OrderConfirmationScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/orders/:id/tracking',
+        builder: (_, state) =>
+            OrderTrackingScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/orders/:id',
+        builder: (_, state) =>
+            OrderDetailScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/orders/:id/review',
+        builder: (_, state) =>
+            ReviewScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/orders/:id/dispute',
+        builder: (_, state) =>
+            DisputeScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+          path: '/notifications',
+          builder: (_, __) => const NotificationsScreen()),
+      GoRoute(
+          path: '/profile/edit',
+          builder: (_, __) => const EditProfileScreen()),
+      GoRoute(
+          path: '/profile/addresses',
+          builder: (_, __) => const AddressesScreen()),
+      GoRoute(
+          path: '/profile/favorites',
+          builder: (_, __) => const FavoritesScreen()),
+      GoRoute(
+          path: '/profile/settings',
+          builder: (_, __) => const SettingsScreen()),
+      GoRoute(
+          path: '/impact',
+          builder: (_, __) => const ImpactDashboardScreen()),
+      GoRoute(
+        path: '/business/:id/profile',
+        builder: (_, state) =>
+            BusinessProfileScreen(businessId: state.pathParameters['id']!),
+      ),
+
+      // ── Consumer Shell (Only for Main Navigation Tabs) ──
       ShellRoute(
         builder: (context, state, child) => ConsumerShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
-          GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
-          GoRoute(
-              path: '/checkout', builder: (_, __) => const CheckoutScreen()),
-          GoRoute(
-            path: '/orders/:id/confirmation',
-            builder: (_, state) =>
-                OrderConfirmationScreen(orderId: state.pathParameters['id']!),
-          ),
-          GoRoute(
-            path: '/orders/:id/tracking',
-            builder: (_, state) =>
-                OrderTrackingScreen(orderId: state.pathParameters['id']!),
-          ),
-          GoRoute(
-              path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
-          GoRoute(
-            path: '/orders/:id',
-            builder: (_, state) =>
-                OrderDetailScreen(orderId: state.pathParameters['id']!),
-          ),
-          GoRoute(
-            path: '/orders/:id/review',
-            builder: (_, state) =>
-                ReviewScreen(orderId: state.pathParameters['id']!),
-          ),
-          GoRoute(
-            path: '/orders/:id/dispute',
-            builder: (_, state) =>
-                DisputeScreen(orderId: state.pathParameters['id']!),
-          ),
-          GoRoute(
-              path: '/notifications',
-              builder: (_, __) => const NotificationsScreen()),
           GoRoute(path: '/browse', builder: (_, __) => const BrowseScreen()),
+          GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
+          GoRoute(path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-          GoRoute(
-              path: '/profile/edit',
-              builder: (_, __) => const EditProfileScreen()),
-          GoRoute(
-              path: '/profile/addresses',
-              builder: (_, __) => const AddressesScreen()),
-          GoRoute(
-              path: '/profile/favorites',
-              builder: (_, __) => const FavoritesScreen()),
-          GoRoute(
-              path: '/profile/settings',
-              builder: (_, __) => const SettingsScreen()),
-          GoRoute(
-              path: '/impact',
-              builder: (_, __) => const ImpactDashboardScreen()),
-          GoRoute(
-            path: '/business/:id/profile',
-            builder: (_, state) =>
-                BusinessProfileScreen(businessId: state.pathParameters['id']!),
-          ),
         ],
       ),
 

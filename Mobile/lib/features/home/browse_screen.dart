@@ -44,15 +44,15 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
   static const _categories = [
     'All',
-    '🍔 Food',
-    '🥗 Salads',
-    '🥐 Bakery',
-    '☕ Café',
-    '🍱 Asian',
-    '🛒 Grocery',
-    '🥩 Meat',
-    '🍕 Pizza',
-    '🍜 Noodles'
+    'Food',
+    'Salads',
+    'Bakery',
+    'Café',
+    'Asian',
+    'Grocery',
+    'Meat',
+    'Pizza',
+    'Noodles'
   ];
 
   @override
@@ -88,7 +88,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                               color: AppColors.textPrimary)),
                       const Spacer(),
                       ScaleTap(
-                        onTap: () => context.push('/cart'),
+                        onTap: () => context.go('/cart'),
                         child: Container(
                           width: 40,
                           height: 40,
@@ -228,6 +228,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 onRefresh: () async => ref.invalidate(_browseListingsProvider),
                 child: asyncListings.when(
                   loading: () => GridView.builder(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                     padding: const EdgeInsets.all(16),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -245,8 +246,9 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       ? const CnEmptyState(
                           title: 'No deals found',
                           subtitle: 'Try a different category or search term',
-                          icon: Icons.search_off_rounded)
+                          imagePath: 'assets/images/empty_orders.png')
                       : GridView.builder(
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
@@ -265,7 +267,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                               HapticFeedback.lightImpact();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${listingModel.title} added to cart 🛒'),
+                                  content: Text('${listingModel.title} added to cart'),
                                   behavior: SnackBarBehavior.floating,
                                   backgroundColor: AppColors.primary,
                                   duration: const Duration(seconds: 2),

@@ -53,14 +53,14 @@ class _CreateListingDetailsScreenState
   final Set<String> _selectedAllergens = {};
 
   static const _categories = [
-    {'key': 'meals', 'label': '🍲 Prepared Meals'},
-    {'key': 'baked-goods', 'label': '🥐 Baked Goods'},
-    {'key': 'fruit-veg', 'label': '🥦 Fruits & Veggies'},
-    {'key': 'dairy', 'label': '🥛 Dairy Products'},
-    {'key': 'meat', 'label': '🥩 Meat & Fish'},
-    {'key': 'beverages', 'label': '🥤 Beverages'},
-    {'key': 'pantry', 'label': '🥫 Pantry Items'},
-    {'key': 'other', 'label': '📦 Other surplus'},
+    {'key': 'meals', 'label': 'Prepared Meals'},
+    {'key': 'baked-goods', 'label': 'Baked Goods'},
+    {'key': 'fruit-veg', 'label': 'Fruits & Veggies'},
+    {'key': 'dairy', 'label': 'Dairy Products'},
+    {'key': 'meat', 'label': 'Meat & Fish'},
+    {'key': 'beverages', 'label': 'Beverages'},
+    {'key': 'pantry', 'label': 'Pantry Items'},
+    {'key': 'other', 'label': 'Other surplus'},
   ];
 
   @override
@@ -284,8 +284,8 @@ class _CreateListingDetailsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.listingId != null
-                ? 'Listing updated successfully! 🎉'
-                : 'Listing published successfully! 🎉'),
+                ? 'Listing updated successfully'
+                : 'Listing published successfully'),
             backgroundColor: AppColors.primary,
           ),
         );

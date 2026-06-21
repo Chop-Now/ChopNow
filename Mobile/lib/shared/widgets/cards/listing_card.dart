@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../animations/scale_tap.dart';
@@ -86,11 +87,15 @@ class ListingCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: const Color(0xFF1E2923).withValues(alpha: 0.04),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: const Color(0xFF1E2923).withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -102,7 +107,10 @@ class ListingCard extends StatelessWidget {
             : _buildList(img, name, business, price, offerPrice, discount, qty,
                 isLowStock, distance),
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuad)
+        .slideY(begin: 0.06, end: 0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuad);
   }
 
   Widget _buildGrid(img, name, business, price, offerPrice, discount, qty,
@@ -112,7 +120,7 @@ class ListingCard extends StatelessWidget {
       children: [
         // Image with badges
         ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           child: Stack(
             children: [
               AspectRatio(
@@ -267,7 +275,7 @@ class ListingCard extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius:
-              const BorderRadius.horizontal(left: Radius.circular(12)),
+              const BorderRadius.horizontal(left: Radius.circular(20)),
           child: SizedBox(
             width: 90,
             height: 90,
@@ -382,8 +390,14 @@ class ListingCardSkeleton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +406,7 @@ class ListingCardSkeleton extends StatelessWidget {
               height: 120,
               decoration: const BoxDecoration(
                 color: AppColors.shimmerBase,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
             ),
             Padding(

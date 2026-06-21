@@ -256,25 +256,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     {
       'key': 'momo',
       'label': 'MTN Mobile Money',
-      'emoji': '📱',
+      'icon': Icons.phone_android_rounded,
       'color': 0xFFFFCC00
     },
     {
       'key': 'airtel',
       'label': 'Airtel Money',
-      'emoji': '📲',
+      'icon': Icons.phonelink_ring_rounded,
       'color': 0xFFFF0000
     },
     // {
     //   'key': 'card',
     //   'label': 'Visa / Mastercard',
-    //   'emoji': '💳',
+    //   'icon': Icons.credit_card_rounded,
     //   'color': 0xFF1A56DB
     // },
     {
       'key': 'cash',
       'label': 'Cash on Pickup',
-      'emoji': '💵',
+      'icon': Icons.payments_rounded,
       'color': 0xFF22C55E
     },
   ];
@@ -385,7 +385,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               child: Column(
                 children: [
                   _DeliveryOption(
-                    icon: '🛍',
+                    icon: Icons.shopping_bag_outlined,
                     label: 'Self-Pickup',
                     subtitle: 'Pick up from the restaurant — Free!',
                     value: 'pickup',
@@ -397,7 +397,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   const SizedBox(height: 8),
                   _DeliveryOption(
-                    icon: '🚴',
+                    icon: Icons.delivery_dining_rounded,
                     label: 'Delivery',
                     subtitle:
                         'Delivered to your door — +RWF ${kDeliveryFeeRwf.toStringAsFixed(0)}',
@@ -533,7 +533,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   return Column(
                     children: [
                       _PaymentTile(
-                        emoji: m['emoji'] as String,
+                        icon: m['icon'] as IconData,
                         label: m['label'] as String,
                         accentColor: Color(m['color'] as int),
                         value: m['key'] as String,
@@ -1031,7 +1031,7 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _DeliveryOption extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String label;
   final String subtitle;
   final String value;
@@ -1063,7 +1063,11 @@ class _DeliveryOption extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
+            Icon(
+              icon,
+              size: 22,
+              color: selected ? AppColors.primary : AppColors.textSecondary,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1104,14 +1108,14 @@ class _DeliveryOption extends StatelessWidget {
 }
 
 class _PaymentTile extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String label;
   final Color accentColor;
   final String value;
   final String groupValue;
   final void Function(String?) onChanged;
   const _PaymentTile({
-    required this.emoji,
+    required this.icon,
     required this.label,
     required this.accentColor,
     required this.value,
@@ -1137,7 +1141,11 @@ class _PaymentTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
-                  child: Text(emoji, style: const TextStyle(fontSize: 20))),
+                  child: Icon(
+                icon,
+                color: accentColor,
+                size: 20,
+              )),
             ),
             const SizedBox(width: 12),
             Expanded(

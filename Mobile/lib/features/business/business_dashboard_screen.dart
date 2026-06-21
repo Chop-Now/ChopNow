@@ -27,11 +27,11 @@ class BusinessDashboardScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                     fontSize: 18)),
-            Text('Hello, ${user?.firstName ?? 'Owner'} 👋',
+            Text('Welcome back, ${user?.firstName ?? 'Owner'}',
                 style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w400)),
+                    fontWeight: FontWeight.w500)),
           ],
         ),
         backgroundColor: AppColors.surface,
@@ -164,8 +164,8 @@ class _BusinessCard extends StatelessWidget {
                                   business.logo!.startsWith('https://'))
                           ? Image.network(business.logo!, fit: BoxFit.cover)
                           : const Center(
-                              child:
-                                  Text('🏪', style: TextStyle(fontSize: 24))),
+                              child: Icon(Icons.storefront_rounded,
+                                  color: Colors.white, size: 24)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -270,10 +270,10 @@ class _StatusChip extends StatelessWidget {
       _ => AppColors.warning,
     };
     final label = switch (status) {
-      'active' || 'approved' => '✅ Active',
-      'rejected' => '❌ Rejected',
-      'suspended' => '⚠ Suspended',
-      _ => '⏳ Pending',
+      'active' || 'approved' => 'Active',
+      'rejected' => 'Rejected',
+      'suspended' => 'Suspended',
+      _ => 'Pending',
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

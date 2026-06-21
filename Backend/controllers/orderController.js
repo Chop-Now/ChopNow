@@ -270,7 +270,7 @@ const sendNewOrderNotifications = async (orderId) => {
     }
 
     // 3. EMAIL: Order confirmation to customer
-    if (customer.preferences?.notifications?.email) {
+    if (customer.preferences?.notifications?.email !== false) {
       sendOrderConfirmationEmail(customer.email, customerName, order).catch((err) =>
         logger.error({ err }, 'Failed to send order confirmation email')
       );
@@ -346,6 +346,7 @@ const getOrders = async (req, res) => {
       .populate('customer', 'firstName lastName email phone')
       .populate('business', 'name type address contact')
       .populate('listing', 'title category photos')
+      .populate({ path: 'items.listing', select: 'title category photos pricing' })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
@@ -377,6 +378,7 @@ const getOrderById = async (req, res) => {
       .populate('customer', 'firstName lastName email phone')
       .populate('business', 'name type address contact media location')
       .populate('listing', 'title category photos pricing')
+      .populate({ path: 'items.listing', select: 'title category photos pricing' })
       .populate('delivery')
       .lean();
 
@@ -516,7 +518,7 @@ const updateOrderStatus = async (req, res) => {
       // - ready_for_pickup: User MUST act (go pick up food before it spoils)
       // Other statuses: In-app notification is sufficient
       const customer = await User.findById(order.customer);
-      if (customer && customer.preferences?.notifications?.email) {
+      if (customer && customer.preferences?.notifications?.email !== false) {
         const customerName =
           `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
 

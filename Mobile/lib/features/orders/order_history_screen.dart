@@ -7,6 +7,7 @@ import '../../core/providers/orders_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
+import '../../shared/widgets/inputs/animated_segmented_control.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -23,6 +24,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -47,28 +53,16 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
-              indicator: const BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(color: AppColors.primary, width: 2.5)),
-              ),
-              labelStyle:
-                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-              unselectedLabelStyle:
-                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-              tabs: const [
-                Tab(text: 'Active'),
-                Tab(text: 'Completed'),
-                Tab(text: 'Cancelled')
-              ],
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: AnimatedSegmentedControl(
+              segments: const ['Active', 'Completed', 'Cancelled'],
+              selectedIndex: _tabController.index,
+              onValueChanged: (index) {
+                _tabController.animateTo(index);
+                setState(() {});
+              },
             ),
           ),
         ),
@@ -122,13 +116,14 @@ class _OrderList extends StatelessWidget {
       return CnEmptyState(
         title: emptyTitle,
         subtitle: emptySubtitle,
-        icon: Icons.receipt_long_outlined,
+        imagePath: 'assets/images/empty_orders.png',
       );
     }
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async => Future.delayed(const Duration(milliseconds: 600)),
       child: ListView.separated(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         itemCount: orders.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),

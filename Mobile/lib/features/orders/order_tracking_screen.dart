@@ -124,8 +124,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-          child:
-              const Center(child: Text('🏪', style: TextStyle(fontSize: 16))),
+          child: const Center(
+            child: Icon(Icons.storefront_rounded, size: 18, color: AppColors.primary),
+          ),
         ),
       ));
     }
@@ -140,8 +141,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-          child:
-              const Center(child: Text('🏠', style: TextStyle(fontSize: 16))),
+          child: const Center(
+            child: Icon(Icons.home_rounded, size: 18, color: AppColors.primary),
+          ),
         ),
       ));
     }
@@ -156,8 +158,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 6)]),
-          child:
-              const Center(child: Text('🏍️', style: TextStyle(fontSize: 18))),
+          child: const Center(
+            child: Icon(Icons.delivery_dining_rounded, size: 20, color: AppColors.primary),
+          ),
         ),
       ));
     }
@@ -246,18 +249,18 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
               order['fulfillmentType']?.toString().toLowerCase() == 'delivery';
           final steps = isDelivery
               ? const [
-                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
-                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline, '✅'),
-                  _Step('Preparing', 'preparing', Icons.restaurant_outlined, '👨‍🍳'),
-                  _Step('Out for Delivery', 'out_for_delivery', Icons.delivery_dining_outlined, '🚴'),
-                  _Step('Completed', 'completed', Icons.celebration_outlined, '🏆'),
+                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined),
+                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline),
+                  _Step('Preparing', 'preparing', Icons.restaurant_outlined),
+                  _Step('Out for Delivery', 'out_for_delivery', Icons.delivery_dining_outlined),
+                  _Step('Completed', 'completed', Icons.celebration_outlined),
                 ]
               : const [
-                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined, '🛍'),
-                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline, '✅'),
-                  _Step('Preparing', 'preparing', Icons.restaurant_outlined, '👨‍🍳'),
-                  _Step('Ready for Pickup', 'ready_for_pickup', Icons.inventory_2_outlined, '🎉'),
-                  _Step('Completed', 'completed', Icons.celebration_outlined, '🏆'),
+                  _Step('Order Placed', 'pending', Icons.shopping_bag_outlined),
+                  _Step('Confirmed', 'confirmed', Icons.check_circle_outline),
+                  _Step('Preparing', 'preparing', Icons.restaurant_outlined),
+                  _Step('Ready for Pickup', 'ready_for_pickup', Icons.inventory_2_outlined),
+                  _Step('Completed', 'completed', Icons.celebration_outlined),
                 ];
 
           if (isDelivery &&
@@ -282,6 +285,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
           }
 
           return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +315,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                   ),
                   child: Column(
                     children: [
-                      // Pulsing status emoji for active orders
+                      // Pulsing status icon for active orders
                       AnimatedBuilder(
                         animation: _pulseCtrl,
                         builder: (_, child) => Transform.scale(
@@ -319,9 +323,10 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                               isActive ? (1.0 + _pulseCtrl.value * 0.08) : 1.0,
                           child: child,
                         ),
-                        child: Text(
-                          _statusEmoji(status),
-                          style: const TextStyle(fontSize: 52),
+                        child: Icon(
+                          _statusIcon(status),
+                          size: 56,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -478,9 +483,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                 if (status == 'completed') ...[
                   const SizedBox(height: 16),
                   CnPrimaryButton(
-                    label: 'Write a Review ⭐',
+                    label: 'Write a Review',
                     onTap: () =>
-                        context.push('/orders/${widget.orderId}/review'),
+                        context.go('/orders/${widget.orderId}/review'),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -492,22 +497,22 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     );
   }
 
-  String _statusEmoji(String s) => switch (s) {
-        'confirmed' => '✅',
-        'preparing' => '👨‍🍳',
-        'ready_for_pickup' => '🎉',
-        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => '🚴',
-        'completed' => '🏆',
-        'cancelled' => '❌',
-        _ => '⏳',
+  IconData _statusIcon(String s) => switch (s) {
+        'confirmed' => Icons.verified_rounded,
+        'preparing' => Icons.restaurant_rounded,
+        'ready_for_pickup' => Icons.shopping_bag_rounded,
+        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => Icons.delivery_dining_rounded,
+        'completed' => Icons.stars_rounded,
+        'cancelled' => Icons.cancel_rounded,
+        _ => Icons.hourglass_empty_rounded,
       };
 
   String _statusLabel(String s) => switch (s) {
-        'confirmed' => 'Order Confirmed!',
+        'confirmed' => 'Order Confirmed',
         'preparing' => 'Being Prepared',
-        'ready_for_pickup' => 'Ready for Pickup! 🎉',
-        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => 'Out for Delivery! 🚴',
-        'completed' => 'Order Completed!',
+        'ready_for_pickup' => 'Ready for Pickup',
+        'out_for_delivery' || 'picked_up' || 'in_transit' || 'delivering' => 'Out for Delivery',
+        'completed' => 'Order Completed',
         'cancelled' => 'Order Cancelled',
         _ => 'Order Placed',
       };
@@ -517,8 +522,7 @@ class _Step {
   final String label;
   final String key;
   final IconData icon;
-  final String emoji;
-  const _Step(this.label, this.key, this.icon, this.emoji);
+  const _Step(this.label, this.key, this.icon);
 }
 
 class _TimelineStep extends StatelessWidget {
@@ -571,10 +575,11 @@ class _TimelineStep extends StatelessWidget {
                       : null,
                 ),
                 child: Center(
-                  child: isDone
-                      ? Text(step.emoji, style: const TextStyle(fontSize: 18))
-                      : Icon(step.icon,
-                          size: 18, color: AppColors.textSecondary),
+                  child: Icon(
+                    isDone ? (isCurrent ? step.icon : Icons.check_rounded) : step.icon,
+                    size: 18,
+                    color: isDone ? Colors.white : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),
@@ -633,7 +638,7 @@ class _OrderItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final listing = item['listing'] ?? {};
+    final listing = item['listing'] is Map ? item['listing'] : {};
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -664,7 +669,7 @@ class _OrderItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(listing['title'] ?? item['name'] ?? 'Item',
+                Text(listing['title'] ?? item['title'] ?? item['name'] ?? 'Item',
                     style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -731,7 +736,7 @@ class _PickupCodeCard extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                isReady ? '🎉 Your Order is Ready!' : '🎫 Your Pickup Code',
+                isReady ? 'Your Order is Ready' : 'Pickup Verification Code',
                 style: TextStyle(
                   fontSize: isReady ? 15 : 13,
                   fontWeight: FontWeight.w700,

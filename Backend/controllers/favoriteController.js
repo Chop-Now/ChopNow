@@ -46,7 +46,14 @@ const getFavorites = async (req, res) => {
     const [favorites, total] = await Promise.all([
       Favorite.find(query)
         .populate('business', 'name type address media stats')
-        .populate('listing', 'title category pricing photos timeWindow')
+        .populate({
+          path: 'listing',
+          select: 'title category pricing images inventory status timeWindow business description',
+          populate: {
+            path: 'business',
+            select: 'name type address media stats'
+          }
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
