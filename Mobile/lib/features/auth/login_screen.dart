@@ -286,7 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (_tabController.index == 0) {
       final email = _emailCtrl.text.trim();
       final pass = _passwordCtrl.text;
-      if (kDebugMode) debugPrint('[Login] Submit with email="$email", passLength=${pass.length}');
+      if (kDebugMode) debugPrint('[Login] Submit tapped');
 
       if (email.isEmpty) {
         if (kDebugMode) debugPrint('[Login] Email is empty');

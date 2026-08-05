@@ -178,7 +178,7 @@ class _CnTextFieldState extends State<CnTextField> {
 }
 
 /// CnSearchBar — rounded search input matching web's pill search design
-class CnSearchBar extends StatelessWidget {
+class CnSearchBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final String hint;
   final VoidCallback? onFilterTap;
@@ -191,56 +191,98 @@ class CnSearchBar extends StatelessWidget {
   });
 
   @override
+  State<CnSearchBar> createState() => _CnSearchBarState();
+}
+
+class _CnSearchBarState extends State<CnSearchBar> {
+  final _focusNode = FocusNode();
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 14),
-          const Icon(Icons.search, size: 18, color: AppColors.textSecondary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              onChanged: onChanged,
-              style:
-                  const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(
-                    fontSize: 14, color: AppColors.textSecondary),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _focusNode.requestFocus(),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 14),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (context, value, _) => AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                child: value.text.isEmpty
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search,
+                              size: 18, color: AppColors.textSecondary),
+                          SizedBox(width: 8),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
-          ),
-          if (onFilterTap != null) ...[
-            Container(
-              width: 1,
-              height: 20,
-              color: AppColors.border,
+            Expanded(
+              child: TextField(
+                focusNode: _focusNode,
+                controller: _controller,
+                onChanged: widget.onChanged,
+                style: const TextStyle(
+                    fontSize: 14, color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: widget.hint,
+                  hintStyle: const TextStyle(
+                      fontSize: 14, color: AppColors.textSecondary),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
             ),
-            IconButton(
-              onPressed: onFilterTap,
-              icon: const Icon(Icons.tune,
-                  size: 18, color: AppColors.textSecondary),
-              tooltip: 'Filter',
-            ),
-          ] else
-            const SizedBox(width: 12),
-        ],
+            if (widget.onFilterTap != null) ...[
+              Container(
+                width: 1,
+                height: 20,
+                color: AppColors.border,
+              ),
+              IconButton(
+                onPressed: widget.onFilterTap,
+                icon: const Icon(Icons.tune,
+                    size: 18, color: AppColors.textSecondary),
+                tooltip: 'Filter',
+              ),
+            ] else
+              const SizedBox(width: 12),
+          ],
+        ),
       ),
     );
   }

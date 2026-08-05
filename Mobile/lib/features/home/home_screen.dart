@@ -158,6 +158,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'Meat'
   ];
 
+  // 'All' has no illustration (it isn't a real category), so it keeps an
+  // icon fallback. Every other category uses the illustrated PNGs.
+  static const _categoryIcon = Icons.apps_rounded;
+
+  static const Map<String, String> _categoryImages = {
+    'Food': 'assets/images/food.png',
+    'Grocery': 'assets/images/grocery.png',
+    'Salads': 'assets/images/salads.png',
+    'Bakery': 'assets/images/bakery.png',
+    'Asian': 'assets/images/asian.png',
+    'Meat': 'assets/images/meat.png',
+  };
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -195,8 +208,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // ── Premium Vibe Header (Web Parity) ──
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 380, // Taller header to fit blobs
+                height: 340, // Taller header to fit blobs
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     // Organic Blob 1: Primary Green
                     Positioned(
@@ -398,7 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             // Impact strip
                             ScaleTap(
-                              onTap: () => context.go('/impact'),
+                              onTap: () => context.push('/impact'),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 16),
@@ -455,48 +469,90 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 38,
+                height: 112,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: _categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
                   itemBuilder: (_, i) {
                     final cat = _categories[i];
                     final active = cat == selectedCat;
+                    final imagePath = _categoryImages[cat];
                     return ScaleTap(
                       onTap: () => ref
                           .read(selectedCategoryProvider.notifier)
                           .state = cat,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: active ? AppColors.primary : AppColors.surface,
-                          borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                              color: active
-                                  ? AppColors.primary
-                                  : AppColors.border),
-                          boxShadow: active
-                              ? [
-                                  BoxShadow(
-                                      color: AppColors.primary
-                                          .withValues(alpha: 0.25),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2))
-                                ]
-                              : null,
-                        ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                active ? Colors.white : AppColors.textSecondary,
-                          ),
+                      child: SizedBox(
+                        width: 80,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 76,
+                              height: 76,
+                              clipBehavior: Clip.antiAlias,
+                              padding: EdgeInsets.all(imagePath != null ? 12 : 0),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: imagePath != null
+                                    ? (active
+                                        ? AppColors.primary.withValues(alpha: 0.12)
+                                        : AppColors.surface)
+                                    : (active
+                                        ? AppColors.primary
+                                        : AppColors.primary.withValues(alpha: 0.12)),
+                                border: Border.all(
+                                  color: active
+                                      ? AppColors.primary
+                                      : AppColors.border,
+                                  width: active ? 2 : 1.5,
+                                ),
+                                boxShadow: active
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color:
+                                              Colors.black.withValues(alpha: 0.04),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                              ),
+                              child: imagePath != null
+                                  ? Image.asset(imagePath, fit: BoxFit.contain)
+                                  : Icon(
+                                      _categoryIcon,
+                                      size: 30,
+                                      color: active
+                                          ? Colors.white
+                                          : AppColors.primary,
+                                    ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              cat,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight:
+                                    active ? FontWeight.w800 : FontWeight.w600,
+                                color: active
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );

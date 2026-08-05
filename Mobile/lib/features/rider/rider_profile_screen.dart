@@ -272,6 +272,7 @@ class RiderProfileScreen extends ConsumerWidget {
   void _showHelpCenter(BuildContext context) {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -298,6 +299,7 @@ class RiderProfileScreen extends ConsumerWidget {
   void _showTerms(BuildContext context) {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

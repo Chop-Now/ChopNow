@@ -279,6 +279,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showAbout(BuildContext context) {
     showDialog(
         context: context,
+        useRootNavigator: false,
         builder: (_) => AlertDialog(
               title: const Text('About ChopNow',
                   style: TextStyle(fontWeight: FontWeight.w700)),
@@ -303,6 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showActiveSessions(BuildContext context) {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (_) => AlertDialog(
         title: const Text('Active Sessions',
             style: TextStyle(fontWeight: FontWeight.w700)),
