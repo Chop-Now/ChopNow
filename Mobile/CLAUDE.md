@@ -43,6 +43,14 @@ Flutter app. Keep entries short and factual. Update it whenever corrected.
   Use your Mac's LAN IP (`ipconfig getifaddr en0`), not `10.0.2.2` — that
   alias only works on the Android emulator, not iOS. LAN IP is DHCP-assigned
   and can change across reconnects.
+- **This local override works on iOS but is blocked on Android.**
+  `android/app/src/main/AndroidManifest.xml` sets
+  `android:usesCleartextTraffic="false"`, so any plain `http://` URL fails
+  silently on Android. To test a local backend from Android you must either
+  put the backend behind HTTPS (e.g. an ngrok/Cloudflare tunnel — preferred),
+  or temporarily flip that flag to `true` and never commit that change.
+  This is also why the old `http://10.0.2.2:5000` default could never have
+  worked on Android as shipped.
 
 ## Auth / secure storage
 
@@ -80,11 +88,28 @@ Flutter app. Keep entries short and factual. Update it whenever corrected.
   required `GoogleDataTransport` version in CocoaPods dependency resolution.
   Don't downgrade it without checking that conflict is still resolved.
 
+## Android project
+
+- `MainActivity` **must** extend `FlutterFragmentActivity`, not
+  `FlutterActivity` — `local_auth`'s biometric prompt requires a
+  `FragmentActivity` host and fails at runtime otherwise. Don't "simplify"
+  it back. (`USE_BIOMETRIC` needs no app-level declaration; the plugin's own
+  manifest merges it in.)
+- `android/gradle.properties` carries `android.builtInKotlin=false` and
+  `android.newDsl=false`, added by Flutter's migrator. These are
+  load-bearing: several plugins (`mobile_scanner`, `local_auth_android`,
+  `camera_android_camerax`, `share_plus`, `shared_preferences_android`) still
+  apply the Kotlin Gradle Plugin, and the build warns that future Flutter
+  versions will reject that. Don't delete these lines until those plugins
+  ship Built-in Kotlin support.
+- `usesCleartextTraffic="false"` — see the Backend connection section; all
+  Android traffic must be HTTPS.
+
 ## GoRouter + ShellRoute + dialogs (crash class, fixed but stay alert)
 
 - Bottom-nav tab switches (`ConsumerShell`, and the Rider/Business shells) use
   `context.go(tab.path)`, which **replaces** GoRouter's whole page stack
-  rather than pushing. So a bottom-nav tab is frequently the *only* page
+  rather than pushing. So a bottom-nav tab is frequently the _only_ page
   GoRouter knows about (`currentConfiguration` has exactly 1 entry).
 - `showDialog` / `showCupertinoDialog` default to `useRootNavigator: true`,
   which pushes onto GoRouter's own Pages-API navigator. GoRouter tracks every
@@ -92,7 +117,7 @@ Flutter app. Keep entries short and factual. Update it whenever corrected.
   such a dialog when the stack has only 1 page confuses GoRouter into
   thinking its last real page was removed, and it crashes with:
   `_AssertionError ('currentConfiguration.isNotEmpty': You have popped the
-  last page off of the stack...)`.
+last page off of the stack...)`.
 - Fix applied everywhere in the app: every `showDialog`/`showCupertinoDialog`
   call now passes `useRootNavigator: false`, so dialogs live on the local
   (shell) navigator instead. `showModalBottomSheet` already defaults to

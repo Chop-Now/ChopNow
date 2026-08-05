@@ -635,7 +635,7 @@ CEO/Co-Founder: Uche
 ### 7.1 Go-to-Market Strategy (Phase 1: Months 1-6) {#7.1-go-to-market-strategy-(phase-1:-months-1-6)}
 
 **Pre-Launch (Months 1-2):**  
- 1\. Build waitlist: 1,000 consumers, 20 businesses  
+1\. Build waitlist: 1,000 consumers, 20 businesses  
 2\. Beta testing with 5 pilot businesses (Kigali)  
 3\. Social media teaser campaigns  
 4\. Partnership MOUs with 2 logistics companies
