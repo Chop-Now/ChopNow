@@ -53,165 +53,182 @@ class ConsumerShell extends ConsumerWidget {
     final current = _currentIndex(context);
     final cartCount = ref.watch(cartCountProvider);
 
-    return Scaffold(
-      extendBody: true,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 90),
-              child: child,
-            ),
-          ),
-
-          // Floating nav bar
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 12,
-            child: Container(
-              height: 68,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(34),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+    // Tab switches use context.go(), which replaces GoRouter's whole page
+    // stack rather than pushing — so a bottom-nav tab is frequently the only
+    // page GoRouter knows about. A system back gesture (iOS edge-swipe,
+    // Android back button) reaching GoRouter's own pop with nothing left to
+    // pop to crashes with a 'currentConfiguration.isNotEmpty' assertion.
+    // Block that here and handle it ourselves instead.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (current != 0) {
+          context.go('/home');
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        extendBody: true,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 90),
+                child: child,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(34),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(34),
-                      border: Border.all(
-                          color: AppColors.border.withValues(alpha: 0.8),
-                          width: 1),
+            ),
+
+            // Floating nav bar
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 12,
+              child: Container(
+                height: 68,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(34),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Row(
-                      children: List.generate(_tabs.length, (i) {
-                        final tab = _tabs[i];
-                        final isActive = i == current;
-                        return Expanded(
-                          child: Semantics(
-                            label: tab.label,
-                            selected: isActive,
-                            button: true,
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                context.go(tab.path);
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 3, vertical: 8),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        AnimatedSwitcher(
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          transitionBuilder: (child, anim) =>
-                                              ScaleTransition(
-                                                  scale: anim, child: child),
-                                          child: Icon(
-                                            isActive
-                                                ? tab.activeIcon
-                                                : tab.icon,
-                                            key: ValueKey(
-                                                '${tab.path}_$isActive'),
-                                            color: isActive
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                            size: 21,
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(34),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(34),
+                        border: Border.all(
+                            color: AppColors.border.withValues(alpha: 0.8),
+                            width: 1),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Row(
+                        children: List.generate(_tabs.length, (i) {
+                          final tab = _tabs[i];
+                          final isActive = i == current;
+                          return Expanded(
+                            child: Semantics(
+                              label: tab.label,
+                              selected: isActive,
+                              button: true,
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  context.go(tab.path);
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeInOut,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 3, vertical: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? AppColors.primary
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(26),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            transitionBuilder: (child, anim) =>
+                                                ScaleTransition(
+                                                    scale: anim, child: child),
+                                            child: Icon(
+                                              isActive
+                                                  ? tab.activeIcon
+                                                  : tab.icon,
+                                              key: ValueKey(
+                                                  '${tab.path}_$isActive'),
+                                              color: isActive
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                              size: 21,
+                                            ),
                                           ),
-                                        ),
-                                        // Cart badge on browse/cart tab if needed
-                                        if (i == 2 && cartCount > 0)
-                                          Positioned(
-                                            top: -4,
-                                            right: -6,
-                                            child: Container(
-                                              width: 16,
-                                              height: 16,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.accent,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                    color: AppColors.surface,
-                                                    width: 1.5),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  cartCount > 9
-                                                      ? '9+'
-                                                      : '$cartCount',
-                                                  style: const TextStyle(
-                                                      fontSize: 8,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white),
+                                          // Cart badge on browse/cart tab if needed
+                                          if (i == 2 && cartCount > 0)
+                                            Positioned(
+                                              top: -4,
+                                              right: -6,
+                                              child: Container(
+                                                width: 16,
+                                                height: 16,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.accent,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: AppColors.surface,
+                                                      width: 1.5),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    cartCount > 9
+                                                        ? '9+'
+                                                        : '$cartCount',
+                                                    style: const TextStyle(
+                                                        fontSize: 8,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Colors.white),
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    AnimatedDefaultTextStyle(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: isActive
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                        color: isActive
-                                            ? Colors.white
-                                            : AppColors.textSecondary,
+                                        ],
                                       ),
-                                      child: Text(tab.label),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 2),
+                                      AnimatedDefaultTextStyle(
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: isActive
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: isActive
+                                              ? Colors.white
+                                              : AppColors.textSecondary,
+                                        ),
+                                        child: Text(tab.label),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        }),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

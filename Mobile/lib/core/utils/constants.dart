@@ -1,15 +1,21 @@
 class AppConstants {
   AppConstants._();
 
-  // API base URL — update this to your deployed backend URL
-  // Development: http://10.0.2.2:5000  (Android emulator localhost)
-  // Production:  https://api.chopnow.app
-  // Production backend on Render (shared MongoDB Atlas DB with the web app)
+  // API base URL — points at the deployed Render backend by default, so
+  // `flutter run` works out of the box with no local backend needed.
+  // The custom domain api.chopnow.app is currently misconfigured (points at
+  // a dead Vercel deployment) — use the Render URL directly until that's
+  // fixed. Shares the same MongoDB Atlas DB as the web app, so data added by
+  // anyone (any device, any teammate) shows up for everyone automatically.
+  // To point at a local backend instead (e.g. for testing backend changes),
+  // override at run time:
+  //   flutter run --dart-define=API_BASE_URL=http://<your-lan-ip>:5001/api/v1 \
+  //               --dart-define=SOCKET_URL=http://<your-lan-ip>:5001
   static const String apiBaseUrl = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:5000/api/v1');
+      defaultValue: 'https://chopnow-backend.onrender.com/api/v1');
 
   static const String socketUrl = String.fromEnvironment('SOCKET_URL',
-      defaultValue: 'http://10.0.2.2:5000');
+      defaultValue: 'https://chopnow-backend.onrender.com');
 
   // Token keys for secure storage
   static const String accessTokenKey = 'chopnow_access_token';

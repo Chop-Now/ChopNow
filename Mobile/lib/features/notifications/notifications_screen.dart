@@ -41,7 +41,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             style: TextStyle(
                 fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
-        automaticallyImplyLeading: false,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           if (notifications.isNotEmpty)
