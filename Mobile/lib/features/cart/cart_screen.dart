@@ -46,6 +46,7 @@ class CartScreen extends ConsumerWidget {
                 HapticFeedback.mediumImpact();
                 showDialog(
                   context: context,
+                  useRootNavigator: false,
                   builder: (_) => AlertDialog(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),

@@ -20,7 +20,7 @@ class ImpactDashboardScreen extends ConsumerWidget {
             expandedHeight: 220,
             pinned: true,
             backgroundColor: AppColors.primary,
-            automaticallyImplyLeading: false,
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(

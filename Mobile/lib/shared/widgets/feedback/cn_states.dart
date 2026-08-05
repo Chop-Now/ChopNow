@@ -3,6 +3,27 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../animations/scale_tap.dart';
 
+/// Centers [child] within the available space, but degrades to scrolling
+/// instead of overflowing when that space is shorter than the child's
+/// natural height — e.g. inside a SliverFillRemaining whose remaining
+/// extent briefly shrinks during pull-to-refresh overscroll. Without this,
+/// fixed-height empty/error states show a RenderFlex overflow in debug and
+/// silently clip content in release.
+Widget _fillAvailable(Widget child) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (!constraints.hasBoundedHeight) return Center(child: child);
+      return SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(child: child),
+        ),
+      );
+    },
+  );
+}
+
 /// CnEmptyState — illustrated empty list state
 class CnEmptyState extends StatelessWidget {
   final String title;
@@ -24,8 +45,8 @@ class CnEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
+    return _fillAvailable(
+      Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -116,8 +137,8 @@ class CnErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
+    return _fillAvailable(
+      Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,

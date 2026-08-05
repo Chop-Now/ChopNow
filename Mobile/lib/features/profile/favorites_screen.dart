@@ -23,8 +23,8 @@ class FavoritesScreen extends ConsumerWidget {
             style: TextStyle(
                 fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
-        automaticallyImplyLeading: false,
       ),
       body: RefreshIndicator(
         color: AppColors.primary,

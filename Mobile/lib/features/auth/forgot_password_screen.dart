@@ -115,6 +115,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   void _showSuccessAndNavigate() {
     showDialog(
       context: context,
+      useRootNavigator: false,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

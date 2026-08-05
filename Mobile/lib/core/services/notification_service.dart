@@ -30,49 +30,62 @@ class NotificationService {
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
 
+  // iOS push requires the Push Notifications entitlement, which in turn
+  // requires a paid Apple Developer Program membership. Until that's set up,
+  // FCM is skipped entirely on iOS rather than failing on every call.
+  bool get _fcmSupported => defaultTargetPlatform != TargetPlatform.iOS;
+
   /// Call once after Firebase.initializeApp() in main().
   Future<void> initialize() async {
-    // ── 1. Background handler ─────────────────────────────────────────────────
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    if (_fcmSupported) {
+      // ── 1. Background handler ───────────────────────────────────────────────
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // ── 2. Request permissions (iOS requires explicit ask) ────────────────────
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
+      // ── 2. Request permissions (iOS requires explicit ask) ──────────────────
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
-    // ── 3. Android foreground presentation options ────────────────────────────
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: false, // We handle foreground display ourselves (premium overlay)
-      badge: true,
-      sound: false,
-    );
+      // ── 3. Android foreground presentation options ──────────────────────────
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: false, // We handle foreground display ourselves (premium overlay)
+        badge: true,
+        sound: false,
+      );
 
-    // ── 4. Get & cache the FCM token ──────────────────────────────────────────
-    _fcmToken = await _messaging.getToken();
-    if (kDebugMode) debugPrint('FCM Token: $_fcmToken');
+      // ── 4. Get & cache the FCM token ─────────────────────────────────────────
+      try {
+        _fcmToken = await _messaging.getToken();
+        if (kDebugMode) debugPrint('FCM Token: $_fcmToken');
+      } catch (e) {
+        if (kDebugMode) debugPrint('Failed to get FCM token: $e');
+      }
 
-    // ── 5. Listen for token refresh ───────────────────────────────────────────
-    _messaging.onTokenRefresh.listen((newToken) {
-      _fcmToken = newToken;
-      _registerTokenWithBackend(newToken);
-    });
-
-    // ── 6. Foreground message handler ─────────────────────────────────────────
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // ── 7. Background notification tap handler ────────────────────────────────
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
-
-    // ── 8. Terminated state: app was opened FROM a notification ───────────────
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      // Slight delay to let the router initialize before navigating
-      Future.delayed(const Duration(milliseconds: 800), () {
-        _handleNotificationTap(initialMessage);
+      // ── 5. Listen for token refresh ──────────────────────────────────────────
+      _messaging.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        _registerTokenWithBackend(newToken);
       });
+
+      // ── 6. Foreground message handler ────────────────────────────────────────
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+      // ── 7. Background notification tap handler ──────────────────────────────
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+      // ── 8. Terminated state: app was opened FROM a notification ─────────────
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        // Slight delay to let the router initialize before navigating
+        Future.delayed(const Duration(milliseconds: 800), () {
+          _handleNotificationTap(initialMessage);
+        });
+      }
+    } else if (kDebugMode) {
+      debugPrint('Skipping FCM setup on iOS (no Push Notifications entitlement).');
     }
 
     // ── 9. Initialize local notifications ────────────────────────────────────
@@ -86,14 +99,20 @@ class NotificationService {
   /// Registers the FCM token with the ChopNow backend so the server can push
   /// targeted notifications to this device.
   Future<void> registerToken() async {
-    final token = _fcmToken ?? await _messaging.getToken();
-    if (token == null) return;
-    _fcmToken = token;
-    await _registerTokenWithBackend(token);
+    if (!_fcmSupported) return;
+    try {
+      final token = _fcmToken ?? await _messaging.getToken();
+      if (token == null) return;
+      _fcmToken = token;
+      await _registerTokenWithBackend(token);
+    } catch (e) {
+      if (kDebugMode) debugPrint('Failed to register FCM token: $e');
+    }
   }
 
   /// Removes the FCM token from the backend on logout.
   Future<void> unregisterToken() async {
+    if (!_fcmSupported) return;
     // Run unregistration in the background with a timeout to prevent emulator hangs
     try {
       await ApiClient.instance.delete(AppEndpoints.fcmToken).timeout(
