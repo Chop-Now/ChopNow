@@ -219,6 +219,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
   void _showWithdrawDialog() {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape:

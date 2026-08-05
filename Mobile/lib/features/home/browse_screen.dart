@@ -41,6 +41,7 @@ class BrowseScreen extends ConsumerStatefulWidget {
 
 class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   final _searchCtrl = TextEditingController();
+  final _searchFocusNode = FocusNode();
 
   static const _categories = [
     'All',
@@ -58,6 +59,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -131,42 +133,69 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   ),
                   const SizedBox(height: 12),
                   // Search field
-                  Container(
-                    height: 46,
-                    decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border)),
-                    child: Row(children: [
-                      const SizedBox(width: 12),
-                      const Icon(Icons.search_rounded,
-                          color: AppColors.textSecondary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: TextField(
-                        controller: _searchCtrl,
-                        onChanged: (v) {
-                          ref.read(_browseSearchProvider.notifier).state = v;
-                        },
-                        decoration: const InputDecoration(
-                          hintText: 'Search food, cafés, grocery...',
-                          hintStyle: TextStyle(
-                              fontSize: 14, color: AppColors.textSecondary),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      )),
-                      if (_searchCtrl.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.close,
-                              size: 18, color: AppColors.textSecondary),
-                          onPressed: () {
-                            _searchCtrl.clear();
-                            ref.read(_browseSearchProvider.notifier).state = '';
-                          },
-                        ),
-                    ]),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _searchFocusNode.requestFocus(),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border)),
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _searchCtrl,
+                        builder: (context, value, _) => Row(children: [
+                          const SizedBox(width: 12),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            child: value.text.isEmpty
+                                ? const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.search_rounded,
+                                          color: AppColors.textSecondary,
+                                          size: 20),
+                                      SizedBox(width: 8),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                          Expanded(
+                              child: TextField(
+                            controller: _searchCtrl,
+                            focusNode: _searchFocusNode,
+                            onChanged: (v) {
+                              ref.read(_browseSearchProvider.notifier).state = v;
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Search food, cafés, grocery...',
+                              hintStyle: TextStyle(
+                                  fontSize: 14, color: AppColors.textSecondary),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              filled: false,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          )),
+                          if (value.text.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.close,
+                                  size: 18, color: AppColors.textSecondary),
+                              onPressed: () {
+                                _searchCtrl.clear();
+                                ref.read(_browseSearchProvider.notifier).state =
+                                    '';
+                              },
+                            ),
+                        ]),
+                      ),
+                    ),
                   ),
                 ],
               ),
