@@ -114,13 +114,9 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
               ease: 'easeInOut',
             }}
           >
-            <h3 className="text-2xl font-bold" style={{ color: 'var(--color-textColor)' }}>
-              {testimonials[active].name}
-            </h3>
-            <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
-              {testimonials[active].designation}
-            </p>
-            <motion.p className="mt-8 text-lg" style={{ color: 'var(--color-gray-50)' }}>
+            <h3 className="text-2xl font-bold text-moringa">{testimonials[active].name}</h3>
+            <p className="text-sm text-moringa-muted">{testimonials[active].designation}</p>
+            <motion.p className="mt-8 text-lg text-moringa-muted">
               {testimonials[active].quote.split(' ').map((word, index) => (
                 <motion.span
                   key={index}
@@ -149,17 +145,15 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
           <div className="flex gap-4 pt-12 md:pt-0">
             <button
               onClick={handlePrev}
-              className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110"
-              style={{ backgroundColor: 'var(--color-solid)' }}
+              className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110 bg-moringa hover:bg-moringa-dark"
             >
-              <IconArrowLeft className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:rotate-12" />
+              <IconArrowLeft className="h-5 w-5 text-yellow transition-transform duration-300 group-hover/button:rotate-12" />
             </button>
             <button
               onClick={handleNext}
-              className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110"
-              style={{ backgroundColor: 'var(--color-solid)' }}
+              className="group/button flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110 bg-moringa hover:bg-moringa-dark"
             >
-              <IconArrowRight className="h-5 w-5 text-white transition-transform duration-300 group-hover/button:-rotate-12" />
+              <IconArrowRight className="h-5 w-5 text-yellow transition-transform duration-300 group-hover/button:-rotate-12" />
             </button>
           </div>
         </div>

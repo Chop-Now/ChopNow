@@ -11,17 +11,14 @@ const Apps = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="flex flex-col md:flex-row items-center justify-around text-sm rounded-2xl max-w-5xl w-full relative overflow-hidden"
+        className="flex flex-col md:flex-row items-center justify-around text-sm rounded-2xl max-w-5xl w-full relative overflow-hidden bg-yellow"
         style={{
-          backgroundColor: 'var(--color-primary)',
-          border: '2px solid var(--color-solid)',
-          boxShadow: '0 0 40px rgba(0, 168, 107, 0.15), 0 10px 30px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 10px 30px rgba(15, 61, 46, 0.18)',
         }}
       >
         <div className="flex flex-col text-center md:text-left items-center md:items-start pt-14 md:p-10 relative z-10">
           <motion.div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3"
-            style={{ backgroundColor: 'var(--color-solidOne)', color: 'white' }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3 bg-moringa text-fufu"
             initial={{ y: -20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
@@ -30,8 +27,7 @@ const Apps = () => {
             Coming Soon
           </motion.div>
           <motion.h2
-            className="md:text-4xl text-2xl font-semibold"
-            style={{ color: 'var(--color-textColor)' }}
+            className="md:text-4xl text-2xl font-semibold text-moringa"
             initial={{ x: -30, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
             viewport={{ once: true }}
@@ -40,8 +36,8 @@ const Apps = () => {
             Download Mobile App
           </motion.h2>
           <motion.p
-            className="mt-2 w-3/4"
-            style={{ color: 'var(--color-gray-50)', fontSize: '15px' }}
+            className="mt-2 w-3/4 text-moringa/85"
+            style={{ fontSize: '15px' }}
             initial={{ x: -30, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
             viewport={{ once: true }}

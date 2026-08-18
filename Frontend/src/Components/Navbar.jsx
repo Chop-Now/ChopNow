@@ -60,8 +60,7 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
           whileHover={{ scale: 1.05 }}
-          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-solid after:absolute after:-bottom-0.5 after:right-3" : ''} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap`}
-          style={{ color: 'var(--color-textColor)' }}
+          className={`${activeSection === link.path ? "relative after:content-[''] after:w-[40%] after:h-1 after:rounded-full after:bg-moringa after:absolute after:-bottom-0.5 after:right-3" : ''} px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap text-moringa`}
         >
           {link.title}
         </motion.a>
@@ -74,7 +73,7 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
         >
           <Link
             to="/login"
-            className="px-6 py-3 transition-all bg-solid border border-gray-500/20 text-white text-sm font-medium rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2"
+            className="px-6 py-3 transition-all bg-yellow hover:bg-yellow-dark border border-moringa/20 text-moringa text-sm font-semibold rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2"
           >
             Get Started
           </Link>

@@ -6,6 +6,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* ── ChopNow brand palette ──
+     Source of truth: root CLAUDE.md. Now Yellow is LIGHT — it carries
+     Moringa/Char text, never white. Pepper takes white only at large sizes
+     (3.6:1); use Char on Pepper for body copy. */
+  --color-moringa: #0f3d2e; /* primary dark green: structure, text on light */
+  --color-moringa-dark: #0a2a20; /* hover / pressed state on moringa */
+  --color-moringa-muted: #4f625a; /* secondary text on fufu (5.9:1, WCAG AA) */
+  --color-yellow: #ffc531; /* Now Yellow — primary CTA, logo mark */
+  --color-yellow-dark: #efb522; /* hover state on yellow */
+  --color-pepper: #e8552f; /* secondary accent: discounts, prices, badges */
+  --color-pepper-dark: #ce4522; /* hover state on pepper */
+  --color-fufu: #faf3e4; /* warm off-white: default ground / surfaces */
+  --color-fufu-dim: #f2ead6; /* slightly deeper fufu: alternating sections */
+  --color-fufu-border: #e6dcc6; /* hairline borders on fufu */
+  --color-char: #17150f; /* near-black: highest-contrast text, mono wordmark */
+
+  /* ── Legacy green/orange brand (being retired) ──
+     Still used by every page except Home. Do not use in new work. */
   --color-primary: #f6fff9; /* Soft green-tinted background */
   --color-solid: #00a86b; /* Main green (brand) */
   --color-solidOne: #ff7a00; /* Main orange (brand accent) */
