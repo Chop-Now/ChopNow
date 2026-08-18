@@ -42,8 +42,7 @@ const AboutUs = () => {
   return (
     <div id="AboutUs" className="px-4 py-12 md:py-16">
       <motion.h1
-        className="text-3xl md:text-4xl font-semibold text-center mx-auto"
-        style={{ color: 'var(--color-textColor)' }}
+        className="text-3xl md:text-4xl font-semibold text-center mx-auto text-moringa"
         initial={{ y: -30, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
@@ -52,8 +51,7 @@ const AboutUs = () => {
         About Us
       </motion.h1>
       <motion.p
-        className="text-sm md:text-base text-center mt-2 max-w-lg mx-auto"
-        style={{ color: 'var(--color-gray-50)' }}
+        className="text-sm md:text-base text-center mt-2 max-w-lg mx-auto text-moringa-muted"
         initial={{ y: -20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
@@ -81,12 +79,12 @@ const AboutUs = () => {
               loading="lazy"
               decoding="async"
             />
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-all duration-500"></div>
+            <div className="absolute inset-0 bg-moringa/50 group-hover:bg-moringa/70 transition-all duration-500"></div>
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-              <h3 className="text-white font-bold text-lg mb-2 opacity-100 group-hover:opacity-100 transition-opacity">
+              <h3 className="text-fufu font-bold text-lg mb-2 opacity-100 group-hover:opacity-100 transition-opacity">
                 {section.title}
               </h3>
-              <p className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <p className="text-fufu text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 {section.description}
               </p>
             </div>
@@ -121,10 +119,10 @@ const AboutUs = () => {
             src={sections[activeIndex].image}
             alt={sections[activeIndex].title}
           />
-          <div className="absolute inset-0 bg-black/50"></div>
+          <div className="absolute inset-0 bg-moringa/60"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-            <h3 className="text-white font-bold text-2xl mb-4">{sections[activeIndex].title}</h3>
-            <p className="text-white text-base">{sections[activeIndex].description}</p>
+            <h3 className="text-fufu font-bold text-2xl mb-4">{sections[activeIndex].title}</h3>
+            <p className="text-fufu text-base">{sections[activeIndex].description}</p>
           </div>
         </motion.div>
 
@@ -140,12 +138,9 @@ const AboutUs = () => {
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className="w-2.5 h-2.5 rounded-full transition-all duration-300"
-              style={{
-                backgroundColor:
-                  activeIndex === index ? 'var(--color-solid)' : 'var(--color-gray-50)',
-                opacity: activeIndex === index ? 1 : 0.5,
-              }}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                activeIndex === index ? 'bg-moringa' : 'bg-moringa/30'
+              }`}
               aria-label={`View section ${index + 1}`}
             />
           ))}

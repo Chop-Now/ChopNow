@@ -3,6 +3,25 @@
 This file is a living list of project-specific facts and conventions for this
 Flutter app. Keep entries short and factual. Update it whenever corrected.
 
+## Brand colours
+
+The approved palette (Moringa `#0F3D2E` / Now Yellow `#FFC531` / Pepper
+`#E8552F` / Fufu `#FAF3E4` / Char `#17150F`), its usage proportions, contrast
+pairings, and logo lockups live in the **root `CLAUDE.md`** — single source of
+truth, shared with the web app. Don't duplicate the values here; they drift.
+
+Mobile-side notes:
+
+- All colours belong in `lib/core/theme/app_colors.dart` (consumed by
+  `app_theme.dart`). 18 files currently hardcode `Color(0x…)` outside it — a
+  palette migration has to sweep those too, not just retheme `AppColors`.
+- `AppColors` is still on the **legacy** green/orange brand (`primary`
+  `#00A86B`, `accent` `#FF7A00`). The palette swap hasn't happened yet; the
+  web app's Home/FAQ/Privacy/Terms pages are already migrated.
+- `AppColors.success` is currently the same green as the brand `primary`.
+  Moringa is also a green, so when migrating keep success visually distinct
+  from the brand colour or success/error states stop reading correctly.
+
 ## Stack
 
 - Flutter, Riverpod for state, GoRouter-style router in `lib/core/router`.

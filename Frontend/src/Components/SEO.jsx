@@ -31,7 +31,7 @@ const SEO = ({
       {image && <meta name="twitter:image" content={image} />}
 
       {/* Mobile */}
-      <meta name="theme-color" content="#00A86B" />
+      <meta name="theme-color" content="#0F3D2E" />
     </Helmet>
   );
 };
