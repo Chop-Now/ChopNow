@@ -56,30 +56,30 @@ const Hero = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
         >
-          <div className="flex items-center gap-2 md:gap-2 border border-gray-300 p-1.5 md:p-2 pr-3 md:pr-4 rounded-full bg-white/80 backdrop-blur-sm whitespace-nowrap">
+          <div className="flex items-center gap-2 md:gap-2 border border-moringa/15 p-1.5 md:p-2 pr-3 md:pr-4 rounded-full bg-fufu/85 backdrop-blur-sm whitespace-nowrap">
             <div className="flex -space-x-2">
               <img
                 src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 1"
-                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-fufu object-cover shrink-0"
               />
               <img
                 src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 2"
-                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-fufu object-cover shrink-0"
               />
               <img
                 src="https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 3"
-                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-fufu object-cover shrink-0"
               />
               <img
                 src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 4"
-                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white object-cover shrink-0"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-fufu object-cover shrink-0"
               />
             </div>
-            <p className="text-[11px] md:text-xs font-medium">
+            <p className="text-[11px] md:text-xs font-medium text-moringa">
               Trusted by 1000+ consumers across Africa
             </p>
           </div>
@@ -90,17 +90,20 @@ const Hero = () => {
           {/* Left Side - Content */}
           <div className="flex-1 max-w-[650px] relative z-10 w-full lg:mt-24 text-center lg:text-left">
             <motion.h2
-              className="mb-3 font-bold leading-tight"
+              className="mb-3 font-bold leading-tight text-moringa"
               style={{ fontSize: 'clamp(24px, 5vw, 42px)' }}
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
             >
-              Rescue <span className="text-solidOne">Surplus Meals</span> <br /> Elevate Taste{' '}
-              <br /> <span className="text-solidTwo">Sustain Tomorrow</span>
+              Rescue <span className="text-pepper-dark">Surplus Meals</span> <br /> Elevate Taste{' '}
+              <br />{' '}
+              <span className="bg-yellow px-2 py-0.5 rounded-lg box-decoration-clone">
+                Sustain Tomorrow
+              </span>
             </motion.h2>
             <motion.p
-              className="leading-relaxed max-w-lg mb-5 mx-auto lg:mx-0"
+              className="leading-relaxed max-w-lg mb-5 mx-auto lg:mx-0 text-moringa-muted"
               style={{ fontSize: 'clamp(14px, 2.5vw, 16px)', lineHeight: '1.5' }}
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -117,81 +120,87 @@ const Hero = () => {
             >
               <Link
                 to="/login"
-                className="px-6 py-3 transition-all border border-gray-500/20 text-white text-sm font-medium cursor-pointer active:scale-95 hover:bg-tertiary bg-solid rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,0.35)] w-80 sm:w-auto flex items-center justify-center"
+                className="px-6 py-3 transition-all border border-moringa/20 text-moringa text-sm font-semibold cursor-pointer active:scale-95 hover:bg-yellow-dark bg-yellow rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(15, 61, 46,0.35)] w-80 sm:w-auto flex items-center justify-center"
               >
                 Get started
               </Link>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center justify-center gap-2 border border-slate-600 active:scale-95 hover:bg-white/10 transition text-slate-600 rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,0.25)] cursor-pointer w-80 sm:w-auto"
+                className="flex items-center justify-center gap-2 border border-moringa/30 active:scale-95 hover:bg-fufu-dim transition text-moringa rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-fufu shadow-[5px_5px_0px_0px_rgba(15, 61, 46,0.25)] cursor-pointer w-80 sm:w-auto"
               >
                 <Video size={18} />
                 <span>Watch demo</span>
               </button>
             </motion.div>
 
-            {/* Stats */}
+            {/* Stats — pre-launch targets, not achieved figures. The caption
+                below is load-bearing: without it these read as live numbers. */}
             <motion.div
-              className="grid grid-cols-4 gap-3 md:gap-5 mt-5 max-w-xl mx-auto lg:mx-0"
+              className="mt-5 max-w-xl mx-auto lg:mx-0"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 1, ease: 'easeOut' }}
             >
-              <div>
-                <h4
-                  className="font-bold mb-0.5 text-base md:text-xl"
-                  style={{ color: 'var(--color-solid)' }}
-                >
-                  {count1}+
-                </h4>
-                <p
-                  className="text-[8px] md:text-xs leading-tight"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Launch Partners
-                </p>
-              </div>
-              <div>
-                <h4
-                  className="font-bold mb-0.5 text-base md:text-xl"
-                  style={{ color: 'var(--color-solid)' }}
-                >
-                  {count2}K
-                </h4>
-                <p
-                  className="text-[8px] md:text-xs leading-tight"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Households
-                </p>
-              </div>
-              <div>
-                <h4
-                  className="font-bold mb-0.5 text-base md:text-xl"
-                  style={{ color: 'var(--color-solid)' }}
-                >
-                  {count3}K
-                </h4>
-                <p
-                  className="text-[8px] md:text-xs leading-tight"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Meals Rescued
-                </p>
-              </div>
-              <div>
-                <h4
-                  className="font-bold mb-0.5 text-base md:text-xl"
-                  style={{ color: 'var(--color-solid)' }}
-                >
-                  {count4}
-                </h4>
-                <p
-                  className="text-[8px] md:text-xs leading-tight"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Countries
-                </p>
+              <p className="text-[9px] md:text-[11px] font-semibold uppercase tracking-wider text-moringa-muted mb-2">
+                Projected impact by 2027
+              </p>
+              <div className="grid grid-cols-4 gap-3 md:gap-5">
+                <div>
+                  <h4
+                    className="font-bold mb-0.5 text-base md:text-xl"
+                    style={{ color: 'var(--color-moringa)' }}
+                  >
+                    {count1}+
+                  </h4>
+                  <p
+                    className="text-[8px] md:text-xs leading-tight"
+                    style={{ color: 'var(--color-moringa-muted)' }}
+                  >
+                    Launch Partners
+                  </p>
+                </div>
+                <div>
+                  <h4
+                    className="font-bold mb-0.5 text-base md:text-xl"
+                    style={{ color: 'var(--color-moringa)' }}
+                  >
+                    {count2}K
+                  </h4>
+                  <p
+                    className="text-[8px] md:text-xs leading-tight"
+                    style={{ color: 'var(--color-moringa-muted)' }}
+                  >
+                    Households
+                  </p>
+                </div>
+                <div>
+                  <h4
+                    className="font-bold mb-0.5 text-base md:text-xl"
+                    style={{ color: 'var(--color-moringa)' }}
+                  >
+                    {count3}K
+                  </h4>
+                  <p
+                    className="text-[8px] md:text-xs leading-tight"
+                    style={{ color: 'var(--color-moringa-muted)' }}
+                  >
+                    Meals Rescued
+                  </p>
+                </div>
+                <div>
+                  <h4
+                    className="font-bold mb-0.5 text-base md:text-xl"
+                    style={{ color: 'var(--color-moringa)' }}
+                  >
+                    {count4}
+                  </h4>
+                  <p
+                    className="text-[8px] md:text-xs leading-tight"
+                    style={{ color: 'var(--color-moringa-muted)' }}
+                  >
+                    Countries
+                  </p>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -225,13 +234,13 @@ const Hero = () => {
           <div className="relative w-full max-w-4xl">
             <motion.button
               onClick={() => setIsModalOpen(false)}
-              className="absolute -top-14 right-0 z-10 bg-white hover:bg-gray-100 rounded-full p-2.5 transition-all active:scale-95 shadow-lg"
+              className="absolute -top-14 right-0 z-10 bg-fufu hover:bg-fufu-dim rounded-full p-2.5 transition-all active:scale-95 shadow-lg"
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
               whileHover={{ scale: 1.1, rotate: 90 }}
             >
-              <X size={28} className="text-gray-800 cursor-pointer" />
+              <X size={28} className="text-moringa cursor-pointer" />
             </motion.button>
             <motion.div
               className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)]"

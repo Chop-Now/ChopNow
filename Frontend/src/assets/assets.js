@@ -38,6 +38,13 @@ import community from './community.jpeg';
 import sustainability from './sustainability.jpeg';
 import innovation from './innovation.jpg';
 import impact from './impact.jpg';
+import kigali from './kigali.jpg';
+import altwordmark from './altwordmark.svg';
+import logomarkgreen from './logomarkgreen.svg';
+import logomarkyellow from './logomarkyellow.svg';
+import wordmarkalone from './wordmarkalone.svg';
+import wordmarkwithlogomark from './wordmarkwithlogomark.svg';
+import wordmarklogo from './wordmarklogo.svg';
 
 export const assets = {
   ChopNowLogo,
@@ -59,6 +66,13 @@ export const assets = {
   sustainability,
   innovation,
   impact,
+  kigali,
+  altwordmark,
+  logomarkgreen,
+  logomarkyellow,
+  wordmarkalone,
+  wordmarkwithlogomark,
+  wordmarklogo,
 };
 
 export const categories = [

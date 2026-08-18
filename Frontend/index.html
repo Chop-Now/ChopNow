@@ -8,11 +8,21 @@
       name="description"
       content="ChopNow connects you with local restaurants and stores to rescue surplus food at discounted prices. Save money, reduce waste, and enjoy delicious meals near you."
     />
-    <meta name="theme-color" content="#22c55e" />
+    <meta name="theme-color" content="#0F3D2E" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/ChopNowLogo.svg" />
-    <link rel="apple-touch-icon" href="/ChopNowLogo.svg" />
+    <!-- Favicon. The mark is a single colour, so neither variant reads on both
+         tab-bar themes: green disappears on dark, yellow washes out on light.
+         Browsers pick by theme; ones that ignore `media` fall back to green. -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/logomarkyellow.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" type="image/svg+xml" href="/logomarkgreen.svg" />
+    <!-- iOS ignores SVG here and renders transparency as black, so this one is
+         a flattened 180x180 PNG tile. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
