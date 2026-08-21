@@ -333,7 +333,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFF006644)],
+                  colors: [AppColors.primary, AppColors.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -631,7 +631,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       padding: EdgeInsets.all(20),
                       child:
                           CircularProgressIndicator(color: AppColors.primary))),
-              error: (e, _) => Center(child: Text(ApiException.fromDioError(e).message)),
+              error: (e, _) =>
+                  Center(child: Text(ApiException.fromDioError(e).message)),
               data: (payouts) {
                 if (payouts.isEmpty) {
                   return Container(

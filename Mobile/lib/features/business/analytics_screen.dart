@@ -104,7 +104,7 @@ class _AnalyticsBody extends StatelessWidget {
             background: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF00B272), Color(0xFF005E3E)],
+                  colors: [AppColors.primaryLight, AppColors.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
