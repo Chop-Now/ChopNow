@@ -123,7 +123,7 @@ const Footer = () => {
         <p className="text-moringa-muted font-medium mb-4">We accept</p>
         <div className="flex items-center gap-4 flex-wrap justify-center">
           {/* MTN Momo */}
-          <div className="w-16 h-16 rounded-full bg-fufu border-2 border-fufu-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
+          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
               src={assets.momo}
               alt="MTN Mobile Money"
@@ -132,7 +132,7 @@ const Footer = () => {
           </div>
 
           {/* Airtel Money */}
-          <div className="w-16 h-16 rounded-full bg-fufu border-2 border-fufu-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
+          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
               src={assets.airtel_money}
               alt="Airtel Money"
@@ -141,12 +141,12 @@ const Footer = () => {
           </div>
 
           {/* Bank */}
-          <div className="w-16 h-16 rounded-full bg-fufu border-2 border-fufu-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
+          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img src={assets.bank} alt="Bank Transfer" className="w-full h-full object-contain" />
           </div>
 
           {/* Mastercard */}
-          <div className="w-16 h-16 rounded-full bg-fufu border-2 border-fufu-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
+          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
               src={assets.mastercard}
               alt="Mastercard"
@@ -155,7 +155,7 @@ const Footer = () => {
           </div>
 
           {/* Visa */}
-          <div className="w-16 h-16 rounded-full bg-fufu border-2 border-fufu-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
+          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img src={assets.visa} alt="Visa" className="w-full h-full object-contain" />
           </div>
         </div>
