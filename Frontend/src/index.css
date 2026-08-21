@@ -22,6 +22,13 @@
   --color-fufu-border: #e6dcc6; /* hairline borders on fufu */
   --color-char: #17150f; /* near-black: highest-contrast text, mono wordmark */
 
+  /* ── Backgrounds ──
+     Scaffold is the main page ground; Surface is the standard card/panel fill.
+     Fufu (above) drops to a secondary band colour used to separate sections. */
+  --color-scaffold: #f6fff9; /* main scaffold background (faint off-white green) */
+  --color-surface: #ffffff; /* standard surface background: cards, panels, pills */
+  --color-surface-border: #e3ebe6; /* cool hairline on scaffold/surface (fufu-border reads warm here) */
+
   /* ── Legacy green/orange brand (being retired) ──
      Still used by every page except Home. Do not use in new work. */
   --color-primary: #f6fff9; /* Soft green-tinted background */

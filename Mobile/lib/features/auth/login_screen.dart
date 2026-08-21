@@ -10,6 +10,7 @@ import '../../core/services/biometric_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
+import '../../shared/widgets/layout/auth_shell.dart';
 
 // ── Role selection constants ──────────────────────────────────────────────────
 enum _LoginRole { none, customer, business }
@@ -76,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _loginWithBiometrics() async {
     HapticFeedback.mediumImpact();
-    
+
     // Clear any previous error
     _clearErrors();
 
@@ -86,7 +87,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     final credentials = await BiometricService.getCredentials();
     if (credentials == null) {
-      setState(() => _localError = 'No saved biometric credentials. Please sign in with password first.');
+      setState(() => _localError =
+          'No saved biometric credentials. Please sign in with password first.');
       return;
     }
 
@@ -194,55 +196,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _handleBack();
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 320),
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.04, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            ),
-            child: _selectedRole == _LoginRole.none
-                ? _RoleSelectionStep(
-                    key: const ValueKey('role_step'),
-                    onBack: _handleBack,
-                    onSelectCustomer: () =>
-                        setState(() => _selectedRole = _LoginRole.customer),
-                    onSelectBusiness: () =>
-                        setState(() => _selectedRole = _LoginRole.business),
-                  )
-                : _LoginFormStep(
-                    key: const ValueKey('form_step'),
-                    selectedRole: _selectedRole,
-                    tabController: _tabController,
-                    emailCtrl: _emailCtrl,
-                    passwordCtrl: _passwordCtrl,
-                    phoneCtrl: _phoneCtrl,
-                    otpCtrl: _otpCtrl,
-                    obscurePassword: _obscurePassword,
-                    onToggleObscure: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                    otpSent: _otpSent,
-                    sendingOtp: _sendingOtp,
-                    onSendOtp: _sendOtp,
-                    isLoading: isLoading,
-                    error: error,
-                    onBack: _handleBack,
-                    onSubmit: isLoading ? null : _submit,
-                    biometricAvailable: _biometricAvailable,
-                    biometricEnabled: _biometricEnabled,
-                    biometricIcon: _biometricIcon,
-                    onBiometricTap: _loginWithBiometrics,
-                  ),
+      // No Scaffold/SafeArea here: AuthShell supplies both, and an outer
+      // SafeArea would paint a light inset above its Moringa hero.
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 320),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.04, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
           ),
         ),
+        child: _selectedRole == _LoginRole.none
+            ? _RoleSelectionStep(
+                key: const ValueKey('role_step'),
+                onBack: _handleBack,
+                onSelectCustomer: () =>
+                    setState(() => _selectedRole = _LoginRole.customer),
+                onSelectBusiness: () =>
+                    setState(() => _selectedRole = _LoginRole.business),
+              )
+            : _LoginFormStep(
+                key: const ValueKey('form_step'),
+                selectedRole: _selectedRole,
+                tabController: _tabController,
+                emailCtrl: _emailCtrl,
+                passwordCtrl: _passwordCtrl,
+                phoneCtrl: _phoneCtrl,
+                otpCtrl: _otpCtrl,
+                obscurePassword: _obscurePassword,
+                onToggleObscure: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+                otpSent: _otpSent,
+                sendingOtp: _sendingOtp,
+                onSendOtp: _sendOtp,
+                isLoading: isLoading,
+                error: error,
+                onBack: _handleBack,
+                onSubmit: isLoading ? null : _submit,
+                biometricAvailable: _biometricAvailable,
+                biometricEnabled: _biometricEnabled,
+                biometricIcon: _biometricIcon,
+                onBiometricTap: _loginWithBiometrics,
+              ),
       ),
     );
   }
@@ -276,7 +275,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _submit() {
-    if (kDebugMode) debugPrint('[Login] _submit called. selectedRole=$_selectedRole, tabIndex=${_tabController.index}');
+    if (kDebugMode)
+      debugPrint(
+          '[Login] _submit called. selectedRole=$_selectedRole, tabIndex=${_tabController.index}');
     HapticFeedback.mediumImpact();
 
     // Map role choice to preferred backend role
@@ -305,7 +306,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         return;
       }
 
-      if (kDebugMode) debugPrint('[Login] Calling authProvider.notifier.login...');
+      if (kDebugMode)
+        debugPrint('[Login] Calling authProvider.notifier.login...');
       ref
           .read(authProvider.notifier)
           .login(email: email, password: pass, preferredRole: preferredRole);
@@ -321,8 +323,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         return;
       }
       if (otp.length < 6) {
-        setState(
-            () => _localError = 'Please enter the full 6-digit OTP code.');
+        setState(() => _localError = 'Please enter the full 6-digit OTP code.');
         return;
       }
       ref.read(authProvider.notifier).loginWithOtp(phone: phone, otp: otp);
@@ -345,96 +346,39 @@ class _RoleSelectionStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return AuthShell(
+      onBack: onBack,
+      title: 'Welcome back',
+      subtitle: 'Rescue good food before it goes to waste.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
-          // Back button
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.arrow_back_rounded,
-                  size: 20, color: AppColors.textPrimary),
+          const Text(
+            'How are you signing in?',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
-          ),
-          const SizedBox(height: 28),
-          // Logo
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(16)),
-            child: const Center(
-                child: Icon(Icons.eco_rounded, size: 28, color: Colors.white)),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Sign in',
-            style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Choose how you want to sign in',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 32),
-
-          // ── Sign in as Customer ──
           _RoleCard(
-            icon: Icons.person_outline_rounded,
-            title: 'Sign in as Customer',
-            subtitle: 'Browse deals & order food',
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            icon: Icons.shopping_bag_rounded,
+            title: 'I\'m a Customer',
+            subtitle: 'Browse deals and order surplus food',
+            tint: AppColors.moringa,
             onTap: onSelectCustomer,
           ),
-          const SizedBox(height: 16),
-
-          // ── Sign in as Business Owner ──
+          const SizedBox(height: 12),
           _RoleCard(
-            icon: Icons.storefront_outlined,
-            title: 'Sign in as Business',
-            subtitle: 'Manage your store & listings',
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1976D2), Color(0xFF0D47A1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            icon: Icons.storefront_rounded,
+            title: 'I\'m a Business',
+            subtitle: 'List surplus and manage your store',
+            tint: AppColors.pepper,
             onTap: onSelectBusiness,
           ),
-          const SizedBox(height: 32),
-
-          // Sign up link
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Don't have an account? ",
-                  style: TextStyle(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              GestureDetector(
-                onTap: () => context.go('/auth/register'),
-                child: const Text('Create one',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
+          const _SignUpPrompt(),
         ],
       ),
     );
@@ -446,14 +390,17 @@ class _RoleCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Gradient gradient;
+
+  /// Brand colour for the icon tile. Always carries Fufu-on-dark, so it must
+  /// be a dark brand colour (Moringa or Pepper), never Now Yellow.
+  final Color tint;
   final VoidCallback onTap;
 
   const _RoleCard({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.gradient,
+    required this.tint,
     required this.onTap,
   });
 
@@ -462,45 +409,68 @@ class _RoleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border, width: 1.5),
+          borderRadius: BorderRadius.circular(20),
           color: AppColors.surface,
         ),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(14),
+                color: tint,
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(icon, color: Colors.white, size: 26),
+              child: Icon(icon, color: AppColors.fufu, size: 24),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
                       style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 2),
                   Text(subtitle,
                       style: const TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary)),
+                          fontSize: 12.5, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const Icon(Icons.arrow_forward_ios_rounded,
-                size: 16, color: AppColors.textSecondary),
+                size: 14, color: AppColors.textTertiary),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SignUpPrompt extends StatelessWidget {
+  const _SignUpPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Don't have an account? ",
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+        GestureDetector(
+          onTap: () => context.go('/auth/register'),
+          child: const Text('Create one',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary)),
+        ),
+      ],
     );
   }
 }
@@ -553,78 +523,45 @@ class _LoginFormStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBusinessRole = selectedRole == _LoginRole.business;
-    final roleLabel = isBusinessRole ? 'Business' : 'Customer';
-    final roleIconData = isBusinessRole ? Icons.storefront_rounded : Icons.shopping_bag_rounded;
+    final roleLabel = isBusinessRole ? 'BUSINESS' : 'CUSTOMER';
+    final roleIconData =
+        isBusinessRole ? Icons.storefront_rounded : Icons.shopping_bag_rounded;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return AuthShell(
+      onBack: onBack,
+      badge: AuthBadge(icon: roleIconData, label: roleLabel),
+      title: 'Sign in',
+      subtitle: 'Welcome back — your next rescue is waiting.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
-          // Back button
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.arrow_back_rounded,
-                  size: 20, color: AppColors.textPrimary),
-            ),
-          ),
-          const SizedBox(height: 28),
-          // Logo
+          // Email / Phone switch
           Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(16)),
-            child: Center(
-                child: Icon(roleIconData, size: 28, color: Colors.white)),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Sign in as $roleLabel',
-            style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
-          ),
-          const Text('Welcome back! Please sign in to continue',
-              style:
-                  TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-          const SizedBox(height: 24),
-
-          // Tab bar
-          Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(100)),
             child: TabBar(
               controller: tabController,
               indicator: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 4)
-                  ]),
+                  color: AppColors.moringa,
+                  borderRadius: BorderRadius.circular(100)),
+              indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
               labelStyle:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              labelColor: AppColors.primary,
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              labelColor: AppColors.fufu,
               unselectedLabelColor: AppColors.textSecondary,
               tabs: const [
-                Tab(text: '📧 Email'),
-                Tab(text: '📱 Phone OTP'),
+                Tab(height: 40, text: 'Email'),
+                Tab(height: 40, text: 'Phone OTP'),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Tab content
           SizedBox(
@@ -659,7 +596,7 @@ class _LoginFormStep extends StatelessWidget {
                     style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                        fontWeight: FontWeight.w700)),
               ),
             ),
 
@@ -669,7 +606,7 @@ class _LoginFormStep extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                   color: AppColors.errorSurface,
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(14)),
               child: Row(children: [
                 const Icon(Icons.error_outline,
                     color: AppColors.error, size: 18),
@@ -682,34 +619,37 @@ class _LoginFormStep extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 16),
-          if (tabController.index == 0 && biometricAvailable && biometricEnabled)
+          const SizedBox(height: 18),
+          if (tabController.index == 0 &&
+              biometricAvailable &&
+              biometricEnabled)
             Row(
               children: [
                 Expanded(
-                  child: CnPrimaryButton(
+                  child: AuthPrimaryButton(
                     label: isLoading ? 'Signing in…' : 'Sign In',
                     isLoading: isLoading,
                     onTap: onSubmit,
+                    icon: Icons.arrow_forward_rounded,
                   ),
                 ),
                 const SizedBox(width: 12),
                 InkWell(
                   onTap: isLoading ? null : onBiometricTap,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(27),
                   child: Container(
-                    height: 50,
-                    width: 50,
+                    height: 54,
+                    width: 54,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.primary, width: 1.5),
-                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.moringa, width: 1.5),
+                      borderRadius: BorderRadius.circular(27),
                       color: AppColors.surface,
                     ),
                     child: Center(
                       child: Icon(
                         biometricIcon,
                         size: 24,
-                        color: AppColors.primary,
+                        color: AppColors.moringa,
                       ),
                     ),
                   ),
@@ -717,30 +657,14 @@ class _LoginFormStep extends StatelessWidget {
               ],
             )
           else
-            CnPrimaryButton(
+            AuthPrimaryButton(
               label: isLoading ? 'Signing in…' : 'Sign In',
               isLoading: isLoading,
               onTap: onSubmit,
+              icon: Icons.arrow_forward_rounded,
             ),
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Don't have an account? ",
-                  style: TextStyle(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              GestureDetector(
-                onTap: () => context.go('/auth/register'),
-                child: const Text('Create one',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
+          const _SignUpPrompt(),
         ],
       ),
     );

@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
+import '../../shared/widgets/layout/auth_shell.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -66,220 +66,199 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AuthShell(
+      onBack: () =>
+          context.canPop() ? context.pop() : context.go('/auth/login'),
+      title: 'Create account',
+      subtitle: 'Join ChopNow and start rescuing food today.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'I want to',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          Row(
             children: [
-              const SizedBox(height: 24),
-              // Back button
-              GestureDetector(
-                onTap: () => context.canPop() ? context.pop() : context.go('/auth/login'),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_back_rounded,
-                      size: 20, color: AppColors.textPrimary),
-                ),
-              ),
-              const SizedBox(height: 28),
-              // Header
-              const Text('Create Account',
-                  style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary)),
-              const SizedBox(height: 4),
-              const Text('Join ChopNow and rescue food today',
-                  style:
-                      TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-              const SizedBox(height: 24),
+              Expanded(
+                  child: _RolePill(
+                icon: Icons.shopping_bag_rounded,
+                label: 'Consumer',
+                subtitle: 'Buy food',
+                selected: _selectedRole == 'consumer',
+                onTap: () => setState(() => _selectedRole = 'consumer'),
+              )),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: _RolePill(
+                icon: Icons.storefront_rounded,
+                label: 'Business',
+                subtitle: 'Sell food',
+                selected: _selectedRole == 'business_owner',
+                onTap: () => setState(() => _selectedRole = 'business_owner'),
+              )),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-              Row(
-                children: [
-                  Expanded(
-                      child: _RolePill(
-                    icon: Icons.shopping_bag_rounded,
-                    label: 'Consumer',
-                    subtitle: 'Buy food',
-                    selected: _selectedRole == 'consumer',
-                    onTap: () => setState(() => _selectedRole = 'consumer'),
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: _RolePill(
-                    icon: Icons.storefront_rounded,
-                    label: 'Business',
-                    subtitle: 'Sell food',
-                    selected: _selectedRole == 'business_owner',
-                    onTap: () =>
-                        setState(() => _selectedRole = 'business_owner'),
-                  )),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Form
-              Form(
-                key: _formKey,
-                child: Column(
+          // Form
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                            child: CnTextField(
-                          label: 'First Name',
-                          controller: _firstNameCtrl,
-                          hint: 'Jane',
-                          validator: (v) => v == null || v.trim().length < 2
-                              ? 'Required'
-                              : null,
-                        )),
-                        const SizedBox(width: 12),
-                        Expanded(
-                            child: CnTextField(
-                          label: 'Last Name',
-                          controller: _lastNameCtrl,
-                          hint: 'Doe',
-                          validator: (v) => v == null || v.trim().length < 2
-                              ? 'Required'
-                              : null,
-                        )),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    CnTextField(
-                      label: 'Email Address',
-                      controller: _emailCtrl,
-                      hint: 'jane@example.com',
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Required';
-                        if (!v.contains('@')) return 'Invalid email';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    CnTextField(
-                      label: 'Phone (optional)',
-                      controller: _phoneCtrl,
-                      hint: '+250 7XX XXX XXX',
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 14),
-                    CnTextField(
-                      label: 'Password',
-                      controller: _passwordCtrl,
-                      hint: 'Min 8 characters',
-                      obscureText: _obscurePassword,
-                      suffix: IconButton(
-                        icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            size: 20,
-                            color: AppColors.textSecondary),
-                        onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.length < 8) {
-                          return 'Min 8 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                    Expanded(
+                        child: CnTextField(
+                      label: 'First Name',
+                      controller: _firstNameCtrl,
+                      hint: 'Jane',
+                      validator: (v) =>
+                          v == null || v.trim().length < 2 ? 'Required' : null,
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: CnTextField(
+                      label: 'Last Name',
+                      controller: _lastNameCtrl,
+                      hint: 'Doe',
+                      validator: (v) =>
+                          v == null || v.trim().length < 2 ? 'Required' : null,
+                    )),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                CnTextField(
+                  label: 'Email Address',
+                  controller: _emailCtrl,
+                  hint: 'jane@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Required';
+                    if (!v.contains('@')) return 'Invalid email';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                CnTextField(
+                  label: 'Phone (optional)',
+                  controller: _phoneCtrl,
+                  hint: '+250 7XX XXX XXX',
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 14),
+                CnTextField(
+                  label: 'Password',
+                  controller: _passwordCtrl,
+                  hint: 'Min 8 characters',
+                  obscureText: _obscurePassword,
+                  suffix: IconButton(
+                    icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: AppColors.textSecondary),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.length < 8) {
+                      return 'Min 8 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
 
-                    // Terms checkbox
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: _agreedToTerms,
-                            onChanged: (v) =>
-                                setState(() => _agreedToTerms = v ?? false),
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4)),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'I agree to the Terms of Service and Privacy Policy',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                                height: 1.4),
-                          ),
-                        ),
-                      ],
+                // Terms checkbox
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (v) =>
+                            setState(() => _agreedToTerms = v ?? false),
+                        activeColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'I agree to the Terms of Service and Privacy Policy',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            height: 1.4),
+                      ),
                     ),
                   ],
                 ),
-              ),
-
-              if (error != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                      color: AppColors.errorSurface,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline,
-                          color: AppColors.error, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: Text(error,
-                              style: const TextStyle(
-                                  color: AppColors.error, fontSize: 13))),
-                    ],
-                  ),
-                ),
               ],
+            ),
+          ),
 
-              const SizedBox(height: 20),
-              CnPrimaryButton(
-                label: _selectedRole == 'business_owner'
-                    ? 'Create Business Account'
-                    : 'Create Account',
-                isLoading: isLoading,
-                onTap: (!_agreedToTerms || isLoading) ? null : _submit,
-              ),
-              const SizedBox(height: 16),
-
-              // Already have an account
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: AppColors.errorSurface,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Row(
                 children: [
-                  const Text('Already have an account? ',
-                      style: TextStyle(
-                          fontSize: 14, color: AppColors.textSecondary)),
-                  GestureDetector(
-                    onTap: () => context.go('/auth/login'),
-                    child: const Text('Sign In',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary)),
-                  ),
+                  const Icon(Icons.error_outline,
+                      color: AppColors.error, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text(error,
+                          style: const TextStyle(
+                              color: AppColors.error, fontSize: 13))),
                 ],
               ),
-              const SizedBox(height: 24),
+            ),
+          ],
+
+          const SizedBox(height: 20),
+          AuthPrimaryButton(
+            label: _selectedRole == 'business_owner'
+                ? 'Create Business Account'
+                : 'Create Account',
+            isLoading: isLoading,
+            onTap: (!_agreedToTerms || isLoading) ? null : _submit,
+          ),
+          const SizedBox(height: 16),
+
+          // Already have an account
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Already have an account? ',
+                  style:
+                      TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              GestureDetector(
+                onTap: () => context.go('/auth/login'),
+                child: const Text('Sign In',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary)),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
@@ -352,7 +331,8 @@ class _RolePill extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.primary : AppColors.textPrimary),
+                      color:
+                          selected ? AppColors.primary : AppColors.textPrimary),
                 ),
               ],
             ),
