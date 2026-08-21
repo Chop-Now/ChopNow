@@ -39,6 +39,28 @@ names anywhere, they are stale.
 | Fufu       | `#FAF3E4` | Warm off-white — default app background / light surface         |
 | Char       | `#17150F` | Near-black — highest-contrast text, mono wordmark               |
 
+### Backgrounds (layered, added after the sheet)
+
+The sheet's Fufu-as-ground was replaced with a layered background scale. Fufu
+is **not** the main ground any more:
+
+| Token            | Hex       | Role                                                               |
+| ---------------- | --------- | ------------------------------------------------------------------ |
+| `scaffold`       | `#F6FFF9` | **Main page ground** — faint off-white green                       |
+| `surface`        | `#FFFFFF` | Standard surface: cards, panels, pills, menus                      |
+| `fufu`           | `#FAF3E4` | Secondary band colour, to separate a section from the ground       |
+| `fufu-dim`       | `#F2EAD6` | Tertiary band, if a third level is ever needed                     |
+| `surface-border` | `#E3EBE6` | Cool hairline on scaffold/surface (`fufu-border` reads warm there) |
+
+Scaffold and surface are only 1.02:1 apart, so cards on the ground separate by
+**shadow, not contrast** — don't remove the shadows expecting the fill to hold
+the edge. Text contrast is marginally better on these than on Fufu:
+`pepper-dark` reaches AA (4.58:1) on scaffold but is large-only (4.22:1) on
+Fufu.
+
+Applied on the homepage only. FAQ, Privacy Policy, and Terms of Service still
+use Fufu as their page ground.
+
 **Proportions (how much of each):** Fufu 58 / Moringa 26 / Yellow 10 /
 Pepper 4 / Char 2. Fufu dominates as the ground, Moringa carries structure,
 Yellow and Pepper are accents only — don't flood a screen with either.

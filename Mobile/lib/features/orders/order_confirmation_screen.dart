@@ -401,7 +401,7 @@ class _ConfettiPainter extends CustomPainter {
               AppColors.primary,
               AppColors.accent,
               const Color(0xFFFFC107),
-              const Color(0xFF4CAF50),
+              AppColors.success,
               const Color(0xFF9C27B0),
             ][i % 5]
                 .withValues(alpha: 0.6 + _random.nextDouble() * 0.4),

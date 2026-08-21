@@ -17,7 +17,8 @@ class AppTheme {
           surface: AppColors.surface,
           error: AppColors.error,
           onPrimary: Colors.white,
-          onSecondary: Colors.white,
+          onSecondary:
+              AppColors.textOnAccent, // Char — white on Now Yellow is 1.58:1
           onSurface: AppColors.textPrimary,
           onError: Colors.white,
           outline: AppColors.border,
@@ -208,7 +209,8 @@ class AppTheme {
           surface: AppColors.darkSurface,
           error: Color(0xFFCF6679),
           onPrimary: Colors.white,
-          onSecondary: Colors.white,
+          onSecondary:
+              AppColors.textOnAccent, // Char — white on Now Yellow is 1.58:1
           onSurface: Colors.white,
           onError: Colors.white,
           outline: AppColors.darkBorder,

@@ -12,10 +12,10 @@ import SEO from '../Components/SEO';
 
 const Home = () => {
   return (
-    // bg-fufu scopes the new brand ground to this page. Once the rest of the
+    // bg-scaffold scopes the new brand ground to this page. Once the rest of the
     // site is migrated off the legacy green palette, move this to `body` in
     // index.css and drop the wrapper.
-    <div className="bg-fufu">
+    <div className="bg-scaffold">
       <SEO
         title="ChopNow - Save Food, Save Money, Save the Planet"
         description="ChopNow connects you with surplus food from local businesses at discounted prices. Reduce food waste and save money in Kigali, Rwanda."

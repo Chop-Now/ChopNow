@@ -75,7 +75,9 @@ final _riderStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
     final res = await ApiClient.instance.get(AppEndpoints.riderStats);
     final data = res.data;
     if (data is Map && data['success'] == true) {
-      return data['stats'] is Map ? Map<String, dynamic>.from(data['stats']) : {};
+      return data['stats'] is Map
+          ? Map<String, dynamic>.from(data['stats'])
+          : {};
     }
     return data is Map<String, dynamic> ? data : {};
   } catch (e) {
@@ -146,7 +148,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not update availability: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+                'Could not update availability: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -202,7 +205,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
     final stats = asyncStats.value ?? {};
     final totalDeliveries = stats['totalDeliveries']?.toString() ?? '-';
     final todayEarningsVal = stats['todayEarnings'];
-    final todayEarnings = todayEarningsVal is num ? 'RWF ${_fmt(todayEarningsVal.toInt())}' : '-';
+    final todayEarnings =
+        todayEarningsVal is num ? 'RWF ${_fmt(todayEarningsVal.toInt())}' : '-';
     final rating = stats['rating']?.toString() ?? '4.9';
 
     return Scaffold(
@@ -279,13 +283,13 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                                     height: 8,
                                     decoration: BoxDecoration(
                                       color: _isOnline
-                                          ? const Color(0xFF7FFFBF)
+                                          ? AppColors.nowYellow
                                           : Colors.white.withValues(alpha: 0.4),
                                       shape: BoxShape.circle,
                                       boxShadow: _isOnline
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF00FF9F)
+                                                color: AppColors.nowYellow
                                                     .withValues(alpha: 0.6),
                                                 blurRadius: 6,
                                               )
@@ -312,7 +316,9 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                         Row(
                           children: [
                             _StatCard(
-                                icon: Icons.check_circle_outline_rounded, label: 'Delivered', value: totalDeliveries),
+                                icon: Icons.check_circle_outline_rounded,
+                                label: 'Delivered',
+                                value: totalDeliveries),
                             const SizedBox(width: 12),
                             _StatCard(
                                 icon: Icons.payments_outlined,
@@ -320,7 +326,9 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
                                 value: todayEarnings),
                             const SizedBox(width: 12),
                             _StatCard(
-                                icon: Icons.star_rounded, label: 'Rating', value: rating),
+                                icon: Icons.star_rounded,
+                                label: 'Rating',
+                                value: rating),
                           ],
                         ),
                       ],
@@ -583,7 +591,8 @@ class _AvailableOrderCardState extends State<_AvailableOrderCard>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
-                        child: Icon(Icons.storefront_rounded, color: Colors.white, size: 22)),
+                        child: Icon(Icons.storefront_rounded,
+                            color: Colors.white, size: 22)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -743,7 +752,8 @@ class _MyDeliveryCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                  child: Icon(Icons.delivery_dining_rounded, size: 22, color: _statusColor)),
+                  child: Icon(Icons.delivery_dining_rounded,
+                      size: 22, color: _statusColor)),
             ),
             const SizedBox(width: 14),
             Expanded(

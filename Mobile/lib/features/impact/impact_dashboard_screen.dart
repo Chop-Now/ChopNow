@@ -26,9 +26,9 @@ class ImpactDashboardScreen extends ConsumerWidget {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFF00C97F),
-                      Color(0xFF00A86B),
-                      Color(0xFF005936)
+                      AppColors.primaryLight,
+                      AppColors.moringa,
+                      AppColors.primaryDark
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -69,7 +69,8 @@ class ImpactDashboardScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.public_rounded, size: 16, color: Colors.white70),
+                                Icon(Icons.public_rounded,
+                                    size: 16, color: Colors.white70),
                                 SizedBox(width: 6),
                                 Text('My Impact',
                                     style: TextStyle(
@@ -222,7 +223,8 @@ class _ImpactContentState extends State<_ImpactContent>
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.inventory_2_rounded, size: 28, color: AppColors.primary),
+                        const Icon(Icons.inventory_2_rounded,
+                            size: 28, color: AppColors.primary),
                         const SizedBox(height: 6),
                         Text('$totalOrders',
                             style: const TextStyle(
@@ -254,7 +256,8 @@ class _ImpactContentState extends State<_ImpactContent>
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.track_changes_rounded, size: 20, color: AppColors.primary),
+                      Icon(Icons.track_changes_rounded,
+                          size: 20, color: AppColors.primary),
                       SizedBox(width: 8),
                       Text('Next Goal',
                           style: TextStyle(
@@ -283,7 +286,8 @@ class _ImpactContentState extends State<_ImpactContent>
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.emoji_events_rounded, size: 20, color: AppColors.primary),
+                      Icon(Icons.emoji_events_rounded,
+                          size: 20, color: AppColors.primary),
                       SizedBox(width: 8),
                       Text('Badges',
                           style: TextStyle(
@@ -327,7 +331,8 @@ class _ImpactContentState extends State<_ImpactContent>
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.lightbulb_rounded, size: 16, color: AppColors.primary),
+                      Icon(Icons.lightbulb_rounded,
+                          size: 16, color: AppColors.primary),
                       SizedBox(width: 6),
                       Text('Did you know?',
                           style: TextStyle(
@@ -370,10 +375,26 @@ class _ImpactContentState extends State<_ImpactContent>
   }
 
   static List<Map<String, dynamic>> _badgesForCount(int count) => [
-        {'label': 'First Rescue', 'earned': count >= 1, 'icon': Icons.eco_rounded},
-        {'label': '5 Meals', 'earned': count >= 5, 'icon': Icons.restaurant_menu_rounded},
-        {'label': 'Food Hero', 'earned': count >= 10, 'icon': Icons.public_rounded},
-        {'label': 'Champion', 'earned': count >= 25, 'icon': Icons.emoji_events_rounded},
+        {
+          'label': 'First Rescue',
+          'earned': count >= 1,
+          'icon': Icons.eco_rounded
+        },
+        {
+          'label': '5 Meals',
+          'earned': count >= 5,
+          'icon': Icons.restaurant_menu_rounded
+        },
+        {
+          'label': 'Food Hero',
+          'earned': count >= 10,
+          'icon': Icons.public_rounded
+        },
+        {
+          'label': 'Champion',
+          'earned': count >= 25,
+          'icon': Icons.emoji_events_rounded
+        },
         {'label': 'Legend', 'earned': count >= 50, 'icon': Icons.stars_rounded},
       ];
 }
@@ -535,7 +556,8 @@ class _BadgePill extends StatelessWidget {
   final String label;
   final bool earned;
   final IconData icon;
-  const _BadgePill({required this.label, required this.earned, required this.icon});
+  const _BadgePill(
+      {required this.label, required this.earned, required this.icon});
 
   @override
   Widget build(BuildContext context) {

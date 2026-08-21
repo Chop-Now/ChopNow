@@ -102,7 +102,7 @@ const HowItWorks = () => {
   const steps = active === 'consumer' ? stepsForConsumers : stepsForVendors;
 
   return (
-    <div id="howItWorks" className="py-14 w-full relative overflow-hidden bg-fufu-dim">
+    <div id="howItWorks" className="py-14 w-full relative overflow-hidden bg-fufu">
       {/* Section Title */}
       <motion.div
         className="text-center mb-8 px-4"
@@ -125,13 +125,13 @@ const HowItWorks = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="bg-fufu shadow-lg rounded-xl p-1.5 flex gap-1">
+        <div className="bg-surface shadow-lg rounded-xl p-1.5 flex gap-1">
           <button
             onClick={() => setActive('consumer')}
             className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
               active === 'consumer'
                 ? 'bg-moringa text-fufu'
-                : 'text-moringa-muted hover:bg-fufu-dim hover:text-moringa'
+                : 'text-moringa-muted hover:bg-scaffold hover:text-moringa'
             }`}
           >
             For Consumers
@@ -142,7 +142,7 @@ const HowItWorks = () => {
             className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
               active === 'vendor'
                 ? 'bg-moringa text-fufu'
-                : 'text-moringa-muted hover:bg-fufu-dim hover:text-moringa'
+                : 'text-moringa-muted hover:bg-scaffold hover:text-moringa'
             }`}
           >
             For Vendors
@@ -156,7 +156,7 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <motion.div
               key={step.id}
-              className={`bg-fufu rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
+              className={`bg-surface rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
                 index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
               }`}
               style={{ height: '350px' }}
@@ -186,7 +186,7 @@ const HowItWorks = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <div className="bg-fufu rounded-3xl shadow-md overflow-hidden">
+        <div className="bg-surface rounded-3xl shadow-md overflow-hidden">
           <div className="flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
             {/* Left Side - Image */}
             <motion.div

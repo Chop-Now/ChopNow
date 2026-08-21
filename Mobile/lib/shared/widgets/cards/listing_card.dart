@@ -90,12 +90,12 @@ class ListingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1E2923).withValues(alpha: 0.04),
+              color: AppColors.char.withValues(alpha: 0.04),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
             BoxShadow(
-              color: const Color(0xFF1E2923).withValues(alpha: 0.02),
+              color: AppColors.char.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -109,8 +109,14 @@ class ListingCard extends StatelessWidget {
       ),
     )
         .animate()
-        .fadeIn(duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuad)
-        .slideY(begin: 0.06, end: 0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuad);
+        .fadeIn(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutQuad)
+        .slideY(
+            begin: 0.06,
+            end: 0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutQuad);
   }
 
   Widget _buildGrid(img, name, business, price, offerPrice, discount, qty,

@@ -75,7 +75,7 @@ class _EarningsBody extends StatelessWidget {
             background: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF00C97F), Color(0xFF006644)],
+                  colors: [AppColors.primaryLight, AppColors.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

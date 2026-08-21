@@ -24,7 +24,7 @@ const Header = () => {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`${isScrolled ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 py-3 transition-all duration-300 ${isScrolled ? 'bg-fufu/95 backdrop-blur-md shadow-md' : ''}`}
+      className={`${isScrolled ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 py-3 transition-all duration-300 ${isScrolled ? 'bg-scaffold/95 backdrop-blur-md shadow-md' : ''}`}
     >
       {/* Container */}
       <div className="mx-auto max-w-[1440px] px-4 lg:px-12 flex items-center justify-between">
@@ -46,7 +46,7 @@ const Header = () => {
             menuOpened={menuOpened}
             containerStyles={`${
               menuOpened
-                ? 'flex items-start flex-col gap-y-4 fixed top-16 left-0 right-0 p-6 bg-fufu shadow-md w-full ring-1 ring-moringa/10 z-50'
+                ? 'flex items-start flex-col gap-y-4 fixed top-16 left-0 right-0 p-6 bg-surface shadow-md w-full ring-1 ring-moringa/10 z-50'
                 : 'hidden lg:flex gap-x-5 xl:gap-x-1 medium-15 p-1'
             }`}
           />
