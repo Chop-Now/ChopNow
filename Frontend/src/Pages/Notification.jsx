@@ -1,4 +1,4 @@
-import PageNavbar from '../Components/PageNavbar';
+﻿import PageNavbar from '../Components/PageNavbar';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -226,15 +226,15 @@ const Notification = () => {
   const getIconConfig = (type) => {
     switch (type) {
       case 'rider':
-        return { Icon: Truck, color: '#00A86B', bgColor: '#E6F9F2' };
+        return { Icon: Truck, color: '#0F3D2E', bgColor: '#E6F9F2' };
       case 'announcement':
-        return { Icon: Megaphone, color: '#FF7A00', bgColor: '#FFF0E6' };
+        return { Icon: Megaphone, color: '#E8552F', bgColor: '#FFF0E6' };
       case 'milestone':
         return { Icon: PartyPopper, color: '#4CAF50', bgColor: '#E8F5E9' };
       case 'order':
-        return { Icon: Store, color: '#007A4B', bgColor: '#E0F2ED' };
+        return { Icon: Store, color: '#0A291E', bgColor: '#E0F2ED' };
       default:
-        return { Icon: Bell, color: '#007A4B', bgColor: '#E0F2ED' };
+        return { Icon: Bell, color: '#0A291E', bgColor: '#E0F2ED' };
     }
   };
 
@@ -334,7 +334,7 @@ const Notification = () => {
 
           {detailLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-solid" />
             </div>
           ) : (
             <div className="p-6">
@@ -385,7 +385,7 @@ const Notification = () => {
                     {meta.orderTotal && (
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-gray-600 ml-6">Total:</span>
-                        <span className="font-bold text-green-600">
+                        <span className="font-bold text-solid">
                           {meta.currency || 'RWF'} {meta.orderTotal?.toLocaleString()}
                         </span>
                       </div>
@@ -411,12 +411,12 @@ const Notification = () => {
 
               {/* Pickup Code - Prominent Display */}
               {meta.pickupCode && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4 text-center">
-                  <p className="text-sm text-green-700 mb-2">Your Pickup Code</p>
-                  <p className="text-3xl font-bold text-green-600 tracking-widest">
+                <div className="bg-primary border-2 border-solid/30 rounded-xl p-4 mb-4 text-center">
+                  <p className="text-sm text-tertiary mb-2">Your Pickup Code</p>
+                  <p className="text-3xl font-bold text-solid tracking-widest">
                     {meta.pickupCode}
                   </p>
-                  <p className="text-xs text-green-600 mt-2">
+                  <p className="text-xs text-solid mt-2">
                     Show this code when you pick up your order
                   </p>
                 </div>
@@ -474,7 +474,7 @@ const Notification = () => {
               {/* Action Button */}
               <button
                 onClick={() => handleDetailAction(selectedNotification)}
-                className="w-full bg-solid text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                className="w-full bg-solid text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-tertiary transition-colors"
               >
                 {meta.actionLabel || 'View Details'}
                 <ChevronRight size={18} />
@@ -636,7 +636,7 @@ const Notification = () => {
             <div className="space-y-4">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-4" />
+                  <Loader2 className="w-8 h-8 animate-spin text-solid mb-4" />
                   <p className="text-gray-50">Loading notifications...</p>
                 </div>
               ) : filteredNotifications.length === 0 ? (
@@ -654,7 +654,7 @@ const Notification = () => {
                       onClick={() => handleNotificationClick(notification)}
                       className={`relative bg-primary rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${
                         !notification.isRead
-                          ? 'ring-2 ring-solid ring-opacity-30 bg-green-50/30'
+                          ? 'ring-2 ring-solid ring-opacity-30 bg-primary/30'
                           : ''
                       }`}
                     >
@@ -692,7 +692,7 @@ const Notification = () => {
                                   </span>
                                 )}
                                 {meta.pickupCode && (
-                                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                                  <span className="bg-primary text-tertiary px-2 py-0.5 rounded font-medium">
                                     Code: {meta.pickupCode}
                                   </span>
                                 )}

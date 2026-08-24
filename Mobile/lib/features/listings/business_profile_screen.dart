@@ -69,7 +69,7 @@ class BusinessProfileScreen extends ConsumerWidget {
                     Container(
                         decoration: const BoxDecoration(
                             gradient: AppColors.heroGradient)),
-                  Container(color: Colors.black.withValues(alpha: 0.3)),
+                  Container(color: AppColors.char.withValues(alpha: 0.3)),
                 ]),
               ),
             ),
@@ -88,7 +88,7 @@ class BusinessProfileScreen extends ConsumerWidget {
                         border: Border.all(color: AppColors.border),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: AppColors.char.withValues(alpha: 0.05),
                               blurRadius: 8)
                         ]),
                     child: Column(

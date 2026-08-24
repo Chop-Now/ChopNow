@@ -200,7 +200,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
         Navigator.pop(context); // Close dialog
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Payout requested successfully! 🚀'),
+              content: Text('Payout requested successfully!'),
               backgroundColor: AppColors.primary),
         );
       }
@@ -373,7 +373,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       label: const Text('Request Withdrawal',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.background,
                         foregroundColor: AppColors.primary,
                         disabledBackgroundColor:
                             Colors.white.withValues(alpha: 0.4),
@@ -453,6 +453,9 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,8 +634,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       padding: EdgeInsets.all(20),
                       child:
                           CircularProgressIndicator(color: AppColors.primary))),
-              error: (e, _) =>
-                  Center(child: Text(ApiException.fromDioError(e).message)),
+              error: (e, _) => Center(child: Text(ApiException.fromDioError(e).message)),
               data: (payouts) {
                 if (payouts.isEmpty) {
                   return Container(
@@ -694,11 +696,14 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                     };
 
                     return Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                        ],
                       ),
                       child: Row(
                         children: [

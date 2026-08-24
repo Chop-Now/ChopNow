@@ -75,16 +75,16 @@ const ShopAdminOverview = () => {
   const salesTrendData =
     businessData?.weeklyTrend?.length > 0
       ? businessData.weeklyTrend.map((week, index) => ({
-          week: `Week ${index + 1}`,
-          sales: week.sales || 0,
-          orders: week.orders || 0,
-        }))
+        week: `Week ${index + 1}`,
+        sales: week.sales || 0,
+        orders: week.orders || 0,
+      }))
       : [
-          { week: 'Week 1', sales: 0, orders: 0 },
-          { week: 'Week 2', sales: 0, orders: 0 },
-          { week: 'Week 3', sales: 0, orders: 0 },
-          { week: 'Week 4', sales: 0, orders: 0 },
-        ];
+        { week: 'Week 1', sales: 0, orders: 0 },
+        { week: 'Week 2', sales: 0, orders: 0 },
+        { week: 'Week 3', sales: 0, orders: 0 },
+        { week: 'Week 4', sales: 0, orders: 0 },
+      ];
 
   // Top selling products from API or empty array
   const topProducts =
@@ -160,13 +160,13 @@ const ShopAdminOverview = () => {
               <div className="flex items-center space-x-1.5">
                 {revenueChange !== 0 ? (
                   revenueChange > 0 ? (
-                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <ArrowUpRight className="w-3 h-3 text-solid" />
                   ) : (
                     <ArrowDownRight className="w-3 h-3 text-red-500" />
                   )
                 ) : null}
                 <span
-                  className={`text-xs font-semibold ${revenueChange > 0 ? 'text-emerald-500' : revenueChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`text-xs font-semibold ${revenueChange > 0 ? 'text-solid' : revenueChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
                 >
                   {revenueChange !== 0
                     ? `${revenueChange > 0 ? '+' : ''}${revenueChange}%`
@@ -193,13 +193,13 @@ const ShopAdminOverview = () => {
               <div className="flex items-center space-x-1.5">
                 {ordersChange !== 0 ? (
                   ordersChange > 0 ? (
-                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <ArrowUpRight className="w-3 h-3 text-solid" />
                   ) : (
                     <ArrowDownRight className="w-3 h-3 text-red-500" />
                   )
                 ) : null}
                 <span
-                  className={`text-xs font-semibold ${ordersChange > 0 ? 'text-emerald-500' : ordersChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`text-xs font-semibold ${ordersChange > 0 ? 'text-solid' : ordersChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
                 >
                   {ordersChange !== 0
                     ? `${ordersChange > 0 ? '+' : ''}${ordersChange}%`
@@ -226,13 +226,13 @@ const ShopAdminOverview = () => {
               <div className="flex items-center space-x-1.5">
                 {avgOrderChange !== 0 ? (
                   avgOrderChange > 0 ? (
-                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <ArrowUpRight className="w-3 h-3 text-solid" />
                   ) : (
                     <ArrowDownRight className="w-3 h-3 text-red-500" />
                   )
                 ) : null}
                 <span
-                  className={`text-xs font-semibold ${avgOrderChange > 0 ? 'text-emerald-500' : avgOrderChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`text-xs font-semibold ${avgOrderChange > 0 ? 'text-solid' : avgOrderChange < 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
                 >
                   {avgOrderChange !== 0
                     ? `${avgOrderChange > 0 ? '+' : ''}${avgOrderChange}%`
@@ -259,8 +259,8 @@ const ShopAdminOverview = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+            <div className="px-3 py-1.5 bg-primary dark:bg-solid/10 rounded-lg">
+              <span className="text-xs font-semibold text-solid dark:text-solidTwo">
                 {weeklyChange > 0 ? '+' : ''}
                 {weeklyChange}% this week
               </span>
@@ -272,8 +272,8 @@ const ShopAdminOverview = () => {
             <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00A86B" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#00A86B" stopOpacity={0.05} />
+                  <stop offset="0%" stopColor="#0F3D2E" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#0F3D2E" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
@@ -321,7 +321,7 @@ const ShopAdminOverview = () => {
                 yAxisId="left"
                 type="monotone"
                 dataKey="sales"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={2}
                 fill="url(#salesGradient)"
               />
@@ -378,15 +378,14 @@ const ShopAdminOverview = () => {
                 >
                   <td className="py-3 px-4">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        product.rank === 1
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${product.rank === 1
                           ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                           : product.rank === 2
                             ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                             : product.rank === 3
                               ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
+                        }`}
                     >
                       {product.rank}
                     </div>
@@ -400,13 +399,12 @@ const ShopAdminOverview = () => {
                   <td className="py-3 px-4 text-sm font-semibold text-solid">{product.revenue}</td>
                   <td className="py-3 px-4">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.stock > 50
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${product.stock > 50
+                          ? 'bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo'
                           : product.stock > 20
                             ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                             : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      }`}
+                        }`}
                     >
                       {product.stock} left
                     </span>
@@ -548,12 +546,12 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {mealsChange > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  <ArrowUpRight className="w-3 h-3 text-solid" />
                 ) : (
                   <ArrowDownRight className="w-3 h-3 text-red-500" />
                 )}
                 <span
-                  className={`text-xs font-semibold ${mealsChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                  className={`text-xs font-semibold ${mealsChange > 0 ? 'text-solid' : 'text-red-500'}`}
                 >
                   {mealsChange > 0 ? '+' : ''}
                   {mealsChange}%
@@ -579,12 +577,12 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {co2Change > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  <ArrowUpRight className="w-3 h-3 text-solid" />
                 ) : (
                   <ArrowDownRight className="w-3 h-3 text-red-500" />
                 )}
                 <span
-                  className={`text-xs font-semibold ${co2Change > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                  className={`text-xs font-semibold ${co2Change > 0 ? 'text-solid' : 'text-red-500'}`}
                 >
                   {co2Change > 0 ? '+' : ''}
                   {co2Change}%
@@ -592,8 +590,8 @@ const WebsiteAdminOverview = () => {
                 <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 group-hover:scale-110 transition-all duration-300">
-              <Leaf className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="p-2.5 rounded-xl bg-primary dark:bg-solid/10 group-hover:scale-110 transition-all duration-300">
+              <Leaf className="w-6 h-6 text-solid dark:text-solidTwo" />
             </div>
           </div>
         </div>
@@ -610,12 +608,12 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {waterChange > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  <ArrowUpRight className="w-3 h-3 text-solid" />
                 ) : (
                   <ArrowDownRight className="w-3 h-3 text-red-500" />
                 )}
                 <span
-                  className={`text-xs font-semibold ${waterChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                  className={`text-xs font-semibold ${waterChange > 0 ? 'text-solid' : 'text-red-500'}`}
                 >
                   {waterChange > 0 ? '+' : ''}
                   {waterChange}%
@@ -640,8 +638,8 @@ const WebsiteAdminOverview = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+            <div className="px-3 py-1.5 bg-primary dark:bg-solid/10 rounded-lg">
+              <span className="text-xs font-semibold text-solid dark:text-solidTwo">
                 {weeklyChange > 0 ? '+' : ''}
                 {weeklyChange}% this week
               </span>
@@ -741,15 +739,14 @@ const WebsiteAdminOverview = () => {
                 >
                   <td className="py-3 px-4">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        vendor.rank === 1
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${vendor.rank === 1
                           ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                           : vendor.rank === 2
                             ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                             : vendor.rank === 3
                               ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
+                        }`}
                     >
                       {vendor.rank}
                     </div>
@@ -760,7 +757,7 @@ const WebsiteAdminOverview = () => {
                   <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
                     {vendor.mealsRescued.toLocaleString()}
                   </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">
+                  <td className="py-3 px-4 text-sm font-semibold text-solid dark:text-solidTwo">
                     {vendor.co2Saved}
                   </td>
                   <td className="py-3 px-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
@@ -875,8 +872,8 @@ const ShopAdminReports = () => {
                 labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
                 itemStyle={{ fontSize: '11px' }}
               />
-              <Bar dataKey="revenue" fill="#00A86B" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="cost" fill="#FF7A00" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="revenue" fill="#0F3D2E" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="cost" fill="#E8552F" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1242,8 +1239,8 @@ const WebsiteAdminReports = () => {
                 }}
                 formatter={(value) => ['RWF ' + value.toLocaleString(), '']}
               />
-              <Bar dataKey="revenue" fill="#00A86B" radius={[6, 6, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="expenses" fill="#FF7A00" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="revenue" fill="#0F3D2E" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="expenses" fill="#E8552F" radius={[6, 6, 0, 0]} maxBarSize={40} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1336,7 +1333,7 @@ const WebsiteAdminReports = () => {
                   }}
                   formatter={(value) => [value + ' orders', '']}
                 />
-                <Bar dataKey="orders" fill="#00A86B" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="orders" fill="#0F3D2E" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1366,13 +1363,12 @@ const WebsiteAdminReports = () => {
               </div>
               <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                 <div
-                  className={`h-2 rounded-full ${
-                    item.type === 'Completed'
+                  className={`h-2 rounded-full ${item.type === 'Completed'
                       ? 'bg-solid'
                       : item.type === 'Pending'
                         ? 'bg-yellow-500'
                         : 'bg-red-500'
-                  }`}
+                    }`}
                   style={{ width: `${item.percentage}%` }}
                 ></div>
               </div>
@@ -1508,26 +1504,24 @@ const ShopAdminInsights = () => {
           >
             <div className="flex items-start justify-between mb-3">
               <div
-                className={`p-2.5 rounded-xl ${
-                  insight.color === 'blue'
+                className={`p-2.5 rounded-xl ${insight.color === 'blue'
                     ? 'bg-blue-50 dark:bg-blue-900/20'
                     : insight.color === 'green'
-                      ? 'bg-green-50 dark:bg-green-900/20'
+                      ? 'bg-primary dark:bg-solid/10'
                       : insight.color === 'orange'
                         ? 'bg-orange-50 dark:bg-orange-900/20'
                         : 'bg-purple-50 dark:bg-purple-900/20'
-                } group-hover:scale-110 transition-all duration-300`}
+                  } group-hover:scale-110 transition-all duration-300`}
               >
                 <insight.icon
-                  className={`w-5 h-5 ${
-                    insight.color === 'blue'
+                  className={`w-5 h-5 ${insight.color === 'blue'
                       ? 'text-blue-600 dark:text-blue-400'
                       : insight.color === 'green'
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'text-solid dark:text-solidTwo'
                         : insight.color === 'orange'
                           ? 'text-orange-600 dark:text-orange-400'
                           : 'text-purple-600 dark:text-purple-400'
-                  }`}
+                    }`}
                 />
               </div>
             </div>
@@ -1589,7 +1583,7 @@ const ShopAdminInsights = () => {
               <Line
                 type="monotone"
                 dataKey="returningCustomers"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={2}
                 dot={{ r: 4 }}
                 name="Returning Customers"
@@ -1612,7 +1606,7 @@ const ShopAdminInsights = () => {
                   {product.product}
                 </h4>
                 {product.trend === 'up' ? (
-                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <TrendingUp className="w-4 h-4 text-solid" />
                 ) : (
                   <TrendingDown className="w-4 h-4 text-red-600" />
                 )}
@@ -1651,7 +1645,7 @@ const ShopAdminInsights = () => {
                   <div className="flex items-center gap-2">
                     <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                       <div
-                        className="bg-green-600 h-2 rounded-full"
+                        className="bg-solid h-2 rounded-full"
                         style={{ width: `${product.checkoutToSale}%` }}
                       ></div>
                     </div>
@@ -1683,22 +1677,20 @@ const ShopAdminInsights = () => {
                 </h4>
                 <div className="flex gap-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      opportunity.impact === 'High'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${opportunity.impact === 'High'
+                        ? 'bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo'
                         : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                    }`}
+                      }`}
                   >
                     {opportunity.impact} Impact
                   </span>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      opportunity.effort === 'Low'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${opportunity.effort === 'Low'
+                        ? 'bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo'
                         : opportunity.effort === 'Medium'
                           ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                           : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}
+                      }`}
                   >
                     {opportunity.effort} Effort
                   </span>
@@ -1868,7 +1860,7 @@ const WebsiteAdminInsights = () => {
               <Line
                 type="monotone"
                 dataKey="users"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={3}
                 dot={{ r: 4 }}
                 name="Total Users"
@@ -1904,15 +1896,15 @@ const WebsiteAdminInsights = () => {
               <div className="flex items-center gap-1">
                 {metric.change > 0 ? (
                   <TrendingUp
-                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-green-500' : 'text-red-500'}`}
+                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-solid' : 'text-red-500'}`}
                   />
                 ) : (
                   <TrendingDown
-                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-green-500' : 'text-red-500'}`}
+                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-solid' : 'text-red-500'}`}
                   />
                 )}
                 <span
-                  className={`text-xs font-semibold ${metric.status === 'good' ? 'text-green-500' : 'text-yellow-500'}`}
+                  className={`text-xs font-semibold ${metric.status === 'good' ? 'text-solid' : 'text-yellow-500'}`}
                 >
                   {Math.abs(metric.change)}% {metric.status === 'warning' ? 'slower' : 'better'}
                 </span>
@@ -1946,9 +1938,9 @@ const WebsiteAdminInsights = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-                  <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400" />
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-1 px-2 py-1 bg-primary dark:bg-solid/10 rounded-full">
+                  <TrendingUp className="w-3 h-3 text-solid dark:text-solidTwo" />
+                  <span className="text-xs font-semibold text-solid dark:text-solidTwo">
                     {region.growth}%
                   </span>
                 </div>
@@ -2004,16 +1996,16 @@ const WebsiteAdminInsights = () => {
           </div>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4">
+        <div className="bg-primary dark:bg-solid/10 border border-solid/30 dark:border-solid/30/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <Leaf className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <div className="p-2 bg-primary dark:bg-solid/10 rounded-lg">
+              <Leaf className="w-5 h-5 text-solid dark:text-solidTwo" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-green-900 dark:text-green-200 mb-1">
+              <h4 className="text-sm font-semibold text-tertiary dark:text-solidTwo mb-1">
                 Sustainability Impact
               </h4>
-              <p className="text-xs text-green-700 dark:text-green-300">
+              <p className="text-xs text-tertiary dark:text-solidTwo">
                 Each rescued meal saves an average of 0.3kg CO2e and 15L of water. Impact growing by
                 18%.
               </p>
@@ -2112,18 +2104,18 @@ const ShopAdminImpact = () => {
         </div>
 
         {/* CO2e Saved */}
-        <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 backdrop-blur-xl rounded-2xl p-5 border border-green-200/50 dark:border-green-700/50 hover:shadow-xl hover:shadow-green-200/30 dark:hover:shadow-green-900/20 transition-all duration-300 group">
+        <div className="bg-linear-to-br from-primary to-primary dark:from-green-900/30 dark:to-green-800/20 backdrop-blur-xl rounded-2xl p-5 border border-solid/30/50 dark:border-solid/30/50 hover:shadow-xl hover:shadow-solidTwo/30/30 dark:hover:shadow-green-900/20 transition-all duration-300 group">
           <div className="flex items-start justify-between mb-3">
             <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/40 group-hover:scale-110 transition-all duration-300">
-              <Leaf className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <Leaf className="w-6 h-6 text-solid dark:text-solidTwo" />
             </div>
-            <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <TrendingUp className="w-5 h-5 text-solid dark:text-solidTwo" />
           </div>
-          <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">CO2e Saved</p>
-          <p className="text-3xl font-bold text-green-900 dark:text-white mb-2">
+          <p className="text-sm font-medium text-tertiary dark:text-solidTwo mb-1">CO2e Saved</p>
+          <p className="text-3xl font-bold text-tertiary dark:text-white mb-2">
             {totalCo2.toLocaleString()} kg
           </p>
-          <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+          <p className="text-xs text-solid dark:text-solidTwo font-medium">
             Environmental impact
           </p>
         </div>
@@ -2464,7 +2456,7 @@ const WebsiteAdminImpact = () => {
           <p className="text-xs opacity-75 mt-2">Since platform launch</p>
         </div>
 
-        <div className="bg-linear-to-br from-green-500 to-green-600 rounded-2xl p-5 text-white shadow-lg">
+        <div className="bg-linear-to-br from-solid to-tertiary rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <Leaf className="w-8 h-8 opacity-80" />
             <span className="text-3xl">🌱</span>
@@ -2549,7 +2541,7 @@ const WebsiteAdminImpact = () => {
                 yAxisId="left"
                 type="monotone"
                 dataKey="meals"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={3}
                 dot={{ r: 5 }}
                 name="Meals Rescued"
@@ -2614,7 +2606,7 @@ const WebsiteAdminImpact = () => {
                   <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
                     {item.meals.toLocaleString()}
                   </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">
+                  <td className="py-3 px-4 text-sm font-semibold text-solid dark:text-solidTwo">
                     {item.co2.toLocaleString()}
                   </td>
                   <td className="py-3 px-4 text-sm font-semibold text-blue-600 dark:text-blue-400">

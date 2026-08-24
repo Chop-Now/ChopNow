@@ -48,6 +48,26 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
   Widget build(BuildContext context) {
     final asyncOrders = ref.watch(_businessOrdersProvider);
 
+    List<int>? badgeCounts;
+    asyncOrders.whenData((allOrders) {
+      final newOrders = allOrders.where((o) {
+        final status = o['status']?.toString() ?? '';
+        final payment = o['payment'] is Map ? o['payment'] : {};
+        final method = payment['paymentMethod']?.toString() ?? '';
+        return status == 'pending' ||
+            status == 'paid' ||
+            (status == 'pending_payment' && method == 'cash');
+      }).length;
+      final activeOrders = allOrders
+          .where((o) => ['confirmed', 'preparing', 'ready_for_pickup']
+              .contains(o['status']))
+          .length;
+      final doneOrders = allOrders
+          .where((o) => ['completed', 'cancelled'].contains(o['status']))
+          .length;
+      badgeCounts = [newOrders, activeOrders, doneOrders];
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -64,6 +84,7 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
             child: AnimatedSegmentedControl(
               segments: const ['New', 'Active', 'Done'],
               selectedIndex: _tabs.index,
+              badgeCounts: badgeCounts,
               onValueChanged: (index) {
                 _tabs.animateTo(index);
                 setState(() {});
@@ -84,7 +105,7 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
         icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
         label: const Text('Quick Verify',
             style: TextStyle(
-                color: Colors.white,
+                color: AppColors.surface,
                 fontWeight: FontWeight.w700,
                 fontSize: 13)),
       ),
@@ -506,76 +527,125 @@ class _BusinessOrderCard extends StatelessWidget {
     final status = order['status']?.toString() ?? 'pending';
     final orderId = order['_id']?.toString() ?? '';
     final customerName = order['customer'] is Map
-        ? '${order['customer']['firstName'] ?? ''} ${order['customer']['lastName'] ?? ''}'
-            .trim()
+        ? '${order['customer']['firstName'] ?? ''} ${order['customer']['lastName'] ?? ''}'.trim()
         : order['user'] is Map
-            ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'
-                .trim()
+            ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'.trim()
             : 'Customer';
 
+    final payment = order['payment'] is Map ? order['payment'] : {};
+    final method = payment['paymentMethod']?.toString() ?? '';
+    final isNew = status == 'pending' ||
+        status == 'paid' ||
+        (status == 'pending_payment' && method == 'cash');
+
+    final (color, label) = isNew
+        ? (AppColors.warning, 'NEW')
+        : switch (status) {
+            'confirmed' => (AppColors.primary, 'CONFIRMED'),
+            'preparing' => (AppColors.primary, 'PREPARING'),
+            'ready_for_pickup' => (AppColors.success, 'READY'),
+            'completed' => (AppColors.success, 'COMPLETED'),
+            'cancelled' => (AppColors.error, 'CANCELLED'),
+            _ => (AppColors.textSecondary, status.toUpperCase()),
+          };
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: status == 'pending'
-                ? AppColors.primary.withValues(alpha: 0.3)
-                : AppColors.border),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)
+          BoxShadow(
+              color: AppColors.char.withValues(alpha: 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4))
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(
-                    'Order #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: AppColors.textPrimary)),
-                Text(customerName,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
-              ])),
-          _StatusBadge(order: order),
-        ]),
-        const SizedBox(height: 8),
-
-        // Items summary
-        // Items summary
-        if (order['items'] is List)
-          ...(order['items'] as List).take(2).map((item) {
-            if (item is! Map) return const SizedBox.shrink();
-            final title = item['title'] ??
-                (item['listing'] is Map ? item['listing']['title'] : null) ??
-                'Item';
-            return Text('${item['quantity']}x $title',
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+                'ORDER #${orderId.length > 5 ? orderId.substring(orderId.length - 5).toUpperCase() : orderId}',
                 style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary));
-          }),
-
-        const SizedBox(height: 8),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: AppColors.textPrimary)),
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: color),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.receipt_long_rounded, color: AppColors.textSecondary, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(customerName,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  if (order['items'] is List)
+                    ...(order['items'] as List).take(2).map((item) {
+                      if (item is! Map) return const SizedBox.shrink();
+                      final title = item['title'] ??
+                          (item['listing'] is Map ? item['listing']['title'] : null) ??
+                          'Item';
+                      return Text('${item['quantity']}x $title',
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500));
+                    }),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('RWF ${order['total'] ?? order['totalAmount'] ?? 0}',
               style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  fontSize: 15)),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                  fontSize: 18)),
           Text(
-              order['fulfillmentType'] == 'delivery' ? '🚚 Delivery' : '🏃 Pickup',
+              order['fulfillmentType'] == 'delivery' ? 'Delivery' : 'Pickup',
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSecondary)),
+                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
         ]),
-
         if (showActions) ...[
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.border, height: 1),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _actionButtons(order),
         ],
       ]),
@@ -599,7 +669,7 @@ class _BusinessOrderCard extends StatelessWidget {
                 label: 'Reject',
                 color: AppColors.error,
                 onTap: () => onUpdate(orderId, 'cancelled'))),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
             child: _FilledBtn(
                 label: 'Accept',
@@ -619,62 +689,6 @@ class _BusinessOrderCard extends StatelessWidget {
           onTap: () => onVerifyPickup(orderId)),
       _ => const SizedBox.shrink(),
     };
-  }
-}
-
-// ── Status Badge ───────────────────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final dynamic order;
-  const _StatusBadge({required this.order});
-  @override
-  Widget build(BuildContext context) {
-    final status = order['status']?.toString() ?? 'pending';
-    final payment = order['payment'] is Map ? order['payment'] : {};
-    final method = payment['paymentMethod']?.toString() ?? '';
-
-    final isNew = status == 'pending' ||
-        status == 'paid' ||
-        (status == 'pending_payment' && method == 'cash');
-
-    final (color, bg, label) = isNew
-        ? (AppColors.warning, AppColors.warningSurface, 'New')
-        : switch (status) {
-            'confirmed' => (
-                AppColors.primary,
-                AppColors.primarySurface,
-                'Confirmed'
-              ),
-            'preparing' => (
-                AppColors.primary,
-                AppColors.primarySurface,
-                'Preparing'
-              ),
-            'ready_for_pickup' => (
-                AppColors.success,
-                AppColors.successSurface,
-                'Ready'
-              ),
-            'completed' => (
-                AppColors.success,
-                AppColors.successSurface,
-                'Completed'
-              ),
-            'cancelled' => (
-                AppColors.error,
-                AppColors.errorSurface,
-                'Cancelled'
-              ),
-            _ => (AppColors.textSecondary, AppColors.surfaceVariant, status),
-          };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: color)),
-    );
   }
 }
 

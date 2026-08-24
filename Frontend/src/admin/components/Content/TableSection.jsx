@@ -1,4 +1,4 @@
-import { MoreHorizontal, SlidersHorizontal, Loader2 } from 'lucide-react';
+﻿import { MoreHorizontal, SlidersHorizontal, Loader2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { orderService } from '../../../services';
 import { useAdminMode } from '../../context/AdminModeContext';
@@ -64,7 +64,7 @@ const TableSection = ({ onNavigate }) => {
     switch (status) {
       case 'Delivered':
       case 'Completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo';
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'Accepted':

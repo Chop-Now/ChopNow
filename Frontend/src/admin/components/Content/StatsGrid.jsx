@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowDownRight,
   ArrowUpRight,
   ShoppingBasket,
@@ -74,7 +74,7 @@ const StatsGrid = () => {
           change: getChange(stats.totalRevenue, stats.previousRevenue).value,
           trend: getChange(stats.totalRevenue, stats.previousRevenue).trend,
           icon: <Wallet className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
         {
@@ -83,7 +83,7 @@ const StatsGrid = () => {
           change: getChange(stats.totalOrders, stats.previousOrders).value,
           trend: getChange(stats.totalOrders, stats.previousOrders).trend,
           icon: <ShoppingBasket className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-grey-200 dark:text-white',
         },
         {
@@ -114,7 +114,7 @@ const StatsGrid = () => {
               />
             </svg>
           ),
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
         {
@@ -138,7 +138,7 @@ const StatsGrid = () => {
               />
             </svg>
           ),
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
       ]
@@ -155,7 +155,7 @@ const StatsGrid = () => {
               : '+0%',
           trend: stats.revenue?.trend || 'up',
           icon: <Wallet className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
         {
@@ -167,7 +167,7 @@ const StatsGrid = () => {
               : '+0%',
           trend: stats.orders?.trend || 'up',
           icon: <ShoppingBasket className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-grey-200 dark:text-white',
         },
         {
@@ -179,7 +179,7 @@ const StatsGrid = () => {
               : '+0%',
           trend: stats.businesses?.trend || 'up',
           icon: <Store className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
         {
@@ -191,7 +191,7 @@ const StatsGrid = () => {
               : '+0%',
           trend: stats.users?.trend || 'up',
           icon: <Users className="w-6 h-6" />,
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bgColor: 'bg-primary dark:bg-solid/10',
           textColor: 'text-black dark:text-white',
         },
       ]
@@ -319,14 +319,14 @@ const StatsGrid = () => {
                   {stat.value}
                 </p>
                 <div className="flex items-center space-x-1.5">
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-500">{stat.change}</span>
+                  <ArrowUpRight className="w-3 h-3 text-solid" />
+                  <span className="text-xs font-semibold text-solid">{stat.change}</span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     vs Last Month
                   </span>
                 </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+              <div className="p-2.5 rounded-xl bg-primary dark:bg-solid/10">
                 <div className="text-black dark:text-white">{stat.icon}</div>
               </div>
             </div>
@@ -354,12 +354,12 @@ const StatsGrid = () => {
                 </p>
                 <div className="flex items-center space-x-1.5">
                   {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <ArrowUpRight className="w-3 h-3 text-solid" />
                   ) : (
                     <ArrowDownRight className="w-3 h-3 text-red-500" />
                   )}
                   <span
-                    className={`text-xs font-semibold ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}
+                    className={`text-xs font-semibold ${stat.trend === 'up' ? 'text-solid' : 'text-red-500'}`}
                   >
                     {stat.change}
                   </span>

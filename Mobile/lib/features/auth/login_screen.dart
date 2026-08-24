@@ -275,9 +275,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _submit() {
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
           '[Login] _submit called. selectedRole=$_selectedRole, tabIndex=${_tabController.index}');
+    }
     HapticFeedback.mediumImpact();
 
     // Map role choice to preferred backend role
@@ -306,8 +307,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         return;
       }
 
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('[Login] Calling authProvider.notifier.login...');
+      }
       ref
           .read(authProvider.notifier)
           .login(email: email, password: pass, preferredRole: preferredRole);

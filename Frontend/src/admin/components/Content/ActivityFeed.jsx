@@ -1,4 +1,4 @@
-import { Clock, Truck, ShoppingCart, User, Store, Star, Loader2, AlertCircle } from 'lucide-react';
+﻿import { Clock, Truck, ShoppingCart, User, Store, Star, Loader2, AlertCircle } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { analyticsService } from '../../../services';
 
@@ -52,8 +52,8 @@ const ActivityFeed = () => {
       },
       order: {
         Icon: ShoppingCart,
-        color: 'text-green-600',
-        bgColor: 'bg-green-500/10 dark:bg-green-500/20',
+        color: 'text-solid',
+        bgColor: 'bg-solid/10 dark:bg-solid/20',
       },
       delivery: {
         Icon: Truck,

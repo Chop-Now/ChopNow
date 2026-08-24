@@ -147,7 +147,7 @@ class CartScreen extends ConsumerWidget {
                     color: AppColors.surface,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
+                          color: AppColors.char.withValues(alpha: 0.08),
                           blurRadius: 20,
                           offset: const Offset(0, -4)),
                     ],
@@ -284,7 +284,7 @@ class _CartItemCard extends ConsumerWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.char.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2))
         ],

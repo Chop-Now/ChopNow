@@ -57,11 +57,19 @@ class CreateListingCameraScreen extends StatelessWidget {
               width: 200,
               height: 200,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.primary, width: 2),
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white.withValues(alpha: 0.05),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  )
+                ],
               ),
               child: const Icon(Icons.camera_alt_rounded,
-                  color: Colors.white54, size: 64),
+                  color: Colors.white, size: 64),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -74,14 +82,15 @@ class CreateListingCameraScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => _capturePhoto(context),
               icon: const Icon(Icons.camera_alt_rounded),
-              label: const Text('Capture Photo'),
+              label: const Text('Capture Photo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
             ),
           ],

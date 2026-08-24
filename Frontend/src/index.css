@@ -29,14 +29,14 @@
   --color-surface: #ffffff; /* standard surface background: cards, panels, pills */
   --color-surface-border: #e3ebe6; /* cool hairline on scaffold/surface (fufu-border reads warm here) */
 
-  /* ── Legacy green/orange brand (being retired) ──
-     Still used by every page except Home. Do not use in new work. */
-  --color-primary: #f6fff9; /* Soft green-tinted background */
-  --color-solid: #00a86b; /* Main green (brand) */
-  --color-solidOne: #ff7a00; /* Main orange (brand accent) */
-  --color-solidTwo: #ffb366; /* Soft orange variant */
-  --color-tertiary: #007a4b; /* Darker green for hover/buttons */
-  --color-textColor: #2e2e2e; /* Dark neutral text */
+  /* ── Legacy green/orange brand — NOW UPDATED to new palette ──
+     All existing components use these vars. They now point to the new colors. */
+  --color-primary: #FAF3E4; /* Fufu — warm neutral background */
+  --color-solid: #0F3D2E; /* Moringa — primary brand green */
+  --color-solidOne: #E8552F; /* Pepper — warm red accent */
+  --color-solidTwo: #FFC531; /* Now Yellow — golden accent */
+  --color-tertiary: #0A291E; /* Dark Moringa — hover/button state */
+  --color-textColor: #17150F; /* Char — deep near-black text */
   --color-gray-50: #8a8a8a; /* Muted gray for secondary text */
 }
 
@@ -93,37 +93,37 @@ body {
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #FAF3E4;
+  --foreground: #17150F;
+  --card: #FFFFFF;
+  --card-foreground: #17150F;
+  --popover: #FFFFFF;
+  --popover-foreground: #17150F;
+  --primary: #0F3D2E;
+  --primary-foreground: #FAF3E4;
+  --secondary: #FFC531;
+  --secondary-foreground: #17150F;
+  --muted: #F0E8D8;
+  --muted-foreground: #5A5040;
+  --accent: #E8552F;
+  --accent-foreground: #FAF3E4;
+  --destructive: #E8552F;
+  --border: #E0D5C0;
+  --input: #E0D5C0;
+  --ring: #0F3D2E;
+  --chart-1: #E8552F;
+  --chart-2: #FFC531;
+  --chart-3: #0F3D2E;
+  --chart-4: #1F7A5C;
+  --chart-5: #0A291E;
+  --sidebar: #0F3D2E;
+  --sidebar-foreground: #FAF3E4;
+  --sidebar-primary: #FFC531;
+  --sidebar-primary-foreground: #0F3D2E;
+  --sidebar-accent: #1F7A5C;
+  --sidebar-accent-foreground: #FAF3E4;
+  --sidebar-border: #0A291E;
+  --sidebar-ring: #FFC531;
 }
 
 .dark {
@@ -165,7 +165,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: #f6fff9 !important;
-    color: #2e2e2e !important;
+    background-color: #FAF3E4 !important;
+    color: #17150F !important;
   }
 }

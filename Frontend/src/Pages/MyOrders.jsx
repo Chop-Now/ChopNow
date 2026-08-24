@@ -1,4 +1,4 @@
-import { assets } from '../assets/assets';
+﻿import { assets } from '../assets/assets';
 import React, { useEffect, useState } from 'react';
 import PageNavbar from '../Components/PageNavbar';
 import Footer from '../Components/Footer';
@@ -377,7 +377,7 @@ const MyOrders = () => {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-4" />
+              <Loader2 className="w-8 h-8 animate-spin text-solid mb-4" />
               <p className="text-gray-600">Loading your orders...</p>
             </div>
           ) : (
@@ -387,7 +387,7 @@ const MyOrders = () => {
                 <div className="flex gap-2 relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-green-600 rounded-md transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-solid rounded-md transition-transform duration-300 ease-in-out ${
                       selectedDeliveryType === 'Delivery'
                         ? 'transform translate-x-0'
                         : 'transform translate-x-[calc(100%+8px)]'
@@ -397,7 +397,7 @@ const MyOrders = () => {
                     onClick={() => handleDeliveryTypeChange('Delivery')}
                     className={`flex-1 py-3 px-6 rounded-md text-sm font-medium z-10 transition-colors duration-300 border ${
                       selectedDeliveryType === 'Delivery'
-                        ? 'text-white border-green-600'
+                        ? 'text-white border-solid'
                         : 'text-gray-700 border-gray-300 bg-white'
                     }`}
                   >
@@ -407,7 +407,7 @@ const MyOrders = () => {
                     onClick={() => handleDeliveryTypeChange('Pickup')}
                     className={`flex-1 py-3 px-6 rounded-md text-sm font-medium z-10 transition-colors duration-300 border ${
                       selectedDeliveryType === 'Pickup'
-                        ? 'text-white border-green-600'
+                        ? 'text-white border-solid'
                         : 'text-gray-700 border-gray-300 bg-white'
                     }`}
                   >
@@ -421,7 +421,7 @@ const MyOrders = () => {
                 <div className="bg-gray-100 rounded-full p-1 flex relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-1 bottom-1 w-1/3 bg-green-600 rounded-full transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-1 bottom-1 w-1/3 bg-solid rounded-full transition-transform duration-300 ease-in-out ${
                       mobileStatusFilter === 'processing'
                         ? 'transform translate-x-0'
                         : mobileStatusFilter === 'completed'
@@ -467,7 +467,7 @@ const MyOrders = () => {
                       <select
                         value={selectedVendor}
                         onChange={(e) => setSelectedVendor(e.target.value)}
-                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-solid"
                       >
                         {vendors.map((vendor, index) => (
                           <option key={index} value={vendor}>
@@ -486,7 +486,7 @@ const MyOrders = () => {
                       <select
                         value={selectedStatus}
                         onChange={(e) => setSelectedStatus(e.target.value)}
-                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-solid"
                       >
                         <option value="all">All Statuses</option>
                         <option value="processing">Processing</option>
@@ -506,7 +506,7 @@ const MyOrders = () => {
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-solid"
                       />
                     </div>
                   </div>
@@ -519,7 +519,7 @@ const MyOrders = () => {
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="border border-gray-300 rounded-md pl-9 pr-2 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-solid"
                       />
                     </div>
                   </div>
@@ -529,7 +529,7 @@ const MyOrders = () => {
                     <label className="text-xs font-medium mb-1.5 opacity-0">Action</label>
                     <button
                       onClick={handleFilterOrders}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
+                      className="bg-solid hover:bg-tertiary text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
                     >
                       Filter Orders
                     </button>
@@ -548,7 +548,7 @@ const MyOrders = () => {
                   <p className="text-gray-600 max-w-md mb-6 px-4">{getEmptyStateMessage()}</p>
                   <button
                     onClick={() => navigate('/shop')}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                    className="bg-solid hover:bg-tertiary text-white px-6 py-3 rounded-md font-medium transition-colors"
                   >
                     Start Shopping
                   </button>
@@ -582,7 +582,7 @@ const MyOrders = () => {
                             <span
                               className={`text-xs px-3 py-1 rounded-full ${
                                 order.status === 'Completed'
-                                  ? 'bg-green-100 text-green-700'
+                                  ? 'bg-primary text-tertiary'
                                   : order.status === 'Processing'
                                     ? 'bg-blue-100 text-blue-700'
                                     : order.status === 'Cancelled'
@@ -596,7 +596,7 @@ const MyOrders = () => {
                           <div className="text-right">
                             <button
                               onClick={() => handleViewDetails(order)}
-                              className="text-green-600 hover:text-green-700 text-sm font-medium underline cursor-pointer"
+                              className="text-solid hover:text-tertiary text-sm font-medium underline cursor-pointer"
                             >
                               View Details
                             </button>
@@ -728,7 +728,7 @@ const MyOrders = () => {
                       <p
                         className={`font-medium ${
                           selectedOrder.status === 'Completed'
-                            ? 'text-green-700'
+                            ? 'text-tertiary'
                             : selectedOrder.status === 'Processing'
                               ? 'text-blue-700'
                               : selectedOrder.status === 'Cancelled'
@@ -825,15 +825,15 @@ const MyOrders = () => {
 
                     {fetchingDetails ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <Loader2 className="w-6 h-6 animate-spin text-solid mr-2" />
                         <span className="text-sm text-gray-600">Loading pickup details...</span>
                       </div>
                     ) : orderDetails ? (
                       <div className="space-y-6">
                         {/* Pickup Code & QR Code Pass */}
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
+                        <div className="bg-gradient-to-r from-primary to-primary border border-solidTwo/30 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
                           {/* QR Code */}
-                          <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
+                          <div className="bg-white p-2.5 rounded-xl border border-solidTwo/30/50 shadow-sm flex-shrink-0">
                             <img
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${orderDetails.pickupDetails?.pickupCode || 'N/A'}`}
                               alt="Pickup QR Code"
@@ -843,7 +843,7 @@ const MyOrders = () => {
 
                           {/* Code details & Copy */}
                           <div className="flex-1 text-center sm:text-left space-y-2 w-full">
-                            <span className="text-[10px] tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
+                            <span className="text-[10px] tracking-wider font-bold text-tertiary uppercase bg-primary/80 px-2.5 py-1 rounded-full">
                               Your Store Pickup Pass
                             </span>
                             <div>
@@ -851,14 +851,14 @@ const MyOrders = () => {
                                 PICKUP CODE
                               </p>
                               <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                                <span className="text-2xl sm:text-3xl font-extrabold text-green-800 tracking-widest font-mono">
+                                <span className="text-2xl sm:text-3xl font-extrabold text-tertiary tracking-widest font-mono">
                                   {orderDetails.pickupDetails?.pickupCode || 'N/A'}
                                 </span>
                                 <button
                                   onClick={() =>
                                     handleCopy(orderDetails.pickupDetails?.pickupCode || '', 'code')
                                   }
-                                  className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+                                  className="p-1.5 text-solid hover:text-tertiary hover:bg-primary rounded-lg transition-colors"
                                   title="Copy Code"
                                 >
                                   {copiedText === 'code' ? (
@@ -869,7 +869,7 @@ const MyOrders = () => {
                                 </button>
                               </div>
                             </div>
-                            <p className="text-xs text-green-800/80 leading-relaxed font-medium">
+                            <p className="text-xs text-tertiary/80 leading-relaxed font-medium">
                               Show either this QR code or the code digits to the vendor at the
                               pickup counter.
                             </p>
@@ -885,7 +885,7 @@ const MyOrders = () => {
                             {orderDetails.business?.contact?.phone && (
                               <a
                                 href={`tel:${orderDetails.business.contact.phone}`}
-                                className="flex items-center gap-1.5 text-xs text-green-600 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
+                                className="flex items-center gap-1.5 text-xs text-solid font-bold bg-primary border border-solidTwo/30 hover:bg-primary px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
                               >
                                 <Phone className="w-3.5 h-3.5" />
                                 Call Store
@@ -942,7 +942,7 @@ const MyOrders = () => {
                                       title="Copy Address"
                                     >
                                       {copiedText === 'address' ? (
-                                        <Check className="w-3.5 h-3.5 text-green-600" />
+                                        <Check className="w-3.5 h-3.5 text-solid" />
                                       ) : (
                                         <Copy className="w-3.5 h-3.5" />
                                       )}
@@ -957,7 +957,7 @@ const MyOrders = () => {
                                     href={`https://www.google.com/maps/dir/?api=1&destination=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
+                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-solid hover:bg-tertiary px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-solidTwo/20"
                                   >
                                     <Navigation className="w-3.5 h-3.5" />
                                     Google Maps
@@ -1019,7 +1019,7 @@ const MyOrders = () => {
 
                     {fetchingDetails ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <Loader2 className="w-6 h-6 animate-spin text-solid mr-2" />
                         <span className="text-sm text-gray-600">
                           Loading live tracking details...
                         </span>
@@ -1028,9 +1028,9 @@ const MyOrders = () => {
                       <div className="space-y-4">
                         {/* Rider details card if assigned */}
                         {orderDetails.delivery?.rider ? (
-                          <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
+                          <div className="bg-primary border border-solidTwo/30 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
                             <div className="flex items-center gap-3">
-                              <div className="bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
+                              <div className="bg-solid text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
                                 {orderDetails.delivery.riderName?.charAt(0) || 'R'}
                               </div>
                               <div>
@@ -1052,7 +1052,7 @@ const MyOrders = () => {
                             {orderDetails.delivery.riderPhone && (
                               <a
                                 href={`tel:${orderDetails.delivery.riderPhone}`}
-                                className="bg-white border border-green-200 text-green-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-50 transition-colors shadow-sm"
+                                className="bg-white border border-solid/30 text-tertiary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary transition-colors shadow-sm"
                               >
                                 Call Rider
                               </a>

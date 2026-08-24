@@ -6,12 +6,14 @@ class AnimatedSegmentedControl extends StatelessWidget {
   final List<String> segments;
   final int selectedIndex;
   final ValueChanged<int> onValueChanged;
+  final List<int>? badgeCounts;
 
   const AnimatedSegmentedControl({
     super.key,
     required this.segments,
     required this.selectedIndex,
     required this.onValueChanged,
+    this.badgeCounts,
   });
 
   @override
@@ -41,7 +43,7 @@ class AnimatedSegmentedControl extends StatelessWidget {
                     borderRadius: BorderRadius.circular(100),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: AppColors.char.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -62,17 +64,47 @@ class AnimatedSegmentedControl extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         color: Colors.transparent,
                         child: Center(
-                          child: Text(
-                            segments[index],
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: selectedIndex == index
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: selectedIndex == index
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                segments[index],
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: selectedIndex == index
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: selectedIndex == index
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                              if (badgeCounts != null && badgeCounts![index] > 0) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: selectedIndex == index
+                                        ? AppColors.primary.withValues(alpha: 0.1)
+                                        : AppColors.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: selectedIndex == index
+                                            ? AppColors.primary.withValues(alpha: 0.2)
+                                            : AppColors.border),
+                                  ),
+                                  child: Text(
+                                    '${badgeCounts![index]}',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: selectedIndex == index
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ),

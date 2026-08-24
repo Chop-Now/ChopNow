@@ -1,4 +1,4 @@
-import Footer from '../Components/Footer';
+﻿import Footer from '../Components/Footer';
 import PageNavbar from '../Components/PageNavbar';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -114,7 +114,7 @@ const MyImpact = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-solid" />
       </div>
     );
   }
@@ -149,7 +149,7 @@ const MyImpact = () => {
               </p>
               {impactData.comparison && (
                 <div
-                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-green-600' : 'text-red-500'}`}
+                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-solid' : 'text-red-500'}`}
                 >
                   {impactData.comparison.percentageChange.trend === 'up' ? (
                     <TrendingUp className="w-3 h-3" />
@@ -248,7 +248,7 @@ const MyImpact = () => {
                       className="h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${mealsProgress}%`,
-                        background: 'linear-gradient(to right, #00A86B, #007A4B)',
+                        background: 'linear-gradient(to right, #0F3D2E, #0A291E)',
                       }}
                     ></div>
                   </div>
@@ -287,7 +287,7 @@ const MyImpact = () => {
                       className="h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${co2Progress}%`,
-                        background: 'linear-gradient(to right, #FFB366, #FF7A00)',
+                        background: 'linear-gradient(to right, #FFC531, #E8552F)',
                       }}
                     ></div>
                   </div>
@@ -348,7 +348,7 @@ const MyImpact = () => {
                     {/* Meals line (green) */}
                     <polyline
                       fill="none"
-                      stroke="#00A86B"
+                      stroke="#0F3D2E"
                       strokeWidth="2"
                       points={chartData
                         .map((d, i) => {
@@ -361,7 +361,7 @@ const MyImpact = () => {
                     {/* CO2 line (orange) */}
                     <polyline
                       fill="none"
-                      stroke="#FF7A00"
+                      stroke="#E8552F"
                       strokeWidth="2"
                       points={chartData
                         .map((d, i) => {
@@ -375,13 +375,13 @@ const MyImpact = () => {
                     {chartData.map((d, i) => {
                       const x = (i / (chartData.length - 1)) * width;
                       const y = height - (d.meals / maxMeals) * height;
-                      return <circle key={`meal-${i}`} cx={x} cy={y} r="3" fill="#00A86B" />;
+                      return <circle key={`meal-${i}`} cx={x} cy={y} r="3" fill="#0F3D2E" />;
                     })}
                     {/* Data points for CO2 */}
                     {chartData.map((d, i) => {
                       const x = (i / (chartData.length - 1)) * width;
                       const y = height - (d.co2 / maxCo2) * height;
-                      return <circle key={`co2-${i}`} cx={x} cy={y} r="3" fill="#FF7A00" />;
+                      return <circle key={`co2-${i}`} cx={x} cy={y} r="3" fill="#E8552F" />;
                     })}
                   </svg>
                 </div>

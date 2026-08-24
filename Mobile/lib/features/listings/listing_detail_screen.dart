@@ -130,7 +130,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                            color: AppColors.char.withValues(alpha: isDark ? 0.2 : 0.04),
                             blurRadius: 16,
                             offset: const Offset(0, -6),
                           ),
@@ -591,10 +591,10 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.85),
+            color: isDark ? AppColors.char.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.85),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.char.withValues(alpha: 0.08),
               width: 1,
             ),
           ),
@@ -629,13 +629,13 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
       decoration: BoxDecoration(
         color: disabled
             ? Colors.transparent
-            : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white),
+            : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.surface),
         shape: BoxShape.circle,
         boxShadow: disabled || isDark
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.char.withValues(alpha: 0.04),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -766,7 +766,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceVariant : Colors.white,
+        color: isDark ? AppColors.darkSurfaceVariant : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? AppColors.darkBorder : AppColors.border,
@@ -774,7 +774,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.02),
+            color: AppColors.char.withValues(alpha: isDark ? 0.05 : 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -851,7 +851,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                color: AppColors.char.withValues(alpha: isDark ? 0.3 : 0.06),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -894,7 +894,7 @@ class _ListingDetailViewState extends ConsumerState<_ListingDetailView>
                               backgroundColor: AppColors.primary,
                               action: SnackBarAction(
                                 label: 'View Cart',
-                                textColor: Colors.white,
+                                textColor: AppColors.surface,
                                 onPressed: () => context.go('/cart'),
                               ),
                               duration: const Duration(seconds: 3),

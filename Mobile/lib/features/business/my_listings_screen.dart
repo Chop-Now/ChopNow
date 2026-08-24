@@ -54,6 +54,14 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
   Widget build(BuildContext context) {
     final asyncListings = ref.watch(myListingsProvider);
 
+    List<int>? badgeCounts;
+    asyncListings.whenData((all) {
+      final active = all.where((l) => l['status'] == 'active').length;
+      final expired = all.where((l) => l['status'] == 'expired' || l['status'] == 'sold_out').length;
+      final draft = all.where((l) => l['status'] == 'draft' || l['status'] == 'inactive').length;
+      badgeCounts = [active, expired, draft];
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -65,20 +73,17 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
         elevation: 0,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 16),
             child: ScaleTap(
               onTap: () => context.push('/business/listings/create'),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(100)),
-                child: const Text('+ Add Deal',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.add_rounded,
+                    color: AppColors.surface, size: 22),
               ),
             ),
           ),
@@ -90,6 +95,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
             child: AnimatedSegmentedControl(
               segments: const ['Active', 'Expired', 'Draft'],
               selectedIndex: _tabs.index,
+              badgeCounts: badgeCounts,
               onValueChanged: (index) {
                 _tabs.animateTo(index);
                 setState(() {});
@@ -230,100 +236,148 @@ class _ListingCard extends StatelessWidget {
     final photos = listing['photos'] as List? ?? [];
     final status = listing['status']?.toString() ?? 'active';
     final stock = listing['quantity'] ?? listing['stock'] ?? 0;
+    
+    final (color, label) = switch (status) {
+      'active' => (AppColors.success, 'ACTIVE'),
+      'expired' => (AppColors.error, 'EXPIRED'),
+      'sold_out' => (AppColors.warning, 'SOLD OUT'),
+      _ => (AppColors.textSecondary, 'DRAFT'),
+    };
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)
+          BoxShadow(
+              color: AppColors.char.withValues(alpha: 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4))
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Thumbnail
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
-              width: 64,
-              height: 64,
+              width: 76,
+              height: 76,
               color: AppColors.surfaceVariant,
               child: photos.isNotEmpty &&
                       (photos[0].toString().startsWith('http://') ||
                           photos[0].toString().startsWith('https://'))
                   ? Image.network(photos[0].toString(), fit: BoxFit.cover)
                   : const Center(
-                      child: Icon(Icons.fastfood_outlined,
+                      child: Icon(Icons.fastfood_rounded,
                           color: AppColors.textSecondary, size: 28)),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(listing['title'] ?? 'Untitled',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.textPrimary)),
-              const SizedBox(height: 2),
-              Row(children: [
-                Text('RWF ${listing['offerPrice'] ?? listing['price'] ?? 0}',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: color),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(listing['title'] ?? 'Untitled',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                        fontSize: 13)),
-                const SizedBox(width: 8),
+                        fontSize: 15,
+                        color: AppColors.textPrimary)),
+                const SizedBox(height: 4),
                 Text('$stock left',
                     style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary)),
-              ]),
-              const SizedBox(height: 4),
-              _StatusPill(status: status),
-            ]),
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                Text('RWF ${listing['offerPrice'] ?? listing['price'] ?? 0}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        fontSize: 18)),
+              ],
+            ),
           ),
-          Column(children: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined,
-                  color: AppColors.primary, size: 20),
-              onPressed: () => onEdit(listing),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded,
-                  color: AppColors.error, size: 20),
-              onPressed: () => onDelete(listing['_id']?.toString() ?? ''),
-            ),
-          ]),
+          const SizedBox(width: 12),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ActionCircleButton(
+                icon: Icons.refresh_rounded,
+                onTap: () => onEdit(listing),
+              ),
+              const SizedBox(height: 12),
+              _ActionCircleButton(
+                icon: Icons.delete_outline_rounded,
+                iconColor: AppColors.error,
+                onTap: () => onDelete(listing['_id']?.toString() ?? ''),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  final String status;
-  const _StatusPill({required this.status});
+class _ActionCircleButton extends StatelessWidget {
+  final IconData icon;
+  final Color? iconColor;
+  final VoidCallback onTap;
+
+  const _ActionCircleButton({
+    required this.icon,
+    this.iconColor,
+    required this.onTap,
+  });
+
   @override
   Widget build(BuildContext context) {
-    final (color, bg, label) = switch (status) {
-      'active' => (AppColors.success, AppColors.successSurface, 'Active'),
-      'expired' => (AppColors.error, AppColors.errorSurface, 'Expired'),
-      'sold_out' => (
-          AppColors.warning,
-          AppColors.warningSurface,
-          'Sold Out'
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant.withValues(alpha: 0.5),
+          shape: BoxShape.circle,
         ),
-      _ => (AppColors.textSecondary, AppColors.surfaceVariant, 'Draft'),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+        child: Icon(
+          icon,
+          size: 18,
+          color: iconColor ?? AppColors.textSecondary,
+        ),
+      ),
     );
   }
 }

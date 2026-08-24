@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { categories } from '../../assets/assets';
 import {
   Search,
@@ -244,8 +244,8 @@ export const AllListings = () => {
       title: 'Active Listings',
       value: stats.active,
       icon: <CheckCircle className="w-6 h-6" />,
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
-      iconColor: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-primary dark:bg-solid/10',
+      iconColor: 'text-solid dark:text-solidTwo',
     },
     {
       title: 'Inactive Listings',

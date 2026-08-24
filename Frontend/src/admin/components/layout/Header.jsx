@@ -1,4 +1,4 @@
-import {
+﻿import {
   Bell,
   ChevronDown,
   MenuIcon,
@@ -884,8 +884,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       case 'order_completed':
         return {
           icon: CheckCircle,
-          iconBg: 'bg-green-100 dark:bg-green-900/30',
-          iconColor: 'text-green-600 dark:text-green-400',
+          iconBg: 'bg-primary dark:bg-solid/10',
+          iconColor: 'text-solid dark:text-solidTwo',
         };
       case 'order_cancelled':
         return {
@@ -918,8 +918,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
       case 'impact_milestone':
         return {
           icon: PartyPopper,
-          iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-          iconColor: 'text-emerald-600 dark:text-emerald-400',
+          iconBg: 'bg-primary dark:bg-solid/10',
+          iconColor: 'text-solid dark:text-solidTwo',
         };
       case 'promotion':
         return {

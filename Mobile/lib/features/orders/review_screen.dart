@@ -190,7 +190,7 @@ class _StarRow extends StatelessWidget {
                     i < rating ? Icons.star_rounded : Icons.star_border_rounded,
                     size: size,
                     color:
-                        i < rating ? const Color(0xFFFFC107) : AppColors.border,
+                        i < rating ? AppColors.nowYellow : AppColors.border,
                   ),
                 ),
               )),

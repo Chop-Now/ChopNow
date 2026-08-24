@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -149,7 +149,7 @@ const AdminDashboard = () => {
               localStorage.removeItem('user');
               navigate('/admin/login');
             }}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-solid hover:bg-tertiary text-white rounded-lg transition-colors"
           >
             Login with Admin Account
           </button>
