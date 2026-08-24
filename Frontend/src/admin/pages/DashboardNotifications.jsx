@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Bell,
   CheckCheck,
@@ -26,8 +26,8 @@ const getIconConfig = (type) => {
     case 'order_completed':
       return {
         Icon: CheckCheck,
-        color: 'text-green-600 dark:text-green-400',
-        bg: 'bg-green-100 dark:bg-green-900/30',
+        color: 'text-solid dark:text-solidTwo',
+        bg: 'bg-primary dark:bg-solid/10',
       };
     case 'order_cancelled':
       return {
@@ -60,8 +60,8 @@ const getIconConfig = (type) => {
     case 'impact_milestone':
       return {
         Icon: PartyPopper,
-        color: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+        color: 'text-solid dark:text-solidTwo',
+        bg: 'bg-primary dark:bg-solid/10',
       };
     case 'promotion':
       return {

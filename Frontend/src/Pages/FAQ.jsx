@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
@@ -97,7 +97,7 @@ const FAQ = () => {
                     scroll-behavior: auto !important;
                 }
             `}</style>
-      <div className="flex flex-col items-center text-center text-moringa px-6 md:px-16 lg:px-24 xl:px-32 py-12 bg-fufu min-h-screen">
+      <div className="flex flex-col items-center text-center text-slate-800 px-6 md:px-16 lg:px-24 xl:px-32 py-12 bg-white min-h-screen">
         {/* Back button for mobile - visible only on small screens */}
         <motion.div
           className="w-full max-w-7xl mb-8 md:hidden"
@@ -108,8 +108,8 @@ const FAQ = () => {
           <div className="relative inline-block p-0.5 rounded-full overflow-hidden before:content-[''] before:absolute before:inset-0 before:bg-[conic-gradient(from_0deg,#0F3D2E,#0F3D2E30,#E8552F,#E8552F30,#0F3D2E)] button-wrapper">
             <motion.button
               onClick={() => navigate(-1)}
-              className="relative z-10 rounded-full px-6 py-2.5 font-medium text-sm flex items-center gap-2 cursor-pointer text-moringa"
-              style={{ backgroundColor: 'var(--color-yellow)' }}
+              className="relative z-10 rounded-full px-6 py-2.5 font-medium text-sm flex items-center gap-2 cursor-pointer text-white"
+              style={{ backgroundColor: 'var(--color-solid)' }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -132,8 +132,8 @@ const FAQ = () => {
             <div className="relative inline-block p-0.5 rounded-full overflow-hidden before:content-[''] before:absolute before:inset-0 before:bg-[conic-gradient(from_0deg,#0F3D2E,#0F3D2E30,#E8552F,#E8552F30,#0F3D2E)] button-wrapper">
               <motion.button
                 onClick={() => navigate(-1)}
-                className="relative z-10 rounded-full px-6 py-2.5 font-medium text-sm flex items-center gap-2 cursor-pointer text-moringa"
-                style={{ backgroundColor: 'var(--color-yellow)' }}
+                className="relative z-10 rounded-full px-6 py-2.5 font-medium text-sm flex items-center gap-2 cursor-pointer text-white"
+                style={{ backgroundColor: 'var(--color-solid)' }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -153,7 +153,7 @@ const FAQ = () => {
         </motion.div>
 
         <motion.p
-          className="text-sm text-moringa-muted mt-2 max-w-sm"
+          className="text-sm text-slate-500 mt-2 max-w-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -161,7 +161,7 @@ const FAQ = () => {
           Find answers to common questions about ChopNow and how we're fighting food waste together.
         </motion.p>
         <motion.div
-          className="flex space-x-2 bg-fufu p-1 border border-moringa/25 rounded-full text-sm mt-8"
+          className="flex space-x-2 bg-white p-1 border border-gray-500/50 rounded-full text-sm mt-8"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -180,9 +180,9 @@ const FAQ = () => {
             />
             <motion.label
               htmlFor="option1"
-              className="cursor-pointer rounded-full py-2 px-9 text-moringa-muted transition-colors duration-200 peer-checked:text-fufu"
+              className="cursor-pointer rounded-full py-2 px-9 text-gray-500 transition-colors duration-200 peer-checked:text-white"
               style={{
-                backgroundColor: userType === 'buyer' ? 'var(--color-moringa)' : 'transparent',
+                backgroundColor: userType === 'buyer' ? 'var(--color-solid)' : 'transparent',
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -204,9 +204,9 @@ const FAQ = () => {
             />
             <motion.label
               htmlFor="option2"
-              className="cursor-pointer rounded-full py-2 px-9 text-moringa-muted transition-colors duration-200 peer-checked:text-fufu"
+              className="cursor-pointer rounded-full py-2 px-9 text-gray-500 transition-colors duration-200 peer-checked:text-white"
               style={{
-                backgroundColor: userType === 'vendor' ? 'var(--color-moringa)' : 'transparent',
+                backgroundColor: userType === 'vendor' ? 'var(--color-solid)' : 'transparent',
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -225,7 +225,7 @@ const FAQ = () => {
               transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
             >
               <motion.div
-                className="flex items-center justify-between w-full cursor-pointer bg-linear-to-r from-yellow/25 via-pepper/10 to-fufu border-2 border-fufu-border p-4 rounded transition-all duration-200"
+                className="flex items-center justify-between w-full cursor-pointer bg-linear-to-r from-primary/30 via-orange-50/20 to-white border-2 border-gray-300 p-4 rounded transition-all duration-200"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 whileHover={{
                   scale: 1.01,
@@ -244,12 +244,12 @@ const FAQ = () => {
                   <ChevronDown
                     className="shrink-0 ml-4"
                     size={20}
-                    style={{ color: 'var(--color-moringa)' }}
+                    style={{ color: 'var(--color-solid)' }}
                   />
                 </motion.div>
               </motion.div>
               <motion.p
-                className="text-sm text-moringa-muted px-4 overflow-hidden"
+                className="text-sm text-slate-600 px-4 overflow-hidden"
                 initial={false}
                 animate={{
                   opacity: openIndex === index ? 1 : 0,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bike,
@@ -151,7 +151,7 @@ const RiderRegistration = () => {
               className="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0"
             />
           ) : (
-            <div className="w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-primary text-tertiary rounded-lg flex items-center justify-center shrink-0">
               {file.name.endsWith('.pdf') ? (
                 <FileText className="w-5 h-5" />
               ) : (
@@ -182,7 +182,7 @@ const RiderRegistration = () => {
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 mt-16 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+          <div className="mx-auto w-16 h-16 bg-primary text-solid rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Application Approved!</h2>
@@ -192,7 +192,7 @@ const RiderRegistration = () => {
           </p>
           <button
             onClick={handleSwitchToRider}
-            className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 px-4 bg-solid hover:bg-tertiary text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
           >
             Go to Rider Dashboard 🚴
           </button>
@@ -259,7 +259,7 @@ const RiderRegistration = () => {
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumbs */}
         <div className="flex items-center justify-center space-x-2 text-xs text-slate-400 mb-6">
-          <span className="text-green-600 font-medium cursor-pointer" onClick={() => navigate('/')}>
+          <span className="text-solid font-medium cursor-pointer" onClick={() => navigate('/')}>
             ChopNow Account
           </span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -282,9 +282,9 @@ const RiderRegistration = () => {
         {/* Form Container */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
           {/* Upper Hero Banner Card */}
-          <div className="bg-gradient-to-br from-green-700 via-green-800 to-emerald-950 p-8 text-white">
+          <div className="bg-gradient-to-br from-solid via-solid to-tertiary p-8 text-white">
             <h2 className="text-xl font-bold mb-2">Flexible Work, Solid Payouts 💸</h2>
-            <p className="text-xs text-green-100 leading-relaxed max-w-xl">
+            <p className="text-xs text-primary leading-relaxed max-w-xl">
               As a ChopNow Rider, you help reduce food waste in your community while earning
               competitive fees. Use your bike, motorcycle, car, or simply walk to complete local
               deliveries.
@@ -340,18 +340,18 @@ const RiderRegistration = () => {
                         onClick={() => setSelectedVehicle(vehicle.key)}
                         className={`flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${
                           isSelected
-                            ? 'bg-green-50/50 border-green-600 ring-2 ring-green-600/20'
+                            ? 'bg-primary/50 border-solid ring-2 ring-solid/20'
                             : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
                         <div
-                          className={`p-2.5 rounded-lg ${isSelected ? 'bg-green-100 text-green-700' : 'bg-slate-50 text-slate-500'}`}
+                          className={`p-2.5 rounded-lg ${isSelected ? 'bg-primary text-tertiary' : 'bg-slate-50 text-slate-500'}`}
                         >
                           <IconComponent className="w-5 h-5" />
                         </div>
                         <div>
                           <p
-                            className={`text-sm font-bold ${isSelected ? 'text-green-900' : 'text-slate-800'}`}
+                            className={`text-sm font-bold ${isSelected ? 'text-tertiary' : 'text-slate-800'}`}
                           >
                             {vehicle.label}
                           </p>
@@ -379,7 +379,7 @@ const RiderRegistration = () => {
                       }
                     }}
                     containerClass="w-full"
-                    inputClass="!w-full !h-11 !rounded-xl !border-slate-200 !text-sm focus:!ring-2 focus:!ring-green-500/20 focus:!border-green-600"
+                    inputClass="!w-full !h-11 !rounded-xl !border-slate-200 !text-sm focus:!ring-2 focus:!ring-solid/20 focus:!border-solid"
                     buttonClass="!bg-slate-50 !border-slate-200 !rounded-l-xl"
                   />
                 </div>
@@ -397,7 +397,7 @@ const RiderRegistration = () => {
                         setNationalId(e.target.value);
                         setErrors((prev) => ({ ...prev, nationalId: null }));
                       }}
-                      className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 outline-none"
+                      className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-solid/20 focus:border-solid outline-none"
                     />
                   </div>
 
@@ -414,7 +414,7 @@ const RiderRegistration = () => {
                           setLicensePlate(e.target.value);
                           setErrors((prev) => ({ ...prev, licensePlate: null }));
                         }}
-                        className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 outline-none"
+                        className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-solid/20 focus:border-solid outline-none"
                       />
                     </div>
                   )}
@@ -428,7 +428,7 @@ const RiderRegistration = () => {
                       National ID or Passport Copy
                     </label>
                     <div
-                      className={`border-2 border-dashed ${errors.nationalIdPhoto ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 bg-slate-50/50'} rounded-xl p-6 text-center hover:border-green-500 hover:bg-green-50/10 transition-all relative overflow-hidden group`}
+                      className={`border-2 border-dashed ${errors.nationalIdPhoto ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 bg-slate-50/50'} rounded-xl p-6 text-center hover:border-solid hover:bg-primary/10 transition-all relative overflow-hidden group`}
                     >
                       <input
                         type="file"
@@ -437,7 +437,7 @@ const RiderRegistration = () => {
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                       />
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-600 transition-colors shadow-sm">
+                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-solid transition-colors shadow-sm">
                           <Upload className="w-5 h-5" />
                         </div>
                         <p className="text-xs font-semibold text-slate-700">
@@ -457,7 +457,7 @@ const RiderRegistration = () => {
                       Vehicle Photo or Ownership Proof
                     </label>
                     <div
-                      className={`border-2 border-dashed ${errors.vehiclePhoto ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 bg-slate-50/50'} rounded-xl p-6 text-center hover:border-green-500 hover:bg-green-50/10 transition-all relative overflow-hidden group`}
+                      className={`border-2 border-dashed ${errors.vehiclePhoto ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 bg-slate-50/50'} rounded-xl p-6 text-center hover:border-solid hover:bg-primary/10 transition-all relative overflow-hidden group`}
                     >
                       <input
                         type="file"
@@ -466,7 +466,7 @@ const RiderRegistration = () => {
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                       />
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-600 transition-colors shadow-sm">
+                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-solid transition-colors shadow-sm">
                           <Upload className="w-5 h-5" />
                         </div>
                         <p className="text-xs font-semibold text-slate-700">
@@ -490,7 +490,7 @@ const RiderRegistration = () => {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="h-4 w-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
+                    className="h-4 w-4 text-solid border-slate-300 rounded focus:ring-solid"
                   />
                 </div>
                 <div className="text-xs">
@@ -509,7 +509,7 @@ const RiderRegistration = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 px-4 bg-solid hover:bg-tertiary text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

@@ -1,4 +1,4 @@
-import { useAppContext } from '../context/AppContext';
+﻿import { useAppContext } from '../context/AppContext';
 import PageNavbar from '../Components/PageNavbar';
 import Footer from '../Components/Footer';
 import LocationPicker from '../Components/maps/LocationPicker';
@@ -424,7 +424,7 @@ const Cart = () => {
                       className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 ${fulfillmentMethod === 'Pickup' ? 'shadow-md' : ''}`}
                       style={{
                         backgroundColor: fulfillmentMethod === 'Pickup' ? 'white' : 'transparent',
-                        color: '#2E2E2E',
+                        color: '#17150F',
                       }}
                     >
                       <Calendar className="w-4 h-4" />
@@ -435,7 +435,7 @@ const Cart = () => {
                       className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 ${fulfillmentMethod === 'Delivery' ? 'shadow-md' : ''}`}
                       style={{
                         backgroundColor: fulfillmentMethod === 'Delivery' ? 'white' : 'transparent',
-                        color: '#2E2E2E',
+                        color: '#17150F',
                       }}
                     >
                       <Calendar className="w-4 h-4" />
@@ -573,7 +573,7 @@ const Cart = () => {
                   <label
                     className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
                       paymentMethod === 'cash'
-                        ? 'border-emerald-400 bg-emerald-50/50'
+                        ? 'border-solid bg-primary/50'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                     onClick={() => setPaymentMethod('cash')}
@@ -592,7 +592,7 @@ const Cart = () => {
                       name="payment_method"
                       checked={paymentMethod === 'cash'}
                       onChange={() => setPaymentMethod('cash')}
-                      className="w-4 h-4 accent-emerald-500"
+                      className="w-4 h-4 accent-solid"
                     />
                   </label>
                 </div>

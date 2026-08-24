@@ -94,7 +94,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: const BoxDecoration(
                             color: AppColors.primary, shape: BoxShape.circle),
                         child: const Icon(Icons.camera_alt_rounded,
-                            color: Colors.white, size: 16),
+                            color: AppColors.surface, size: 16),
                       ),
                     ),
                   ),

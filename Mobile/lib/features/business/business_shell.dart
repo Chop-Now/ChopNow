@@ -50,7 +50,7 @@ class BusinessShell extends StatelessWidget {
               top: BorderSide(color: AppColors.border, width: 0.5)),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: AppColors.char.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, -4))
           ],
@@ -73,18 +73,26 @@ class BusinessShell extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(active ? tab.activeIcon : tab.icon,
-                              color: active
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                              size: 22),
-                          const SizedBox(height: 3),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: active ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Icon(active ? tab.activeIcon : tab.icon,
+                                color: active
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                                size: 24),
+                          ),
+                          const SizedBox(height: 4),
                           Text(tab.label,
                               style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: active
-                                      ? FontWeight.w700
-                                      : FontWeight.w400,
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   color: active
                                       ? AppColors.primary
                                       : AppColors.textSecondary)),

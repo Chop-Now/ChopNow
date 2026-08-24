@@ -120,10 +120,10 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+              boxShadow: [BoxShadow(color: AppColors.char.withValues(alpha: 0.26), blurRadius: 4)]),
           child: const Center(
             child: Icon(Icons.storefront_rounded, size: 18, color: AppColors.primary),
           ),
@@ -137,10 +137,10 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+              boxShadow: [BoxShadow(color: AppColors.char.withValues(alpha: 0.26), blurRadius: 4)]),
           child: const Center(
             child: Icon(Icons.home_rounded, size: 18, color: AppColors.primary),
           ),
@@ -154,10 +154,10 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         width: 40,
         height: 40,
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 6)]),
+              boxShadow: [BoxShadow(color: AppColors.char.withValues(alpha: 0.38), blurRadius: 6)]),
           child: const Center(
             child: Icon(Icons.delivery_dining_rounded, size: 20, color: AppColors.primary),
           ),
@@ -398,7 +398,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                     border: Border.all(color: AppColors.border),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: AppColors.char.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2))
                     ],
@@ -893,7 +893,7 @@ class _StoreInfoCard extends StatelessWidget {
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.char.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1062,7 +1062,7 @@ class _StoreInfoCard extends StatelessWidget {
                                     .withValues(alpha: 0.2)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: AppColors.char.withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),

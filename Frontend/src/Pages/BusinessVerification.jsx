@@ -1,4 +1,4 @@
-import {
+﻿import {
   MapPin,
   LocateFixed,
   CloudUpload,
@@ -196,7 +196,7 @@ const BusinessVerification = () => {
           className="flex items-center justify-center space-x-4 text-xs mb-8"
           style={{ color: 'var(--color-gray-50)' }}
         >
-          <p className="text-green-600 font-medium">Account creation</p>
+          <p className="text-solid font-medium">Account creation</p>
           <ChevronRight className="w-3 h-3" />
           <p style={{ color: 'var(--color-textColor)' }} className="font-medium">
             Business details

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2, Bike, Store } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
@@ -166,7 +166,7 @@ const MyProfile = () => {
   if (loading) {
     return (
       <div className="bg-gray-80 min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-solid" />
       </div>
     );
   }
@@ -284,9 +284,9 @@ const MyProfile = () => {
 
                 {/* 
                 {!availableRoles.includes('business_owner') && (
-                  <div className="bg-emerald-50/40 border border-emerald-200 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                  <div className="bg-primary/40 border border-solid/30 rounded-2xl p-6 flex flex-col justify-between gap-4">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                      <div className="flex items-center gap-2 text-tertiary font-bold">
                         <Store className="w-5 h-5" />
                         <span className="text-xs uppercase tracking-wider">Sell Surplus</span>
                       </div>
@@ -305,7 +305,7 @@ const MyProfile = () => {
                           console.error('Error adding business role:', error);
                         }
                       }}
-                      className="w-full mt-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
+                      className="w-full mt-2 py-2 px-4 bg-solid hover:bg-tertiary text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
                     >
                       Register Business
                     </button>

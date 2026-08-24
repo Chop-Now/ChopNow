@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { assets } from '../assets/assets';
 import {
   Eye,
@@ -410,41 +410,41 @@ const ForgotPassword = () => {
                   </p>
                   <div className="flex items-center gap-2 text-sm">
                     {criteria.minLength ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-solid" />
                     ) : (
                       <XCircle className="w-4 h-4 text-slate-600" />
                     )}
-                    <span className={criteria.minLength ? 'text-green-400' : 'text-slate-400'}>
+                    <span className={criteria.minLength ? 'text-solidTwo' : 'text-slate-400'}>
                       At least 8 characters long
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     {criteria.hasUpper ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-solid" />
                     ) : (
                       <XCircle className="w-4 h-4 text-slate-600" />
                     )}
-                    <span className={criteria.hasUpper ? 'text-green-400' : 'text-slate-400'}>
+                    <span className={criteria.hasUpper ? 'text-solidTwo' : 'text-slate-400'}>
                       Contains an uppercase letter (A-Z)
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     {criteria.hasLower ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-solid" />
                     ) : (
                       <XCircle className="w-4 h-4 text-slate-600" />
                     )}
-                    <span className={criteria.hasLower ? 'text-green-400' : 'text-slate-400'}>
+                    <span className={criteria.hasLower ? 'text-solidTwo' : 'text-slate-400'}>
                       Contains a lowercase letter (a-z)
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     {criteria.hasNumber ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-solid" />
                     ) : (
                       <XCircle className="w-4 h-4 text-slate-600" />
                     )}
-                    <span className={criteria.hasNumber ? 'text-green-400' : 'text-slate-400'}>
+                    <span className={criteria.hasNumber ? 'text-solidTwo' : 'text-slate-400'}>
                       Contains a number (0-9)
                     </span>
                   </div>
@@ -470,7 +470,7 @@ const ForgotPassword = () => {
             {/* Step 4: Success Screen */}
             {step === 4 && (
               <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6 text-green-500 animate-bounce">
+                <div className="w-20 h-20 rounded-full bg-solid/10 border border-solid/20 flex items-center justify-center mb-6 text-solid animate-bounce">
                   <KeyRound className="w-10 h-10" />
                 </div>
 

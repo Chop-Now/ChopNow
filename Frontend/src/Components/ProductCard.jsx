@@ -1,4 +1,4 @@
-import { ShoppingCart, Flame, Users } from 'lucide-react';
+﻿import { ShoppingCart, Flame, Users } from 'lucide-react';
 import React, { useCallback, memo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -46,7 +46,7 @@ const ProductCard = memo(({ product }) => {
         }
       }}
       aria-label={`${product.name || 'Product'} - RWF ${(offerPrice || 0).toLocaleString()}${discountPercent > 0 ? `, ${discountPercent}% off` : ''}`}
-      className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500 group"
+      className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-solid group"
       style={{ borderColor: '#E5E5E5' }}
     >
       {/* ── Image ── */}

@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import '../utils/constants.dart';
 import '../services/auth_service.dart';
 import 'api_endpoints.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
   ApiClient._();
@@ -67,6 +69,18 @@ class ApiClient {
         },
       ),
     );
+
+    if (kDebugMode) {
+      dio.interceptors.add(PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: false,
+        error: true,
+        compact: true,
+        maxWidth: 90,
+      ));
+    }
 
     return dio;
   }

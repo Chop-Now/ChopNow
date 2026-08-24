@@ -9,34 +9,9 @@ import '../../shared/widgets/feedback/cn_states.dart';
 // ── Analytics Riverpod Provider ───────────────────────────────────────────────
 final _businessAnalyticsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  try {
-    final res = await ApiClient.instance.get(AppEndpoints.businessAnalytics);
-    final data = res.data;
-    return data is Map<String, dynamic> ? data : {};
-  } catch (_) {
-    // Return robust simulation data if the server route is offline or not configured yet
-    return {
-      'stats': {
-        'totalOrders': 58,
-        'totalListings': 8,
-        'averageRating': 4.9,
-        'reviewCount': 24,
-        'balance': 72000.0,
-      },
-      'weeklyTrend': [
-        {'_id': 1, 'sales': 15000.0, 'orders': 5},
-        {'_id': 2, 'sales': 22500.0, 'orders': 8},
-        {'_id': 3, 'sales': 18000.0, 'orders': 6},
-        {'_id': 4, 'sales': 31000.0, 'orders': 11},
-      ],
-      'topProducts': [
-        {'name': '准备救援的 Prepared Lunch Box', 'sold': 22, 'revenue': 44000.0},
-        {'name': 'Rescue Baked Croissants', 'sold': 16, 'revenue': 24000.0},
-        {'name': 'Surplus Fruit Box Large', 'sold': 10, 'revenue': 20000.0},
-        {'name': 'Daily Rescue Salad', 'sold': 6, 'revenue': 9000.0},
-      ]
-    };
-  }
+  final res = await ApiClient.instance.get(AppEndpoints.businessAnalytics);
+  final data = res.data;
+  return data is Map<String, dynamic> ? data : {};
 });
 
 // ── Screen Widget ─────────────────────────────────────────────────────────────
@@ -49,6 +24,14 @@ class AnalyticsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Store Analytics',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surface,
+        automaticallyImplyLeading: false,
+        elevation: 0,
+      ),
       body: asyncData.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -95,67 +78,45 @@ class _AnalyticsBody extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // ── Gradient Header ──
-        SliverAppBar(
-          expandedHeight: 220,
-          pinned: true,
-          backgroundColor: AppColors.primary,
-          flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryLight, AppColors.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+        // ── Total Sales Header ──
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 28),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
+                ]
               ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Store Analytics',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Performance summary of your food store',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.75),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'RWF ${_fmt(totalRevenue.toInt())}',
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -1.0,
-                        ),
-                      ),
-                      const Text(
-                        'Sales (Last 30 Days)',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
+              child: Column(
+                children: [
+                  const Text(
+                    'Total Sales',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'RWF ${_fmt(totalRevenue.toInt())}',
+                    style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -1.0,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          )
         ),
 
         // ── Scrollable content lists ──
@@ -248,7 +209,7 @@ class _AnalyticsBody extends StatelessWidget {
                     border: Border.all(color: AppColors.border),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
+                        color: AppColors.char.withValues(alpha: 0.03),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -454,7 +415,7 @@ class _QuickStat extends StatelessWidget {
           border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppColors.char.withValues(alpha: 0.03),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -523,16 +484,16 @@ class _ProductRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rankBg = switch (rank) {
-      1 => const Color(0xFFFEF3C7),
-      2 => const Color(0xFFF1F5F9),
-      3 => const Color(0xFFFFEDD5),
-      _ => const Color(0xFFF1F5F9),
+      1 => AppColors.accentSurface,
+      2 => AppColors.surfaceVariant,
+      3 => AppColors.warningSurface,
+      _ => AppColors.surfaceVariant,
     };
     final rankText = switch (rank) {
-      1 => const Color(0xFFB45309),
-      2 => const Color(0xFF475569),
-      3 => const Color(0xFFC2410C),
-      _ => const Color(0xFF64748B),
+      1 => AppColors.accentDark,
+      2 => AppColors.textSecondary,
+      3 => AppColors.pepper,
+      _ => AppColors.textTertiary,
     };
 
     return Container(

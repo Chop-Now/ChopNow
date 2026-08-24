@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plane, Users, Truck, Check, Sprout, Coins, MessageCircleHeart } from 'lucide-react';
 import { assets } from '../assets/assets';
 // eslint-disable-next-line no-unused-vars
@@ -27,7 +27,7 @@ const stepsForVendors = [
     description:
       'Prepare orders and coordinate pickup times. Track your environmental impact in real-time.',
     icon: <Truck className="w-6 h-6 text-white" />,
-    bg: 'bg-gradient-to-br from-green-400 to-green-600',
+    bg: 'bg-gradient-to-br from-solidLight to-tertiary',
   },
   {
     id: '04',
@@ -62,7 +62,7 @@ const stepsForConsumers = [
     description:
       'Head to the vendor location at your scheduled time. Show your QR code or ticket and collect your meal.',
     icon: <Truck className="w-6 h-6 text-white" />,
-    bg: 'bg-gradient-to-br from-green-400 to-green-600',
+    bg: 'bg-gradient-to-br from-solidLight to-tertiary',
   },
   {
     id: '04',
@@ -102,7 +102,11 @@ const HowItWorks = () => {
   const steps = active === 'consumer' ? stepsForConsumers : stepsForVendors;
 
   return (
-    <div id="howItWorks" className="py-14 w-full relative overflow-hidden bg-fufu">
+    <div
+      id="howItWorks"
+      className="py-14 w-full relative overflow-hidden"
+      style={{ backgroundColor: '#E8F5E9' }}
+    >
       {/* Section Title */}
       <motion.div
         className="text-center mb-8 px-4"
@@ -111,8 +115,16 @@ const HowItWorks = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <h1 className="text-3xl md:text-4xl font-semibold mb-4 text-moringa">How ChopNow Works</h1>
-        <p className="max-w-2xl mx-auto text-sm md:text-base text-moringa-muted">
+        <h1
+          className="text-3xl md:text-4xl font-semibold mb-4"
+          style={{ color: 'var(--color-textColor)' }}
+        >
+          How ChopNow Works
+        </h1>
+        <p
+          className="max-w-2xl mx-auto text-sm md:text-base"
+          style={{ color: 'var(--color-gray-50)' }}
+        >
           Inspired by the simplicity of rescue platforms you love. Three steps to fresher eats.
         </p>
       </motion.div>
@@ -125,14 +137,15 @@ const HowItWorks = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="bg-surface shadow-lg rounded-xl p-1.5 flex gap-1">
+        <div className="bg-white shadow-lg rounded-xl p-1.5 flex gap-1">
           <button
             onClick={() => setActive('consumer')}
             className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
-              active === 'consumer'
-                ? 'bg-moringa text-fufu'
-                : 'text-moringa-muted hover:bg-scaffold hover:text-moringa'
+              active === 'consumer' ? 'text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
+            style={{
+              backgroundColor: active === 'consumer' ? 'var(--color-solid)' : 'transparent',
+            }}
           >
             For Consumers
           </button>
@@ -140,10 +153,9 @@ const HowItWorks = () => {
           <button
             onClick={() => setActive('vendor')}
             className={`px-6 py-2.5 rounded-lg transition font-semibold cursor-pointer ${
-              active === 'vendor'
-                ? 'bg-moringa text-fufu'
-                : 'text-moringa-muted hover:bg-scaffold hover:text-moringa'
+              active === 'vendor' ? 'text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
+            style={{ backgroundColor: active === 'vendor' ? 'var(--color-solid)' : 'transparent' }}
           >
             For Vendors
           </button>
@@ -156,7 +168,7 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <motion.div
               key={step.id}
-              className={`bg-surface rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
+              className={`bg-white rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
                 index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
               }`}
               style={{ height: '350px' }}
@@ -167,13 +179,17 @@ const HowItWorks = () => {
               whileHover={{ scale: 1.03 }}
             >
               {/* Step number */}
-              <p className="text-5xl font-extrabold text-moringa/15 mb-6">{step.id}</p>
+              <p className="text-5xl font-extrabold text-gray-200 mb-6">{step.id}</p>
 
               {/* Title */}
-              <h3 className="font-bold text-xl mb-4 text-moringa">{step.title}</h3>
+              <h3 className="font-bold text-xl mb-4" style={{ color: 'var(--color-textColor)' }}>
+                {step.title}
+              </h3>
 
               {/* Description */}
-              <p className="text-sm leading-relaxed text-moringa-muted">{step.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-gray-50)' }}>
+                {step.description}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -186,7 +202,7 @@ const HowItWorks = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <div className="bg-surface rounded-3xl shadow-md overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-md overflow-hidden">
           <div className="flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
             {/* Left Side - Image */}
             <motion.div
@@ -211,7 +227,10 @@ const HowItWorks = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <h1 className="text-2xl md:text-3xl font-bold mb-6 text-moringa">
+              <h1
+                className="text-2xl md:text-3xl font-bold mb-6"
+                style={{ color: 'var(--color-solid)' }}
+              >
                 Why We Are the Best?
               </h1>
               <div className="space-y-5">
@@ -224,17 +243,22 @@ const HowItWorks = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
                   >
-                    {/* Cocoa tile + yellow glyph mirrors the brand app icon */}
-                    <div className="shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-lg flex items-center justify-center bg-moringa">
+                    <div
+                      className="shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--color-solid)' }}
+                    >
                       {React.cloneElement(feature.icon, {
-                        className: 'w-5 h-5 md:w-6 md:h-6 text-yellow',
+                        className: 'w-5 h-5 md:w-6 md:h-6 text-white',
                       })}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-base md:text-lg font-semibold text-moringa">
+                      <h3
+                        className="text-base md:text-lg font-semibold"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
                         {feature.title}
                       </h3>
-                      <p className="text-sm md:text-base text-moringa-muted">
+                      <p className="text-sm md:text-base" style={{ color: 'var(--color-gray-50)' }}>
                         {feature.description}
                       </p>
                     </div>

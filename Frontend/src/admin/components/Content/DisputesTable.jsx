@@ -1,4 +1,4 @@
-import { MoreHorizontal, SlidersHorizontal } from 'lucide-react';
+﻿import { MoreHorizontal, SlidersHorizontal } from 'lucide-react';
 import React from 'react';
 
 const DisputesTable = () => {
@@ -58,7 +58,7 @@ const DisputesTable = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Resolved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo';
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'Under Review':

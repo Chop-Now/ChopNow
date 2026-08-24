@@ -157,7 +157,7 @@ class _EmailVerificationScreenState
                   border: Border.all(color: AppColors.border),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.char.withValues(alpha: 0.04),
                         blurRadius: 12)
                   ],
                 ),
