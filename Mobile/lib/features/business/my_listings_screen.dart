@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
+import 'widgets/biz_ui.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../shared/widgets/inputs/animated_segmented_control.dart';
@@ -57,8 +58,12 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
     List<int>? badgeCounts;
     asyncListings.whenData((all) {
       final active = all.where((l) => l['status'] == 'active').length;
-      final expired = all.where((l) => l['status'] == 'expired' || l['status'] == 'sold_out').length;
-      final draft = all.where((l) => l['status'] == 'draft' || l['status'] == 'inactive').length;
+      final expired = all
+          .where((l) => l['status'] == 'expired' || l['status'] == 'sold_out')
+          .length;
+      final draft = all
+          .where((l) => l['status'] == 'draft' || l['status'] == 'inactive')
+          .length;
       badgeCounts = [active, expired, draft];
     });
 
@@ -80,8 +85,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
                 width: 36,
                 height: 36,
                 decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle),
+                    color: AppColors.primary, shape: BoxShape.circle),
                 child: const Icon(Icons.add_rounded,
                     color: AppColors.surface, size: 22),
               ),
@@ -186,7 +190,8 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Failed to delete: ${e.toString().replaceAll('Exception: ', '')}'),
+                content: Text(
+                    'Failed to delete: ${e.toString().replaceAll('Exception: ', '')}'),
                 backgroundColor: AppColors.error),
           );
         }
@@ -214,7 +219,8 @@ class _ListingTabView extends StatelessWidget {
           title: emptyLabel, imagePath: 'assets/images/empty_orders.png');
     }
     return ListView.separated(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.all(12),
       itemCount: listings.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -236,7 +242,7 @@ class _ListingCard extends StatelessWidget {
     final photos = listing['photos'] as List? ?? [];
     final status = listing['status']?.toString() ?? 'active';
     final stock = listing['quantity'] ?? listing['stock'] ?? 0;
-    
+
     final (color, label) = switch (status) {
       'active' => (AppColors.success, 'ACTIVE'),
       'expired' => (AppColors.error, 'EXPIRED'),
@@ -249,20 +255,14 @@ class _ListingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-              color: AppColors.char.withValues(alpha: 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 4))
-        ],
+        boxShadow: BizStyle.shadow(),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Thumbnail
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             child: Container(
               width: 76,
               height: 76,
