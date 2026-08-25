@@ -74,10 +74,11 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search Header
+            // Search Header. Ground is the scaffold tint, not white, so the
+            // white search pill and cart button read against it.
             Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              color: AppColors.background,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -95,9 +96,22 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceVariant,
+                            color: AppColors.surface,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.moringa.withValues(alpha: 0.13),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                              BoxShadow(
+                                color:
+                                    AppColors.moringa.withValues(alpha: 0.05),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           child: Stack(
                             alignment: Alignment.center,
@@ -137,15 +151,29 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                     behavior: HitTestBehavior.opaque,
                     onTap: () => _searchFocusNode.requestFocus(),
                     child: Container(
-                      height: 46,
+                      height: 54,
                       decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border)),
+                        color: AppColors.surface,
+                        // Full pill, like the reference
+                        borderRadius: BorderRadius.circular(27),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.moringa.withValues(alpha: 0.14),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                          BoxShadow(
+                            color: AppColors.moringa.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
                       child: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _searchCtrl,
                         builder: (context, value, _) => Row(children: [
-                          const SizedBox(width: 12),
+                          // Clears the pill's 27px curve
+                          const SizedBox(width: 20),
                           AnimatedSize(
                             duration: const Duration(milliseconds: 180),
                             curve: Curves.easeOut,
@@ -166,7 +194,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                             controller: _searchCtrl,
                             focusNode: _searchFocusNode,
                             onChanged: (v) {
-                              ref.read(_browseSearchProvider.notifier).state = v;
+                              ref.read(_browseSearchProvider.notifier).state =
+                                  v;
                             },
                             decoration: const InputDecoration(
                               hintText: 'Search food, cafés, grocery...',
@@ -257,7 +286,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 onRefresh: () async => ref.invalidate(_browseListingsProvider),
                 child: asyncListings.when(
                   loading: () => GridView.builder(
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics()),
                     padding: const EdgeInsets.all(16),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -277,7 +307,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           subtitle: 'Try a different category or search term',
                           imagePath: 'assets/images/empty_orders.png')
                       : GridView.builder(
-                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
@@ -291,12 +322,16 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                             onTap: () =>
                                 context.push('/listings/${listings[i]['_id']}'),
                             onAddToCart: () {
-                              final listingModel = Listing.fromJson(listings[i] as Map<String, dynamic>);
-                              ref.read(cartProvider.notifier).addItem(listingModel);
+                              final listingModel = Listing.fromJson(
+                                  listings[i] as Map<String, dynamic>);
+                              ref
+                                  .read(cartProvider.notifier)
+                                  .addItem(listingModel);
                               HapticFeedback.lightImpact();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${listingModel.title} added to cart'),
+                                  content: Text(
+                                      '${listingModel.title} added to cart'),
                                   behavior: SnackBarBehavior.floating,
                                   backgroundColor: AppColors.primary,
                                   duration: const Duration(seconds: 2),

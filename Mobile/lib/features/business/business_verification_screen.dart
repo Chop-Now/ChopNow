@@ -429,7 +429,8 @@ class _BusinessVerificationScreenState
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        border: Border.all(
+                            color: AppColors.border.withValues(alpha: 0.5)),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.char.withValues(alpha: 0.02),

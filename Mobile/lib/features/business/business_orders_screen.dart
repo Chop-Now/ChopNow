@@ -5,6 +5,7 @@ import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
+import 'widgets/biz_ui.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/widgets/inputs/animated_segmented_control.dart';
 
@@ -99,15 +100,19 @@ class _BusinessOrdersScreenState extends ConsumerState<BusinessOrdersScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showQuickVerifyDialog(),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
-        label: const Text('Quick Verify',
-            style: TextStyle(
-                color: AppColors.surface,
-                fontWeight: FontWeight.w700,
-                fontSize: 13)),
+      // Lifted clear of the floating nav pill.
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 78),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showQuickVerifyDialog(),
+          backgroundColor: AppColors.primary,
+          icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+          label: const Text('Quick Verify',
+              style: TextStyle(
+                  color: AppColors.surface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13)),
+        ),
       ),
       body: asyncOrders.when(
         loading: () => const Center(
@@ -383,7 +388,8 @@ class _PickupCodeDialogState extends State<_PickupCodeDialog> {
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
                       ],
                       decoration: InputDecoration(
                         counterText: '',
@@ -496,7 +502,8 @@ class _OrderList extends StatelessWidget {
           title: emptyMessage, imagePath: 'assets/images/empty_orders.png');
     }
     return ListView.separated(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.all(12),
       itemCount: orders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -527,9 +534,11 @@ class _BusinessOrderCard extends StatelessWidget {
     final status = order['status']?.toString() ?? 'pending';
     final orderId = order['_id']?.toString() ?? '';
     final customerName = order['customer'] is Map
-        ? '${order['customer']['firstName'] ?? ''} ${order['customer']['lastName'] ?? ''}'.trim()
+        ? '${order['customer']['firstName'] ?? ''} ${order['customer']['lastName'] ?? ''}'
+            .trim()
         : order['user'] is Map
-            ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'.trim()
+            ? '${order['user']['firstName'] ?? ''} ${order['user']['lastName'] ?? ''}'
+                .trim()
             : 'Customer';
 
     final payment = order['payment'] is Map ? order['payment'] : {};
@@ -554,13 +563,7 @@ class _BusinessOrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-              color: AppColors.char.withValues(alpha: 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 4))
-        ],
+        boxShadow: BizStyle.shadow(),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(
@@ -604,9 +607,10 @@ class _BusinessOrderCard extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.receipt_long_rounded, color: AppColors.textSecondary, size: 24),
+              child: const Icon(Icons.receipt_long_rounded,
+                  color: AppColors.textSecondary, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -615,17 +619,23 @@ class _BusinessOrderCard extends StatelessWidget {
                 children: [
                   Text(customerName,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   if (order['items'] is List)
                     ...(order['items'] as List).take(2).map((item) {
                       if (item is! Map) return const SizedBox.shrink();
                       final title = item['title'] ??
-                          (item['listing'] is Map ? item['listing']['title'] : null) ??
+                          (item['listing'] is Map
+                              ? item['listing']['title']
+                              : null) ??
                           'Item';
                       return Text('${item['quantity']}x $title',
                           style: const TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500));
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500));
                     }),
                 ],
               ),
@@ -639,10 +649,11 @@ class _BusinessOrderCard extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
                   fontSize: 18)),
-          Text(
-              order['fulfillmentType'] == 'delivery' ? 'Delivery' : 'Pickup',
+          Text(order['fulfillmentType'] == 'delivery' ? 'Delivery' : 'Pickup',
               style: const TextStyle(
-                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600)),
         ]),
         if (showActions) ...[
           const SizedBox(height: 16),
@@ -672,8 +683,7 @@ class _BusinessOrderCard extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
             child: _FilledBtn(
-                label: 'Accept',
-                onTap: () => onUpdate(orderId, 'confirmed'))),
+                label: 'Accept', onTap: () => onUpdate(orderId, 'confirmed'))),
       ]);
     }
 
@@ -685,8 +695,7 @@ class _BusinessOrderCard extends StatelessWidget {
           label: 'Mark as Ready',
           onTap: () => onUpdate(orderId, 'ready_for_pickup')),
       'ready_for_pickup' => _FilledBtn(
-          label: 'Verify & Complete',
-          onTap: () => onVerifyPickup(orderId)),
+          label: 'Verify & Complete', onTap: () => onVerifyPickup(orderId)),
       _ => const SizedBox.shrink(),
     };
   }

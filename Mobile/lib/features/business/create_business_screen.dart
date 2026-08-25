@@ -79,7 +79,8 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.5)),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.char.withValues(alpha: 0.03),
@@ -91,7 +92,8 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                     child: _logoPath != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(19),
-                            child: Image.file(File(_logoPath!), fit: BoxFit.cover))
+                            child:
+                                Image.file(File(_logoPath!), fit: BoxFit.cover))
                         : const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -130,25 +132,36 @@ class _CreateBusinessScreenState extends ConsumerState<CreateBusinessScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.surface,
+                          color:
+                              selected ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
                           border: Border.all(
                               color: selected
                                   ? AppColors.primary
                                   : AppColors.border.withValues(alpha: 0.5)),
-                          boxShadow: selected ? [
-                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))
-                          ] : [
-                            BoxShadow(color: AppColors.char.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))
-                          ],
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2))
+                                ]
+                              : [
+                                  BoxShadow(
+                                      color: AppColors.char
+                                          .withValues(alpha: 0.02),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2))
+                                ],
                         ),
                         child: Center(
                           child: Text(t['label']!,
                               style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                   color: selected
                                       ? Colors.white
                                       : AppColors.textPrimary)),

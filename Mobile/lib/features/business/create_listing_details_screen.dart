@@ -328,7 +328,8 @@ class _CreateListingDetailsScreenState
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                    border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.5)),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.char.withValues(alpha: 0.03),
@@ -359,7 +360,10 @@ class _CreateListingDetailsScreenState
                                   Icon(Icons.add_photo_alternate_outlined,
                                       size: 40, color: AppColors.textSecondary),
                                   SizedBox(height: 8),
-                                  Text('Add Photo', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                                  Text('Add Photo',
+                                      style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 13)),
                                 ],
                               )),
                   ),
@@ -390,25 +394,36 @@ class _CreateListingDetailsScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.surface,
+                          color:
+                              selected ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
                           border: Border.all(
                               color: selected
                                   ? AppColors.primary
                                   : AppColors.border.withValues(alpha: 0.5)),
-                          boxShadow: selected ? [
-                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))
-                          ] : [
-                            BoxShadow(color: AppColors.char.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))
-                          ],
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2))
+                                ]
+                              : [
+                                  BoxShadow(
+                                      color: AppColors.char
+                                          .withValues(alpha: 0.02),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2))
+                                ],
                         ),
                         child: Center(
                           child: Text(c['label']!,
                               style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                   color: selected
                                       ? Colors.white
                                       : AppColors.textPrimary)),
