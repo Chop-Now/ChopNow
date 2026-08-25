@@ -713,7 +713,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           builder: (ctx, setSheetState) {
             final isMomo = _paymentMethod == 'momo';
             final themeColor =
-                isMomo ? const Color(0xFFFFCC00) : const Color(0xFFFF0000);
+                isMomo ? AppColors.nowYellow : AppColors.error;
             final providerName = isMomo ? 'MTN MoMo' : 'Airtel Money';
 
             Future<void> initiateMoMoPayment() async {
@@ -885,7 +885,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                               color: isMomo
-                                  ? const Color(0xFF1A56DB)
+                                  ? AppColors.info
                                   : Colors.white,
                             )),
                       ),
@@ -995,7 +995,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.char.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2))
         ],

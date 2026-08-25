@@ -27,6 +27,7 @@ class CnTextField extends StatefulWidget {
   final bool autofocus;
   final Iterable<String>? autofillHints;
   final int? maxLength;
+  final AutovalidateMode autovalidateMode;
 
   const CnTextField({
     super.key,
@@ -49,6 +50,7 @@ class CnTextField extends StatefulWidget {
     this.autofocus = false,
     this.autofillHints,
     this.maxLength,
+    this.autovalidateMode = AutovalidateMode.disabled,
   });
 
   @override
@@ -82,6 +84,7 @@ class _CnTextFieldState extends State<CnTextField> {
           textInputAction: widget.textInputAction,
           autofillHints: widget.autofillHints,
           maxLength: widget.maxLength,
+          autovalidateMode: widget.autovalidateMode,
           onChanged: (v) {
             widget.onChanged?.call(v);
             if (_errorText != null) setState(() => _errorText = null);
@@ -218,7 +221,7 @@ class _CnSearchBarState extends State<CnSearchBar> {
           border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: AppColors.char.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

@@ -27,9 +27,7 @@ class PendingReviewScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Pending Review',
             style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                fontSize: 16)),
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         automaticallyImplyLeading: false,
@@ -86,17 +84,24 @@ class PendingReviewScreen extends ConsumerWidget {
               children: [
                 // Icon Header
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 90,
+                  height: 90,
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.12),
+                    color: AppColors.surface,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      )
+                    ],
                   ),
                   child: const Center(
                     child: Icon(
                       Icons.hourglass_empty_rounded,
                       color: Colors.orange,
-                      size: 40,
+                      size: 44,
                     ),
                   ),
                 ),
@@ -132,9 +137,9 @@ class PendingReviewScreen extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.1)),
+                        color: AppColors.primary.withValues(alpha: 0.15)),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,

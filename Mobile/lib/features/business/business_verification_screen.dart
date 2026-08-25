@@ -225,9 +225,7 @@ class _BusinessVerificationScreenState
       appBar: AppBar(
         title: const Text('Business Verification',
             style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                fontSize: 16)),
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -378,14 +376,21 @@ class _BusinessVerificationScreenState
 
               InkWell(
                 onTap: _isLoading ? null : _pickDocument,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: AppColors.border, style: BorderStyle.solid),
+                        color: AppColors.border.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.char.withValues(alpha: 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
                   child: Center(
                     child: Column(
@@ -420,11 +425,18 @@ class _BusinessVerificationScreenState
                 const SizedBox(height: 6),
                 ..._selectedFiles.asMap().entries.map((e) => Container(
                       margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.char.withValues(alpha: 0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
                       ),
                       child: Row(
                         children: [

@@ -59,21 +59,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authProvider);
       final path = state.uri.path;
 
-      // Always allow splash and auth routes when loading/unauthenticated
-      if (auth is AuthInitial || auth is AuthLoading) {
+      final publicPaths = [
+        '/splash',
+        '/onboarding',
+        '/auth/login',
+        '/auth/register',
+        '/auth/otp',
+        '/auth/forgot-password',
+        '/auth/reset-password'
+      ];
+
+      if (auth is AuthInitial) {
         return path == '/splash' ? null : '/splash';
       }
 
-      if (auth is AuthUnauthenticated) {
-        final publicPaths = [
-          '/splash',
-          '/onboarding',
-          '/auth/login',
-          '/auth/register',
-          '/auth/otp',
-          '/auth/forgot-password',
-          '/auth/reset-password'
-        ];
+      if (auth is AuthLoading) {
+        // If we're already on a public path (like login/register), stay there so the button can show a spinner.
+        // Otherwise, go to splash while we load/check auth.
+        if (publicPaths.any((p) => path.startsWith(p))) return null;
+        return '/splash';
+      }
+
+      if (auth is AuthUnauthenticated || auth is AuthError) {
         if (publicPaths.any((p) => path.startsWith(p))) return null;
         return '/auth/login';
       }

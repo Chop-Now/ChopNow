@@ -70,8 +70,7 @@ class AuthService {
 
   // ── Onboarding Status ──
   static Future<bool> hasCompletedOnboarding() async {
-    final status =
-        await _storage.read(key: AppConstants.onboardingCompletedKey);
+    final status = await _storage.read(key: AppConstants.onboardingCompletedKey);
     return status == 'true';
   }
 

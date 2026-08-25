@@ -222,13 +222,13 @@ class AuthPrimaryButton extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         height: 54,
         decoration: BoxDecoration(
-          color: disabled ? AppColors.border : AppColors.nowYellow,
+          color: disabled ? AppColors.border : AppColors.moringa,
           borderRadius: BorderRadius.circular(27),
           boxShadow: disabled
               ? null
               : [
                   BoxShadow(
-                    color: AppColors.nowYellow.withValues(alpha: 0.38),
+                    color: AppColors.moringa.withValues(alpha: 0.38),
                     blurRadius: 18,
                     offset: const Offset(0, 7),
                   ),
@@ -242,7 +242,7 @@ class AuthPrimaryButton extends StatelessWidget {
                   child: CircularProgressIndicator(
                     strokeWidth: 2.2,
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.textOnAccent),
+                        AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                   ),
                 )
               : Row(
@@ -255,12 +255,12 @@ class AuthPrimaryButton extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: disabled
                             ? AppColors.textTertiary
-                            : AppColors.textOnAccent,
+                            : AppColors.textOnPrimary,
                       ),
                     ),
                     if (icon != null) ...[
                       const SizedBox(width: 8),
-                      Icon(icon, size: 18, color: AppColors.textOnAccent),
+                      Icon(icon, size: 18, color: AppColors.textOnPrimary),
                     ],
                   ],
                 ),
