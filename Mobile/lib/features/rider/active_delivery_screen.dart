@@ -430,11 +430,11 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
+                      color: AppColors.char.withValues(alpha: 0.12),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ],
@@ -453,11 +453,11 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(100),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: AppColors.char.withValues(alpha: 0.1),
                         blurRadius: 8)
                   ],
                 ),
@@ -527,7 +527,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
+                      color: AppColors.char.withValues(alpha: 0.12),
                       blurRadius: 12)
                 ],
               ),
@@ -707,11 +707,11 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
         child: Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: AppColors.char.withValues(alpha: 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 3))
             ],
@@ -824,11 +824,11 @@ class _PhaseProgressBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.char.withValues(alpha: 0.1),
               blurRadius: 12,
               offset: const Offset(0, 4))
         ],

@@ -39,7 +39,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
         label: const Text('Add Address',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.surface, fontWeight: FontWeight.w700)),
       ),
       body: addresses.isEmpty
           ? const CnEmptyState(

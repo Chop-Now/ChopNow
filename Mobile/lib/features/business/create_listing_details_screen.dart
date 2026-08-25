@@ -322,12 +322,23 @@ class _CreateListingDetailsScreenState
             children: [
               // Photo preview
               Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    color: Colors.black12,
+                child: Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.char.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
                     child: widget.imagePath.isNotEmpty
                         ? Image.file(
                             File(widget.imagePath),
@@ -342,8 +353,15 @@ class _CreateListingDetailsScreenState
                                     size: 50,
                                     color: AppColors.textSecondary),
                               )
-                            : const Icon(Icons.broken_image,
-                                size: 50, color: AppColors.textSecondary)),
+                            : const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      size: 40, color: AppColors.textSecondary),
+                                  SizedBox(height: 8),
+                                  Text('Add Photo', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                                ],
+                              )),
                   ),
                 ),
               ),
@@ -357,9 +375,10 @@ class _CreateListingDetailsScreenState
                       color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               SizedBox(
-                height: 40,
+                height: 48,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   children: _categories.map((c) {
                     final selected = _selectedCategory == c['key'];
                     return GestureDetector(
@@ -369,24 +388,31 @@ class _CreateListingDetailsScreenState
                         duration: const Duration(milliseconds: 150),
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.primarySurface
+                              ? AppColors.primary
                               : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
                           border: Border.all(
                               color: selected
                                   ? AppColors.primary
-                                  : AppColors.border),
+                                  : AppColors.border.withValues(alpha: 0.5)),
+                          boxShadow: selected ? [
+                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))
+                          ] : [
+                            BoxShadow(color: AppColors.char.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))
+                          ],
                         ),
-                        child: Text(c['label']!,
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: selected
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary)),
+                        child: Center(
+                          child: Text(c['label']!,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                  color: selected
+                                      ? Colors.white
+                                      : AppColors.textPrimary)),
+                        ),
                       ),
                     );
                   }).toList(),
