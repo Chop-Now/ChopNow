@@ -1,4 +1,4 @@
-﻿import Footer from '../Components/Footer';
+import Footer from '../Components/Footer';
 import PageNavbar from '../Components/PageNavbar';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -114,7 +114,7 @@ const MyImpact = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-solid" />
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
       </div>
     );
   }
@@ -149,7 +149,7 @@ const MyImpact = () => {
               </p>
               {impactData.comparison && (
                 <div
-                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-solid' : 'text-red-500'}`}
+                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-green-600' : 'text-red-500'}`}
                 >
                   {impactData.comparison.percentageChange.trend === 'up' ? (
                     <TrendingUp className="w-3 h-3" />
@@ -248,7 +248,7 @@ const MyImpact = () => {
                       className="h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${mealsProgress}%`,
-                        background: 'linear-gradient(to right, #0F3D2E, #0A291E)',
+                        background: 'linear-gradient(to right, #0F3D2E, #0A2A20)',
                       }}
                     ></div>
                   </div>

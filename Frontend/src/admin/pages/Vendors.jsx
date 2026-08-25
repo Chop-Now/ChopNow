@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   ListFilter,
@@ -81,7 +81,7 @@ const VendorDetailsModal = ({
               <span
                 className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
                   vendor.status === 'approved'
-                    ? 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                     : vendor.status === 'pending'
                       ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                       : vendor.status === 'moreInfoRequested'
@@ -250,7 +250,7 @@ const VendorDetailsModal = ({
                     Approved Date
                   </p>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-solid" />
+                    <Calendar className="w-4 h-4 text-green-500" />
                     <p className="text-sm text-slate-800 dark:text-white">
                       {new Date(vendor.approvedDate).toLocaleDateString()}
                     </p>
@@ -330,7 +330,7 @@ const VendorDetailsModal = ({
                     onClick={() => handleAction(showActionDialog)}
                     className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer ${
                       showActionDialog === 'approve'
-                        ? 'bg-solid hover:bg-tertiary'
+                        ? 'bg-green-600 hover:bg-green-700'
                         : showActionDialog === 'reject'
                           ? 'bg-red-600 hover:bg-red-700'
                           : showActionDialog === 'rescind'
@@ -355,7 +355,7 @@ const VendorDetailsModal = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowActionDialog('approve')}
-                  className="flex items-center gap-2 flex-1 px-4 py-2 bg-solid hover:bg-tertiary text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                  className="flex items-center gap-2 flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
                 >
                   <CheckSquare className="w-4 h-4" />
                   Approve
@@ -691,8 +691,8 @@ export const AllVendors = () => {
       title: 'Approved Vendors',
       value: stats.approved,
       icon: <BadgeCheck className="w-6 h-6" />,
-      bgColor: 'bg-primary dark:bg-solid/10',
-      iconColor: 'text-solid dark:text-solidTwo',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
     {
       title: 'Pending Applications',
@@ -936,7 +936,7 @@ export const AllVendors = () => {
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
                         vendor.status === 'approved'
-                          ? 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                           : vendor.status === 'pending'
                             ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                             : vendor.status === 'moreInfoRequested'

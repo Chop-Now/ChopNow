@@ -300,7 +300,7 @@ const SignUp = () => {
         <div className="w-full md:w-1/2 md:ml-[50%] flex flex-col items-center justify-center px-4 py-8">
           {/* Logo */}
           <div className="mb-8">
-            <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
+            <img src={assets.wordmarklogo} alt="ChopNow" className="h-12" />
           </div>
 
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
@@ -313,7 +313,10 @@ const SignUp = () => {
                 >
                   Sign up
                 </h2>
-                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-3 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Choose how you want to sign up
                 </p>
 
@@ -346,7 +349,10 @@ const SignUp = () => {
                 </button>
 
                 {/* Sign in link */}
-                <p className="text-sm mt-8 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-8 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Already have an account?{' '}
                   <Link
                     to="/login"
@@ -375,7 +381,10 @@ const SignUp = () => {
                     Back
                   </button>
                 </div>
-                <p className="text-sm mb-6 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mb-6 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   {userType === 'buyer'
                     ? 'Create your buyer account'
                     : 'Create your business account'}
@@ -402,7 +411,10 @@ const SignUp = () => {
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">
                       <div className="w-full h-px bg-gray-300"></div>
-                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                      <p
+                        className="text-nowrap text-sm"
+                        style={{ color: 'var(--color-moringa-muted)' }}
+                      >
                         or sign up with email
                       </p>
                       <div className="w-full h-px bg-gray-300"></div>
@@ -411,7 +423,7 @@ const SignUp = () => {
                     {/* First Name & Last Name */}
                     <div className="flex gap-3">
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                        <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                        <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                         <input
                           type="text"
                           placeholder="First name"
@@ -421,7 +433,7 @@ const SignUp = () => {
                         />
                       </div>
                       <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                        <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                        <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                         <input
                           type="text"
                           placeholder="Last name"
@@ -434,7 +446,7 @@ const SignUp = () => {
 
                     {/* Email Input */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
                         placeholder="Email address"
@@ -464,7 +476,7 @@ const SignUp = () => {
 
                     {/* Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
@@ -480,12 +492,12 @@ const SignUp = () => {
                         {showPassword ? (
                           <EyeOff
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         ) : (
                           <Eye
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         )}
                       </button>
@@ -493,7 +505,7 @@ const SignUp = () => {
 
                     {/* Confirm Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
@@ -509,12 +521,12 @@ const SignUp = () => {
                         {showConfirmPassword ? (
                           <EyeOff
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         ) : (
                           <Eye
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         )}
                       </button>
@@ -567,7 +579,10 @@ const SignUp = () => {
                       {/* Manual Address Input */}
                       <div className="mt-3 relative">
                         <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                          <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                          <MapPin
+                            className="w-5 h-5"
+                            style={{ color: 'var(--color-moringa-muted)' }}
+                          />
                           <input
                             type="text"
                             placeholder="Or enter address manually"
@@ -633,7 +648,7 @@ const SignUp = () => {
 
                       {/* Selected Address Display */}
                       {address && (
-                        <p className="mt-2 text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                        <p className="mt-2 text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                           Selected: {address}
                         </p>
                       )}
@@ -660,7 +675,10 @@ const SignUp = () => {
                   <>
                     {/* Business Name */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Handshake className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Handshake
+                        className="w-5 h-5"
+                        style={{ color: 'var(--color-moringa-muted)' }}
+                      />
                       <input
                         type="text"
                         placeholder="Business name"
@@ -674,7 +692,7 @@ const SignUp = () => {
                     <div className="mt-4 relative">
                       <label
                         className="block text-xs font-medium mb-1.5"
-                        style={{ color: 'var(--color-gray-50)' }}
+                        style={{ color: 'var(--color-moringa-muted)' }}
                       >
                         Business Category
                       </label>
@@ -709,13 +727,13 @@ const SignUp = () => {
                             })()}
                           </div>
                         ) : (
-                          <span className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                          <span className="text-sm" style={{ color: 'var(--color-moringa-muted)' }}>
                             Select your business type
                           </span>
                         )}
                         <ChevronDown
                           className={`w-5 h-5 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`}
-                          style={{ color: 'var(--color-gray-50)' }}
+                          style={{ color: 'var(--color-moringa-muted)' }}
                         />
                       </button>
 
@@ -744,7 +762,10 @@ const SignUp = () => {
                                   >
                                     {category.label}
                                   </p>
-                                  <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                                  <p
+                                    className="text-xs"
+                                    style={{ color: 'var(--color-moringa-muted)' }}
+                                  >
                                     {category.description}
                                   </p>
                                 </div>
@@ -779,7 +800,7 @@ const SignUp = () => {
 
                     {/* Contact Person */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <User className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="text"
                         placeholder="Contact person"
@@ -791,7 +812,7 @@ const SignUp = () => {
 
                     {/* Email Input */}
                     <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
-                      <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
                         placeholder="Email address"
@@ -821,7 +842,7 @@ const SignUp = () => {
 
                     {/* Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
@@ -837,12 +858,12 @@ const SignUp = () => {
                         {showPassword ? (
                           <EyeOff
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         ) : (
                           <Eye
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         )}
                       </button>
@@ -850,7 +871,7 @@ const SignUp = () => {
 
                     {/* Confirm Password Input */}
                     <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                      <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                      <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
@@ -866,12 +887,12 @@ const SignUp = () => {
                         {showConfirmPassword ? (
                           <EyeOff
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         ) : (
                           <Eye
                             className="w-5 h-5 cursor-pointer"
-                            style={{ color: 'var(--color-gray-50)' }}
+                            style={{ color: 'var(--color-moringa-muted)' }}
                           />
                         )}
                       </button>
@@ -889,7 +910,10 @@ const SignUp = () => {
                 </button>
 
                 {/* Terms and Privacy */}
-                <p className="text-xs mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-xs mt-4 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   By creating an account, you agree to our{' '}
                   <Link
                     to="/terms-of-service"
@@ -909,7 +933,10 @@ const SignUp = () => {
                 </p>
 
                 {/* Sign in link */}
-                <p className="text-sm mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-4 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Already have an account?{' '}
                   <Link
                     to="/login"

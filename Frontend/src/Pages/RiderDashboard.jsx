@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bike,
@@ -146,7 +146,7 @@ const RiderDashboard = () => {
     switch (status) {
       case 'completed':
         return (
-          <span className="bg-primary text-tertiary border border-solid/30 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
             Completed
           </span>
         );
@@ -177,11 +177,11 @@ const RiderDashboard = () => {
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 mt-16">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Top Header Card */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-tertiary rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 z-10">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-solidTwo animate-pulse" />
-              <span className="text-[10px] tracking-widest text-solidTwo font-bold uppercase">
+              <Sparkles className="w-5 h-5 text-green-400 animate-pulse" />
+              <span className="text-[10px] tracking-widest text-green-400 font-bold uppercase">
                 Rider Partner Portal
               </span>
             </div>
@@ -204,7 +204,7 @@ const RiderDashboard = () => {
                 </p>
                 <p className="text-xs font-bold flex items-center gap-1.5 mt-0.5">
                   <span
-                    className={`w-2 h-2 rounded-full ${isOnline ? 'bg-solid' : 'bg-red-400'}`}
+                    className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400'}`}
                   />
                   {isOnline ? 'Online' : 'Offline'}
                 </p>
@@ -215,7 +215,7 @@ const RiderDashboard = () => {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
                   isOnline
                     ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-solid hover:bg-solid text-white'
+                    : 'bg-green-500 hover:bg-green-600 text-white'
                 }`}
               >
                 {isToggling ? 'Syncing...' : isOnline ? 'Go Offline' : 'Go Online'}
@@ -232,13 +232,13 @@ const RiderDashboard = () => {
           </div>
 
           {/* Absolute decorative background sphere */}
-          <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-solid/10 blur-3xl -z-0" />
+          <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-green-500/10 blur-3xl -z-0" />
         </div>
 
         {/* Dynamic Mobile App Promo Notice */}
-        <div className="bg-primary border border-solid/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="flex gap-4 items-start">
-            <div className="p-3 bg-primary text-tertiary rounded-xl">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl">
               <Smartphone className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -267,7 +267,7 @@ const RiderDashboard = () => {
         {/* Payout & Earnings Summary Card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-primary text-tertiary rounded-2xl border border-primary">
+            <div className="p-4 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100">
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
@@ -281,7 +281,7 @@ const RiderDashboard = () => {
           </div>
           <button
             onClick={() => setShowPayoutModal(true)}
-            className="w-full sm:w-auto py-3 px-6 bg-solid hover:bg-tertiary text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
           >
             Withdraw Earnings
             <ArrowRight className="w-4 h-4" />
@@ -294,7 +294,7 @@ const RiderDashboard = () => {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
             {loadingStats ? (
               <div className="flex items-center justify-center h-20">
-                <Loader2 className="w-6 h-6 animate-spin text-solid" />
+                <Loader2 className="w-6 h-6 animate-spin text-green-500" />
               </div>
             ) : (
               <>
@@ -307,11 +307,11 @@ const RiderDashboard = () => {
                       {formatCurrency(stats?.totalEarnings || 0)}
                     </p>
                   </div>
-                  <div className="p-2.5 bg-primary text-tertiary rounded-xl">
+                  <div className="p-2.5 bg-green-50 text-green-700 rounded-xl">
                     <DollarSign className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-[11px] text-solid">
+                <div className="mt-4 flex items-center gap-1 text-[11px] text-green-600">
                   <TrendingUp className="w-3.5 h-3.5" />
                   <span>+{formatCurrency(stats?.weeklyEarningsSum || 0)} this week</span>
                 </div>
@@ -342,7 +342,7 @@ const RiderDashboard = () => {
                 </div>
                 <p className="mt-4 text-[11px] text-slate-400">
                   {stats?.activeTrips > 0 ? (
-                    <span className="text-solid font-semibold">
+                    <span className="text-green-600 font-semibold">
                       {stats.activeTrips} active deliveries
                     </span>
                   ) : (
@@ -396,7 +396,7 @@ const RiderDashboard = () => {
 
             {loadingStats ? (
               <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-solid" />
+                <Loader2 className="w-8 h-8 animate-spin text-green-500" />
               </div>
             ) : (
               <>
@@ -423,7 +423,7 @@ const RiderDashboard = () => {
                           <div
                             className={`w-full max-w-[28px] rounded-t-lg transition-all duration-500 ${
                               bar.amount > 0
-                                ? 'bg-gradient-to-t from-solid to-tertiary'
+                                ? 'bg-gradient-to-t from-green-500 to-emerald-600'
                                 : 'bg-slate-100'
                             }`}
                             style={{ height: `${heightPercent || 5}%` }}
@@ -436,7 +436,7 @@ const RiderDashboard = () => {
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-500 pt-2">
                   <span className="font-semibold text-slate-800">Total Weekly Earnings:</span>
-                  <span className="font-bold text-tertiary">
+                  <span className="font-bold text-green-700">
                     {formatCurrency(stats?.weeklyEarningsSum || 0)}
                   </span>
                 </div>
@@ -459,7 +459,7 @@ const RiderDashboard = () => {
 
               {loadingPayouts ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-solid" />
+                  <Loader2 className="w-6 h-6 animate-spin text-green-500" />
                 </div>
               ) : payouts.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
@@ -502,7 +502,7 @@ const RiderDashboard = () => {
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-scaleIn">
             <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-solidTwo" />
+                <DollarSign className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-bold text-sm">Request Payout</h3>
               </div>
               <button
@@ -535,7 +535,7 @@ const RiderDashboard = () => {
                   placeholder="Minimum 5,000 RWF"
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-solid/20 focus:border-solid outline-none transition-all font-semibold"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all font-semibold"
                 />
               </div>
 
@@ -547,7 +547,7 @@ const RiderDashboard = () => {
                     onClick={() => setPayoutMethod('mobile')}
                     className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${
                       payoutMethod === 'mobile'
-                        ? 'border-solid bg-primary/50 text-tertiary ring-2 ring-solid/20'
+                        ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 ring-2 ring-emerald-600/20'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -558,7 +558,7 @@ const RiderDashboard = () => {
                     onClick={() => setPayoutMethod('bank')}
                     className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${
                       payoutMethod === 'bank'
-                        ? 'border-solid bg-primary/50 text-tertiary ring-2 ring-solid/20'
+                        ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 ring-2 ring-emerald-600/20'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -571,7 +571,7 @@ const RiderDashboard = () => {
                 <button
                   type="submit"
                   disabled={requestingPayout}
-                  className="w-full py-3.5 bg-solid hover:bg-tertiary disabled:opacity-75 text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg"
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg"
                 >
                   {requestingPayout ? (
                     <>

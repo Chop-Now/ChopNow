@@ -1,4 +1,4 @@
-﻿import {
+import {
   MapPin,
   LocateFixed,
   CloudUpload,
@@ -194,9 +194,9 @@ const BusinessVerification = () => {
         {/* Breadcrumbs */}
         <div
           className="flex items-center justify-center space-x-4 text-xs mb-8"
-          style={{ color: 'var(--color-gray-50)' }}
+          style={{ color: 'var(--color-moringa-muted)' }}
         >
-          <p className="text-solid font-medium">Account creation</p>
+          <p className="text-green-600 font-medium">Account creation</p>
           <ChevronRight className="w-3 h-3" />
           <p style={{ color: 'var(--color-textColor)' }} className="font-medium">
             Business details
@@ -210,7 +210,7 @@ const BusinessVerification = () => {
           <h1 className="text-2xl font-semibold mb-2" style={{ color: 'var(--color-textColor)' }}>
             Business Verification
           </h1>
-          <p className="text-sm" style={{ color: 'var(--color-gray-50)' }}>
+          <p className="text-sm" style={{ color: 'var(--color-moringa-muted)' }}>
             Just a few more details to get your business live on ChopNow and start selling surplus
             food.
           </p>
@@ -226,7 +226,7 @@ const BusinessVerification = () => {
                 Why we need this information
               </h3>
             </div>
-            <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
               To ensure the safety of our customers and maintain a trustworthy marketplace we need
               to verify your business's identity and confirm you're authorized to handle food. This
               helps prevent fraud and ensures compliance with local health regulations.
@@ -320,7 +320,7 @@ const BusinessVerification = () => {
                 <div
                   className={`flex items-center w-full bg-transparent border h-12 rounded-lg overflow-hidden px-4 gap-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
                 >
-                  <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                  <MapPin className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type="text"
                     placeholder="Or enter address manually"
@@ -388,7 +388,7 @@ const BusinessVerification = () => {
 
               {/* Selected Address Display */}
               {address && (
-                <p className="mb-3 text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                <p className="mb-3 text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                   Selected: {address}
                 </p>
               )}
@@ -456,7 +456,7 @@ const BusinessVerification = () => {
               <h4 className="text-xs font-medium mb-2" style={{ color: 'var(--color-textColor)' }}>
                 Upload Verification Documents
               </h4>
-              <p className="text-xs mb-4" style={{ color: 'var(--color-gray-50)' }}>
+              <p className="text-xs mb-4" style={{ color: 'var(--color-moringa-muted)' }}>
                 {businessType && CATEGORY_REQUIREMENTS[businessType]
                   ? `Please upload ${CATEGORY_REQUIREMENTS[businessType].requiredDocs.toLowerCase()}. This document is required for verification.`
                   : 'Please upload a valid business document or certificate. This document is required for verification.'}
@@ -468,7 +468,7 @@ const BusinessVerification = () => {
                 className={`border-2 border-dashed bg-white rounded-lg text-xs p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-indigo-500 transition-colors ${errors.files ? 'border-red-500' : 'border-indigo-600/60'}`}
               >
                 <CloudUpload className="w-10 h-10" style={{ color: 'var(--color-solid)' }} />
-                <p style={{ color: 'var(--color-gray-50)' }}>Drag & drop your files here</p>
+                <p style={{ color: 'var(--color-moringa-muted)' }}>Drag & drop your files here</p>
                 <p className="text-gray-400 text-xs">
                   Or{' '}
                   <span className="underline" style={{ color: 'var(--color-solid)' }}>
@@ -507,7 +507,10 @@ const BusinessVerification = () => {
                           >
                             {file.name}
                           </p>
-                          <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
+                          <p
+                            className="text-[10px]"
+                            style={{ color: 'var(--color-moringa-muted)' }}
+                          >
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
@@ -525,7 +528,10 @@ const BusinessVerification = () => {
               )}
 
               {/* File Upload Notice */}
-              <div className="mt-3 text-[10px] space-y-1" style={{ color: 'var(--color-gray-50)' }}>
+              <div
+                className="mt-3 text-[10px] space-y-1"
+                style={{ color: 'var(--color-moringa-muted)' }}
+              >
                 <div className="flex items-center gap-1">
                   <CircleCheck className="w-3 h-3" />
                   <p>Accepted formats: PDF, JPG, PNG</p>
@@ -554,7 +560,10 @@ const BusinessVerification = () => {
                   'Submit for Verification'
                 )}
               </button>
-              <p className="text-[10px] text-center mt-3" style={{ color: 'var(--color-gray-50)' }}>
+              <p
+                className="text-[10px] text-center mt-3"
+                style={{ color: 'var(--color-moringa-muted)' }}
+              >
                 Our team will review your submission within 1-3 business days.
               </p>
             </div>

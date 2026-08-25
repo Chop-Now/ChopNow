@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminMode } from '../context/AdminModeContext';
 import { payoutService, businessService } from '../../services';
 import LoadingSpinner from '../../Components/ui/LoadingSpinner';
@@ -156,7 +156,7 @@ const ShopAdminPayouts = () => {
 
   const getStatusBadge = (status) => {
     const styles = {
-      completed: 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo',
+      completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
       pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     };
@@ -667,7 +667,7 @@ const WebsiteAdminPayouts = () => {
     const styles = {
       requested: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      completed: 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo',
+      completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
       failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
       cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
     };
@@ -781,8 +781,8 @@ const WebsiteAdminPayouts = () => {
                 {mtnPayouts.length} requests
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-primary dark:bg-solid/10 group-hover:scale-110 transition-all duration-300">
-              <Smartphone className="w-6 h-6 text-solid dark:text-solidTwo" />
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 group-hover:scale-110 transition-all duration-300">
+              <Smartphone className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
         </div>
@@ -811,7 +811,7 @@ const WebsiteAdminPayouts = () => {
           <button
             onClick={handleReleaseMTNPayouts}
             disabled={mtnPayouts.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-solid hover:bg-solid text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Smartphone className="w-4 h-4" />
             Approve All Mobile Money ({mtnPayouts.length})
@@ -963,7 +963,7 @@ const WebsiteAdminPayouts = () => {
                                   onClick={() =>
                                     setActionModal({ open: true, payout, action: 'complete' })
                                   }
-                                  className="px-3 py-1.5 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-medium transition-colors"
+                                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
                                 >
                                   Mark Complete
                                 </button>
@@ -1100,7 +1100,7 @@ const WebsiteAdminPayouts = () => {
                 disabled={processingId === actionModal.payout?._id}
                 className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors font-medium disabled:opacity-50 ${
                   actionModal.action === 'complete'
-                    ? 'bg-solid hover:bg-tertiary'
+                    ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >

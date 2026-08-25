@@ -43,7 +43,9 @@ class CreateListingCameraScreen extends StatelessWidget {
         title: const Text('Take Live Photo'),
         actions: [
           TextButton(
-            onPressed: () => context.canPop() ? context.pop() : context.go('/business/dashboard'),
+            onPressed: () => context.canPop()
+                ? context.pop()
+                : context.go('/business/dashboard'),
             child:
                 const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
@@ -58,7 +60,9 @@ class CreateListingCameraScreen extends StatelessWidget {
               height: 200,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    width: 1.5),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -82,7 +86,8 @@ class CreateListingCameraScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => _capturePhoto(context),
               icon: const Icon(Icons.camera_alt_rounded),
-              label: const Text('Capture Photo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              label: const Text('Capture Photo',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

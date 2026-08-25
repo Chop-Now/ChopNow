@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CartesianGrid,
   Line,
@@ -190,7 +190,7 @@ const OrderTrendsChart = () => {
   if (loading) {
     return (
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-4 h-96 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-solid" />
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
       </div>
     );
   }
@@ -299,7 +299,7 @@ const OrderTrendsChart = () => {
             <defs>
               <linearGradient id="currentGradient" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
-                <stop offset="100%" stopColor="#0A291E" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.8} />
               </linearGradient>
               <linearGradient id="previousGradient" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />

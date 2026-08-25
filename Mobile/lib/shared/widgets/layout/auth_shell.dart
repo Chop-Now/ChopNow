@@ -20,6 +20,11 @@ class AuthShell extends StatelessWidget {
 
   final Widget child;
 
+  /// When true the sheet stretches [child] to at least the available height,
+  /// so a short screen can push content apart with Spacer/Expanded instead of
+  /// leaving a dead gap at the bottom. Still scrolls if content overflows.
+  final bool fillHeight;
+
   const AuthShell({
     super.key,
     required this.title,
@@ -27,6 +32,7 @@ class AuthShell extends StatelessWidget {
     required this.child,
     this.onBack,
     this.badge,
+    this.fillHeight = false,
   });
 
   @override
@@ -127,9 +133,19 @@ class AuthShell extends StatelessWidget {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-                  child: child,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                    child: fillHeight
+                        ? ConstrainedBox(
+                            constraints: BoxConstraints(
+                              // minus the vertical padding above
+                              minHeight: constraints.maxHeight - 56,
+                            ),
+                            child: IntrinsicHeight(child: child),
+                          )
+                        : child,
+                  ),
                 ),
               ),
             ),

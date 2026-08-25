@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
+import 'widgets/biz_ui.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/api/api_exception.dart';
@@ -394,7 +395,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                     color: AppColors.primary.withValues(alpha: 0.15)),
               ),
@@ -451,11 +452,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
-                  ],
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: BizStyle.shadow(),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,7 +632,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       padding: EdgeInsets.all(20),
                       child:
                           CircularProgressIndicator(color: AppColors.primary))),
-              error: (e, _) => Center(child: Text(ApiException.fromDioError(e).message)),
+              error: (e, _) =>
+                  Center(child: Text(ApiException.fromDioError(e).message)),
               data: (payouts) {
                 if (payouts.isEmpty) {
                   return Container(
@@ -642,7 +641,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: AppColors.border)),
                     child: const Center(
                         child: Text('No payout transactions found',
@@ -699,11 +698,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: [
-                          BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
-                        ],
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: BizStyle.shadow(),
                       ),
                       child: Row(
                         children: [
@@ -711,8 +707,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: method == 'mobile'
-                                  ? Colors.amber.shade50
-                                  : Colors.blue.shade50,
+                                  ? AppColors.nowYellow.withValues(alpha: 0.18)
+                                  : AppColors.info.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -720,8 +716,8 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                                   ? Icons.phone_android_rounded
                                   : Icons.account_balance_rounded,
                               color: method == 'mobile'
-                                  ? Colors.amber.shade800
-                                  : Colors.blue.shade800,
+                                  ? AppColors.accentDark
+                                  : AppColors.info,
                               size: 20,
                             ),
                           ),

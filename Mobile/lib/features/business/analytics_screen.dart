@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
+import 'widgets/biz_ui.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 
 // ── Analytics Riverpod Provider ───────────────────────────────────────────────
@@ -80,44 +81,39 @@ class _AnalyticsBody extends StatelessWidget {
       slivers: [
         // ── Total Sales Header ──
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 28),
-              width: double.infinity,
-              decoration: BoxDecoration(
+            child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            width: double.infinity,
+            decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
-                boxShadow: [
-                  BoxShadow(color: AppColors.char.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
-                ]
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'Total Sales',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
+                boxShadow: BizStyle.shadow()),
+            child: Column(
+              children: [
+                const Text(
+                  'Total Sales',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'RWF ${_fmt(totalRevenue.toInt())}',
-                    style: const TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -1.0,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'RWF ${_fmt(totalRevenue.toInt())}',
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -1.0,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          )
-        ),
+          ),
+        )),
 
         // ── Scrollable content lists ──
         SliverToBoxAdapter(
@@ -206,14 +202,7 @@ class _AnalyticsBody extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.char.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    boxShadow: BizStyle.shadow(),
                   ),
                   child: _buildChart(rawTrend),
                 ),
@@ -240,19 +229,7 @@ class _AnalyticsBody extends StatelessWidget {
 
                 // Top product list cards
                 if (rawProducts.isEmpty)
-                  Container(
-                    height: 100,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Text(
-                      'No sales data available yet',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  )
+                  const _PlaceholderProductRows()
                 else
                   ...List.generate(rawProducts.length, (idx) {
                     final prod = rawProducts[idx] as Map;
@@ -274,8 +251,13 @@ class _AnalyticsBody extends StatelessWidget {
 
   // Double series or sales representation bar builder using fl_chart
   Widget _buildChart(List trend) {
+    // Show the chart shape even with no data, greyed out and labelled, so the
+    // dashboard never reads as broken or half-built.
     if (trend.isEmpty) {
-      return const Center(child: Text('Insufficient data to display trends'));
+      return const _PlaceholderBarChart(
+        label: 'Not enough data yet',
+        hint: 'Your sales trend appears here once orders come through.',
+      );
     }
 
     final double maxVal = trend.fold<double>(
@@ -411,15 +393,8 @@ class _QuickStat extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.char.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: BizStyle.shadow(),
         ),
         child: Row(
           children: [
@@ -501,8 +476,8 @@ class _ProductRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: BizStyle.shadow(),
       ),
       child: Row(
         children: [
@@ -588,5 +563,185 @@ class _ProductRow extends StatelessWidget {
       buf.write(s[i]);
     }
     return buf.toString();
+  }
+}
+
+/// A greyed-out bar chart used when there is nothing to plot yet. The shape is
+/// dummy data — it exists so the section keeps its visual weight and the user
+/// can see what will appear, rather than staring at an empty box.
+class _PlaceholderBarChart extends StatelessWidget {
+  final String label;
+  final String hint;
+  const _PlaceholderBarChart({required this.label, required this.hint});
+
+  // Arbitrary but plausible silhouette.
+  static const _shape = [0.35, 0.55, 0.4, 0.75, 0.5, 0.85, 0.6];
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IgnorePointer(
+          child: Opacity(
+            opacity: 0.35,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: 1.0,
+                minY: 0,
+                gridData: const FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                barTouchData: BarTouchData(enabled: false),
+                barGroups: [
+                  for (var i = 0; i < _shape.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: _shape[i],
+                          width: 16,
+                          color: AppColors.textTertiary,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.moringa.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.insights_rounded,
+                      size: 15, color: AppColors.textSecondary),
+                  const SizedBox(width: 7),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                hint,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 11.5,
+                    height: 1.35,
+                    color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Greyed skeleton rows standing in for the top-products list.
+class _PlaceholderProductRows extends StatelessWidget {
+  const _PlaceholderProductRows();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IgnorePointer(
+          child: Opacity(
+            opacity: 0.3,
+            child: Column(
+              children: List.generate(
+                3,
+                (i) => Container(
+                  height: 58,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: AppColors.textTertiary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                                height: 9,
+                                width: 130,
+                                color: AppColors.textTertiary),
+                            const SizedBox(height: 7),
+                            Container(
+                                height: 8,
+                                width: 70,
+                                color: AppColors.textTertiary),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.moringa.withValues(alpha: 0.08),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Text(
+            'No sales data yet',
+            style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary),
+          ),
+        ),
+      ],
+    );
   }
 }

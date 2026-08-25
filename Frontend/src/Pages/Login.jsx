@@ -61,7 +61,7 @@ const Login = () => {
         <div className="w-full md:w-1/2 md:ml-[50%] flex flex-col items-center justify-center px-4 py-8">
           {/* Logo */}
           <div className="mb-8">
-            <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-12" />
+            <img src={assets.wordmarklogo} alt="ChopNow" className="h-12" />
           </div>
 
           <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
@@ -74,7 +74,10 @@ const Login = () => {
                 >
                   Sign in
                 </h2>
-                <p className="text-sm mt-3 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-3 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Choose how you want to sign in
                 </p>
 
@@ -107,7 +110,10 @@ const Login = () => {
                 </button>
 
                 {/* Sign up link */}
-                <p className="text-sm mt-8 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-8 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Don't have an account?{' '}
                   <Link
                     to="/signup"
@@ -136,7 +142,10 @@ const Login = () => {
                     Back
                   </button>
                 </div>
-                <p className="text-sm mb-6 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mb-6 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Welcome back! Please sign in to continue
                 </p>
 
@@ -160,7 +169,10 @@ const Login = () => {
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">
                       <div className="w-full h-px bg-gray-300"></div>
-                      <p className="text-nowrap text-sm" style={{ color: 'var(--color-gray-50)' }}>
+                      <p
+                        className="text-nowrap text-sm"
+                        style={{ color: 'var(--color-moringa-muted)' }}
+                      >
                         or sign in with email
                       </p>
                       <div className="w-full h-px bg-gray-300"></div>
@@ -170,7 +182,7 @@ const Login = () => {
 
                 {/* Email Input */}
                 <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                  <Mail className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                  <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type="email"
                     placeholder="Email address"
@@ -182,7 +194,7 @@ const Login = () => {
 
                 {/* Password Input */}
                 <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                  <Lock className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                  <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
@@ -198,12 +210,12 @@ const Login = () => {
                     {showPassword ? (
                       <EyeOff
                         className="w-5 h-5 cursor-pointer"
-                        style={{ color: 'var(--color-gray-50)' }}
+                        style={{ color: 'var(--color-moringa-muted)' }}
                       />
                     ) : (
                       <Eye
                         className="w-5 h-5 cursor-pointer"
-                        style={{ color: 'var(--color-gray-50)' }}
+                        style={{ color: 'var(--color-moringa-muted)' }}
                       />
                     )}
                   </button>
@@ -216,7 +228,7 @@ const Login = () => {
                     <label
                       className="text-sm cursor-pointer"
                       htmlFor="checkbox"
-                      style={{ color: 'var(--color-gray-50)' }}
+                      style={{ color: 'var(--color-moringa-muted)' }}
                     >
                       Remember me
                     </label>
@@ -278,7 +290,10 @@ const Login = () => {
                     {/* Manual Address Input */}
                     <div className="mt-3 relative">
                       <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
-                        <MapPin className="w-5 h-5" style={{ color: 'var(--color-gray-50)' }} />
+                        <MapPin
+                          className="w-5 h-5"
+                          style={{ color: 'var(--color-moringa-muted)' }}
+                        />
                         <input
                           type="text"
                           placeholder="Or enter address manually"
@@ -344,7 +359,7 @@ const Login = () => {
 
                     {/* Selected Address Display */}
                     {address && (
-                      <p className="mt-2 text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                      <p className="mt-2 text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                         Selected: {address}
                       </p>
                     )}
@@ -466,7 +481,10 @@ const Login = () => {
                 </button>
 
                 {/* Sign up link */}
-                <p className="text-sm mt-4 text-center" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-sm mt-4 text-center"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Don't have an account?{' '}
                   <Link
                     to="/signup"

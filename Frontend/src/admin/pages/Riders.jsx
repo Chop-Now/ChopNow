@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   ListFilter,
@@ -95,7 +95,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
             <span
               className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 rider.riderStatus === 'approved'
-                  ? 'bg-primary text-tertiary border border-solid/30 dark:bg-solid/10/30 dark:text-solidTwo'
+                  ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400'
                   : rider.riderStatus === 'pending'
                     ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 animate-pulse'
                     : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/30 dark:text-rose-400'
@@ -189,7 +189,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     href={rider.riderDetails?.nationalIdPhoto}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] text-solid font-semibold hover:underline"
+                    className="text-[10px] text-green-600 font-semibold hover:underline"
                   >
                     Open Full
                   </a>
@@ -224,7 +224,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     href={rider.riderDetails?.vehiclePhoto}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] text-solid font-semibold hover:underline"
+                    className="text-[10px] text-green-600 font-semibold hover:underline"
                   >
                     Open Full
                   </a>
@@ -259,7 +259,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                   <button
                     onClick={handleApprove}
                     disabled={submittingAction}
-                    className="flex-1 py-3 bg-solid hover:bg-tertiary disabled:opacity-70 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-md"
+                    className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-70 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-md"
                   >
                     {submittingAction && <Loader2 className="w-4 h-4 animate-spin" />}
                     Approve Application
@@ -420,11 +420,11 @@ const Riders = ({ defaultStatus = 'all' }) => {
             )}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-solid border-l-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-green-500 border-l-4">
           <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Active Approved Riders
           </p>
-          <p className="text-2xl font-black text-solid dark:text-solid mt-1">
+          <p className="text-2xl font-black text-green-600 dark:text-green-500 mt-1">
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
@@ -457,7 +457,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
               placeholder="Search rider name, phone or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-solid/20 focus:border-solid dark:text-white"
+              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-600 dark:text-white"
             />
           </div>
 
@@ -487,7 +487,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
         {/* Table Area */}
         {loading ? (
           <div className="py-20 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-solid mx-auto mb-3" />
+            <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-3" />
             <p className="text-xs text-slate-500">Loading riders database...</p>
           </div>
         ) : filteredRiders.length === 0 ? (
@@ -542,7 +542,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
                           rider.riderStatus === 'approved'
-                            ? 'bg-primary text-tertiary border-solid/30 dark:bg-solid/10 dark:text-solidTwo'
+                            ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400'
                             : rider.riderStatus === 'pending'
                               ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400'
                               : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400'
