@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Users,
@@ -222,7 +222,7 @@ export const AllUsers = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
-        return 'bg-primary text-tertiary';
+        return 'bg-green-100 text-green-700';
       case 'pending':
         return 'bg-yellow-100 text-yellow-700';
       case 'suspended':
@@ -399,8 +399,8 @@ export const AllUsers = () => {
               <div className="flex items-center gap-1 mt-1">
                 {weeklyChange >= 0 ? (
                   <>
-                    <ArrowUpRight className="w-3 h-3 text-solid dark:text-solidTwo" />
-                    <span className="text-[10px] text-solid dark:text-solidTwo font-medium">
+                    <ArrowUpRight className="w-3 h-3 text-green-600 dark:text-green-400" />
+                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
                       +{weeklyChange} this week
                     </span>
                   </>
@@ -435,8 +435,8 @@ export const AllUsers = () => {
                 </p>
               )}
             </div>
-            <div className="bg-primary dark:bg-solid/10 p-3 rounded-full">
-              <Store className="w-6 h-6 text-solid dark:text-solidTwo" />
+            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-full">
+              <Store className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -499,7 +499,7 @@ export const AllUsers = () => {
               placeholder="Search by name or email"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-solid focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
 
@@ -509,7 +509,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('all')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'all'
-                  ? 'bg-solid text-white'
+                  ? 'bg-green-600 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -519,7 +519,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('customer')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'customer'
-                  ? 'bg-solid text-white'
+                  ? 'bg-green-600 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -529,7 +529,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('vendor')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'vendor'
-                  ? 'bg-solid text-white'
+                  ? 'bg-green-600 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -539,7 +539,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('rider')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'rider'
-                  ? 'bg-solid text-white'
+                  ? 'bg-green-600 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -549,7 +549,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('admin')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'admin'
-                  ? 'bg-solid text-white'
+                  ? 'bg-green-600 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -572,7 +572,7 @@ export const AllUsers = () => {
                       selectedUsers.length === currentUsers.length && currentUsers.length > 0
                     }
                     onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 text-solid focus:ring-solid cursor-pointer"
+                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                   />
                 </th>
                 <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
@@ -600,7 +600,7 @@ export const AllUsers = () => {
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
                       onChange={() => handleSelectUser(user.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-solid focus:ring-solid cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                     />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -639,7 +639,7 @@ export const AllUsers = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedUser(user)}
-                        className="text-solid hover:text-tertiary transition-colors cursor-pointer"
+                        className="text-green-600 hover:text-green-800 transition-colors cursor-pointer"
                       >
                         <Pen className="w-4 h-4" />
                       </button>
@@ -764,7 +764,7 @@ export const AllUsers = () => {
                   {!editingRoles ? (
                     <button
                       onClick={() => handleEditRoles(selectedUser)}
-                      className="text-[9px] text-solid hover:text-tertiary dark:text-solidTwo font-medium cursor-pointer"
+                      className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer"
                     >
                       Edit Roles
                     </button>
@@ -779,7 +779,7 @@ export const AllUsers = () => {
                       <button
                         onClick={handleSaveRoles}
                         disabled={savingRoles}
-                        className="text-[9px] text-solid hover:text-tertiary dark:text-solidTwo font-medium cursor-pointer disabled:opacity-50"
+                        className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer disabled:opacity-50"
                       >
                         {savingRoles ? 'Saving...' : 'Save'}
                       </button>
@@ -857,7 +857,7 @@ export const AllUsers = () => {
               {selectedUser.status === 'pending' && (
                 <button
                   onClick={() => handleApproveUser(selectedUser.id)}
-                  className="w-full bg-solid hover:bg-tertiary dark:bg-tertiary dark:hover:bg-solid text-white font-semibold py-2 px-3 text-xs rounded-lg transition-colors mb-3 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold py-2 px-3 text-xs rounded-lg transition-colors mb-3 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CheckCircle className="w-3 h-3" />
                   Approve User
@@ -896,32 +896,32 @@ export const AllUsers = () => {
               {selectedUser.role !== 'rider' && (
                 <div className="mb-3">
                   <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
-                    <Leaf className="w-3 h-3 text-solid dark:text-solidTwo" />
+                    <Leaf className="w-3 h-3 text-green-600 dark:text-green-400" />
                     Environmental Impact
                   </h4>
                   <div className="grid grid-cols-2 gap-1.5">
-                    <div className="p-2 bg-primary dark:bg-solid/10 rounded-lg border border-solidTwo/30 dark:border-solid/30">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                       <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
                         Meals Saved
                       </p>
-                      <p className="text-base font-bold text-tertiary dark:text-solidTwo">
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">
                         {selectedUser.impact.meals}
                       </p>
                     </div>
-                    <div className="p-2 bg-primary dark:bg-solid/10 rounded-lg border border-solidTwo/30 dark:border-solid/30">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                       <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
                         CO₂ Saved (kg)
                       </p>
-                      <p className="text-base font-bold text-tertiary dark:text-solidTwo">
+                      <p className="text-base font-bold text-green-700 dark:text-green-400">
                         {selectedUser.impact.co2Saved}
                       </p>
                     </div>
                     {selectedUser.impact.waterSaved !== undefined && (
-                      <div className="p-2 bg-primary dark:bg-solid/10 rounded-lg border border-solidTwo/30 dark:border-solid/30 col-span-2">
+                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
                         <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
                           Water Saved (L)
                         </p>
-                        <p className="text-base font-bold text-tertiary dark:text-solidTwo">
+                        <p className="text-base font-bold text-green-700 dark:text-green-400">
                           {selectedUser.impact.waterSaved}
                         </p>
                       </div>
@@ -941,7 +941,7 @@ export const AllUsers = () => {
                       key={index}
                       className="flex items-start gap-1.5 p-1.5 border border-slate-200 dark:border-slate-700 rounded-lg"
                     >
-                      <div className="w-1 h-1 bg-solid dark:bg-solid rounded-full mt-1"></div>
+                      <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full mt-1"></div>
                       <div className="flex-1">
                         <p className="text-[10px] font-medium text-slate-900 dark:text-white">
                           {activity.action}
@@ -968,7 +968,7 @@ export const AllUsers = () => {
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder="Add notes about this user..."
-                  className="w-full p-2 text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-solid focus:border-transparent resize-none"
+                  className="w-full p-2 text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                   rows="2"
                 />
                 <button
@@ -1076,7 +1076,7 @@ export const RolesPermissions = () => {
             Manage admin roles and their access levels
           </p>
         </div>
-        <button className="bg-solid hover:bg-tertiary dark:bg-tertiary dark:hover:bg-solid text-white font-semibold py-2 px-4 text-sm rounded-lg transition-colors cursor-pointer">
+        <button className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold py-2 px-4 text-sm rounded-lg transition-colors cursor-pointer">
           + Create New Role
         </button>
       </div>
@@ -1096,7 +1096,7 @@ export const RolesPermissions = () => {
                   {role.description}
                 </p>
               </div>
-              <span className="bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo text-[10px] font-semibold px-2 py-1 rounded-full">
+              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-semibold px-2 py-1 rounded-full">
                 {role.userCount} {role.userCount === 1 ? 'user' : 'users'}
               </span>
             </div>
@@ -1111,7 +1111,7 @@ export const RolesPermissions = () => {
                     key={idx}
                     className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
                   >
-                    <CheckCircle className="w-3 h-3 text-solid dark:text-solidTwo" />
+                    <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
                     {permission}
                   </li>
                 ))}
@@ -1119,7 +1119,7 @@ export const RolesPermissions = () => {
             </div>
 
             <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex gap-2 mt-auto">
-              <button className="flex-1 bg-solid hover:bg-tertiary dark:bg-tertiary dark:hover:bg-solid text-white font-medium py-2 px-3 text-xs rounded-lg transition-colors cursor-pointer">
+              <button className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-medium py-2 px-3 text-xs rounded-lg transition-colors cursor-pointer">
                 Edit Role
               </button>
               <button className="px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
@@ -1170,7 +1170,7 @@ export const UserActivity = () => {
       case 'order':
         return <FileText className="w-4 h-4 text-blue-600" />;
       case 'delivery':
-        return <CheckCircle className="w-4 h-4 text-solid" />;
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'update':
         return <Pen className="w-4 h-4 text-purple-600" />;
       case 'registration':
@@ -1189,7 +1189,7 @@ export const UserActivity = () => {
       case 'order':
         return 'bg-blue-50 dark:bg-blue-900/20';
       case 'delivery':
-        return 'bg-primary dark:bg-solid/10';
+        return 'bg-green-50 dark:bg-green-900/20';
       case 'update':
         return 'bg-purple-50 dark:bg-purple-900/20';
       case 'registration':
@@ -1236,7 +1236,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('24hours')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '24hours'
-                ? 'bg-solid text-white'
+                ? 'bg-green-600 text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
@@ -1246,7 +1246,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('7days')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '7days'
-                ? 'bg-solid text-white'
+                ? 'bg-green-600 text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
@@ -1256,7 +1256,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('30days')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '30days'
-                ? 'bg-solid text-white'
+                ? 'bg-green-600 text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
@@ -1268,7 +1268,7 @@ export const UserActivity = () => {
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-solid" />
+            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
             <span className="ml-2 text-slate-600 dark:text-slate-400">Loading activities...</span>
           </div>
         ) : currentActivities.length === 0 ? (

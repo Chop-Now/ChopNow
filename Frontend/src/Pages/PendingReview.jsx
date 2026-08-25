@@ -33,7 +33,7 @@ const PendingReview = () => {
           </h1>
 
           {/* Description */}
-          <p className="text-xs text-center mb-5" style={{ color: 'var(--color-gray-50)' }}>
+          <p className="text-xs text-center mb-5" style={{ color: 'var(--color-moringa-muted)' }}>
             Thank you for submitting your details. Your application is now under manual review by
             our team to ensure everything is in order.
           </p>
@@ -84,7 +84,7 @@ const PendingReview = () => {
                   >
                     1. Admin review
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
                     Our team is carefully reviewing your application.
                   </p>
                 </div>
@@ -102,7 +102,7 @@ const PendingReview = () => {
                   >
                     2. Approval email
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
                     We will notify you via email once the review is complete.
                   </p>
                 </div>
@@ -120,7 +120,7 @@ const PendingReview = () => {
                   >
                     3. Full dashboard access
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-gray-50)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
                     Once approved, you'll gain full access to your vendor dashboard.
                   </p>
                 </div>
@@ -139,7 +139,7 @@ const PendingReview = () => {
             >
               Have Questions?
             </h2>
-            <p className="text-[10px] mb-3" style={{ color: 'var(--color-gray-50)' }}>
+            <p className="text-[10px] mb-3" style={{ color: 'var(--color-moringa-muted)' }}>
               Find answers to common questions in our FAQ or contact our support.
             </p>
 

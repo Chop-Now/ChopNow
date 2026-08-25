@@ -10,6 +10,7 @@ import '../../core/services/biometric_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
+import '../../shared/animations/scale_tap.dart';
 import '../../shared/widgets/layout/auth_shell.dart';
 
 // ── Role selection constants ──────────────────────────────────────────────────
@@ -352,34 +353,40 @@ class _RoleSelectionStep extends StatelessWidget {
       onBack: onBack,
       title: 'Welcome back',
       subtitle: 'Rescue good food before it goes to waste.',
+      fillHeight: true,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          const Spacer(flex: 2),
           const Text(
-            'How are you signing in?',
+            "Who's chopping?",
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 16),
-          _RoleCard(
-            icon: Icons.shopping_bag_rounded,
-            title: 'I\'m a Customer',
-            subtitle: 'Browse deals and order surplus food',
-            tint: AppColors.moringa,
-            onTap: onSelectCustomer,
+          const SizedBox(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _RoleAvatar(
+                icon: Icons.shopping_bag_rounded,
+                label: 'Customer',
+                tint: AppColors.moringa,
+                onTap: onSelectCustomer,
+              ),
+              const SizedBox(width: 32),
+              _RoleAvatar(
+                icon: Icons.storefront_rounded,
+                label: 'Business',
+                tint: AppColors.pepper,
+                onTap: onSelectBusiness,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _RoleCard(
-            icon: Icons.storefront_rounded,
-            title: 'I\'m a Business',
-            subtitle: 'List surplus and manage your store',
-            tint: AppColors.pepper,
-            onTap: onSelectBusiness,
-          ),
-          const SizedBox(height: 26),
+          const Spacer(flex: 3),
           const _SignUpPrompt(),
         ],
       ),
@@ -387,68 +394,64 @@ class _RoleSelectionStep extends StatelessWidget {
   }
 }
 
-// ── Role card widget ──────────────────────────────────────────────────────────
-class _RoleCard extends StatelessWidget {
+// ── Role avatar (profile-picker style) ────────────────────────────────────────
+class _RoleAvatar extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
 
-  /// Brand colour for the icon tile. Always carries Fufu-on-dark, so it must
-  /// be a dark brand colour (Moringa or Pepper), never Now Yellow.
+  /// Disc colour. Carries a Fufu glyph, so it must be a dark brand colour
+  /// (Moringa or Pepper) — never Now Yellow.
   final Color tint;
   final VoidCallback onTap;
 
-  const _RoleCard({
+  const _RoleAvatar({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.tint,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return ScaleTap(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border, width: 1.5),
-          borderRadius: BorderRadius.circular(20),
-          color: AppColors.surface,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: tint,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Icon(icon, color: AppColors.fufu, size: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Tinted halo echoes the disc treatment used on the onboarding slides.
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: tint.withValues(alpha: 0.12),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary)),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 12.5, color: AppColors.textSecondary)),
+            child: Container(
+              width: 128,
+              height: 128,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: tint,
+                boxShadow: [
+                  BoxShadow(
+                    color: tint.withValues(alpha: 0.30),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
                 ],
               ),
+              child: Icon(icon, size: 54, color: AppColors.fufu),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                size: 14, color: AppColors.textTertiary),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -462,15 +465,20 @@ class _SignUpPrompt extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Don't have an account? ",
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+        const Text(
+          "Don't have an account? ",
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
         GestureDetector(
           onTap: () => context.go('/auth/register'),
-          child: const Text('Create one',
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary)),
+          child: const Text(
+            'Create one',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.moringa,
+            ),
+          ),
         ),
       ],
     );

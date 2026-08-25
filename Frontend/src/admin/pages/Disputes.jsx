@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   History,
@@ -293,8 +293,8 @@ export const CustomerComplaints = () => {
           ? `Avg Resolution: ${formatResolutionTime(disputeStats.avgResolutionMinutes)}`
           : 'No resolutions yet',
       icon: <CircleCheck className="w-6 h-6" />,
-      bgColor: 'bg-primary dark:bg-solid/10',
-      iconColor: 'text-solid dark:text-solidTwo',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
   ];
 
@@ -354,7 +354,7 @@ export const CustomerComplaints = () => {
         return (
           <button
             onClick={() => handleResolve(issue.id)}
-            className="flex items-center gap-1 px-3 py-2 bg-solid hover:bg-tertiary text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Check className="w-4 h-4" />
           </button>
@@ -668,7 +668,7 @@ export const CustomerComplaints = () => {
       {/* Empty State */}
       {filteredIssues.length === 0 && (
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-12 border border-slate-200/50 dark:border-slate-700/50 text-center">
-          <CheckCircle className="w-16 h-16 mx-auto text-solid mb-4" />
+          <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No Issues Found</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             All complaints matching your filters have been resolved or there are no active issues.
@@ -1026,7 +1026,7 @@ export const CustomerComplaints = () => {
                   handleResolve(selectedIssue.id);
                   setSelectedIssue(null);
                 }}
-                className="w-full bg-solid hover:bg-tertiary text-white font-semibold py-3 px-4 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
                 Mark as Resolved

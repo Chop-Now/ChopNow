@@ -101,7 +101,7 @@ const Testimonials = () => {
           <Link
             to="/login"
             aria-label="getStarted"
-            className="px-7 py-3 bg-yellow hover:bg-yellow-dark text-moringa rounded-md active:scale-95 transition-all font-semibold cursor-pointer flex items-center justify-center"
+            className="px-7 py-3 bg-yellow hover:bg-yellow-dark text-char rounded-md active:scale-95 transition-all font-semibold cursor-pointer flex items-center justify-center"
           >
             Get started
           </Link>

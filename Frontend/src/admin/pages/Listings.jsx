@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { categories } from '../../assets/assets';
 import {
   Search,
@@ -244,8 +244,8 @@ export const AllListings = () => {
       title: 'Active Listings',
       value: stats.active,
       icon: <CheckCircle className="w-6 h-6" />,
-      bgColor: 'bg-primary dark:bg-solid/10',
-      iconColor: 'text-solid dark:text-solidTwo',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
     {
       title: 'Inactive Listings',
@@ -1326,7 +1326,7 @@ export const NewListing = () => {
                 </p>
                 <div
                   className="flex items-center gap-1 text-xs mb-0.5"
-                  style={{ color: 'var(--color-gray-50)' }}
+                  style={{ color: 'var(--color-moringa-muted)' }}
                 >
                   <span>{formData.vendor || 'Vendor Name'}</span>
                   <span>•</span>
@@ -1334,7 +1334,7 @@ export const NewListing = () => {
                     1km
                   </span>
                 </div>
-                <p className="text-xs mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
+                <p className="text-xs mb-1.5" style={{ color: 'var(--color-moringa-muted)' }}>
                   Pickup at{' '}
                   {formData.pickupFrom && formData.pickupTo
                     ? `${new Date(formData.pickupFrom).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${new Date(formData.pickupTo).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
@@ -1346,7 +1346,10 @@ export const NewListing = () => {
                       RWF {formData.offerPrice ? Number(formData.offerPrice).toLocaleString() : '0'}
                     </p>
                     {formData.price && (
-                      <p className="text-xs line-through" style={{ color: 'var(--color-gray-50)' }}>
+                      <p
+                        className="text-xs line-through"
+                        style={{ color: 'var(--color-moringa-muted)' }}
+                      >
                         RWF {Number(formData.price).toLocaleString()}
                       </p>
                     )}
@@ -2055,7 +2058,7 @@ const EditListing = ({ product, onBack }) => {
                 </p>
                 <div
                   className="flex items-center gap-1 text-xs mb-0.5"
-                  style={{ color: 'var(--color-gray-50)' }}
+                  style={{ color: 'var(--color-moringa-muted)' }}
                 >
                   <span>{formData.vendor || 'Vendor Name'}</span>
                   <span>•</span>
@@ -2063,7 +2066,7 @@ const EditListing = ({ product, onBack }) => {
                     1km
                   </span>
                 </div>
-                <p className="text-xs mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
+                <p className="text-xs mb-1.5" style={{ color: 'var(--color-moringa-muted)' }}>
                   Pickup at{' '}
                   {formData.pickupFrom && formData.pickupTo
                     ? `${new Date(formData.pickupFrom).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${new Date(formData.pickupTo).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
@@ -2075,7 +2078,10 @@ const EditListing = ({ product, onBack }) => {
                       RWF {formData.offerPrice ? Number(formData.offerPrice).toLocaleString() : '0'}
                     </p>
                     {formData.price && (
-                      <p className="text-xs line-through" style={{ color: 'var(--color-gray-50)' }}>
+                      <p
+                        className="text-xs line-through"
+                        style={{ color: 'var(--color-moringa-muted)' }}
+                      >
                         RWF {Number(formData.price).toLocaleString()}
                       </p>
                     )}

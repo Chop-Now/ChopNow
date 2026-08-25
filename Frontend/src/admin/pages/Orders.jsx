@@ -316,9 +316,9 @@ const OrdersTable = ({ title, statusFilter }) => {
         return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
       case 'Completed':
       case 'Delivered':
-        return 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'Ready':
-        return 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
       case 'In Transit':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
       case 'Cancelled':
@@ -352,7 +352,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                   setQuickCode('');
                   setQuickVerifyResult(null);
                 }}
-                className="w-full md:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-semibold shadow-md shadow-solid/10 hover:shadow-solid/20 transition-all cursor-pointer whitespace-nowrap"
+                className="w-full md:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-green-500/10 hover:shadow-green-500/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 <CheckCircle className="w-4 h-4" />
                 Quick Verify Pickup
@@ -537,10 +537,11 @@ const OrdersTable = ({ title, statusFilter }) => {
                   </td>
                   <td className="px-5 py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${order.type === 'Delivery'
+                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        order.type === 'Delivery'
                           ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400'
-                          : 'bg-primary text-tertiary dark:bg-solid/10 dark:text-solidTwo'
-                        }`}
+                          : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400'
+                      }`}
                     >
                       {order.type}
                     </span>
@@ -581,7 +582,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'ready_for_pickup')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-solid hover:bg-tertiary text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Ready
                         </button>
@@ -603,7 +604,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'completed')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-solid hover:bg-tertiary text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Deliver
                         </button>
@@ -613,7 +614,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                       {order.status === 'Ready' && order.type === 'Pickup' && (
                         <button
                           onClick={() => handleRowClick(order.orderId)}
-                          className="px-2 py-1 bg-solid hover:bg-tertiary text-white rounded text-[10px] font-bold transition-all cursor-pointer animate-pulse shrink-0"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-bold transition-all cursor-pointer animate-pulse shrink-0"
                         >
                           Verify Code
                         </button>
@@ -655,10 +656,11 @@ const OrdersTable = ({ title, statusFilter }) => {
                 <button
                   key={index + 1}
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-colors ${currentPage === index + 1
-                      ? 'bg-solid text-white shadow-md shadow-solid/15'
+                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-colors ${
+                    currentPage === index + 1
+                      ? 'bg-green-600 text-white shadow-md shadow-green-500/15'
                       : 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
-                    }`}
+                  }`}
                 >
                   {index + 1}
                 </button>
@@ -741,7 +743,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Payment Status:</span>
                       <span
-                        className={`font-semibold ${selectedOrder.payment?.paymentStatus === 'completed' ? 'text-solid' : 'text-yellow-600'}`}
+                        className={`font-semibold ${selectedOrder.payment?.paymentStatus === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}
                       >
                         {selectedOrder.payment?.paymentStatus || 'pending'}
                       </span>
@@ -913,14 +915,14 @@ const OrdersTable = ({ title, statusFilter }) => {
                 {/* 1. Verify Pickup Code Block */}
                 {selectedOrder.fulfillmentType === 'pickup' &&
                   ['paid', 'confirmed', 'ready_for_pickup'].includes(selectedOrder.status) && (
-                    <div className="bg-primary dark:bg-solid/10 border border-solid/30/60 dark:border-emerald-900/40 rounded-xl p-4 space-y-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-4 space-y-3">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4.5 h-4.5 text-solid dark:text-solidTwo" />
-                        <h5 className="font-bold text-tertiary dark:text-solidTwo">
+                        <CheckCircle className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
+                        <h5 className="font-bold text-emerald-800 dark:text-emerald-300">
                           Verify Customer Pickup Code
                         </h5>
                       </div>
-                      <p className="text-[11px] text-tertiary dark:text-solidTwo">
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
                         Enter the customer's 6-digit pickup code to confirm pickup and complete the
                         order.
                       </p>
@@ -931,7 +933,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                           placeholder="Enter pickup code"
                           value={pickupCode}
                           onChange={(e) => setPickupCode(e.target.value)}
-                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-solid/30 rounded-lg text-sm text-center font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent uppercase"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 rounded-lg text-sm text-center font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase"
                         />
                         <button
                           onClick={() =>
@@ -941,7 +943,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                             )
                           }
                           disabled={verifyingCode}
-                          className="px-4 py-2 bg-solid hover:bg-tertiary disabled:bg-solid text-white rounded-lg font-bold transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-bold transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                         >
                           {verifyingCode ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1028,7 +1030,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                           )
                         }
                         disabled={updatingStatus}
-                        className="px-3.5 py-2 bg-solid hover:bg-tertiary text-white rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                       >
                         {updatingStatus ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1094,7 +1096,7 @@ const OrdersTable = ({ title, statusFilter }) => {
             {/* Header */}
             <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
               <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <CheckCircle className="w-4.5 h-4.5 text-solid" />
+                <CheckCircle className="w-4.5 h-4.5 text-green-600" />
                 Quick Verify Pickup Code
               </h3>
               <button
@@ -1122,7 +1124,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                   placeholder="e.g. A9B8C7"
                   value={quickCode}
                   onChange={(e) => setQuickCode(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-lg text-center font-bold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent text-slate-800 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-lg text-center font-bold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-slate-800 dark:text-white"
                   required
                 />
               </div>
@@ -1130,26 +1132,27 @@ const OrdersTable = ({ title, statusFilter }) => {
               {/* Status Results Display */}
               {quickVerifyResult && (
                 <div
-                  className={`p-4 rounded-xl border ${quickVerifyResult.success
-                      ? 'bg-primary dark:bg-solid/10 border-solid/30 dark:border-green-900/40 text-tertiary dark:text-solidTwo'
+                  className={`p-4 rounded-xl border ${
+                    quickVerifyResult.success
+                      ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-300'
                       : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300'
-                    }`}
+                  }`}
                 >
                   {quickVerifyResult.success ? (
                     <div className="space-y-1">
-                      <p className="font-bold flex items-center gap-1.5 text-tertiary dark:text-solidTwo">
-                        <CheckCircle className="w-4.5 h-4.5 text-solid" />
+                      <p className="font-bold flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                        <CheckCircle className="w-4.5 h-4.5 text-green-600" />
                         Verification Successful!
                       </p>
-                      <p className="text-[11px] text-tertiary dark:text-solidTwo mt-1">
+                      <p className="text-[11px] text-green-700 dark:text-green-400 mt-1">
                         Order <span className="font-bold">#{quickVerifyResult.orderId}</span> has
                         been marked as Completed.
                       </p>
-                      <p className="text-[11px] text-tertiary dark:text-solidTwo">
+                      <p className="text-[11px] text-green-700 dark:text-green-400">
                         Customer:{' '}
                         <span className="font-semibold">{quickVerifyResult.customerName}</span>
                       </p>
-                      <p className="text-[11px] text-tertiary dark:text-solidTwo">
+                      <p className="text-[11px] text-green-700 dark:text-green-400">
                         Total:{' '}
                         <span className="font-semibold">
                           RWF {quickVerifyResult.total.toLocaleString()}
@@ -1181,7 +1184,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                 <button
                   type="submit"
                   disabled={verifyingCode}
-                  className="px-4 py-2 bg-solid hover:bg-tertiary disabled:opacity-50 text-white rounded-lg font-bold shadow-md shadow-solid/10 hover:shadow-solid/20 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg font-bold shadow-md shadow-green-500/10 hover:shadow-green-500/20 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
                   {verifyingCode ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

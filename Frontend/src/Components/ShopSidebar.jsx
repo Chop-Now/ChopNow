@@ -27,14 +27,14 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
             onClick={() => setShowSortDropdown(!showSortDropdown)}
             className="w-full px-3 py-2 rounded-lg flex items-center justify-between text-xs transition-all hover:border-opacity-70"
             style={{
-              border: '1px solid var(--color-gray-50)',
+              border: '1px solid var(--color-moringa-muted)',
               color: 'var(--color-textColor)',
             }}
           >
             <span>{sortBy}</span>
             <ChevronDown
               className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`}
-              style={{ color: 'var(--color-gray-50)' }}
+              style={{ color: 'var(--color-moringa-muted)' }}
             />
           </button>
 
@@ -143,7 +143,7 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
         </h3>
         <p
           className="text-xs leading-relaxed text-center"
-          style={{ color: 'var(--color-gray-50)' }}
+          style={{ color: 'var(--color-moringa-muted)' }}
         >
           You've saved <strong style={{ color: 'var(--color-textColor)' }}>5kg</strong> of CO
           <sub>2</sub> so far. Keep it up!

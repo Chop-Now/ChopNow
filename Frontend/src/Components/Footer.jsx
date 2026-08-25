@@ -104,7 +104,7 @@ const Footer = () => {
                 className="bg-transparent outline-none rounded-full px-4 h-full flex-1 text-moringa placeholder:text-moringa/45"
                 placeholder="Enter your email"
               />
-              <button className="bg-yellow hover:bg-yellow-dark text-moringa rounded-full h-9 mr-1.5 px-6 flex items-center justify-center text-xs font-semibold transition-all active:scale-95 cursor-pointer">
+              <button className="bg-moringa hover:bg-moringa-dark text-fufu rounded-full h-9 mr-1.5 px-6 flex items-center justify-center text-xs font-semibold transition-all active:scale-95 cursor-pointer">
                 Subscribe
               </button>
             </div>

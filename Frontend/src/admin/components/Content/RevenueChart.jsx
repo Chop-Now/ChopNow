@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 const RevenueChart = () => {
@@ -83,7 +83,7 @@ const RevenueChart = () => {
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
-                <stop offset="100%" stopColor="#0A291E" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.6} />
               </linearGradient>
               <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />

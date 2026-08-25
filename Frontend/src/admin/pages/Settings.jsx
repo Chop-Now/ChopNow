@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CircleUserRound,
   ReceiptText,
@@ -751,7 +751,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                     onClick={() => setActiveTab(item.id)}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer ${
                       activeTab === item.id
-                        ? 'bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo shadow-sm'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
@@ -1382,8 +1382,8 @@ const Settings = ({ initialTab = 'profile' }) => {
               {/* Commission & Payout Settings */}
               <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary dark:bg-solid/10 flex items-center justify-center">
-                    <Percent className="w-5 h-5 text-solid dark:text-solidTwo" />
+                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <Percent className="w-5 h-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -1528,7 +1528,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                           className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 rounded-full peer after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
                             feature.key === 'maintenanceMode'
                               ? 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 peer-checked:after:translate-x-full peer-checked:bg-red-600'
-                              : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-solid dark:peer-focus:ring-solid peer-checked:after:translate-x-full peer-checked:bg-solid'
+                              : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:bg-green-600'
                           }`}
                         ></div>
                       </label>
@@ -1596,7 +1596,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-solid dark:peer-focus:ring-solid rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-solid"></div>
+                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
                       </label>
                     </div>
                   ))}
@@ -1749,8 +1749,8 @@ const Settings = ({ initialTab = 'profile' }) => {
                   </div>
                   <div className="flex items-center space-x-3">
                     {twoFactorEnabled ? (
-                      <div className="flex items-center justify-center px-3 py-1.5 rounded-full bg-primary dark:bg-solid/10">
-                        <span className="text-xs font-medium text-solid dark:text-solidTwo">
+                      <div className="flex items-center justify-center px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30">
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">
                           Enabled
                         </span>
                       </div>
@@ -1771,7 +1771,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                         disabled={twoFALoading}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-solid dark:peer-focus:ring-solid rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-solid"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1883,7 +1883,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                             </td>
                             <td className="py-3">
                               {activity.status === 'Successful' ? (
-                                <span className="inline-flex items-center space-x-1 px-2 py-1 bg-primary dark:bg-solid/10 text-tertiary dark:text-solidTwo rounded text-xs font-medium">
+                                <span className="inline-flex items-center space-x-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-medium">
                                   <CheckCircle className="w-3 h-3" />
                                   <span>Successful</span>
                                 </span>
