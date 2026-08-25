@@ -101,7 +101,7 @@ const ProductCard = memo(({ product }) => {
 
         <div
           className="flex items-center gap-1 text-xs mb-0.5"
-          style={{ color: 'var(--color-gray-50)' }}
+          style={{ color: 'var(--color-moringa-muted)' }}
         >
           <span>{product.vendor || 'Unknown Vendor'}</span>
           <span>•</span>
@@ -111,7 +111,7 @@ const ProductCard = memo(({ product }) => {
         </div>
 
         {/* Pickup time row */}
-        <p className="text-xs mb-1.5" style={{ color: 'var(--color-gray-50)' }}>
+        <p className="text-xs mb-1.5" style={{ color: 'var(--color-moringa-muted)' }}>
           Pickup at {product.pickupTime || 'Flexible'}
         </p>
 
@@ -141,7 +141,7 @@ const ProductCard = memo(({ product }) => {
               RWF {(offerPrice || 0).toLocaleString()}
             </p>
             {price > offerPrice && (
-              <p className="text-xs line-through" style={{ color: 'var(--color-gray-50)' }}>
+              <p className="text-xs line-through" style={{ color: 'var(--color-moringa-muted)' }}>
                 RWF {price.toLocaleString()}
               </p>
             )}

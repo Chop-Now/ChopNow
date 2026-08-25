@@ -55,7 +55,7 @@ const Advisors = () => {
       </motion.h1>
       <motion.p
         className="max-w-2xl mb-12 text-sm md:text-base"
-        style={{ color: 'var(--color-gray-50)' }}
+        style={{ color: 'var(--color-moringa-muted)' }}
         initial={{ y: -20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}

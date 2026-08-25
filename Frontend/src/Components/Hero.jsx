@@ -120,13 +120,13 @@ const Hero = () => {
             >
               <Link
                 to="/login"
-                className="px-6 py-3 transition-all border border-moringa/20 text-moringa text-sm font-semibold cursor-pointer active:scale-95 hover:bg-yellow-dark bg-yellow rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(15, 61, 46,0.35)] w-80 sm:w-auto flex items-center justify-center"
+                className="px-6 py-3 transition-all border border-moringa/20 text-fufu text-sm font-semibold cursor-pointer active:scale-95 hover:bg-moringa-dark bg-moringa rounded-md h-11 sm:text-base shadow-[5px_5px_0px_0px_rgba(15,61,46,0.35)] w-80 sm:w-auto flex items-center justify-center"
               >
                 Get started
               </Link>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center justify-center gap-2 border border-moringa/30 active:scale-95 hover:bg-scaffold transition text-moringa rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-surface shadow-[5px_5px_0px_0px_rgba(15, 61, 46,0.25)] cursor-pointer w-80 sm:w-auto"
+                className="flex items-center justify-center gap-2 border border-moringa/30 active:scale-95 hover:bg-scaffold transition text-moringa rounded-md px-4 h-11 text-sm sm:text-base font-semibold bg-surface shadow-[5px_5px_0px_0px_rgba(15,61,46,0.25)] cursor-pointer w-80 sm:w-auto"
               >
                 <Video size={18} />
                 <span>Watch demo</span>

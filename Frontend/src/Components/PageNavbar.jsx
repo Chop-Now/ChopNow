@@ -53,7 +53,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
         style={{ borderColor: '#E5E5E5' }}
       >
         <NavLink to="/" onClick={() => setOpen(false)}>
-          <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="h-9" />
+          <img src={assets.wordmarklogo} alt="ChopNow" className="h-9" />
         </NavLink>
 
         {/* Desktop Menu */}
@@ -83,7 +83,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
           {!hideSearch && (
             <div
               className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full"
-              style={{ border: '1px solid var(--color-gray-50)', backgroundColor: 'white' }}
+              style={{ border: '1px solid var(--color-moringa-muted)', backgroundColor: 'white' }}
             >
               <input
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,7 +92,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                 type="text"
                 placeholder="Search products"
               />
-              <Search className="w-4 h-4" style={{ color: 'var(--color-gray-50)' }} />
+              <Search className="w-4 h-4" style={{ color: 'var(--color-moringa-muted)' }} />
             </div>
           )}
 
@@ -145,7 +145,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                       >
                         {user.firstName} {user.lastName}
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                      <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                         {user.email}
                       </p>
                     </div>
@@ -155,7 +155,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                       <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
                         <p
                           className="text-xs font-medium mb-2"
-                          style={{ color: 'var(--color-gray-50)' }}
+                          style={{ color: 'var(--color-moringa-muted)' }}
                         >
                           Switch Mode
                         </p>
@@ -333,9 +333,9 @@ const PageNavbar = ({ onMobileFilterClick }) => {
         <div className="md:hidden px-6 py-3 bg-white border-b" style={{ borderColor: '#E5E5E5' }}>
           <div
             className="flex items-center text-sm gap-2 px-3 py-2 rounded-full w-full"
-            style={{ border: '1px solid var(--color-gray-50)' }}
+            style={{ border: '1px solid var(--color-moringa-muted)' }}
           >
-            <Search className="w-4 h-4" style={{ color: 'var(--color-gray-50)' }} />
+            <Search className="w-4 h-4" style={{ color: 'var(--color-moringa-muted)' }} />
             <input
               onChange={(e) => setSearchQuery(e.target.value)}
               value={searchQuery}
@@ -350,7 +350,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                 className="p-1 hover:opacity-70 transition-opacity"
                 aria-label="Filter"
               >
-                <Funnel className="w-4 h-4" style={{ color: 'var(--color-gray-50)' }} />
+                <Funnel className="w-4 h-4" style={{ color: 'var(--color-moringa-muted)' }} />
               </button>
             )}
           </div>
@@ -416,7 +416,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                   style={{ backgroundColor: 'var(--color-solidOne)' }}
                 />
               </div>
-              <span className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+              <span className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                 Notifications
               </span>
             </div>
@@ -424,7 +424,10 @@ const PageNavbar = ({ onMobileFilterClick }) => {
             {/* Mobile Role Switcher - Only show if user has multiple roles */}
             {isAuthenticated && availableRoles && availableRoles.length > 1 && (
               <div className="pt-6 border-t mt-4" style={{ borderColor: '#E5E5E5' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-xs font-medium mb-3"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   Switch Mode
                 </p>
                 <div className="flex flex-col gap-2">

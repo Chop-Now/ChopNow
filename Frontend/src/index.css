@@ -29,15 +29,21 @@
   --color-surface: #ffffff; /* standard surface background: cards, panels, pills */
   --color-surface-border: #e3ebe6; /* cool hairline on scaffold/surface (fufu-border reads warm here) */
 
-  /* ── Legacy green/orange brand (being retired) ──
-     Still used by every page except Home. Do not use in new work. */
-  --color-primary: #f6fff9; /* Soft green-tinted background */
-  --color-solid: #00a86b; /* Main green (brand) */
-  --color-solidOne: #ff7a00; /* Main orange (brand accent) */
-  --color-solidTwo: #ffb366; /* Soft orange variant */
-  --color-tertiary: #007a4b; /* Darker green for hover/buttons */
-  --color-textColor: #2e2e2e; /* Dark neutral text */
-  --color-gray-50: #8a8a8a; /* Muted gray for secondary text */
+  /* ── Legacy token names, repointed at the brand palette ──
+     ~500 call sites across the app still use these names. Rather than rewrite
+     every one, each now resolves to its brand equivalent, so legacy pages
+     render on-brand. Prefer the names above in new work.
+
+     NOTE: `--color-gray-50` is deliberately NOT redefined here. Overriding it
+     shadowed Tailwind's built-in near-white `gray-50`, which made every
+     `bg-gray-50` surface paint mid-grey (it read as a dark overlay). Muted
+     text now uses `--color-moringa-muted` instead. */
+  --color-primary: var(--color-scaffold); /* page ground (unchanged hex) */
+  --color-solid: var(--color-moringa); /* was #00A86B green */
+  --color-solidOne: var(--color-pepper); /* was #FF7A00 orange */
+  --color-solidTwo: var(--color-yellow); /* was #FFB366 soft orange */
+  --color-tertiary: var(--color-moringa-dark); /* hover/pressed */
+  --color-textColor: var(--color-char); /* was #2E2E2E neutral */
 }
 
 html,
@@ -165,7 +171,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: #f6fff9 !important;
-    color: #2e2e2e !important;
+    background-color: var(--color-scaffold) !important;
+    color: var(--color-char) !important;
   }
 }

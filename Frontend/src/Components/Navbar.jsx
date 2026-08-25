@@ -73,7 +73,7 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
         >
           <Link
             to="/login"
-            className="px-6 py-3 transition-all bg-yellow hover:bg-yellow-dark border border-moringa/20 text-moringa text-sm font-semibold rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2"
+            className="px-6 py-3 transition-all bg-moringa hover:bg-moringa-dark border border-moringa text-fufu text-sm font-semibold rounded-full cursor-pointer active:scale-95 flex items-center justify-center gap-2 w-full mt-2"
           >
             Get Started
           </Link>

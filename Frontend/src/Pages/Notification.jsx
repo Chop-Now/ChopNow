@@ -226,15 +226,15 @@ const Notification = () => {
   const getIconConfig = (type) => {
     switch (type) {
       case 'rider':
-        return { Icon: Truck, color: '#00A86B', bgColor: '#E6F9F2' };
+        return { Icon: Truck, color: '#0F3D2E', bgColor: '#E6F9F2' };
       case 'announcement':
-        return { Icon: Megaphone, color: '#FF7A00', bgColor: '#FFF0E6' };
+        return { Icon: Megaphone, color: '#E8552F', bgColor: '#FFF0E6' };
       case 'milestone':
-        return { Icon: PartyPopper, color: '#4CAF50', bgColor: '#E8F5E9' };
+        return { Icon: PartyPopper, color: '#4CAF50', bgColor: '#FAF3E4' };
       case 'order':
-        return { Icon: Store, color: '#007A4B', bgColor: '#E0F2ED' };
+        return { Icon: Store, color: '#0A2A20', bgColor: '#E0F2ED' };
       default:
-        return { Icon: Bell, color: '#007A4B', bgColor: '#E0F2ED' };
+        return { Icon: Bell, color: '#0A2A20', bgColor: '#E0F2ED' };
     }
   };
 
@@ -557,7 +557,7 @@ const Notification = () => {
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-textColor mb-2">Notifications Center</h1>
-              <p className="text-gray-50">All your recent updates in one place</p>
+              <p className="text-moringa-muted">All your recent updates in one place</p>
             </div>
 
             {/* Mobile Filters - Below Title */}
@@ -618,14 +618,14 @@ const Notification = () => {
             <div className="flex justify-end items-center gap-6 mb-6 pb-4 border-b border-gray-200">
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-2 text-sm text-textColor hover:text-gray-50 transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-sm text-textColor hover:text-moringa-muted transition-colors cursor-pointer"
               >
                 <CheckCheck size={18} />
                 <span>Mark all as read</span>
               </button>
               <button
                 onClick={archiveAll}
-                className="flex items-center gap-2 text-sm text-textColor hover:text-gray-50 transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-sm text-textColor hover:text-moringa-muted transition-colors cursor-pointer"
               >
                 <ArchiveRestore size={18} />
                 <span>Archive All</span>
@@ -637,10 +637,10 @@ const Notification = () => {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-4" />
-                  <p className="text-gray-50">Loading notifications...</p>
+                  <p className="text-moringa-muted">Loading notifications...</p>
                 </div>
               ) : filteredNotifications.length === 0 ? (
-                <div className="text-center py-12 text-gray-50">
+                <div className="text-center py-12 text-moringa-muted">
                   <Bell size={48} className="mx-auto mb-4 text-gray-300" />
                   <p>No notifications to display</p>
                 </div>

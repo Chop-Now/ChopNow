@@ -284,7 +284,7 @@ const OrderTrendsChart = () => {
               dataKey={dataKeys.current}
               stroke="url(#currentGradient)"
               strokeWidth={3}
-              dot={{ fill: '#00A86B', strokeWidth: 2, r: 4 }}
+              dot={{ fill: '#0F3D2E', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6 }}
             />
             <Line
@@ -292,18 +292,18 @@ const OrderTrendsChart = () => {
               dataKey={dataKeys.previous}
               stroke="url(#previousGradient)"
               strokeWidth={3}
-              dot={{ fill: '#FF7A00', strokeWidth: 2, r: 4 }}
+              dot={{ fill: '#E8552F', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6 }}
               strokeDasharray="5 5"
             />
             <defs>
               <linearGradient id="currentGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#00A86B" stopOpacity={1} />
-                <stop offset="100%" stopColor="#007A4B" stopOpacity={0.8} />
+                <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
+                <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.8} />
               </linearGradient>
               <linearGradient id="previousGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#FF7A00" stopOpacity={1} />
-                <stop offset="100%" stopColor="#FFB366" stopOpacity={0.8} />
+                <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />
+                <stop offset="100%" stopColor="#FFC531" stopOpacity={0.8} />
               </linearGradient>
             </defs>
           </LineChart>

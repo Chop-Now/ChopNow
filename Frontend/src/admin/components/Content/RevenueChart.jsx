@@ -82,12 +82,12 @@ const RevenueChart = () => {
             />
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#00A86B" stopOpacity={1} />
-                <stop offset="100%" stopColor="#007A4B" stopOpacity={0.6} />
+                <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
+                <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.6} />
               </linearGradient>
               <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FF7A00" stopOpacity={1} />
-                <stop offset="100%" stopColor="#FFB366" stopOpacity={0.6} />
+                <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />
+                <stop offset="100%" stopColor="#FFC531" stopOpacity={0.6} />
               </linearGradient>
             </defs>
           </BarChart>

@@ -256,7 +256,10 @@ const Cart = () => {
                 style={{ color: 'var(--color-textColor)' }}
               >
                 Shopping Cart{' '}
-                <span className="text-sm font-normal" style={{ color: 'var(--color-gray-50)' }}>
+                <span
+                  className="text-sm font-normal"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   ({getTotalCartItems()} Items)
                 </span>
               </h1>
@@ -323,13 +326,13 @@ const Cart = () => {
                         </p>
                       </div>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                           {product.vendor}
                         </p>
                         <button
                           onClick={() => removeFromCart(product._id)}
                           className="group text-xs transition cursor-pointer flex items-center justify-center"
-                          style={{ color: 'var(--color-gray-50)' }}
+                          style={{ color: 'var(--color-moringa-muted)' }}
                         >
                           <Trash2 className="w-5 h-5 group-hover:stroke-solidOne transition" />
                         </button>
@@ -398,7 +401,10 @@ const Cart = () => {
                     Your Positive Impact
                   </h3>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-gray-50)' }}>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
                   This order prevents <strong style={{ color: 'var(--color-solid)' }}>2.5kg</strong>{' '}
                   of food waste and saves{' '}
                   <strong style={{ color: 'var(--color-solid)' }}>6.2kg</strong> of CO₂ emissions.
@@ -424,7 +430,7 @@ const Cart = () => {
                       className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 ${fulfillmentMethod === 'Pickup' ? 'shadow-md' : ''}`}
                       style={{
                         backgroundColor: fulfillmentMethod === 'Pickup' ? 'white' : 'transparent',
-                        color: '#2E2E2E',
+                        color: '#17150F',
                       }}
                     >
                       <Calendar className="w-4 h-4" />
@@ -435,7 +441,7 @@ const Cart = () => {
                       className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 ${fulfillmentMethod === 'Delivery' ? 'shadow-md' : ''}`}
                       style={{
                         backgroundColor: fulfillmentMethod === 'Delivery' ? 'white' : 'transparent',
-                        color: '#2E2E2E',
+                        color: '#17150F',
                       }}
                     >
                       <Calendar className="w-4 h-4" />
@@ -457,7 +463,7 @@ const Cart = () => {
                 {fulfillmentMethod === 'Delivery' ? (
                   <>
                     <div className="mb-3">
-                      <p className="text-xs mb-2" style={{ color: 'var(--color-gray-50)' }}>
+                      <p className="text-xs mb-2" style={{ color: 'var(--color-moringa-muted)' }}>
                         {deliveryAddress || 'No delivery address set'}
                       </p>
                       <button
@@ -486,7 +492,7 @@ const Cart = () => {
                       >
                         {vendorAddress.name}
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--color-gray-50)' }}>
+                      <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                         {vendorAddress.address}
                       </p>
                     </div>
@@ -614,7 +620,7 @@ const Cart = () => {
                 <div className="space-y-2 mb-4">
                   {cartArray.map((product, index) => (
                     <div key={index} className="flex justify-between text-xs">
-                      <span style={{ color: 'var(--color-gray-50)' }}>
+                      <span style={{ color: 'var(--color-moringa-muted)' }}>
                         {product.name} x{product.cartQuantity}
                       </span>
                       <span style={{ color: 'var(--color-textColor)' }}>
@@ -628,19 +634,19 @@ const Cart = () => {
 
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span style={{ color: 'var(--color-gray-50)' }}>Subtotal</span>
+                    <span style={{ color: 'var(--color-moringa-muted)' }}>Subtotal</span>
                     <span style={{ color: 'var(--color-textColor)' }}>
                       RWF {subtotal.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span style={{ color: 'var(--color-gray-50)' }}>Discount</span>
+                    <span style={{ color: 'var(--color-moringa-muted)' }}>Discount</span>
                     <span style={{ color: 'var(--color-textColor)' }}>
                       RWF {discount.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span style={{ color: 'var(--color-gray-50)' }}>Delivery Fee</span>
+                    <span style={{ color: 'var(--color-moringa-muted)' }}>Delivery Fee</span>
                     <span style={{ color: 'var(--color-textColor)' }}>
                       {deliveryFee === 0 ? 'Free' : `RWF ${deliveryFee.toLocaleString()}`}
                     </span>
