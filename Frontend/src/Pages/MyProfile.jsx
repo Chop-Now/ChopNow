@@ -208,7 +208,7 @@ const MyProfile = () => {
               <p className="text-sm font-semibold text-textColor truncate">
                 {profile.firstName} {profile.lastName}
               </p>
-              <p className="text-xs text-gray-50 truncate">{profile.email}</p>
+              <p className="text-xs text-moringa-muted truncate">{profile.email}</p>
             </div>
           </div>
 
@@ -217,7 +217,7 @@ const MyProfile = () => {
 
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <span className="text-xs font-semibold text-gray-50 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-moringa-muted uppercase tracking-wider">
                 Personal
               </span>
               <div className="flex flex-col gap-1">
@@ -250,7 +250,9 @@ const MyProfile = () => {
             {/* Header */}
             <div className="flex w-full flex-col items-start gap-1">
               <h1 className="text-3xl font-bold text-textColor">Account</h1>
-              <p className="text-sm text-gray-50">Update your profile and personal details here</p>
+              <p className="text-sm text-moringa-muted">
+                Update your profile and personal details here
+              </p>
             </div>
 
             {/* Account Upgrades Section */}
@@ -353,7 +355,7 @@ const MyProfile = () => {
                         disabled={uploadingAvatar}
                       />
                     </label>
-                    <span className="text-xs text-gray-50">
+                    <span className="text-xs text-moringa-muted">
                       For best results, upload an image 512x512 or larger.
                     </span>
                   </div>
@@ -464,9 +466,9 @@ const MyProfile = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                   >
                     {showCurrentPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <EyeOff className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     ) : (
-                      <Eye className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <Eye className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     )}
                   </button>
                 </div>
@@ -492,13 +494,13 @@ const MyProfile = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                   >
                     {showNewPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <EyeOff className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     ) : (
-                      <Eye className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <Eye className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-50 mt-2">
+                <p className="text-xs text-moringa-muted mt-2">
                   Your password must have at least 8 characters, include one uppercase letter, and
                   one number.
                 </p>
@@ -521,9 +523,9 @@ const MyProfile = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <EyeOff className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     ) : (
-                      <Eye className="w-5 h-5 text-gray-50 cursor-pointer" />
+                      <Eye className="w-5 h-5 text-moringa-muted cursor-pointer" />
                     )}
                   </button>
                 </div>

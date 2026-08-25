@@ -198,7 +198,7 @@ const ForgotPassword = () => {
   const criteria = getPasswordCriteria();
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-moringa-dark via-moringa to-moringa-dark">
       <div className="flex w-full">
         {/* Left Side - Branding Panel (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
@@ -212,7 +212,7 @@ const ForgotPassword = () => {
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center w-full p-12 text-white">
             <div className="mb-8">
               <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="w-14 h-14" />
+                <img src={assets.logomarkyellow} alt="ChopNow" className="w-14 h-14" />
               </div>
             </div>
             <h1 className="text-4xl font-bold mb-4 text-center">ChopNow</h1>
@@ -227,11 +227,11 @@ const ForgotPassword = () => {
         <div className="w-full md:w-1/2 md:ml-[50%] flex flex-col items-center justify-center px-4 py-8">
           {/* Mobile Logo */}
           <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="w-10 h-10" />
+            <img src={assets.logomarkgreen} alt="ChopNow" className="w-10 h-10" />
             <span className="text-2xl font-bold text-white">ChopNow</span>
           </div>
 
-          <div className="border border-gray-500/20 bg-slate-900/40 backdrop-blur-md rounded-2xl p-8 md:p-12 w-full max-w-lg shadow-xl shadow-black/20">
+          <div className="border border-gray-500/20 bg-moringa-dark/40 backdrop-blur-md rounded-2xl p-8 md:p-12 w-full max-w-lg shadow-xl shadow-black/20">
             {/* Step 1: Email Request */}
             {step === 1 && (
               <form onSubmit={handleRequestOtp} className="flex flex-col">
@@ -256,7 +256,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 bg-gradient-to-r from-solid to-tertiary hover:from-tertiary hover:to-solid text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/20"
+                  className="w-full h-14 bg-yellow hover:bg-yellow-dark text-char font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/20"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center gap-2">
@@ -307,7 +307,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 bg-gradient-to-r from-solid to-tertiary hover:from-tertiary hover:to-solid text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/20"
+                  className="w-full h-14 bg-yellow hover:bg-yellow-dark text-char font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/20"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center gap-2">
@@ -453,7 +453,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={isLoading || !isPasswordValid() || password !== confirmPassword}
-                  className="w-full h-14 bg-gradient-to-r from-solid to-tertiary hover:from-tertiary hover:to-solid text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/25"
+                  className="w-full h-14 bg-yellow hover:bg-yellow-dark text-char font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/25"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center gap-2">
@@ -482,7 +482,7 @@ const ForgotPassword = () => {
 
                 <Link
                   to="/login"
-                  className="w-full h-14 flex items-center justify-center bg-gradient-to-r from-solid to-tertiary hover:from-tertiary hover:to-solid text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-solid/20"
+                  className="w-full h-14 flex items-center justify-center bg-yellow hover:bg-yellow-dark text-char font-bold rounded-xl transition-all duration-300 shadow-lg shadow-solid/20"
                 >
                   Back to Sign In
                 </Link>

@@ -272,8 +272,8 @@ const ShopAdminOverview = () => {
             <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00A86B" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#00A86B" stopOpacity={0.05} />
+                  <stop offset="0%" stopColor="#0F3D2E" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#0F3D2E" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
@@ -321,7 +321,7 @@ const ShopAdminOverview = () => {
                 yAxisId="left"
                 type="monotone"
                 dataKey="sales"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={2}
                 fill="url(#salesGradient)"
               />
@@ -875,8 +875,8 @@ const ShopAdminReports = () => {
                 labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
                 itemStyle={{ fontSize: '11px' }}
               />
-              <Bar dataKey="revenue" fill="#00A86B" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="cost" fill="#FF7A00" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="revenue" fill="#0F3D2E" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="cost" fill="#E8552F" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1242,8 +1242,8 @@ const WebsiteAdminReports = () => {
                 }}
                 formatter={(value) => ['RWF ' + value.toLocaleString(), '']}
               />
-              <Bar dataKey="revenue" fill="#00A86B" radius={[6, 6, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="expenses" fill="#FF7A00" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="revenue" fill="#0F3D2E" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="expenses" fill="#E8552F" radius={[6, 6, 0, 0]} maxBarSize={40} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1336,7 +1336,7 @@ const WebsiteAdminReports = () => {
                   }}
                   formatter={(value) => [value + ' orders', '']}
                 />
-                <Bar dataKey="orders" fill="#00A86B" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="orders" fill="#0F3D2E" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1589,7 +1589,7 @@ const ShopAdminInsights = () => {
               <Line
                 type="monotone"
                 dataKey="returningCustomers"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={2}
                 dot={{ r: 4 }}
                 name="Returning Customers"
@@ -1868,7 +1868,7 @@ const WebsiteAdminInsights = () => {
               <Line
                 type="monotone"
                 dataKey="users"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={3}
                 dot={{ r: 4 }}
                 name="Total Users"
@@ -2549,7 +2549,7 @@ const WebsiteAdminImpact = () => {
                 yAxisId="left"
                 type="monotone"
                 dataKey="meals"
-                stroke="#00A86B"
+                stroke="#0F3D2E"
                 strokeWidth={3}
                 dot={{ r: 5 }}
                 name="Meals Rescued"

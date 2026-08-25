@@ -86,22 +86,25 @@ Fufu on Moringa is 11.00:1.
 
 ### Where colours live
 
-- Web tokens: `@theme` block at the top of `Frontend/src/index.css` —
-  `--color-moringa`, `--color-yellow`, `--color-pepper`, `--color-fufu`,
-  `--color-char`, plus working shades (`-dark` hovers, `moringa-muted` for
-  secondary text, `fufu-dim` for alternating sections, `fufu-border` for
-  hairlines). Legacy `solid`/`solidOne`/`tertiary`/`textColor` tokens sit
-  below them and are still used by every page except Home, FAQ, Privacy
-  Policy, and Terms of Service.
+- Web tokens: `@theme` block at the top of `Frontend/src/index.css`.
+- **The ~500 legacy call sites were not rewritten.** Instead the legacy token
+  names now resolve to brand values, so every page renders on-brand:
+  `--color-solid` → Moringa, `--color-tertiary` → moringa-dark,
+  `--color-solidOne` → Pepper, `--color-solidTwo` → Now Yellow,
+  `--color-textColor` → Char, `--color-primary` → scaffold (hex unchanged).
+  Prefer the brand names in new work, but the legacy names are safe.
 - Mobile tokens: `Mobile/lib/core/theme/app_colors.dart` (+ `app_theme.dart`)
-  — **not yet migrated**, still on the legacy green/orange brand.
-- Retheming token files is **not sufficient**: raw hex literals and legacy
-  token names are spread across `Frontend/src`, and 18 Flutter files hardcode
-  `Color(0x…)` outside `AppColors`. A real migration has to sweep those too.
+  — migrated to the brand palette; see `Mobile/CLAUDE.md`.
 - Keep semantic colours (success / warning / error / info) distinct from brand
-  colours — don't collapse "success" into Moringa or "warning" into Yellow, or
-  error states stop reading as errors. Note Moringa is a green: it must not
-  become the success colour.
+  colours. Moringa is a green: it must not become the success colour, and
+  Pepper is close enough to a danger red that error states need a cooler,
+  deeper red to stay distinguishable.
+
+### Buttons
+
+Primary CTAs are **Moringa with Fufu/white text** — not Now Yellow. The one
+exception is a CTA sitting _on_ a Moringa panel (the auth split-screens), where
+a Moringa fill is invisible; those use Now Yellow with Char text (11.5:1).
 
 ### Known trap: `--color-gray-50`
 

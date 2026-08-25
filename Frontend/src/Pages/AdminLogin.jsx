@@ -108,7 +108,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-moringa-dark via-moringa to-moringa-dark">
       {/* Left Side - Branding Panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Background Image with Overlay */}
@@ -126,7 +126,7 @@ const AdminLogin = () => {
           {/* Logo */}
           <div className="mb-8">
             <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-              <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="w-14 h-14" />
+              <img src={assets.logomarkyellow} alt="ChopNow" className="w-14 h-14" />
             </div>
           </div>
 
@@ -164,7 +164,7 @@ const AdminLogin = () => {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <img src={assets.ChopNowLogo} alt="ChopNow Logo" className="w-10 h-10" />
+            <img src={assets.logomarkgreen} alt="ChopNow" className="w-10 h-10" />
             <span className="text-2xl font-bold text-white">ChopNow</span>
           </div>
 
@@ -274,7 +274,7 @@ const AdminLogin = () => {
             <button
               type="submit"
               disabled={isLoading || isGoogleLoading}
-              className="w-full h-14 bg-gradient-to-r from-solid to-tertiary hover:from-tertiary hover:to-solid text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/25 hover:shadow-xl hover:shadow-solid/30"
+              className="w-full h-14 bg-yellow hover:bg-yellow-dark text-char font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-solid/25 hover:shadow-xl hover:shadow-solid/30"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
