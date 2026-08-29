@@ -27,6 +27,10 @@ const createBusiness = async (req, res) => {
       ? { type: 'Point', coordinates: address.location.coordinates }
       : undefined;
 
+    if (address && address.location) {
+      delete address.location;
+    }
+
     // Determine if business type requires verification documents
     // Restaurants and cafes need health/food preparation certificates
     // Farmers, supermarkets, and bakeries can sell without document verification

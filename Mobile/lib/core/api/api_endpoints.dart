@@ -28,7 +28,6 @@ class AppEndpoints {
 
   // ── Listings ──────────────────────────────────────────────────────────────
   static const String listings = '/listings';
-  static const String myListings = '/listings/my';
   static const String nearbyListings = '/listings/nearby';
   static String listingById(String id) => '/listings/$id';
   static String listingPhotos(String id) => '/listings/$id/photos';
@@ -99,11 +98,8 @@ class AppEndpoints {
   static const String fcmToken = '/users/fcm-token';
 
   // ── Rider ─────────────────────────────────────────────────────────────────
-  static const String riderOrders = '/orders/rider';
   static const String riderStats = '/rider/stats';
   static const String riderEarnings = '/rider/earnings';
-  static String riderAcceptOrder(String id) => '/orders/$id/accept';
-  static String riderCompleteDelivery(String id) => '/orders/$id/complete';
   static const String applyRider = '/users/apply-rider';
   static const String riderAvailability = '/rider/availability';
 

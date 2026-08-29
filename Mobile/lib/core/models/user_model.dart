@@ -103,7 +103,7 @@ class AppUser {
               .map((a) => UserAddress.fromJson(Map<String, dynamic>.from(a)))
               .toList()
           : const [],
-      isEmailVerified: json['isEmailVerified'] == true,
+      isEmailVerified: json['emailVerified'] == true || json['isEmailVerified'] == true,
       isActive: json['isActive'] != false,
       riderStatus: json['riderStatus'] ?? 'none',
       riderDetails: json['riderDetails'] is Map

@@ -186,10 +186,9 @@ const getAvailableDeliveries = async (req, res) => {
     // Geospatial filter — find deliveries with pickup near rider's location
     if (lat && lng) {
       query['pickupLocation.location'] = {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
-          $maxDistance: parseInt(radius) * 1000, // convert km → meters
-        },
+        $geoWithin: {
+          $centerSphere: [[parseFloat(lng), parseFloat(lat)], parseFloat(radius) / 6378.1] // radius in radians
+        }
       };
     }
 
