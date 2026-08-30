@@ -368,19 +368,21 @@ class _RoleSelectionStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _RoleAvatar(
+              _RoleCard(
                 icon: Icons.shopping_bag_rounded,
-                label: 'Customer',
+                title: 'Customer',
+                subtitle: 'Order delicious surplus food at a huge discount.',
                 tint: AppColors.moringa,
                 onTap: onSelectCustomer,
               ),
-              const SizedBox(width: 32),
-              _RoleAvatar(
+              const SizedBox(height: 16),
+              _RoleCard(
                 icon: Icons.storefront_rounded,
-                label: 'Business',
+                title: 'Business',
+                subtitle: 'Sell your surplus meals and reduce daily waste.',
                 tint: AppColors.pepper,
                 onTap: onSelectBusiness,
               ),
@@ -394,64 +396,91 @@ class _RoleSelectionStep extends StatelessWidget {
   }
 }
 
-// ── Role avatar (profile-picker style) ────────────────────────────────────────
-class _RoleAvatar extends StatelessWidget {
+// ── Role card (sleek and modern) ──────────────────────────────────────────────
+class _RoleCard extends StatelessWidget {
   final IconData icon;
-  final String label;
-
-  /// Disc colour. Carries a Fufu glyph, so it must be a dark brand colour
-  /// (Moringa or Pepper) — never Now Yellow.
+  final String title;
+  final String subtitle;
   final Color tint;
   final VoidCallback onTap;
 
-  const _RoleAvatar({
+  const _RoleCard({
     required this.icon,
-    required this.label,
+    required this.title,
+    required this.subtitle,
     required this.tint,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTap(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Tinted halo echoes the disc treatment used on the onboarding slides.
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: tint.withValues(alpha: 0.12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ScaleTap(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.border,
+              width: 1.5,
             ),
-            child: Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: tint,
-                boxShadow: [
-                  BoxShadow(
-                    color: tint.withValues(alpha: 0.30),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+            boxShadow: [
+              BoxShadow(
+                color: tint.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
-              child: Icon(icon, size: 54, color: AppColors.fufu),
-            ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tint.withValues(alpha: 0.12),
+                ),
+                child: Icon(icon, size: 28, color: tint),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textTertiary,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
