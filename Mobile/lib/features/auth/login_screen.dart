@@ -381,7 +381,7 @@ class _RoleSelectionStep extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 56),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
