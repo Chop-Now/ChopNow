@@ -223,7 +223,7 @@ function uid() { return Math.random().toString(36).slice(2,10); }
       ok('Rider toggled online', online.status===200, 'status=' + online.status);
       const pu = await api('PATCH','/deliveries/' + dId + '/status',{status:'picked_up'},rToken);
       ok('Rider picked up', pu.status===200, 'status=' + pu.status);
-      const loc = await api('PATCH','/deliveries/' + dId + '/location',{latitude:-1.95,longitude:30.06},rToken);
+      const loc = await api('PATCH','/deliveries/' + dId + '/location',{lat:-1.95,lng:30.06},rToken);
       ok('Rider updated location', loc.status===200, 'status=' + loc.status);
       const it = await api('PATCH','/deliveries/' + dId + '/status',{status:'in_transit'},rToken);
       ok('Rider in transit', it.status===200, 'status=' + it.status);
