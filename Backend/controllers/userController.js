@@ -487,10 +487,12 @@ const resendVerificationEmail = async (req, res) => {
     );
 
     if (sent) {
-      res.json({ message: 'Verification email sent' });
+      logger.info({ email: user.email }, 'Verification email sent successfully');
     } else {
-      res.status(500).json({ message: 'Failed to send verification email' });
+      logger.error({ email: user.email }, 'Failed to send verification email (service error or address rejected)');
     }
+    // Always return 200 to avoid leaking whether the email was accepted
+    res.json({ message: 'Verification email sent' });
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -538,13 +540,11 @@ const forgotPassword = async (req, res) => {
 
     if (sent) {
       logger.info({ email: normalizedEmail }, 'Password reset OTP code sent successfully');
-      res.json({ message: successMessage });
     } else {
-      logger.error({ email: normalizedEmail }, 'Failed to send password reset OTP email');
-      res
-        .status(500)
-        .json({ message: 'Failed to send password reset code. Please try again later.' });
+      logger.error({ email: normalizedEmail }, 'Failed to send password reset OTP email (email service error or address rejected)');
     }
+    // Always return 200 to prevent email enumeration and avoid 500 on email service failures
+    res.json({ message: successMessage });
   } catch (error) {
     logger.error({ err: error }, 'Forgot password error');
     res.status(500).json({
