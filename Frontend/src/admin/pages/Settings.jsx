@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useAdminMode } from '../context/AdminModeContext';
 import { useAppContext } from '../../context/AppContext';
+import { clearAccessToken } from '../../services/api';
 import {
   businessService,
   authService,
@@ -132,7 +133,14 @@ const Settings = ({ initialTab = 'profile' }) => {
     // Commission Settings
     platformFeePercent: 10,
     minimumWithdrawal: 5000,
-    payoutSchedule: 'biweekly', // weekly, biweekly, monthly
+    payoutHoldDays: 7,
+    payoutIntervalDays: 7,
+    // Checkout pricing
+    cashPaymentsEnabled: false,
+    deliveryFee: 1000,
+    deliveryCommissionPercent: 10,
+    taxPercent: 0,
+    taxLabel: 'VAT',
     // Features Toggles
     allowNewRegistrations: true,
     requireEmailVerification: true,
@@ -166,7 +174,13 @@ const Settings = ({ initialTab = 'profile' }) => {
             supportPhone: settings.supportPhone || '+250 788 000 000',
             platformFeePercent: settings.platformFeePercent ?? 10,
             minimumWithdrawal: settings.minimumWithdrawal ?? 5000,
-            payoutSchedule: settings.payoutSchedule || 'biweekly',
+            payoutHoldDays: settings.payoutHoldDays ?? 7,
+            payoutIntervalDays: settings.payoutIntervalDays ?? 7,
+            cashPaymentsEnabled: settings.cashPaymentsEnabled ?? false,
+            deliveryFee: settings.deliveryFee ?? 1000,
+            deliveryCommissionPercent: settings.deliveryCommissionPercent ?? 10,
+            taxPercent: settings.taxPercent ?? 0,
+            taxLabel: settings.taxLabel || 'VAT',
             allowNewRegistrations: settings.allowNewRegistrations ?? true,
             requireEmailVerification: settings.requireEmailVerification ?? true,
             allowGuestCheckout: settings.allowGuestCheckout ?? false,
@@ -356,7 +370,7 @@ const Settings = ({ initialTab = 'profile' }) => {
       await authService.deleteAccount();
       toast.success('Account deleted successfully. Redirecting...');
       localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      clearAccessToken();
       setTimeout(() => {
         window.location.href = '/login';
       }, 1500);
@@ -1395,7 +1409,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Platform Fee (%)
@@ -1433,23 +1447,130 @@ const Settings = ({ initialTab = 'profile' }) => {
                         className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                        Payout Schedule
+                        Earnings Holding Period (days)
                       </label>
-                      <select
-                        value={platformSettings.payoutSchedule}
+                      <input
+                        type="number"
+                        min="0"
+                        max="60"
+                        value={platformSettings.payoutHoldDays}
                         onChange={(e) =>
-                          handlePlatformSettingChange('payoutSchedule', e.target.value)
+                          handlePlatformSettingChange('payoutHoldDays', parseInt(e.target.value) || 0)
                         }
                         className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
-                      >
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Bi-weekly (1st & 15th)</option>
-                        <option value="monthly">Monthly</option>
-                      </select>
+                      />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        A vendor's earnings from a completed order become withdrawable this many
+                        days later. Keeps money on hand to cover refunds/disputes on that order.
+                        Rider delivery earnings are never held.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Minimum Days Between Payout Requests
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="60"
+                        value={platformSettings.payoutIntervalDays}
+                        onChange={(e) =>
+                          handlePlatformSettingChange(
+                            'payoutIntervalDays',
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                      />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        A vendor or rider can request at most one payout every this many days. A
+                        failed or cancelled payout doesn't count against them.
+                      </p>
                     </div>
                   </div>
+
+                  {/* Checkout pricing: platform-controlled delivery fee, rider commission, tax */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                    {[
+                      {
+                        key: 'deliveryFee',
+                        label: 'Delivery Fee per Vendor (RWF)',
+                        min: 0,
+                        parse: (v) => parseInt(v, 10),
+                      },
+                      {
+                        key: 'deliveryCommissionPercent',
+                        label: 'Commission on Delivery Fee (%)',
+                        min: 0,
+                        max: 100,
+                        parse: parseFloat,
+                      },
+                      {
+                        key: 'taxPercent',
+                        label: 'Tax (%) — 0 = no tax line',
+                        min: 0,
+                        max: 100,
+                        parse: parseFloat,
+                      },
+                    ].map((field) => (
+                      <div key={field.key}>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          {field.label}
+                        </label>
+                        <input
+                          type="number"
+                          min={field.min}
+                          max={field.max}
+                          value={platformSettings[field.key]}
+                          onChange={(e) =>
+                            handlePlatformSettingChange(
+                              field.key,
+                              Number.isNaN(field.parse(e.target.value))
+                                ? 0
+                                : field.parse(e.target.value)
+                            )
+                          }
+                          className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Tax Label
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={30}
+                        value={platformSettings.taxLabel}
+                        onChange={(e) => handlePlatformSettingChange('taxLabel', e.target.value)}
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                  <label className="flex items-start gap-3 pt-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!platformSettings.cashPaymentsEnabled}
+                      onChange={(e) =>
+                        handlePlatformSettingChange('cashPaymentsEnabled', e.target.checked)
+                      }
+                      className="mt-0.5 w-4 h-4"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-slate-800 dark:text-slate-200">
+                        Allow cash payments
+                      </span>
+                      <span className="block text-xs text-slate-600 dark:text-slate-400">
+                        Off by default: with cash the vendor keeps the money, so ChopNow can't
+                        collect its commission and riders aren't paid through the app.
+                      </span>
+                    </span>
+                  </label>
                 </div>
               </div>
 

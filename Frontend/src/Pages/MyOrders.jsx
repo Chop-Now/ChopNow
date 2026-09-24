@@ -15,9 +15,15 @@ import {
   Navigation,
   Copy,
   Check,
+  Star,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { orderService } from '../services';
+import { orderService, reviewService } from '../services';
+import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentModal';
+
+// Mirrors Order.canBeCancelled() on the backend, which is what actually
+// enforces this - the button is just hidden for other states.
+const CANCELLABLE_STATUSES = ['pending_payment', 'paid', 'confirmed'];
 import toast from 'react-hot-toast';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -93,6 +99,82 @@ const MyOrders = () => {
   const [riderLocation, setRiderLocation] = useState(null);
 
   const [copiedText, setCopiedText] = useState('');
+  const [reviewedOrderIds, setReviewedOrderIds] = useState(() => new Set());
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [paymentTarget, setPaymentTarget] = useState(null);
+
+  useEffect(() => {
+    reviewService
+      .getMyReviews()
+      .then((reviews) => {
+        setReviewedOrderIds(new Set(reviews.map((r) => String(r.order?._id || r.order))));
+      })
+      .catch(() => {
+        // Non-critical: worst case the review button shows and the backend
+        // rejects a duplicate with a clear message.
+      });
+  }, []);
+
+  // Pay for an unpaid order. Orders from the same checkout (one per vendor)
+  // are paid together with a single prompt.
+  const handleCompletePayment = (order) => {
+    const unpaidSiblings = order.checkoutGroup
+      ? myOrders.filter(
+          (o) =>
+            String(o.checkoutGroup) === String(order.checkoutGroup) &&
+            o.rawStatus === 'pending_payment'
+        )
+      : [order];
+    setSelectedOrder(null);
+    setPaymentTarget({
+      ...(order.checkoutGroup ? { checkoutId: order.checkoutGroup } : { orderId: order.orderId }),
+      orderIds: unpaidSiblings.map((o) => o.orderId),
+      total: unpaidSiblings.reduce((sum, o) => sum + (o.amount || 0), 0),
+    });
+  };
+
+  const handleCancelOrder = async (order) => {
+    if (!window.confirm('Cancel this order? This cannot be undone.')) return;
+    setCancelling(true);
+    try {
+      await orderService.cancelOrder(order.orderId);
+      toast.success(
+        order.rawStatus === 'pending_payment'
+          ? 'Order cancelled'
+          : 'Order cancelled. Any payment you made will be refunded.'
+      );
+      setSelectedOrder(null);
+      await fetchMyOrders();
+    } catch (error) {
+      toast.error(error.message || 'Could not cancel this order');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleSubmitReview = async (order) => {
+    if (reviewForm.rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await reviewService.createReview({
+        order: order.orderId,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim() || undefined,
+      });
+      setReviewedOrderIds((prev) => new Set(prev).add(String(order.orderId)));
+      setReviewForm({ rating: 0, comment: '' });
+      toast.success('Thanks for your review!');
+    } catch (error) {
+      toast.error(error.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -106,6 +188,7 @@ const MyOrders = () => {
   const handleViewDetails = async (order) => {
     setSelectedOrder(order);
     setOrderDetails(null);
+    setReviewForm({ rating: 0, comment: '' });
     setFetchingDetails(true);
     try {
       const data = await orderService.getOrderById(order.orderId);
@@ -192,6 +275,9 @@ const MyOrders = () => {
     return {
       _id: order.orderNumber || order._id,
       orderId: order._id,
+      rawStatus: order.status,
+      checkoutGroup: order.checkoutGroup,
+      rawPaymentMethod: order.payment?.paymentMethod,
       vendor: order.business?.name || 'Unknown Vendor',
       vendorId: order.business?._id,
       status:
@@ -207,8 +293,8 @@ const MyOrders = () => {
         order.items?.map((item) => ({
           quantity: item.quantity,
           product: {
-            _id: item.productId || order.listing?._id,
-            name: item.name || order.listing?.title || 'Product',
+            _id: item.listing?._id || item.listing || item.productId || order.listing?._id,
+            name: item.title || item.name || order.listing?.title || 'Product',
             image: order.listing?.photos || ['/placeholder-food.jpg'],
             offerPrice: item.unitPrice || 0,
           },
@@ -711,6 +797,85 @@ const MyOrders = () => {
                 </button>
               </div>
               <div className="p-6">
+                {/* Complete an unpaid mobile-money order */}
+                {selectedOrder.rawStatus === 'pending_payment' &&
+                  selectedOrder.rawPaymentMethod !== 'cash' && (
+                    <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm text-gray-700">
+                        This order is waiting for payment. The vendor sees it once it's paid.
+                      </p>
+                      <button
+                        onClick={() => handleCompletePayment(selectedOrder)}
+                        className="shrink-0 rounded-md px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                        style={{ backgroundColor: 'var(--color-solid)' }}
+                      >
+                        Complete payment
+                      </button>
+                    </div>
+                  )}
+
+                {/* Cancel order */}
+                {CANCELLABLE_STATUSES.includes(selectedOrder.rawStatus) && (
+                  <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-100 bg-red-50 p-4">
+                    <p className="text-sm text-gray-700">
+                      Changed your mind? You can cancel until the vendor starts preparing it.
+                    </p>
+                    <button
+                      onClick={() => handleCancelOrder(selectedOrder)}
+                      disabled={cancelling}
+                      className="shrink-0 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {cancelling ? 'Cancelling…' : 'Cancel order'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Leave a review */}
+                {selectedOrder.rawStatus === 'completed' &&
+                  (reviewedOrderIds.has(String(selectedOrder.orderId)) ? (
+                    <div className="mb-6 flex items-center gap-2 rounded-lg border border-green-100 bg-green-50 p-4 text-sm text-green-700">
+                      <Check className="h-4 w-4" />
+                      You reviewed this order. Thank you!
+                    </div>
+                  ) : (
+                    <div className="mb-6 rounded-lg border border-gray-200 p-4">
+                      <h4 className="mb-2 font-semibold">How was your order?</h4>
+                      <div className="mb-3 flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                            onClick={() => setReviewForm((f) => ({ ...f, rating: star }))}
+                          >
+                            <Star
+                              className="h-7 w-7"
+                              fill={reviewForm.rating >= star ? '#F59E0B' : 'none'}
+                              stroke={reviewForm.rating >= star ? '#F59E0B' : '#9CA3AF'}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={reviewForm.comment}
+                        onChange={(e) =>
+                          setReviewForm((f) => ({ ...f, comment: e.target.value }))
+                        }
+                        maxLength={1000}
+                        rows={3}
+                        placeholder="Tell others about the food and the vendor (optional)"
+                        className="mb-3 w-full rounded-md border border-gray-300 p-2 text-sm"
+                      />
+                      <button
+                        onClick={() => handleSubmitReview(selectedOrder)}
+                        disabled={submittingReview}
+                        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {submittingReview ? 'Submitting…' : 'Submit review'}
+                      </button>
+                    </div>
+                  ))}
+
                 {/* Order Info */}
                 <div className="mb-6">
                   <h4 className="font-semibold text-lg mb-3">Order Information</h4>
@@ -1167,6 +1332,17 @@ const MyOrders = () => {
           </div>
         )}
       </div>
+      {paymentTarget && (
+        <MobileMoneyPaymentModal
+          target={paymentTarget}
+          onClose={() => setPaymentTarget(null)}
+          onPaid={() => {
+            setPaymentTarget(null);
+            fetchMyOrders();
+          }}
+        />
+      )}
+
       <Footer />
     </>
   );

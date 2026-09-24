@@ -6,6 +6,7 @@ import 'react-phone-input-2/lib/style.css';
 import { authService } from '../services';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
+import { clearAccessToken } from '../services/api';
 
 const MyProfile = () => {
   const { addBusinessRole, availableRoles } = useAppContext();
@@ -151,7 +152,7 @@ const MyProfile = () => {
   const handleDeleteAccount = async () => {
     try {
       await authService.deleteAccount();
-      localStorage.removeItem('token');
+      clearAccessToken();
       localStorage.removeItem('user');
       localStorage.removeItem('cartItems');
       toast.success('Account deleted successfully');

@@ -31,14 +31,309 @@ import { disputeService } from '../../services';
 import toast from 'react-hot-toast';
 import { useAdminMode } from '../context/AdminModeContext';
 
-// Placeholder for RefundRequests component
+/**
+ * Resolve a dispute: choose the outcome and, for refunds, who pays for it -
+ * the vendor (their share comes out of their earnings) or ChopNow (goodwill).
+ */
+const ResolveDisputeDialog = ({ issue, submitting, onCancel, onSubmit }) => {
+  const [action, setAction] = useState('full_refund');
+  const [amount, setAmount] = useState('');
+  const [fundedBy, setFundedBy] = useState('vendor');
+  const [comment, setComment] = useState('');
+  const isRefund = action === 'full_refund' || action === 'partial_refund';
+  const orderTotal = issue.orderValue || 0;
+  const partialAmount = Number(amount);
+  const partialInvalid =
+    action === 'partial_refund' &&
+    (!partialAmount || partialAmount <= 0 || (orderTotal && partialAmount > orderTotal));
+
+  const submit = () => {
+    if (partialInvalid) {
+      toast.error(`Enter a refund amount between 1 and ${orderTotal.toLocaleString()} RWF`);
+      return;
+    }
+    onSubmit({
+      action,
+      ...(action === 'partial_refund' ? { amount: partialAmount } : {}),
+      ...(isRefund ? { refundFundedBy: fundedBy } : {}),
+      comment: comment.trim() || undefined,
+    });
+  };
+
+  const option = (value, label, hint) => (
+    <label
+      key={value}
+      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${
+        action === value
+          ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+          : 'border-slate-200 dark:border-slate-700'
+      }`}
+    >
+      <input
+        type="radio"
+        name="resolution_action"
+        checked={action === value}
+        onChange={() => setAction(value)}
+        className="mt-1"
+      />
+      <span>
+        <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">
+          {label}
+        </span>
+        {hint && <span className="block text-xs text-slate-500">{hint}</span>}
+      </span>
+    </label>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 p-6 shadow-2xl">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              Resolve dispute
+            </h3>
+            <p className="text-xs text-slate-500">
+              Order {issue.orderId}
+              {orderTotal ? ` · RWF ${orderTotal.toLocaleString()}` : ''}
+            </p>
+          </div>
+          <button onClick={onCancel} aria-label="Close" className="text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {option(
+            'full_refund',
+            'Full refund',
+            orderTotal ? `RWF ${orderTotal.toLocaleString()} back to the customer` : null
+          )}
+          {option('partial_refund', 'Partial refund')}
+          {action === 'partial_refund' && (
+            <input
+              type="number"
+              min="1"
+              max={orderTotal || undefined}
+              placeholder="Refund amount (RWF)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800"
+            />
+          )}
+          {option('replacement', 'Replacement arranged', 'No money is refunded')}
+          {option('rejected', 'Reject the complaint', 'No money is refunded')}
+        </div>
+
+        {isRefund && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Who pays for this refund?
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ['vendor', "Vendor's fault", "Taken from the vendor's earnings"],
+                ['platform', 'Platform goodwill', 'ChopNow covers it'],
+              ].map(([value, label, hint]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFundedBy(value)}
+                  className={`text-left p-3 rounded-lg border ${
+                    fundedBy === value
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {label}
+                  </span>
+                  <span className="block text-xs text-slate-500">{hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <textarea
+          rows={3}
+          placeholder="Note for the record (optional)"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800 mb-4"
+        />
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={submitting}
+            className="px-4 py-2 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-50 flex items-center gap-2"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Resolve
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Ops queue of refunds owed to customers (paid orders that were cancelled,
+ * dispute refunds, payments that arrived for cancelled orders). There is no
+ * automatic pawaPay refund yet: ops sends the money back to the payer's
+ * number, then records it here.
+ */
 export const RefundRequests = () => {
+  const [status, setStatus] = useState('pending_manual');
+  const [refunds, setRefunds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
+
+  const load = async (filter) => {
+    setLoading(true);
+    try {
+      const data = await disputeService.getRefundRequests(filter);
+      setRefunds(data.refundRequests || []);
+    } catch (error) {
+      toast.error(error.message || 'Failed to load refund requests');
+      setRefunds([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load(status);
+  }, [status]);
+
+  const settle = async (refund, outcome) => {
+    const note = window.prompt(
+      outcome === 'completed'
+        ? 'Mobile money reference for the refund (optional):'
+        : 'Why could this refund not be made? (optional)'
+    );
+    if (note === null) return; // cancelled
+    setBusyId(refund._id);
+    try {
+      await disputeService.updateRefundRequest(refund._id, { status: outcome, notes: note });
+      toast.success(outcome === 'completed' ? 'Refund recorded as paid' : 'Refund marked failed');
+      setRefunds((prev) => prev.filter((r) => r._id !== refund._id));
+    } catch (error) {
+      toast.error(error.message || 'Failed to update refund');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const fmt = (n) => `RWF ${Math.round(n || 0).toLocaleString()}`;
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 dark:text-white">Refund Requests</h1>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
-        <p className="text-gray-600 dark:text-gray-400">Coming Soon</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold dark:text-white">Refund Requests</h1>
+          <p className="text-sm text-gray-500">
+            Send the money back to the customer&apos;s mobile money number, then record it here.
+          </p>
+        </div>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-slate-200"
+        >
+          <option value="pending_manual">To process</option>
+          <option value="completed">Refunded</option>
+          <option value="failed">Failed</option>
+          <option value="">All</option>
+        </select>
       </div>
+
+      {loading ? (
+        <div className="flex justify-center p-10">
+          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        </div>
+      ) : refunds.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center text-gray-600 dark:text-gray-400">
+          No refund requests here.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {refunds.map((refund) => (
+            <div
+              key={refund._id}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex flex-wrap items-center justify-between gap-4"
+            >
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-800 dark:text-slate-100">
+                  {fmt(refund.amount)} ·{' '}
+                  <span className="font-normal text-slate-600 dark:text-slate-300">
+                    Order {refund.order?.orderNumber || '—'}
+                  </span>
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {[refund.customer?.firstName, refund.customer?.lastName]
+                    .filter(Boolean)
+                    .join(' ') || 'Customer'}
+                  {refund.payment?.payerPhoneNumber
+                    ? ` · pay back to +${String(refund.payment.payerPhoneNumber).replace(/^\+/, '')}`
+                    : refund.customer?.phone
+                      ? ` · ${refund.customer.phone}`
+                      : ''}
+                  {refund.payment?.correspondent
+                    ? ` (${refund.payment.correspondent === 'AIRTEL_RWA' ? 'Airtel' : 'MTN'})`
+                    : ''}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {refund.business?.name ? `${refund.business.name} · ` : ''}
+                  {refund.reason || 'Refund'} ·{' '}
+                  {refund.fundedBy === 'vendor'
+                    ? `vendor's fault (${fmt(refund.vendorDeduction)} from vendor)`
+                    : 'ChopNow pays'}{' '}
+                  · {new Date(refund.createdAt).toLocaleString()}
+                </p>
+                {refund.notes && (
+                  <p className="text-xs text-slate-500 mt-1">Note: {refund.notes}</p>
+                )}
+              </div>
+              {refund.status === 'pending_manual' ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => settle(refund, 'failed')}
+                    disabled={busyId === refund._id}
+                    className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 disabled:opacity-50"
+                  >
+                    Couldn&apos;t refund
+                  </button>
+                  <button
+                    onClick={() => settle(refund, 'completed')}
+                    disabled={busyId === refund._id}
+                    className="px-3 py-2 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-50"
+                  >
+                    Mark refunded
+                  </button>
+                </div>
+              ) : (
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded ${
+                    refund.status === 'completed'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {refund.status === 'completed' ? 'Refunded' : 'Failed'}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -56,13 +351,15 @@ export const CustomerComplaints = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [resolvingId, setResolvingId] = useState(null);
+  // Dispute being resolved in the resolution dialog
+  const [resolveTarget, setResolveTarget] = useState(null);
   const itemsPerPage = 9;
 
   // Transform backend dispute format to frontend issue format
   const transformDispute = (dispute) => ({
     id: dispute._id,
     orderId: dispute.order?.orderNumber || dispute.orderId || 'N/A',
-    orderValue: dispute.order?.totalAmount || 0,
+    orderValue: dispute.order?.pricing?.total || 0,
     priority: dispute.priority || 'medium',
     type: dispute.type || 'other',
     title: dispute.subject || dispute.title || 'Issue',
@@ -233,20 +530,32 @@ export const CustomerComplaints = () => {
   const showingFrom = filteredIssues.length > 0 ? startIndex + 1 : 0;
   const showingTo = Math.min(endIndex, filteredIssues.length);
 
-  const handleResolve = async (issueId) => {
+  // Resolving moves money (refunds), so it always goes through the dialog
+  // where the admin picks the outcome and who pays for a refund.
+  const handleResolve = (issueId) => {
+    if (adminMode !== 'website') {
+      toast.error('Only ChopNow admins can resolve disputes');
+      return;
+    }
+    const issue = issues.find((i) => i.id === issueId);
+    if (issue) setResolveTarget(issue);
+  };
+
+  const submitResolution = async (resolution) => {
+    const issueId = resolveTarget.id;
     setResolvingId(issueId);
     try {
-      await disputeService.resolveDispute(issueId, {
-        resolution: 'Resolved by admin',
-        status: 'resolved',
-      });
+      await disputeService.resolveDispute(issueId, resolution);
       setIssues((prev) => prev.filter((i) => i.id !== issueId));
-      toast.success('Dispute resolved successfully');
+      setResolveTarget(null);
+      toast.success(
+        resolution.action === 'full_refund' || resolution.action === 'partial_refund'
+          ? 'Dispute resolved - refund queued for processing'
+          : 'Dispute resolved'
+      );
     } catch (error) {
       console.error('Error resolving dispute:', error);
-      toast.error('Failed to resolve dispute');
-      // Still remove from UI for demo purposes
-      setIssues((prev) => prev.filter((i) => i.id !== issueId));
+      toast.error(error.message || 'Failed to resolve dispute');
     } finally {
       setResolvingId(null);
     }
@@ -1034,6 +1343,15 @@ export const CustomerComplaints = () => {
             </div>
           </div>
         </>
+      )}
+
+      {resolveTarget && (
+        <ResolveDisputeDialog
+          issue={resolveTarget}
+          submitting={resolvingId === resolveTarget.id}
+          onCancel={() => setResolveTarget(null)}
+          onSubmit={submitResolution}
+        />
       )}
     </div>
   );

@@ -4,7 +4,7 @@ const payoutService = {
   // Request a payout
   requestPayout: async (payoutData) => {
     try {
-      const response = await api.post('/api/payouts/request', payoutData);
+      const response = await api.post('/api/payouts/request', payoutData, { silent: true });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -15,6 +15,16 @@ const payoutService = {
   getMyPayouts: async () => {
     try {
       const response = await api.get('/api/payouts/me');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Balance history: my own, or (admin) another payee's via { business } / { user }
+  getLedger: async (params) => {
+    try {
+      const response = await api.get('/api/payouts/ledger', { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

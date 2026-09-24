@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { userService } from '../services';
+import { clearAccessToken } from '../services/api';
 
 const AdminLogin = () => {
   const { login, googleAuth, user, isAuthenticated } = useAppContext();
@@ -26,50 +27,49 @@ const AdminLogin = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Google Login for Admin
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setIsGoogleLoading(true);
-      try {
-        const result = await googleAuth(tokenResponse.access_token);
-        const loggedInUser = result.user;
+  // Google Login for Admin - H5 fix: see Login.jsx, ID-token credential flow.
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsGoogleLoading(true);
+    try {
+      const result = await googleAuth(credentialResponse.credential);
+      const loggedInUser = result.user;
 
-        // Get roles from response
-        const userRoles = loggedInUser.roles || [loggedInUser.role];
+      // Get roles from response
+      const userRoles = loggedInUser.roles || [loggedInUser.role];
 
-        // Check if user has admin role
-        if (!userRoles.includes('admin')) {
-          toast.error('Access denied. This Google account does not have admin privileges.');
-          // Clear the session since they're not an admin
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setIsGoogleLoading(false);
-          return;
-        }
-
-        // Switch to admin role if not already active
-        if (loggedInUser.activeRole !== 'admin') {
-          try {
-            await userService.switchRole('admin');
-          } catch (switchError) {
-            console.warn('Could not switch to admin role:', switchError);
-          }
-        }
-
-        toast.success('Admin login successful!');
-        window.location.href = '/admin';
-      } catch (err) {
-        console.error('Google Login error:', err);
-        toast.error(err.message || 'Google login failed');
+      // Check if user has admin role
+      if (!userRoles.includes('admin')) {
+        toast.error('Access denied. This Google account does not have admin privileges.');
+        // Clear the session since they're not an admin
+        clearAccessToken();
+        localStorage.removeItem('user');
         setIsGoogleLoading(false);
+        return;
       }
-    },
-    onError: (error) => {
-      console.error('Google Login Failed:', error);
-      toast.error('Google login failed. Please try again.');
+
+      // Switch to admin role if not already active
+      if (loggedInUser.activeRole !== 'admin') {
+        try {
+          await userService.switchRole('admin');
+        } catch (switchError) {
+          console.warn('Could not switch to admin role:', switchError);
+        }
+      }
+
+      toast.success('Admin login successful!');
+      window.location.href = '/admin';
+    } catch (err) {
+      console.error('Google Login error:', err);
+      toast.error(err.message || 'Google login failed');
       setIsGoogleLoading(false);
-    },
-  });
+    }
+  };
+
+  const handleGoogleError = (error) => {
+    console.error('Google Login Failed:', error);
+    toast.error('Google login failed. Please try again.');
+    setIsGoogleLoading(false);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -92,7 +92,7 @@ const AdminLogin = () => {
       if (!userRoles.includes('admin')) {
         toast.error('Access denied. This account does not have admin privileges.');
         // Clear the session since they're not an admin
-        localStorage.removeItem('token');
+        clearAccessToken();
         localStorage.removeItem('user');
         setIsLoading(false);
         return;
@@ -185,24 +185,23 @@ const AdminLogin = () => {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Google Login Button */}
-            <button
-              type="button"
-              onClick={() => loginWithGoogle()}
-              disabled={isGoogleLoading || isLoading}
-              className="w-full flex items-center justify-center gap-3 h-14 bg-white hover:bg-gray-50 text-slate-800 font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-black/10"
-            >
-              {isGoogleLoading ? (
-                <div className="flex items-center gap-2">
+            <div className="relative w-full h-14 flex justify-center [&>div]:w-full [&_iframe]:!w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                text="continue_with"
+                shape="rectangular"
+                width="384"
+              />
+              {(isGoogleLoading || isLoading) && (
+                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white rounded-xl">
                   <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Signing in...</span>
+                  <span className="text-slate-800 font-medium">Signing in...</span>
                 </div>
-              ) : (
-                <>
-                  <img src={assets.google} alt="Google" className="w-5 h-5" />
-                  <span>Continue with Google</span>
-                </>
               )}
-            </button>
+            </div>
 
             {/* Divider */}
             <div className="flex items-center gap-4">

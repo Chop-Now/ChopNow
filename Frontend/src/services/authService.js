@@ -14,7 +14,9 @@ const authService = {
   // Login user
   login: async (credentials) => {
     try {
-      const response = await api.post('/api/users/login', credentials);
+      // silent: the login screens show their own error message; avoid a
+      // second, generic toast.
+      const response = await api.post('/api/users/login', credentials, { silent: true });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -81,7 +83,11 @@ const authService = {
   // Verify email with token
   verifyEmail: async (token) => {
     try {
-      const response = await api.get(`/api/users/verify-email?token=${token}`);
+      // silent: VerifyEmail.jsx shows its own error state; avoid a duplicate toast.
+      const response = await api.get('/api/users/verify-email', {
+        params: { token },
+        silent: true,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -91,7 +97,12 @@ const authService = {
   // Resend verification email
   resendVerificationEmail: async (email) => {
     try {
-      const response = await api.post('/api/users/resend-verification', { email });
+      // silent: callers show their own success/error message.
+      const response = await api.post(
+        '/api/users/resend-verification',
+        { email },
+        { silent: true }
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

@@ -1,7 +1,34 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// In dev, requests go through Vite's own dev-server proxy (see vite.config.js)
+// as same-origin relative paths, so the refresh-token cookie is stored as a
+// same-site cookie - see the proxy config's comment for why. The production
+// build has no dev server / proxy, so it always talks to the real API URL.
+const API_URL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// H2 fix: the refresh token now lives only in an httpOnly cookie the backend
+// sets (never reachable from JS - that's the point). The access token is kept
+// here, in a module-scoped variable, instead of localStorage: it survives for
+// the life of the tab but is wiped on reload, same as it would be if XSS'd -
+// an attacker who can run JS on the page can still call authenticated
+// endpoints while the tab is open (unavoidable for a UI that authenticates at
+// all), but can no longer exfiltrate a long-lived credential for offline use.
+let accessToken = null;
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+export const getAccessToken = () => accessToken;
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+// The CSRF cookie is deliberately NOT httpOnly (see Backend/utils/authCookies.js)
+// so it can be read here and echoed back as a header - the double-submit check.
+const getCsrfTokenFromCookie = () => {
+  const match = document.cookie.match(/(?:^|; )csrfToken=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
 // Create axios instance
 const api = axios.create({
@@ -10,7 +37,9 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false,
+  // Required so the browser attaches the httpOnly refresh-token cookie to
+  // cross-site requests (frontend and backend are on different domains).
+  withCredentials: true,
 });
 
 // Track whether a token refresh is in progress to avoid duplicate refresh calls
@@ -31,20 +60,26 @@ const processQueue = (error, token = null) => {
 
 // Force logout: clear all auth state and redirect
 const forceLogout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
+  clearAccessToken();
   localStorage.removeItem('user');
   if (!window.location.pathname.includes('/login')) {
     window.location.href = '/login';
   }
 };
 
-// Request interceptor to add token to headers
+// Request interceptor to add the access token and (when present) the CSRF
+// double-submit header. The csrfToken cookie only exists once a refresh-token
+// cookie has been set (login/register/refresh), so this is a no-op otherwise;
+// harmless to send on every request since only /refresh-token checks it.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken;
     }
     return config;
   },
@@ -89,44 +124,43 @@ api.interceptors.response.use(
         originalRequest._retry = true;
         isRefreshing = true;
 
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          try {
-            const { data: refreshData } = await axios.post(`${API_URL}/api/users/refresh-token`, {
-              refreshToken,
-            });
-            const newToken = refreshData.token;
-            const newRefreshToken = refreshData.refreshToken;
-
-            localStorage.setItem('token', newToken);
-            if (newRefreshToken) {
-              localStorage.setItem('refreshToken', newRefreshToken);
+        // No local refresh-token check needed: it lives in the httpOnly cookie,
+        // which the browser attaches automatically (withCredentials: true).
+        // The backend tells us with 400 if there's genuinely no session.
+        try {
+          const { data: refreshData } = await axios.post(
+            `${API_URL}/api/users/refresh-token`,
+            {},
+            {
+              withCredentials: true,
+              headers: { 'X-CSRF-Token': getCsrfTokenFromCookie() },
             }
+          );
+          const newToken = refreshData.token;
+          setAccessToken(newToken);
 
-            api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-            processQueue(null, newToken);
-            return api(originalRequest);
-          } catch (refreshError) {
-            processQueue(refreshError, null);
-            forceLogout();
-            return Promise.reject(refreshError);
-          } finally {
-            isRefreshing = false;
-          }
-        } else {
-          // No refresh token available, force logout
-          isRefreshing = false;
+          processQueue(null, newToken);
+          return api(originalRequest);
+        } catch (refreshError) {
+          processQueue(refreshError, null);
           forceLogout();
-          return Promise.reject(error);
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       }
 
       // Handle other error statuses
       switch (status) {
         case 403:
-          if (!silentMode) toast.error('You do not have permission to perform this action.');
+          // EMAIL_NOT_VERIFIED is handled by the login page with its own
+          // message and resend action.
+          if (!silentMode && data?.code !== 'EMAIL_NOT_VERIFIED') {
+            toast.error('You do not have permission to perform this action.');
+          }
           break;
         case 404:
           if (!silentMode) toast.error(data.message || 'Resource not found.');
