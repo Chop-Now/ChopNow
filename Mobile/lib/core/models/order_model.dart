@@ -10,6 +10,10 @@ class Order {
   final DateTime? readyAt;
   final int? co2Saved;
 
+  /// Orders placed together in one multi-vendor checkout (one per vendor)
+  /// share this id and are paid with a single mobile-money payment.
+  final String? checkoutGroup;
+
   const Order({
     required this.id,
     required this.status,
@@ -21,6 +25,7 @@ class Order {
     this.createdAt,
     this.readyAt,
     this.co2Saved,
+    this.checkoutGroup,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -43,7 +48,7 @@ class Order {
           (json['pricing']?['total'] as num?)?.toDouble() ??
           (json['totalAmount'] as num?)?.toDouble() ??
           0,
-      paymentMethod: json['paymentMethod'],
+      paymentMethod: json['paymentMethod'] ?? json['payment']?['paymentMethod'],
       deliveryType: json['deliveryType'],
       business: businessMap,
       createdAt: json['createdAt'] != null
@@ -53,6 +58,7 @@ class Order {
           ? DateTime.tryParse(json['readyAt'].toString())
           : null,
       co2Saved: (json['co2Saved'] as num?)?.toInt(),
+      checkoutGroup: json['checkoutGroup']?.toString(),
     );
   }
 
@@ -67,6 +73,15 @@ class Order {
 
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
+
+  /// Placed with mobile money but not paid yet - the customer can still pay.
+  bool get awaitingPayment =>
+      status == 'pending_payment' && paymentMethod != 'cash';
+
+  /// Mirrors Order.canBeCancelled() on the backend, which is what actually
+  /// enforces this - the UI only uses it to decide whether to show the button.
+  bool get canBeCancelled =>
+      const ['pending_payment', 'paid', 'confirmed'].contains(status);
 }
 
 class OrderItem {

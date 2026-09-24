@@ -46,6 +46,9 @@ class AppEndpoints {
 
   // ── Orders ────────────────────────────────────────────────────────────────
   static const String orders = '/orders';
+  // Multi-vendor checkout: price a cart, then place it (one order per vendor).
+  static const String ordersQuote = '/orders/quote';
+  static const String ordersCheckout = '/orders/checkout';
   static const String myOrders = '/orders/my';
   static String orderById(String id) => '/orders/$id';
   static String orderStatus(String id) => '/orders/$id/status';

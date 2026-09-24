@@ -34,14 +34,14 @@ jest.mock('../utils/logger', () => {
 });
 
 // ── Mock emailService so no real emails are ever sent ──
-jest.mock('../utils/emailService', () => ({
-  sendVerificationEmail: jest.fn().mockResolvedValue(true),
-  sendPasswordResetEmail: jest.fn().mockResolvedValue(true),
-  sendOTPEmail: jest.fn().mockResolvedValue(true),
-  sendPasswordChangeOTP: jest.fn().mockResolvedValue(true),
-  sendPasswordChangedConfirmation: jest.fn().mockResolvedValue(true),
-  sendSensitiveChangeOTP: jest.fn().mockResolvedValue(true),
-}));
+// Every export is mocked (derived from the real module) so a newly-added email
+// helper can never silently be `undefined` in tests.
+jest.mock('../utils/emailService', () => {
+  const actual = jest.requireActual('../utils/emailService');
+  return Object.fromEntries(
+    Object.keys(actual).map((name) => [name, jest.fn().mockResolvedValue(true)])
+  );
+});
 
 // ── Connect to test database before the suite runs ──
 beforeAll(async () => {

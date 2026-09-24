@@ -3,10 +3,20 @@ const Schema = mongoose.Schema;
 
 const paymentSchema = new Schema(
   {
+    // The (first) order this payment is for. A multi-vendor checkout pays for
+    // several orders at once - those are all listed in `orders`.
     order: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
       required: [true, 'Order reference is required'],
+    },
+    orders: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
+      index: true,
+      default: undefined,
+    },
+    checkoutGroup: {
+      type: Schema.Types.ObjectId,
     },
     depositId: {
       type: String,

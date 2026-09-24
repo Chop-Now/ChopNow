@@ -4,9 +4,11 @@ const Sentry = require('./instrument');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const pinoHttp = require('pino-http');
 const { createServer } = require('http');
 const socketManager = require('./socket');
@@ -160,11 +162,12 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      // In production, block requests with no origin (except health checks handled before CORS)
+      // No Origin header = not a browser cross-origin request: the Flutter
+      // app, pawaPay's payment callbacks, Render health checks. CORS only
+      // governs browsers, so rejecting these adds no security - it took the
+      // whole mobile app and every payment confirmation down whenever
+      // NODE_ENV=production.
       if (!origin) {
-        if (isProduction) {
-          return callback(new Error('Not allowed by CORS'));
-        }
         return callback(null, true);
       }
       if (allowedOrigins.includes(origin)) {
@@ -174,28 +177,44 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   })
 );
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(cookieParser());
 
 // Input sanitization — strips all HTML from string fields in req.body
 app.use(sanitizeInput);
 
 // --- Rate limiting ---
+// Mobile carriers in Rwanda put many customers behind one shared public IP
+// (carrier-grade NAT), so per-IP limits must leave room for a crowd of real
+// users - 100 requests / 15 min locked out whole groups of customers (one
+// checkout's payment-status polling alone is ~20 requests).
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: Number(process.env.RATE_LIMIT_API_MAX) || 1500,
+  message: { message: 'Too many requests, please slow down and try again shortly.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // pawaPay payment callbacks all come from pawaPay's own few IPs - never
+  // throttle them (they're authenticated by signature instead).
+  skip: (req) => /\/payments\/webhook$/.test(req.path),
 });
 
+// Brute-force protection is per account (IP + email), so one attacker can't
+// guess a password, but customers sharing a carrier IP don't lock each other
+// out of logging in.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: isProduction ? 10 : 50,
-  message: { message: 'Too many login attempts from this IP, please try again later.' },
+  keyGenerator: (req) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    return `${ipKeyGenerator(req.ip)}|${email}`;
+  },
+  message: { message: 'Too many login attempts, please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -265,13 +284,26 @@ app.get('/', (req, res) => {
   });
 });
 
-// Auth routes with stricter limiter
-app.use('/api/v1/users/login', authLimiter);
-app.use('/api/v1/users/register', authLimiter);
-app.use('/api/v1/users/forgot-password', passwordResetLimiter);
-app.use('/api/v1/users/reset-password', passwordResetLimiter);
-app.use('/api/v1/users/send-otp', otpLimiter);
-app.use('/api/v1/users/verify-otp', otpLimiter);
+// Auth routes with stricter limiter. userRoutes is mounted at BOTH /api/v1/users
+// and the backward-compatible /api/users (which the web frontend calls), so
+// every limiter must cover both prefixes - previously only /api/v1 was
+// limited, leaving the paths real browser traffic uses effectively unlimited.
+const USER_ROUTE_PREFIXES = ['/api/v1/users', '/api/users'];
+const strictUserRouteLimits = {
+  '/login': authLimiter,
+  '/register': authLimiter,
+  '/forgot-password': passwordResetLimiter,
+  '/verify-reset-otp': passwordResetLimiter,
+  '/reset-password': passwordResetLimiter,
+  '/resend-verification': passwordResetLimiter,
+  '/send-otp': otpLimiter,
+  '/verify-otp': otpLimiter,
+};
+for (const prefix of USER_ROUTE_PREFIXES) {
+  for (const [path, limiter] of Object.entries(strictUserRouteLimits)) {
+    app.use(`${prefix}${path}`, limiter);
+  }
+}
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));

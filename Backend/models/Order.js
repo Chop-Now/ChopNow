@@ -54,10 +54,19 @@ const orderSchema = new Schema(
       ref: 'Business',
       required: [true, 'Business is required'],
     },
+    // The first listing in this order (kept for display/back-compat); each
+    // item carries its own listing, and an order may hold several listings
+    // from the same vendor.
     listing: {
       type: Schema.Types.ObjectId,
       ref: 'Listing',
       required: [true, 'Listing is required'],
+    },
+    // Orders placed together in one multi-vendor checkout (one per vendor)
+    // share this id and are paid with a single mobile-money payment.
+    checkoutGroup: {
+      type: Schema.Types.ObjectId,
+      index: true,
     },
 
     // Items
@@ -90,6 +99,34 @@ const orderSchema = new Schema(
         type: Number,
         default: 0,
         min: [0, 'Vendor amount cannot be negative'],
+      },
+      // Platform's cut of the delivery fee; the rider earns riderAmount.
+      deliveryCommission: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      riderAmount: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      tax: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      taxPercent: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      // Vendor-funded dispute refunds granted before the order completed;
+      // deducted from what completion credits to the vendor.
+      vendorRefunded: {
+        type: Number,
+        default: 0,
+        min: 0,
       },
       total: {
         type: Number,
@@ -191,11 +228,16 @@ const orderSchema = new Schema(
     payment: {
       paymentMethod: {
         type: String,
-        enum: ['card', 'mobile_money', 'cash'],
+        // C5 fix: 'card' removed - there is no real card gateway, so this
+        // value existed only as an unauthenticated "mark my order paid" path.
+        enum: ['mobile_money', 'cash'],
       },
       paymentStatus: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
+        // C8 fix: 'refund_pending'/'refunded' added so a dispute resolution
+        // that grants a refund can actually reflect that on the order instead
+        // of leaving paymentStatus looking like nothing happened.
+        enum: ['pending', 'completed', 'failed', 'refund_pending', 'refunded'],
         default: 'pending',
       },
     },
@@ -266,17 +308,19 @@ orderSchema.pre('validate', function () {
     // Generate order number: ORD-YYYYMMDD-RANDOM
     const date = new Date();
     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-    const random = crypto.randomInt(0, 10000).toString().padStart(4, '0');
+    // 8 hex chars (~4 billion values per day). Four random digits collided
+    // with ~50% odds at ~100 orders/day, failing checkout on the unique index.
+    const random = crypto.randomBytes(4).toString('hex').toUpperCase();
     this.orderNumber = `ORD-${dateStr}-${random}`;
   }
 
-  // Calculate total
+  // Calculate total (tax is part of what the customer pays)
   if (
     this.pricing &&
     this.pricing.subtotal !== undefined &&
     this.pricing.deliveryFee !== undefined
   ) {
-    this.pricing.total = this.pricing.subtotal + this.pricing.deliveryFee;
+    this.pricing.total = this.pricing.subtotal + this.pricing.deliveryFee + (this.pricing.tax || 0);
   }
 });
 
@@ -300,12 +344,15 @@ orderSchema.methods.updateStatus = function (newStatus) {
   return this.save();
 };
 
+// Statuses from which an order can still be cancelled
+const CANCELLABLE_STATUSES = ['pending_payment', 'paid', 'confirmed'];
+
 // Method to check if order can be cancelled
 orderSchema.methods.canBeCancelled = function () {
-  const cancellableStatuses = ['pending_payment', 'paid', 'confirmed'];
-  return cancellableStatuses.includes(this.status);
+  return CANCELLABLE_STATUSES.includes(this.status);
 };
 
 const Order = mongoose.model('Order', orderSchema);
+Order.CANCELLABLE_STATUSES = CANCELLABLE_STATUSES;
 
 module.exports = Order;

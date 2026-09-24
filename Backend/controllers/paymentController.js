@@ -3,25 +3,223 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Payment = require('../models/Payment');
-const Listing = require('../models/Listing');
 const logger = require('../utils/logger');
 const { verifySignature } = require('../utils/pawapaySignatures');
-const { sendNewOrderNotifications } = require('./orderController');
+const { sendNewOrderNotifications, cancelOrderAndRestoreInventory } = require('./orderController');
+const RefundRequest = require('../models/RefundRequest');
 const socketManager = require('../socket');
+
+const isPawapayProduction = () => process.env.PAWAPAY_ENVIRONMENT === 'production';
+
+/**
+ * C5: the single source of truth for simulated payments. Never in pawaPay
+ * production, whatever PAYMENT_TEST_MODE says - otherwise one mis-set env var
+ * on the live server turns every order into free food. In sandbox it's on
+ * unless PAYMENT_TEST_MODE is explicitly 'false' (to exercise the real
+ * sandbox API).
+ */
+const isPaymentTestMode = () => !isPawapayProduction() && process.env.PAYMENT_TEST_MODE !== 'false';
+
+const emitOrderUpdate = (order) => {
+  try {
+    socketManager
+      .getIO()
+      .to(`user_${order.customer.toString()}`)
+      .emit('order_status_updated', order);
+  } catch (socketErr) {
+    logger.warn({ err: socketErr.message }, 'Socket emit for payment outcome failed');
+  }
+};
+
+/**
+ * Applies a final pawaPay deposit outcome exactly once. Shared by the webhook,
+ * the status-poll fallback and the sandbox simulator so all three have the
+ * same idempotency and race handling.
+ *
+ * H9: the Payment is claimed atomically (status-filtered findOneAndUpdate), so
+ * duplicate/concurrent deliveries of the same outcome are no-ops. A COMPLETED
+ * may also claim a payment the expiry job already timed out - the customer's
+ * money really was taken and must not be silently ignored.
+ *
+ * The order is likewise moved with compare-and-swaps rather than a blind save:
+ * - COMPLETED only moves pending_payment -> paid. If the order was cancelled
+ *   meanwhile (customer cancel, expiry), the money is queued for refund
+ *   instead of resurrecting the order after its stock was released.
+ * - FAILED cancels via cancelOrderAndRestoreInventory only from
+ *   pending_payment, and not while another attempt for the order is still
+ *   live, so stock is never released twice and a later successful retry
+ *   isn't undone.
+ *
+ * @returns {Promise<{processed: boolean, payment: Payment|null}>}
+ */
+const applyDepositOutcome = async ({
+  depositId,
+  completed,
+  providerTransactionId,
+  failureReason,
+  rawCallbackData,
+}) => {
+  const claimFilter = completed
+    ? {
+        depositId,
+        $or: [{ status: 'pending' }, { status: 'failed', 'failureReason.code': 'TIMEOUT' }],
+      }
+    : { depositId, status: 'pending' };
+
+  let payment = null;
+  let paidOrders = [];
+  let cancelledOrders = [];
+
+  // Claim + order transitions + refund/stock changes commit together: if any
+  // step fails, the Payment goes back to its unclaimed state and the webhook
+  // (answered with a 5xx) is retried rather than lost.
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      paidOrders = [];
+      cancelledOrders = [];
+
+      payment = await Payment.findOneAndUpdate(
+        claimFilter,
+        {
+          $set: {
+            status: completed ? 'completed' : 'failed',
+            callbackReceived: true,
+            ...(rawCallbackData ? { rawCallbackData } : {}),
+            ...(providerTransactionId ? { providerTransactionId } : {}),
+            ...(failureReason
+              ? {
+                  failureReason: {
+                    code: failureReason.code,
+                    description: failureReason.description,
+                  },
+                }
+              : {}),
+          },
+        },
+        { new: true, session }
+      );
+      if (!payment) return;
+
+      // A multi-vendor checkout payment covers several orders (one per vendor).
+      const orderIds = payment.orders?.length ? payment.orders : [payment.order];
+
+      for (const orderId of orderIds) {
+        if (completed) {
+          const paidOrder = await Order.findOneAndUpdate(
+            { _id: orderId, status: 'pending_payment' },
+            {
+              $set: {
+                status: 'paid',
+                'payment.paymentMethod': 'mobile_money',
+                'payment.paymentStatus': 'completed',
+                'statusTimestamps.paidAt': new Date(),
+              },
+            },
+            { new: true, session }
+          );
+          if (paidOrder) {
+            paidOrders.push(paidOrder);
+            continue;
+          }
+
+          // Money arrived for an order that can no longer take it (cancelled by
+          // the customer or the expiry job while the PIN prompt was open, or a
+          // second successful attempt on an already-paid order). Queue a
+          // refund of that order's share.
+          const order = await Order.findById(orderId).session(session);
+          if (!order) continue;
+          await RefundRequest.create(
+            [
+              {
+                order: order._id,
+                payment: payment._id,
+                business: order.business,
+                customer: order.customer,
+                amount: order.pricing.total,
+                currency: payment.currency,
+                reason: `Payment received for ${order.status} order`,
+                requestedBy: order.customer,
+              },
+            ],
+            { session }
+          );
+          if (order.status === 'cancelled') {
+            await Order.updateOne(
+              { _id: order._id },
+              { $set: { 'payment.paymentStatus': 'refund_pending' } },
+              { session }
+            );
+          }
+          logger.warn(
+            { orderNumber: order.orderNumber, orderStatus: order.status, depositId },
+            'Payment completed for an order that could not accept it - refund queued'
+          );
+          continue;
+        }
+
+        // FAILED
+        const order = await Order.findById(orderId).session(session);
+        if (!order) {
+          logger.error({ orderId }, 'Matching order for payment outcome not found');
+          continue;
+        }
+        const otherLiveAttempt = await Payment.exists({
+          _id: { $ne: payment._id },
+          $or: [{ order: order._id }, { orders: order._id }],
+          status: { $in: ['pending', 'completed'] },
+        }).session(session);
+        if (otherLiveAttempt) continue;
+        const cancelled = await cancelOrderAndRestoreInventory(order, {
+          fromStatuses: ['pending_payment'],
+          paymentStatus: 'failed',
+          reason: 'Payment failed',
+          session,
+        });
+        if (cancelled) cancelledOrders.push(order);
+      }
+    });
+  } finally {
+    session.endSession();
+  }
+
+  if (!payment) return { processed: false, payment: null };
+
+  // Notifications only after the transaction has committed - each vendor
+  // hears about its own order.
+  for (const order of paidOrders) {
+    logger.info({ orderNumber: order.orderNumber, depositId }, 'Order marked as paid.');
+    setImmediate(() => {
+      sendNewOrderNotifications(order._id).catch((err) =>
+        logger.error({ err }, 'Failed to send paid order notifications')
+      );
+      emitOrderUpdate(order);
+    });
+  }
+  for (const order of cancelledOrders) {
+    logger.info({ orderNumber: order.orderNumber, depositId }, 'Order cancelled: payment failed.');
+    setImmediate(() => emitOrderUpdate(order));
+  }
+  return { processed: true, payment };
+};
 
 /**
  * @desc    Initiate mobile money payment (deposit) via pawaPay
  * @route   POST /api/payments/deposit
  * @access  Private
+ *
+ * Pays either one order (`orderId`, older clients and "pay later" from order
+ * history) or every still-unpaid order of a multi-vendor checkout
+ * (`checkoutId`) with a single mobile-money prompt for the combined total.
  */
 const initiatePayment = async (req, res) => {
   try {
-    const { orderId, phoneNumber, correspondent } = req.body;
+    const { orderId, checkoutId, phoneNumber, correspondent } = req.body;
 
-    if (!orderId || !phoneNumber || !correspondent) {
-      return res
-        .status(400)
-        .json({ message: 'Please provide orderId, phoneNumber, and correspondent' });
+    if ((!orderId && !checkoutId) || !phoneNumber || !correspondent) {
+      return res.status(400).json({
+        message: 'Please provide orderId (or checkoutId), phoneNumber, and correspondent',
+      });
     }
 
     if (!['MTN_MOMO_RWA', 'AIRTEL_RWA'].includes(correspondent)) {
@@ -31,41 +229,64 @@ const initiatePayment = async (req, res) => {
     }
 
     // Clean phone number to MSISDN format (e.g., must start with country code, no +, no spaces)
-    let formattedPhone = phoneNumber.replace(/[\s+]/g, '');
+    let formattedPhone = String(phoneNumber).replace(/[\s+]/g, '');
     if (formattedPhone.startsWith('0')) {
       // Assuming Rwandan number if starts with 0
       formattedPhone = '250' + formattedPhone.substring(1);
     }
-    if (!formattedPhone.startsWith('250') || formattedPhone.length !== 12) {
+    if (!/^250\d{9}$/.test(formattedPhone)) {
       return res.status(400).json({
         message: 'Phone number must be a valid Rwandan number (e.g., 25078xxxxxxx or 078xxxxxxx)',
       });
     }
 
-    // Find the order
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    // Find the order(s) this payment covers
+    let orders;
+    if (checkoutId) {
+      if (!mongoose.isValidObjectId(checkoutId)) {
+        return res.status(400).json({ message: 'Invalid checkoutId' });
+      }
+      const group = await Order.find({ checkoutGroup: checkoutId }).sort({ createdAt: 1 });
+      if (group.length === 0) {
+        return res.status(404).json({ message: 'Checkout not found' });
+      }
+      if (group.some((o) => o.customer.toString() !== req.user._id.toString())) {
+        return res.status(403).json({ message: 'Not authorized to pay for this checkout' });
+      }
+      orders = group.filter((o) => o.status === 'pending_payment');
+      if (orders.length === 0) {
+        return res.status(400).json({ message: 'Nothing left to pay in this checkout' });
+      }
+    } else {
+      if (!mongoose.isValidObjectId(orderId)) {
+        return res.status(400).json({ message: 'Invalid orderId' });
+      }
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      if (order.customer.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized to pay for this order' });
+      }
+      if (order.status !== 'pending_payment') {
+        return res
+          .status(400)
+          .json({ message: `Order status is ${order.status}. Cannot initiate payment.` });
+      }
+      orders = [order];
     }
 
-    // Authorize check: order must belong to caller
-    if (order.customer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized to pay for this order' });
-    }
-
-    // Order must be pending payment
-    if (order.status !== 'pending_payment') {
-      return res
-        .status(400)
-        .json({ message: `Order status is ${order.status}. Cannot initiate payment.` });
-    }
+    const amount = orders.reduce((sum, o) => sum + o.pricing.total, 0);
+    const currency = orders[0].pricing.currency || 'RWF';
+    const orderIds = orders.map((o) => o._id);
 
     // Generate depositId (UUIDv4)
     const depositId = crypto.randomUUID();
 
     // Configure pawaPay API details
-    const isProduction = process.env.PAWAPAY_ENVIRONMENT === 'production';
-    const baseUrl = isProduction ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
+    const baseUrl = isPawapayProduction()
+      ? 'https://api.pawapay.io'
+      : 'https://api.sandbox.pawapay.io';
     const apiKey = process.env.PAWAPAY_API_KEY;
 
     if (!apiKey) {
@@ -73,116 +294,56 @@ const initiatePayment = async (req, res) => {
       return res.status(500).json({ message: 'Payment gateway configuration error' });
     }
 
-    const payload = {
-      depositId: depositId,
-      amount: String(order.pricing.total),
-      currency: order.pricing.currency || 'RWF',
-      payer: {
-        type: 'MMO',
-        accountDetails: {
-          phoneNumber: formattedPhone,
-          provider: correspondent,
-        },
-      },
-      customerMessage: `ChopNow ${order.orderNumber.replace(/[^a-zA-Z0-9]/g, '').slice(-8)}`,
-    };
+    // The Payment exists BEFORE pawaPay is asked for the deposit, so a fast
+    // callback can never arrive for a depositId we don't know about yet.
+    const payment = await Payment.create({
+      order: orderIds[0],
+      orders: orderIds,
+      checkoutGroup: orders[0].checkoutGroup,
+      depositId,
+      amount,
+      currency,
+      payerPhoneNumber: formattedPhone,
+      correspondent,
+      status: 'pending',
+    });
+    await Order.updateMany(
+      { _id: { $in: orderIds }, status: 'pending_payment' },
+      { $set: { 'payment.paymentMethod': 'mobile_money' } }
+    );
 
-    logger.debug({ payload }, 'Initiating pawaPay deposit request');
+    const markInitiationFailed = (code, description) =>
+      Payment.updateOne(
+        { _id: payment._id, status: 'pending' },
+        { $set: { status: 'failed', failureReason: { code, description } } }
+      );
 
     // ─── TEST MODE ──────────────────────────────────────────────────────────
-    // Active when PAYMENT_TEST_MODE=true, OR when running in sandbox and
-    // PAYMENT_TEST_MODE has not been explicitly set to 'false'.
-    // This prevents real API failures during staging/testing.
-    const isSandbox = process.env.PAWAPAY_ENVIRONMENT !== 'production';
-    const testModeExplicitlyDisabled = process.env.PAYMENT_TEST_MODE === 'false';
-    const isTestMode =
-      process.env.PAYMENT_TEST_MODE === 'true' || (isSandbox && !testModeExplicitlyDisabled);
-
-    if (isTestMode) {
+    // See isPaymentTestMode: sandbox only, never pawaPay production.
+    if (isPaymentTestMode()) {
       logger.info(
-        { orderId, depositId, reason: isSandbox ? 'sandbox-auto' : 'explicit' },
+        { orderIds, depositId, amount },
         'PAYMENT_TEST_MODE: Simulating successful deposit'
       );
 
-      // Create Payment record immediately
-      const payment = await Payment.create({
-        order: order._id,
-        depositId,
-        amount: order.pricing.total,
-        currency: order.pricing.currency || 'RWF',
-        payerPhoneNumber: formattedPhone,
-        correspondent,
-        status: 'pending',
-      });
-
-      order.payment.paymentMethod = 'mobile_money';
-      await order.save();
-
-      // Simulate webhook callback after 5 seconds (COMPLETED)
-      // Call the webhook handler directly in-process (no HTTP self-call needed)
+      // Simulate the COMPLETED callback after 5 seconds, through the same
+      // applyDepositOutcome the real webhook uses (so test mode exercises the
+      // real idempotency/race handling rather than a separate blind save).
       setTimeout(async () => {
         try {
           logger.info({ depositId }, 'PAYMENT_TEST_MODE: Firing simulated COMPLETED callback');
-
-          // Build a minimal fake request/response matching what the real webhook handler expects
-          const fakeReq = {
-            body: {
+          const providerTransactionId = `TEST-${depositId.substring(0, 8).toUpperCase()}`;
+          await applyDepositOutcome({
+            depositId,
+            completed: true,
+            providerTransactionId,
+            rawCallbackData: {
               depositId,
               status: 'COMPLETED',
-              providerTransactionId: `TEST-${depositId.substring(0, 8).toUpperCase()}`,
-              amount: String(order.pricing.total),
-              currency: order.pricing.currency || 'RWF',
-              country: 'RWA',
-              correspondent,
-              payer: { address: { value: formattedPhone } },
-              customerTimestamp: new Date().toISOString(),
+              providerTransactionId,
+              simulated: true,
             },
-            headers: {}, // No signature headers — sandbox mode allows this
-          };
-
-          // Directly invoke the webhook handler logic (skip signature check in sandbox)
-          const paymentRecord = await Payment.findOne({ depositId });
-          if (!paymentRecord) {
-            logger.warn(
-              { depositId },
-              'PAYMENT_TEST_MODE: Payment not found for simulated callback'
-            );
-            return;
-          }
-
-          paymentRecord.status = 'completed';
-          paymentRecord.callbackReceived = true;
-          paymentRecord.rawCallbackData = fakeReq.body;
-          paymentRecord.providerTransactionId = fakeReq.body.providerTransactionId;
-          await paymentRecord.save();
-
-          const orderToUpdate = await Order.findById(paymentRecord.order);
-          if (orderToUpdate) {
-            orderToUpdate.status = 'paid';
-            orderToUpdate.payment.paymentStatus = 'completed';
-            orderToUpdate.statusTimestamps.paidAt = new Date();
-            await orderToUpdate.save();
-
-            // Notify customer via socket
-            try {
-              const io = socketManager.getIO();
-              io.to(`user_${orderToUpdate.customer.toString()}`).emit(
-                'order_status_updated',
-                orderToUpdate
-              );
-              logger.info(
-                { orderNumber: orderToUpdate.orderNumber },
-                'PAYMENT_TEST_MODE: Order marked paid and customer notified'
-              );
-            } catch (socketErr) {
-              logger.warn({ err: socketErr.message }, 'PAYMENT_TEST_MODE: Socket emit failed');
-            }
-
-            // Send email/vendor notifications
-            sendNewOrderNotifications(orderToUpdate._id).catch((err) =>
-              logger.warn({ err: err.message }, 'PAYMENT_TEST_MODE: Notification send failed')
-            );
-          }
+          });
         } catch (err) {
           logger.warn(
             { err: err.message },
@@ -197,53 +358,73 @@ const initiatePayment = async (req, res) => {
           '[TEST MODE] Payment simulated. A fake webhook will complete the order in 5 seconds.',
         depositId,
         paymentId: payment._id,
+        amount,
+        orders: orderIds,
         testMode: true,
       });
     }
     // ─── END TEST MODE ───────────────────────────────────────────────────────
 
-    // Call pawaPay Deposits API
-    const response = await axios.post(`${baseUrl}/v2/deposits`, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'Idempotency-Key': depositId,
+    const payload = {
+      depositId,
+      amount: String(amount),
+      currency,
+      payer: {
+        type: 'MMO',
+        accountDetails: {
+          phoneNumber: formattedPhone,
+          provider: correspondent,
+        },
       },
-      timeout: 10000,
-    });
+      customerMessage: `ChopNow ${orders[0].orderNumber.replace(/[^a-zA-Z0-9]/g, '').slice(-8)}`,
+    };
+    logger.debug({ depositId, amount, orderIds }, 'Initiating pawaPay deposit request');
+
+    let response;
+    try {
+      response = await axios.post(`${baseUrl}/v2/deposits`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'Idempotency-Key': depositId,
+        },
+        timeout: 10000,
+      });
+    } catch (error) {
+      // A timeout doesn't prove pawaPay didn't take the request - leave the
+      // Payment pending so the webhook/status poll can still settle it (the
+      // expiry job times it out otherwise). A definite HTTP rejection fails it.
+      if (error.response) {
+        await markInitiationFailed(
+          'INITIATION_REJECTED',
+          error.response.data?.message || `HTTP ${error.response.status}`
+        );
+      }
+      throw error;
+    }
 
     logger.debug({ response: response.data }, 'pawaPay deposit initiation response');
 
-    // Verify response
     if (response.data && response.data.status === 'ACCEPTED') {
-      // Create a Payment record
-      const payment = await Payment.create({
-        order: order._id,
-        depositId: depositId,
-        amount: order.pricing.total,
-        currency: order.pricing.currency || 'RWF',
-        payerPhoneNumber: formattedPhone,
-        correspondent: correspondent,
-        status: 'pending',
-      });
-
-      // Update order status/method references quietly
-      order.payment.paymentMethod = 'mobile_money';
-      await order.save();
-
       return res.status(200).json({
         success: true,
         message: 'Payment initiated successfully. Please complete PIN prompt on your phone.',
-        depositId: depositId,
+        depositId,
         paymentId: payment._id,
-      });
-    } else {
-      logger.error({ responseData: response.data }, 'pawaPay deposit not accepted');
-      return res.status(400).json({
-        message: 'Payment initiation rejected by pawaPay',
-        details: response.data,
+        amount,
+        orders: orderIds,
       });
     }
+
+    logger.error({ responseData: response.data }, 'pawaPay deposit not accepted');
+    await markInitiationFailed(
+      response.data?.failureReason?.failureCode || 'NOT_ACCEPTED',
+      response.data?.failureReason?.failureMessage || `Status ${response.data?.status}`
+    );
+    return res.status(400).json({
+      message: 'Payment initiation rejected by pawaPay',
+      details: response.data,
+    });
   } catch (error) {
     // Log the full pawaPay error response for debugging
     const pawapayError = error.response?.data;
@@ -258,7 +439,6 @@ const initiatePayment = async (req, res) => {
     return res.status(500).json({
       message: 'Failed to initiate mobile money payment',
       error: pawapayError?.message || error.message,
-      details: pawapayError,
     });
   }
 };
@@ -270,7 +450,12 @@ const initiatePayment = async (req, res) => {
  */
 const handleWebhook = async (req, res) => {
   try {
-    logger.info({ body: req.body, headers: req.headers }, 'pawaPay Webhook Received');
+    // C10 fix: this is a public, unauthenticated, constantly-hit endpoint - never
+    // log the full raw body/headers (transaction payloads, phone numbers, and any
+    // signature/auth headers pawaPay sends). Log only the minimal identifying
+    // fields needed to trace a webhook through the logs.
+    const { depositId, status, failureReason, providerTransactionId } = req.body || {};
+    logger.info({ depositId, status }, 'pawaPay Webhook Received');
 
     // 1. Verify cryptographic signature (RFC-9421)
     const isValidSignature = await verifySignature(req);
@@ -279,131 +464,45 @@ const handleWebhook = async (req, res) => {
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
-    const { depositId, status, failureReason, providerTransactionId } = req.body;
-
     if (!depositId || !status) {
       return res.status(400).json({ error: 'Missing depositId or status' });
     }
 
-    // 2. Find matching Payment
-    const payment = await Payment.findOne({ depositId });
-    if (!payment) {
-      logger.warn({ depositId }, 'pawaPay callback received for untracked payment ID.');
+    // Only final outcomes change anything; pawaPay can also send non-final
+    // statuses (e.g. ACCEPTED/PROCESSING) which must not fail the order.
+    const completed = status === 'COMPLETED';
+    const failed = status === 'FAILED' || status === 'REJECTED';
+    if (!completed && !failed) {
+      logger.info({ depositId, status }, 'pawaPay callback with non-final status ignored');
+      return res.status(200).json({ message: 'Non-final status ignored' });
+    }
+
+    // 2. Claim the Payment and apply the outcome exactly once (H9) - see
+    // applyDepositOutcome.
+    const { processed } = await applyDepositOutcome({
+      depositId,
+      completed,
+      providerTransactionId,
+      failureReason,
+      rawCallbackData: req.body,
+    });
+    if (!processed) {
+      logger.info(
+        { depositId },
+        'pawaPay callback ignored: payment not found or already processed'
+      );
       // Still return 200 OK so pawaPay stops retrying
-      return res.status(200).json({ message: 'Callback ignored: payment untracked' });
-    }
-
-    // Avoid double processing
-    if (payment.callbackReceived && payment.status !== 'pending') {
-      logger.info({ depositId }, 'pawaPay callback already processed for this transaction.');
-      return res.status(200).json({ message: 'Duplicate callback ignored' });
-    }
-
-    // 3. Update Payment record
-    payment.status = status === 'COMPLETED' ? 'completed' : 'failed';
-    payment.callbackReceived = true;
-    payment.rawCallbackData = req.body;
-    if (providerTransactionId) {
-      payment.providerTransactionId = providerTransactionId;
-    }
-    if (failureReason) {
-      payment.failureReason = {
-        code: failureReason.code,
-        description: failureReason.description,
-      };
-    }
-    await payment.save();
-
-    // 4. Update corresponding Order using a session to handle inventory release atomically if failed
-    const session = await mongoose.startSession();
-    let orderToNotify = null;
-    let notificationStatus = null; // 'COMPLETED' or 'FAILED'
-
-    try {
-      await session.withTransaction(async () => {
-        const order = await Order.findById(payment.order).session(session);
-        if (!order) {
-          logger.error({ orderId: payment.order }, 'Matching order for payment callback not found');
-          return;
-        }
-
-        if (status === 'COMPLETED') {
-          // Update Order to PAID
-          order.status = 'paid';
-          order.payment.paymentStatus = 'completed';
-          if (!order.statusTimestamps.paidAt) {
-            order.statusTimestamps.paidAt = new Date();
-          }
-          await order.save({ session });
-
-          orderToNotify = order;
-          notificationStatus = 'COMPLETED';
-
-          logger.info(
-            { orderNumber: order.orderNumber, depositId },
-            'Order marked as paid via pawaPay callback.'
-          );
-        } else {
-          // Payment failed: mark Order as cancelled and release listing stock
-          order.status = 'cancelled';
-          order.payment.paymentStatus = 'failed';
-          if (!order.statusTimestamps.cancelledAt) {
-            order.statusTimestamps.cancelledAt = new Date();
-          }
-          await order.save({ session });
-
-          // Release stock reservation
-          const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-          const listing = await Listing.findById(order.listing).session(session);
-          if (listing) {
-            listing.inventory.quantity += totalQuantity;
-            listing.inventory.reserved -= totalQuantity;
-            if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
-              listing.status = 'active';
-            }
-            await listing.save({ session });
-          }
-
-          orderToNotify = order;
-          notificationStatus = 'FAILED';
-
-          logger.info(
-            { orderNumber: order.orderNumber, depositId },
-            'Order cancelled due to failed payment callback.'
-          );
-        }
-      });
-    } finally {
-      session.endSession();
-    }
-
-    // Trigger notifications and Socket.io broadcasts to vendor and customer AFTER transaction commits
-    if (orderToNotify) {
-      setImmediate(() => {
-        if (notificationStatus === 'COMPLETED') {
-          sendNewOrderNotifications(orderToNotify._id).catch((err) =>
-            logger.error({ err }, 'Failed to send paid order notifications')
-          );
-        }
-
-        try {
-          const io = socketManager.getIO();
-          io.to(`user_${orderToNotify.customer.toString()}`).emit(
-            'order_status_updated',
-            orderToNotify
-          );
-        } catch (socketErr) {
-          logger.error({ err: socketErr }, 'Socket emit in webhook failed');
-        }
-      });
+      return res.status(200).json({ message: 'Callback ignored: not found or already processed' });
     }
 
     // Always respond HTTP 200 to acknowledge webhook
     return res.status(200).json({ status: 'success' });
   } catch (error) {
     logger.error({ err: error.message }, 'pawaPay webhook processing error');
-    // Return 200 OK anyway to prevent pawaPay from hammering the webhook on crash
-    return res.status(200).json({ error: 'processing error' });
+    // 5xx so pawaPay retries: applyDepositOutcome is transactional and
+    // idempotent, so a failed attempt left nothing half-applied and a retry is
+    // safe (and is the only way this outcome gets applied).
+    return res.status(500).json({ error: 'processing error' });
   }
 };
 
@@ -414,20 +513,29 @@ const handleWebhook = async (req, res) => {
  */
 const getPaymentStatus = async (req, res) => {
   try {
-    const payment = await Payment.findOne({ order: req.params.orderId }).sort({ createdAt: -1 });
-
-    if (!payment) {
-      return res.status(404).json({ message: 'No payment record found for this order' });
+    const { orderId } = req.params;
+    if (!mongoose.isValidObjectId(orderId)) {
+      return res.status(400).json({ message: 'Invalid order id' });
     }
 
     // Authorize check
-    const order = await Order.findById(payment.order);
+    const order = await Order.findById(orderId).select('customer');
+    if (!order) {
+      return res.status(404).json({ message: 'No payment record found for this order' });
+    }
     if (
-      order &&
       order.customer.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
+      !req.user.roles?.includes('admin')
     ) {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Latest payment covering this order - alone, or as part of a checkout.
+    let payment = await Payment.findOne({ $or: [{ order: orderId }, { orders: orderId }] }).sort({
+      createdAt: -1,
+    });
+    if (!payment) {
+      return res.status(404).json({ message: 'No payment record found for this order' });
     }
 
     // --- Active status check fallback ---
@@ -438,7 +546,8 @@ const getPaymentStatus = async (req, res) => {
       const baseUrl = isProduction ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
       const apiKey = process.env.PAWAPAY_API_KEY;
 
-      if (apiKey) {
+      // Test mode payments are simulated locally; there's nothing to poll.
+      if (apiKey && !isPaymentTestMode()) {
         try {
           const response = await axios.get(`${baseUrl}/v2/deposits/${payment.depositId}`, {
             headers: {
@@ -448,74 +557,22 @@ const getPaymentStatus = async (req, res) => {
           });
 
           if (response.data && response.data.status === 'FOUND' && response.data.data) {
-            const remoteStatus = response.data.data.status;
-            if (remoteStatus === 'COMPLETED') {
-              payment.status = 'completed';
-              payment.providerTransactionId = response.data.data.providerTransactionId;
-              await payment.save();
+            const remote = response.data.data;
+            const isCompleted = remote.status === 'COMPLETED';
+            const isFailed = remote.status === 'FAILED' || remote.status === 'REJECTED';
 
-              if (order && order.status !== 'paid') {
-                order.status = 'paid';
-                order.payment.paymentStatus = 'completed';
-                if (!order.statusTimestamps.paidAt) {
-                  order.statusTimestamps.paidAt = new Date();
-                }
-                await order.save();
-
-                // Trigger vendor/customer notifications
-                sendNewOrderNotifications(order._id).catch((err) =>
-                  logger.error(
-                    { err },
-                    'Failed to send paid order notifications in status check fallback'
-                  )
-                );
-
-                // Notify frontend via socket
-                try {
-                  const io = socketManager.getIO();
-                  io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
-                } catch (socketErr) {
-                  logger.warn({ err: socketErr.message }, 'Socket emit in fallback failed');
-                }
-              }
-            } else if (remoteStatus === 'FAILED' || remoteStatus === 'REJECTED') {
-              payment.status = 'failed';
-              if (response.data.data.failureReason) {
-                payment.failureReason = {
-                  code: response.data.data.failureReason.code,
-                  description: response.data.data.failureReason.description,
-                };
-              }
-              await payment.save();
-
-              if (order && order.status !== 'cancelled') {
-                order.status = 'cancelled';
-                order.payment.paymentStatus = 'failed';
-                if (!order.statusTimestamps.cancelledAt) {
-                  order.statusTimestamps.cancelledAt = new Date();
-                }
-                await order.save();
-
-                // Release stock reservation
-                const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-                const listing = await Listing.findById(order.listing);
-                if (listing) {
-                  listing.inventory.quantity += totalQuantity;
-                  listing.inventory.reserved -= totalQuantity;
-                  if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
-                    listing.status = 'active';
-                  }
-                  await listing.save();
-                }
-
-                // Notify frontend via socket
-                try {
-                  const io = socketManager.getIO();
-                  io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
-                } catch (socketErr) {
-                  logger.warn({ err: socketErr.message }, 'Socket emit in fallback failed');
-                }
-              }
+            if (isCompleted || isFailed) {
+              // Same claim-once path as the webhook (H9) - see applyDepositOutcome.
+              // A poll racing the webhook or another poll can't double-apply.
+              const { payment: claimed } = await applyDepositOutcome({
+                depositId: payment.depositId,
+                completed: isCompleted,
+                providerTransactionId: remote.providerTransactionId,
+                failureReason: remote.failureReason,
+              });
+              // Whether we won the claim or lost it to a concurrent request /
+              // the webhook, report the Payment's real current state.
+              payment = claimed || (await Payment.findById(payment._id));
             }
           }
         } catch (apiErr) {
@@ -540,4 +597,5 @@ module.exports = {
   initiatePayment,
   handleWebhook,
   getPaymentStatus,
+  isPaymentTestMode,
 };

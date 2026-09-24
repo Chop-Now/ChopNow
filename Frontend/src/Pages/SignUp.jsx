@@ -25,7 +25,7 @@ import { reverseGeocode, searchAddress } from '../services/geocoding';
 import { businessService } from '../services';
 import toast from 'react-hot-toast';
 
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
@@ -83,17 +83,16 @@ const SignUp = () => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const { getCurrentLocation } = useGeolocation();
 
-  const signupWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await googleAuth(tokenResponse.access_token);
-        navigate('/shop');
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    onError: () => toast.error('Google Signup Failed'),
-  });
+  // H5 fix: see Login.jsx - ID-token credential flow, required by the backend's
+  // audience verification.
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await googleAuth(credentialResponse.credential);
+      navigate('/shop');
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Check if registrations are allowed - AFTER all hooks
   if (!isFeatureEnabled('registration')) {
@@ -269,7 +268,10 @@ const SignUp = () => {
         };
 
         await register(userData);
-        toast.success('Account created successfully!');
+        toast.success(
+          'Account created! Check your inbox for a verification link - you will need it to log in next time.',
+          { duration: 6000 }
+        );
 
         // Redirect buyers directly to shop
         navigate('/shop');
@@ -394,19 +396,17 @@ const SignUp = () => {
                   // Buyer Form
                   <>
                     {/* Google Button */}
-                    <button
-                      type="button"
-                      onClick={() => signupWithGoogle()}
-                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
-                      <span
-                        className="ml-2 text-sm font-medium"
-                        style={{ color: 'var(--color-textColor)' }}
-                      >
-                        Sign up with Google
-                      </span>
-                    </button>
+                    <div className="w-full flex justify-center [&>div]:w-full">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => toast.error('Google Signup Failed')}
+                        theme="outline"
+                        size="large"
+                        text="signup_with"
+                        shape="rectangular"
+                        width="384"
+                      />
+                    </div>
 
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">

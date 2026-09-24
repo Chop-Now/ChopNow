@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Listing = require('../models/Listing');
@@ -6,7 +5,8 @@ const Business = require('../models/Business');
 const User = require('../models/User');
 const _Delivery = require('../models/Delivery');
 const Notification = require('../models/Notification');
-const PlatformSettings = require('../models/PlatformSettings');
+const Payment = require('../models/Payment');
+const RefundRequest = require('../models/RefundRequest');
 const logger = require('../utils/logger');
 const {
   sendOrderConfirmationEmail,
@@ -24,9 +24,181 @@ const IMPACT_FACTORS = {
   WATER_PER_MEAL: 1000, // litres of water saved per meal
 };
 const socketManager = require('../socket');
+const { CheckoutError, buildQuote, placeCheckout } = require('../services/checkoutService');
+const { recordEntry, holdUntil } = require('../services/ledgerService');
+const PlatformSettings = require('../models/PlatformSettings');
+
+const CANCELLABLE_STATUSES = Order.CANCELLABLE_STATUSES;
+const TERMINAL_ORDER_STATUSES = ['completed', 'cancelled'];
+// Statuses a vendor/admin may set through the generic status endpoint.
+// 'paid' is owned by the payment flow, 'cancelled' by cancelOrder, and
+// 'pending_payment' is only ever the initial state.
+const VENDOR_SETTABLE_STATUSES = [
+  'confirmed',
+  'preparing',
+  'ready_for_pickup',
+  'out_for_delivery',
+  'completed',
+];
+// Cash is collected by the vendor at handover; mobile money must have
+// actually been received before the order can progress. (A partly refunded
+// order was still paid, and must still be completable.)
+const MONEY_RECEIVED_STATUSES = ['completed', 'refund_pending', 'refunded'];
+const PAYMENT_SETTLED_FILTER = {
+  $or: [
+    { 'payment.paymentMethod': 'cash' },
+    { 'payment.paymentStatus': { $in: MONEY_RECEIVED_STATUSES } },
+  ],
+};
+const isPaymentSettled = (order) =>
+  order.payment?.paymentMethod === 'cash' ||
+  MONEY_RECEIVED_STATUSES.includes(order.payment?.paymentStatus);
 
 /**
- * @desc    Create a new order
+ * Atomically completes an order: transitions status -> 'completed' (only if
+ * the order isn't already completed or cancelled), credits the business's
+ * payout balance, and increments customer/business impact stats.
+ *
+ * C7 fix: this is "the single most important fix in the entire audit" -
+ * Business.stats.balance was never credited anywhere, so a vendor could
+ * complete any number of orders and never accumulate a payable balance,
+ * making payouts structurally impossible.
+ * H6 fix: the status transition is a single atomic findOneAndUpdate keyed on
+ * the order NOT already being completed/cancelled, so calling this twice for
+ * the same order (a retried request, a duplicate webhook-driven call, races
+ * between updateOrderStatus/verifyPickupCode/verifyPickupCodeDirect) can only
+ * ever credit the balance and increment stats once - the second call's
+ * findOneAndUpdate matches nothing and returns null.
+ *
+ * Shared by updateOrderStatus, verifyPickupCode, and verifyPickupCodeDirect -
+ * the three places an order can become 'completed'.
+ *
+ * Only orders whose payment is settled can complete: a mobile-money order
+ * must actually have been paid (otherwise a vendor could complete an order
+ * placed from a throwaway account and never paid, and draw a payout of money
+ * the platform never received).
+ *
+ * The payout balance is credited only for mobile-money orders - that's the
+ * only money the platform actually holds. A cash order's customer paid the
+ * vendor directly, so crediting it here would pay the vendor twice.
+ *
+ * @param {object} [extraFields] additional $set fields to apply atomically
+ *   alongside the status change (e.g. pickupDetails.pickedUpAt).
+ * @returns {Promise<Order|null>} the updated order, or null if it was already
+ *   in a terminal state (completed/cancelled) or unpaid, and nothing was changed.
+ */
+const completeOrderAtomically = async (orderId, extraFields = {}) => {
+  const { payoutHoldDays = 7 } = await PlatformSettings.getSettings();
+  let order = null;
+  let earning = 0;
+
+  // Status change, balance credit, stats and the ledger row commit together.
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      earning = 0;
+      order = await Order.findOneAndUpdate(
+        { _id: orderId, status: { $nin: TERMINAL_ORDER_STATUSES }, ...PAYMENT_SETTLED_FILTER },
+        {
+          $set: {
+            status: 'completed',
+            'statusTimestamps.completedAt': new Date(),
+            ...extraFields,
+          },
+        },
+        { new: true, session }
+      );
+      if (!order) return;
+
+      const totalMeals = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      const co2Increment = totalMeals * IMPACT_FACTORS.CO2_PER_MEAL;
+      const waterIncrement = totalMeals * IMPACT_FACTORS.WATER_PER_MEAL;
+      const platformHeldFunds = order.payment?.paymentMethod === 'mobile_money';
+      const businessId = order.business._id || order.business;
+      // Less any vendor-funded dispute refund granted before completion.
+      earning = platformHeldFunds
+        ? Math.max(0, order.pricing.vendorAmount - (order.pricing.vendorRefunded || 0))
+        : 0;
+
+      await User.updateOne(
+        { _id: order.customer },
+        { $inc: { 'stats.totalSpent': order.pricing.total } },
+        { session }
+      );
+      const business = await Business.findOneAndUpdate(
+        { _id: businessId },
+        {
+          $inc: {
+            'stats.balance': earning,
+            'stats.impact.mealsRescued': totalMeals,
+            'stats.impact.co2Saved': co2Increment,
+            'stats.impact.waterSaved': waterIncrement,
+            'metrics.mealsSaved': totalMeals,
+            'metrics.co2Saved': co2Increment,
+          },
+        },
+        { new: true, session }
+      );
+
+      if (earning > 0) {
+        const refunded = order.pricing.vendorRefunded || 0;
+        await recordEntry(
+          {
+            business: businessId,
+            type: 'order_earning',
+            amount: earning,
+            balanceAfter: business?.stats?.balance,
+            currency: order.pricing.currency,
+            availableAt: holdUntil(payoutHoldDays),
+            order: order._id,
+            description:
+              `Order ${order.orderNumber} completed: ${order.pricing.subtotal} sales - ` +
+              `${order.pricing.platformFee} ChopNow fee` +
+              (refunded ? ` - ${refunded} refunded earlier` : '') +
+              (payoutHoldDays ? ` (on hold ${payoutHoldDays} days)` : ''),
+          },
+          session
+        );
+      }
+    });
+  } finally {
+    session.endSession();
+  }
+  return order;
+};
+
+const respondCheckoutError = (res, error, logMessage) => {
+  if (error instanceof CheckoutError) {
+    return res.status(error.status).json({ message: error.message, details: error.details });
+  }
+  logger.error({ err: error }, logMessage);
+  return res.status(500).json({
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+  });
+};
+
+// Cash orders are live straight away (vendors are notified now); mobile-money
+// orders notify vendors only once paid (see applyDepositOutcome).
+const afterOrdersPlaced = async (orders) => {
+  for (const order of orders) {
+    if (order.payment?.paymentMethod === 'cash') {
+      await sendNewOrderNotifications(order._id);
+    } else {
+      try {
+        socketManager
+          .getIO()
+          .to(`user_${order.customer.toString()}`)
+          .emit('order_status_updated', order);
+      } catch (socketErr) {
+        logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
+      }
+    }
+  }
+};
+
+/**
+ * @desc    Create a new order for a single listing (kept for older app versions;
+ *          new clients use POST /orders/checkout)
  * @route   POST /api/orders
  * @access  Private (consumer, business_owner, admin)
  */
@@ -34,165 +206,77 @@ const createOrder = async (req, res) => {
   try {
     const { listing, items, fulfillmentType, deliveryDetails, pickupDetails, payment } = req.body;
 
-    // Validation (before starting session)
     if (!listing || !items || !fulfillmentType) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
-
-    // Verify listing exists and is available
-    const listingDoc = await Listing.findById(listing).populate('business');
-    if (!listingDoc) {
-      return res.status(404).json({ message: 'Listing not found' });
-    }
-
-    if (!listingDoc.isAvailable()) {
-      return res.status(400).json({ message: 'Listing is not available' });
-    }
-
-    // Calculate totals
-    let subtotal = 0;
-    for (const item of items) {
-      item.title = item.title || item.name || listingDoc.title;
-      item.unitPrice = item.unitPrice !== undefined ? item.unitPrice : listingDoc.pricing.price;
-      item.subtotal = item.subtotal !== undefined ? item.subtotal : item.quantity * item.unitPrice;
-      subtotal += item.subtotal;
-    }
-
-    let deliveryFee = 0;
-    if (fulfillmentType === 'delivery') {
-      if (listingDoc.fulfillment !== 'delivery') {
-        return res.status(400).json({ message: 'Delivery not available for this listing' });
-      }
-      if (!deliveryDetails || !deliveryDetails.address) {
-        return res.status(400).json({ message: 'Delivery address required for delivery orders' });
-      }
-      deliveryFee = listingDoc.business?.deliverySettings?.fee || 0;
-    }
-
-    // Get platform settings for commission calculation
-    const platformSettings = await PlatformSettings.getSettings();
-    const platformFeePercent = platformSettings.platformFeePercent || 10;
-    const platformFee = Math.round((subtotal * platformFeePercent) / 100);
-    const vendorAmount = subtotal - platformFee;
-    const total = subtotal + deliveryFee;
-
-    // --- Transaction: reserve inventory, create order, update stats atomically ---
-    const session = await mongoose.startSession();
-    let order;
-    try {
-      await session.withTransaction(async () => {
-        // Reserve inventory atomically
-        const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-        const updated = await Listing.findOneAndUpdate(
-          { _id: listingDoc._id, 'inventory.quantity': { $gte: totalQuantity } },
-          {
-            $inc: {
-              'inventory.quantity': -totalQuantity,
-              'inventory.reserved': totalQuantity,
-              'stats.orders': 1,
-            },
-          },
-          { session, new: true }
-        );
-        if (!updated) {
-          throw new Error('Not enough stock available');
-        }
-        if (updated.inventory.quantity === 0) {
-          updated.status = 'sold_out';
-          await updated.save({ session });
-        }
-
-        // Create order
-        const isTestMode = process.env.PAYMENT_TEST_MODE !== 'false';
-        const initialStatus =
-          payment?.paymentMethod === 'card' && isTestMode ? 'paid' : 'pending_payment';
-        const initialPaymentStatus =
-          payment?.paymentMethod === 'card' && isTestMode
-            ? 'completed'
-            : payment?.paymentStatus || 'pending';
-
-        const orderData = {
-          customer: req.user._id,
-          business: listingDoc.business._id,
-          listing: listingDoc._id,
-          items,
-          pricing: {
-            subtotal,
-            deliveryFee,
-            platformFee,
-            platformFeePercent,
-            vendorAmount,
-            total,
-            currency: listingDoc.pricing.currency,
-          },
-          fulfillmentType,
-          deliveryDetails,
-          pickupDetails:
-            fulfillmentType === 'pickup'
-              ? {
-                  ...pickupDetails,
-                  pickupCode: crypto.randomBytes(4).toString('hex').substring(0, 6).toUpperCase(),
-                }
-              : undefined,
-          status: initialStatus,
-          payment: {
-            paymentMethod: payment?.paymentMethod,
-            paymentStatus: initialPaymentStatus,
-          },
-        };
-
-        if (initialStatus === 'paid') {
-          orderData.statusTimestamps = {
-            paidAt: new Date(),
-          };
-        }
-
-        [order] = await Order.create([orderData], { session });
-
-        // Update user stats
-        await User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $inc: { 'stats.ordersCount': 1 },
-          },
-          { session }
-        );
-
-        // Update business stats
-        await Business.findByIdAndUpdate(
-          listingDoc.business._id,
-          {
-            $inc: { 'stats.totalOrders': 1 },
-          },
-          { session }
-        );
+    // This endpoint places ONE order for ONE listing. Older clients sent a
+    // whole mixed cart here and every item was charged at the first listing's
+    // price and taken from its stock - refuse that instead of mis-charging.
+    if (items.some((i) => i.listing && String(i.listing) !== String(listing))) {
+      return res.status(400).json({
+        message:
+          'Items from different listings must be checked out together. Please update the app and try again.',
       });
-    } finally {
-      session.endSession();
     }
 
-    // --- Post-transaction: notifications and emails ---
-    const isCashOrder = order.payment?.paymentMethod === 'cash';
-    const isPaidCardOrder = order.payment?.paymentMethod === 'card' && order.status === 'paid';
+    // C4: prices are always computed server-side from the listing (inside
+    // placeCheckout); client unitPrice/subtotal are ignored.
+    const { orders } = await placeCheckout({
+      customerId: req.user._id,
+      items: items.map((i) => ({ listing, quantity: i.quantity })),
+      fulfillmentType,
+      deliveryDetails,
+      pickupDetails,
+      paymentMethod: payment?.paymentMethod,
+    });
 
-    if (isCashOrder || isPaidCardOrder) {
-      // Send vendor notifications and customer emails immediately
-      await sendNewOrderNotifications(order._id);
-    } else {
-      // For mobile money/card (pending payment), just notify customer of order placement pending payment
-      try {
-        const io = socketManager.getIO();
-        io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
-      } catch (socketErr) {
-        logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
-      }
-    }
-
-    res.status(201).json(order);
+    await afterOrdersPlaced(orders);
+    res.status(201).json(orders[0]);
   } catch (error) {
-    logger.error({ err: error }, 'Create order failed');
-    const statusCode = error.message === 'Not enough stock available' ? 400 : 500;
-    res.status(statusCode).json({ message: error.message });
+    respondCheckoutError(res, error, 'Create order failed');
+  }
+};
+
+/**
+ * @desc    Price a cart (any number of vendors) without placing it
+ * @route   POST /api/orders/quote
+ * @access  Private
+ */
+const quoteCheckout = async (req, res) => {
+  try {
+    const { items, fulfillmentType, payment } = req.body;
+    const quote = await buildQuote({
+      items,
+      fulfillmentType,
+      paymentMethod: payment?.paymentMethod,
+    });
+    res.json(quote);
+  } catch (error) {
+    respondCheckoutError(res, error, 'Checkout quote failed');
+  }
+};
+
+/**
+ * @desc    Place a whole cart: one order per vendor, paid with one payment
+ * @route   POST /api/orders/checkout
+ * @access  Private
+ */
+const createCheckout = async (req, res) => {
+  try {
+    const { items, fulfillmentType, deliveryDetails, pickupDetails, payment } = req.body;
+    const { checkoutGroup, orders, quote } = await placeCheckout({
+      customerId: req.user._id,
+      items,
+      fulfillmentType,
+      deliveryDetails,
+      pickupDetails,
+      paymentMethod: payment?.paymentMethod,
+    });
+
+    await afterOrdersPlaced(orders);
+    res.status(201).json({ checkoutId: checkoutGroup, orders, totals: quote.totals });
+  } catch (error) {
+    respondCheckoutError(res, error, 'Checkout failed');
   }
 };
 
@@ -316,8 +400,12 @@ const getOrders = async (req, res) => {
 
     const query = {};
 
-    // Role-based filtering
-    const filterRole = req.query.role || req.user.role;
+    // Role-based filtering. A ?role= switch is honoured only for a role the
+    // user actually holds - otherwise any customer could pass ?role=admin and
+    // list every customer's orders.
+    const userRoles = req.user.roles || [req.user.role];
+    const filterRole =
+      req.query.role && userRoles.includes(req.query.role) ? req.query.role : req.user.role;
     if (filterRole === 'business_owner') {
       const businesses = await Business.find({ owner: req.user._id }).select('_id').lean();
       query.business = { $in: businesses.map((b) => b._id) };
@@ -428,7 +516,48 @@ const updateOrderStatus = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    await order.updateStatus(status);
+    if (!VENDOR_SETTABLE_STATUSES.includes(status)) {
+      return res.status(400).json({ message: `Status '${status}' cannot be set directly` });
+    }
+    if (TERMINAL_ORDER_STATUSES.includes(order.status)) {
+      return res.status(400).json({
+        message: `Order is already '${order.status}' and cannot be updated`,
+      });
+    }
+    if (!isPaymentSettled(order)) {
+      return res.status(400).json({ message: 'This order has not been paid yet' });
+    }
+
+    // C7/H6 fix: 'completed' goes through the shared idempotent helper (funds
+    // the business payout balance, guards against replay) instead of a plain
+    // save. Every other status is also a compare-and-swap on "not terminal":
+    // a plain save racing a completion could otherwise flip a completed order
+    // back to e.g. 'confirmed', letting it be completed (and credited) twice.
+    let updated;
+    if (status === 'completed') {
+      updated = await completeOrderAtomically(order._id);
+    } else {
+      const timestampField = {
+        confirmed: 'confirmedAt',
+        ready_for_pickup: 'readyAt',
+      }[status];
+      updated = await Order.findOneAndUpdate(
+        { _id: order._id, status: { $nin: TERMINAL_ORDER_STATUSES }, ...PAYMENT_SETTLED_FILTER },
+        {
+          $set: {
+            status,
+            ...(timestampField ? { [`statusTimestamps.${timestampField}`]: new Date() } : {}),
+          },
+        },
+        { new: true }
+      );
+    }
+    if (!updated) {
+      return res.status(409).json({ message: 'Order changed state; please refresh and retry' });
+    }
+    // The atomic update wrote to the DB directly; sync this (populated)
+    // in-memory copy so the response and socket broadcast below aren't stale.
+    order.set({ status: updated.status, statusTimestamps: updated.statusTimestamps });
 
     // Get related data for rich notifications
     const listing = await Listing.findById(order.listing);
@@ -458,34 +587,13 @@ const updateOrderStatus = async (req, res) => {
         notificationMessage = `Your order #${order.orderNumber} is on its way to you`;
         notificationType = 'order_out_for_delivery';
         break;
-      case 'completed': {
+      case 'completed':
+        // Balance crediting and impact-stat increments already happened
+        // inside completeOrderAtomically above.
         notificationTitle = 'Order Completed';
         notificationMessage = `Thank you! Your order #${order.orderNumber} has been completed`;
         notificationType = 'order_completed';
-
-        // Update user stats
-        await User.findByIdAndUpdate(order.customer, {
-          $inc: { 'stats.totalSpent': order.pricing.total },
-        });
-
-        // Update impact metrics on business — increment based on items quantity
-        const totalMealsCompleted = order.items.reduce(
-          (sum, item) => sum + (item.quantity || 1),
-          0
-        );
-        const co2Increment = totalMealsCompleted * IMPACT_FACTORS.CO2_PER_MEAL;
-        const waterIncrement = totalMealsCompleted * IMPACT_FACTORS.WATER_PER_MEAL;
-        await Business.findByIdAndUpdate(order.business._id || order.business, {
-          $inc: {
-            'stats.impact.mealsRescued': totalMealsCompleted,
-            'stats.impact.co2Saved': co2Increment,
-            'stats.impact.waterSaved': waterIncrement,
-            'metrics.mealsSaved': totalMealsCompleted,
-            'metrics.co2Saved': co2Increment,
-          },
-        });
         break;
-      }
     }
 
     if (notificationTitle) {
@@ -561,6 +669,140 @@ const updateOrderStatus = async (req, res) => {
 };
 
 /**
+ * Cancels an order and restores its reserved inventory in a single
+ * transaction.
+ *
+ * H7 fix: previously only this dedicated cancelOrder endpoint did the
+ * inventory restore - the generic updateOrderStatus endpoint and the
+ * delivery-triggered cancellation path (deliveryController.js) both just
+ * flipped Order.status to 'cancelled' directly, permanently shrinking the
+ * listing's available inventory by whatever was reserved for that order.
+ * Both now call this instead.
+ *
+ * The order is claimed with a status-filtered findOneAndUpdate inside the
+ * transaction, so two racing cancellers (customer tap + expiry job, a FAILED
+ * webhook + the customer, a double-tap) can't both restore the stock: the
+ * loser's claim matches nothing and it returns false. (This previously
+ * checked canBeCancelled() on an in-memory copy and saved via
+ * order.updateStatus(), which wrote outside the transaction.)
+ *
+ * @param {Order} order - an already-fetched Order document. `order.listing`
+ *   may be populated or a bare ObjectId; either works. It is updated in place
+ *   to the cancelled state on success.
+ * @param {object} [options]
+ * @param {string[]} [options.fromStatuses] - only cancel from these statuses
+ *   (defaults to every cancellable status).
+ * @param {string} [options.paymentStatus] - paymentStatus to record when no
+ *   refund is needed (e.g. 'failed' for a failed/expired payment).
+ * @param {ClientSession} [options.session] - run inside the caller's
+ *   transaction instead of starting one.
+ * @returns {Promise<boolean>} true if cancelled, false if the order was not
+ *   in a cancellable state (nothing was changed).
+ */
+const cancelOrderAndRestoreInventory = async (
+  order,
+  { requestedBy, reason, fromStatuses = CANCELLABLE_STATUSES, paymentStatus, session } = {}
+) => {
+  if (!fromStatuses.includes(order.status)) return false;
+
+  const listingId = order.listing._id || order.listing;
+  let cancelled = null;
+
+  const cancelInSession = async (session) => {
+    cancelled = null;
+    const now = new Date();
+    const claimed = await Order.findOneAndUpdate(
+      { _id: order._id, status: { $in: fromStatuses } },
+      { $set: { status: 'cancelled', 'statusTimestamps.cancelledAt': now } },
+      { new: true, session }
+    );
+    if (!claimed) return;
+
+    // An order may hold several listings from its vendor - put each item's
+    // quantity back on its own listing.
+    const quantityByListing = new Map();
+    for (const item of claimed.items) {
+      const id = String(item.listing || listingId);
+      quantityByListing.set(id, (quantityByListing.get(id) || 0) + item.quantity);
+    }
+    for (const [id, quantity] of quantityByListing) {
+      const listing = await Listing.findById(id).session(session);
+      if (!listing) continue;
+      listing.inventory.quantity += quantity;
+      listing.inventory.reserved = Math.max(0, listing.inventory.reserved - quantity);
+      if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
+        listing.status = 'active';
+      }
+      await listing.save({ session });
+    }
+
+    // A mobile-money order that was already paid (paid/confirmed) must not
+    // just be cancelled - the customer's money has to come back. There's no
+    // real pawaPay refund API integrated, so queue it in the same tracked ops
+    // queue dispute refunds use (see RefundRequest).
+    const alreadyPaid =
+      claimed.payment?.paymentMethod === 'mobile_money' &&
+      MONEY_RECEIVED_STATUSES.includes(claimed.payment?.paymentStatus);
+    if (alreadyPaid) {
+      // Refund what hasn't already been refunded (e.g. by an earlier partial
+      // dispute refund) - never more than the order total in all.
+      const [{ refunded = 0 } = {}] = await RefundRequest.aggregate([
+        { $match: { order: claimed._id, status: { $ne: 'failed' } } },
+        { $group: { _id: null, refunded: { $sum: '$amount' } } },
+      ]).session(session);
+      const remaining = claimed.pricing.total - refunded;
+      if (remaining > 0) {
+        const payment = await Payment.findOne({
+          $or: [{ order: claimed._id }, { orders: claimed._id }],
+          status: 'completed',
+        }).session(session);
+        await RefundRequest.create(
+          [
+            {
+              order: claimed._id,
+              payment: payment?._id,
+              business: claimed.business,
+              customer: claimed.customer,
+              amount: remaining,
+              currency: claimed.pricing.currency,
+              reason: reason || 'Paid order cancelled',
+              requestedBy: requestedBy || claimed.customer,
+            },
+          ],
+          { session }
+        );
+      }
+      claimed.payment.paymentStatus = 'refund_pending';
+      await claimed.save({ session });
+    } else if (paymentStatus) {
+      claimed.payment.paymentStatus = paymentStatus;
+      await claimed.save({ session });
+    }
+
+    cancelled = claimed;
+  };
+
+  if (session) {
+    await cancelInSession(session);
+  } else {
+    const ownSession = await mongoose.startSession();
+    try {
+      await ownSession.withTransaction(() => cancelInSession(ownSession));
+    } finally {
+      ownSession.endSession();
+    }
+  }
+
+  if (!cancelled) return false;
+  order.set({
+    status: cancelled.status,
+    statusTimestamps: cancelled.statusTimestamps,
+    payment: cancelled.payment,
+  });
+  return true;
+};
+
+/**
  * @desc    Cancel order
  * @route   PUT /api/orders/:id/cancel
  * @access  Private
@@ -578,31 +820,12 @@ const cancelOrder = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (!order.canBeCancelled()) {
+    const cancelled = await cancelOrderAndRestoreInventory(order, {
+      requestedBy: req.user._id,
+      reason: 'Cancelled by customer',
+    });
+    if (!cancelled) {
       return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
-    }
-
-    // --- Transaction: restore inventory + cancel order atomically ---
-    let listing;
-    const session = await mongoose.startSession();
-    try {
-      await session.withTransaction(async () => {
-        const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-        listing = await Listing.findById(order.listing._id).session(session);
-        if (listing) {
-          listing.inventory.quantity += totalQuantity;
-          listing.inventory.reserved -= totalQuantity;
-          if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
-            listing.status = 'active';
-          }
-          await listing.save({ session });
-        }
-
-        await order.updateStatus('cancelled');
-        await order.save({ session });
-      });
-    } finally {
-      session.endSession();
     }
 
     // --- Post-transaction: notifications (non-critical) ---
@@ -629,8 +852,8 @@ const cancelOrder = async (req, res) => {
         currency: order.pricing.currency,
         businessName: business?.name || 'Vendor',
         businessLogo: business?.media?.logo,
-        listingTitle: listing?.title,
-        listingImage: listing?.photos?.[0],
+        listingTitle: order.listing?.title,
+        listingImage: order.listing?.photos?.[0],
         actionLabel: 'View Details',
         actionUrl: '/my-orders',
       },
@@ -651,8 +874,8 @@ const cancelOrder = async (req, res) => {
           orderTotal: order.pricing.total,
           currency: order.pricing.currency,
           customerName,
-          listingTitle: listing?.title,
-          listingImage: listing?.photos?.[0],
+          listingTitle: order.listing?.title,
+          listingImage: order.listing?.photos?.[0],
           actionLabel: 'View Orders',
           actionUrl: '/dashboard',
         },
@@ -713,22 +936,20 @@ const verifyPickupCode = async (req, res) => {
       return res.status(400).json({ message: 'Invalid pickup code' });
     }
 
-    order.pickupDetails.pickedUpAt = new Date();
-    await order.updateStatus('completed');
+    if (!TERMINAL_ORDER_STATUSES.includes(order.status) && !isPaymentSettled(order)) {
+      return res.status(400).json({ message: 'This order has not been paid yet' });
+    }
 
-    // Impact metrics update on pickup completion
-    const totalMealsPickup = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    const co2IncrementPickup = totalMealsPickup * IMPACT_FACTORS.CO2_PER_MEAL;
-    const waterIncrementPickup = totalMealsPickup * IMPACT_FACTORS.WATER_PER_MEAL;
-    Business.findByIdAndUpdate(order.business._id || order.business, {
-      $inc: {
-        'stats.impact.mealsRescued': totalMealsPickup,
-        'stats.impact.co2Saved': co2IncrementPickup,
-        'stats.impact.waterSaved': waterIncrementPickup,
-        'metrics.mealsSaved': totalMealsPickup,
-        'metrics.co2Saved': co2IncrementPickup,
-      },
-    }).catch((err) => logger.error({ err }, 'Failed to update impact metrics on pickup'));
+    // C7/H6 fix: same atomic, idempotent, balance-crediting completion as
+    // updateOrderStatus - see completeOrderAtomically.
+    const completed = await completeOrderAtomically(order._id, {
+      'pickupDetails.pickedUpAt': new Date(),
+    });
+    if (!completed) {
+      return res.status(400).json({
+        message: `Order is already '${order.status}' and cannot be completed again`,
+      });
+    }
 
     // Email customer their completion summary + review prompt
     const customer = await User.findById(order.customer)
@@ -737,17 +958,12 @@ const verifyPickupCode = async (req, res) => {
     if (customer && customer.preferences?.notifications?.email !== false) {
       const customerName =
         `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
-      sendOrderCompletedEmail(customer.email, customerName, order).catch((err) =>
+      sendOrderCompletedEmail(customer.email, customerName, completed).catch((err) =>
         logger.error({ err }, 'Failed to send order completed email on pickup verify')
       );
     }
 
-    // Update user total spent stats
-    await User.findByIdAndUpdate(order.customer, {
-      $inc: { 'stats.totalSpent': order.pricing.total },
-    });
-
-    res.json({ message: 'Pickup verified successfully', order });
+    res.json({ message: 'Pickup verified successfully', order: completed });
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -792,23 +1008,19 @@ const verifyPickupCodeDirect = async (req, res) => {
       return res.status(404).json({ message: 'Active order with this pickup code not found' });
     }
 
-    order.pickupDetails.pickedUpAt = new Date();
-    await order.updateStatus('completed');
-
-    // Update impact metrics on business
-    const totalMealsPickup = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    const co2IncrementPickup = totalMealsPickup * IMPACT_FACTORS.CO2_PER_MEAL;
-    const waterIncrementPickup = totalMealsPickup * IMPACT_FACTORS.WATER_PER_MEAL;
-
-    await Business.findByIdAndUpdate(order.business._id || order.business, {
-      $inc: {
-        'stats.impact.mealsRescued': totalMealsPickup,
-        'stats.impact.co2Saved': co2IncrementPickup,
-        'stats.impact.waterSaved': waterIncrementPickup,
-        'metrics.mealsSaved': totalMealsPickup,
-        'metrics.co2Saved': co2IncrementPickup,
-      },
-    }).catch((err) => logger.error({ err }, 'Failed to update impact metrics on pickup'));
+    // C7/H6 fix: same atomic, idempotent, balance-crediting completion as
+    // updateOrderStatus - see completeOrderAtomically. The query above already
+    // excludes already-completed orders, but the transition itself still
+    // needs to be atomic against a concurrent duplicate scan hitting this
+    // same order before either has written back.
+    const completed = await completeOrderAtomically(order._id, {
+      'pickupDetails.pickedUpAt': new Date(),
+    });
+    if (!completed) {
+      return res.status(400).json({
+        message: `Order is already '${order.status}' and cannot be completed again`,
+      });
+    }
 
     // Email customer
     const customer = await User.findById(order.customer)
@@ -817,15 +1029,10 @@ const verifyPickupCodeDirect = async (req, res) => {
     if (customer && customer.preferences?.notifications?.email !== false) {
       const customerName =
         `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
-      sendOrderCompletedEmail(customer.email, customerName, order).catch((err) =>
+      sendOrderCompletedEmail(customer.email, customerName, completed).catch((err) =>
         logger.error({ err }, 'Failed to send order completed email on pickup verify')
       );
     }
-
-    // Update user total spent stats
-    await User.findByIdAndUpdate(order.customer, {
-      $inc: { 'stats.totalSpent': order.pricing.total },
-    });
 
     res.json({
       message: 'Pickup verified and order completed successfully',
@@ -902,6 +1109,8 @@ const getAdminOrders = async (req, res) => {
 
 module.exports = {
   createOrder,
+  quoteCheckout,
+  createCheckout,
   getOrders,
   getOrderById,
   updateOrderStatus,
@@ -910,4 +1119,6 @@ module.exports = {
   verifyPickupCodeDirect,
   getAdminOrders,
   sendNewOrderNotifications,
+  completeOrderAtomically,
+  cancelOrderAndRestoreInventory,
 };

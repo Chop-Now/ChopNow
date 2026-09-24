@@ -48,6 +48,9 @@ const {
   validateResetPassword,
   validateForgotPassword,
   validateVerifyResetOTP,
+  validateSendOTP,
+  validateVerifyOTP,
+  validateGoogleLogin,
 } = require('../middleware/validation');
 const { checkRegistrationAllowed } = require('../middleware/platformSettings');
 
@@ -114,11 +117,12 @@ router.post('/register', checkRegistrationAllowed, validateRegister, registerUse
  *         description: Invalid credentials
  */
 router.post('/login', validateLogin, loginUser);
-router.post('/google-login', googleLogin);
+router.post('/google-login', validateGoogleLogin, googleLogin);
 
 // Email verification
 router.get('/verify-email', verifyEmail);
-router.post('/resend-verification', resendVerificationEmail);
+// Same shape as forgot-password: a single, valid, normalized email.
+router.post('/resend-verification', validateForgotPassword, resendVerificationEmail);
 
 // Password reset
 router.post('/forgot-password', validateForgotPassword, forgotPassword);
@@ -126,8 +130,8 @@ router.post('/verify-reset-otp', validateVerifyResetOTP, verifyResetOTP);
 router.post('/reset-password', validateResetPassword, resetPassword);
 
 // OTP login
-router.post('/send-otp', sendOTP);
-router.post('/verify-otp', verifyOTP);
+router.post('/send-otp', validateSendOTP, sendOTP);
+router.post('/verify-otp', validateVerifyOTP, verifyOTP);
 
 // Token refresh
 router.post('/refresh-token', refreshAccessToken);

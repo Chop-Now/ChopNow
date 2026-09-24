@@ -125,6 +125,8 @@ const businessSchema = new Schema(
       averageRating: { type: Number, default: 0 },
       reviewCount: { type: Number, default: 0 },
       balance: { type: Number, default: 0 },
+      // When the last payout was requested - enforces payoutIntervalDays.
+      lastPayoutRequestedAt: { type: Date },
       impact: {
         co2Saved: { type: Number, default: 0 },
         mealsRescued: { type: Number, default: 0 },

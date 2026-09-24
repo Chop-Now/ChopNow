@@ -16,8 +16,8 @@ import { reverseGeocode, searchAddress } from '../services/geocoding';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
-import { businessService } from '../services';
+import { GoogleLogin } from '@react-oauth/google';
+import { businessService, authService } from '../services';
 import LocationPicker from '../Components/maps/LocationPicker';
 
 const Login = () => {
@@ -25,19 +25,23 @@ const Login = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+  const [resending, setResending] = useState(false);
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await googleAuth(tokenResponse.access_token);
-        // Redirect consumers to shop
-        navigate('/shop');
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    onError: () => toast.error('Google Login Failed'),
-  });
+  // H5 fix: use the ID-token credential flow (GoogleLogin), not the
+  // access-token flow (useGoogleLogin) - Google's Identity Services only
+  // issues an audience-bound ID token through this flow, and the backend now
+  // requires one to verify the login is actually for this app (see
+  // Backend/controllers/userController.js googleLogin).
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await googleAuth(credentialResponse.credential);
+      // Redirect consumers to shop
+      navigate('/shop');
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
@@ -152,19 +156,17 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <>
                     {/* Google Button */}
-                    <button
-                      type="button"
-                      onClick={() => loginWithGoogle()}
-                      className="w-full bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-12 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      <img src={assets.google} alt="Google Logo" className="w-5 h-5" />
-                      <span
-                        className="ml-2 text-sm font-medium"
-                        style={{ color: 'var(--color-textColor)' }}
-                      >
-                        Continue with Google
-                      </span>
-                    </button>
+                    <div className="w-full flex justify-center [&>div]:w-full">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => toast.error('Google Login Failed')}
+                        theme="outline"
+                        size="large"
+                        text="continue_with"
+                        shape="rectangular"
+                        width="384"
+                      />
+                    </div>
 
                     {/* Divider */}
                     <div className="flex items-center gap-4 w-full my-6">
@@ -471,6 +473,10 @@ const Login = () => {
                       }
                     } catch (error) {
                       console.error('Login error:', error);
+                      if (error.code === 'EMAIL_NOT_VERIFIED') {
+                        setUnverifiedEmail(error.email || email);
+                        return;
+                      }
                       toast.error(error.message || 'Login failed');
                     }
                   }}
@@ -479,6 +485,33 @@ const Login = () => {
                 >
                   Login
                 </button>
+
+                {unverifiedEmail && (
+                  <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p className="mb-2">
+                      Please verify your email first. We sent a link to{' '}
+                      <strong>{unverifiedEmail}</strong> when you signed up.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={resending}
+                      onClick={async () => {
+                        setResending(true);
+                        try {
+                          const res = await authService.resendVerificationEmail(unverifiedEmail);
+                          toast.success(res.message || 'Verification email sent');
+                        } catch (err) {
+                          toast.error(err.message || 'Could not resend the email');
+                        } finally {
+                          setResending(false);
+                        }
+                      }}
+                      className="font-medium underline disabled:opacity-50"
+                    >
+                      {resending ? 'Sending…' : 'Resend verification email'}
+                    </button>
+                  </div>
+                )}
 
                 {/* Sign up link */}
                 <p

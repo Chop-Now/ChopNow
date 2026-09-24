@@ -4,7 +4,7 @@ import ProductCard from '../Components/ProductCard';
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Home, Star, ShoppingCart, Send, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
+import { Home, Star, ShoppingCart, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
 import { reviewService, favoriteService } from '../services';
 import toast from 'react-hot-toast';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
@@ -16,14 +16,12 @@ const ProductDetails = () => {
   const { id } = useParams();
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [thumbnail, setThumbnail] = useState(null);
-  const [review, setReview] = useState({ rating: 0, comment: '' });
   const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
   const [showMagnifier, setShowMagnifier] = useState(false);
 
   // Reviews state
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Favorites state
   const [isFavorite, setIsFavorite] = useState(false);
@@ -150,41 +148,6 @@ const ProductDetails = () => {
       .catch(() => {
         toast.error('Failed to copy link');
       });
-  };
-
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-
-    if (!isAuthenticated) {
-      toast.error('Please login to submit a review');
-      navigate('/login');
-      return;
-    }
-
-    if (review.rating === 0) {
-      toast.error('Please select a rating');
-      return;
-    }
-    if (!review.comment.trim()) {
-      toast.error('Please write a review');
-      return;
-    }
-
-    setSubmittingReview(true);
-    try {
-      const newReview = await reviewService.createReview({
-        business: product.vendorId,
-        rating: review.rating,
-        comment: review.comment,
-      });
-      setReviews((prev) => [newReview, ...prev]);
-      toast.success('Review submitted successfully!');
-      setReview({ rating: 0, comment: '' });
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit review');
-    } finally {
-      setSubmittingReview(false);
-    }
   };
 
   const handleToggleFavorite = async () => {
@@ -610,66 +573,14 @@ const ProductDetails = () => {
             Customer Reviews
           </h2>
 
-          {/* Write a Review */}
-          <div className="mb-8 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-primary)' }}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
-              Write a Review
-            </h3>
-            <form onSubmit={handleSubmitReview}>
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Your Rating
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className="w-8 h-8 cursor-pointer transition-transform hover:scale-110"
-                      fill={review.rating >= star ? 'var(--color-solidOne)' : 'none'}
-                      stroke={
-                        review.rating >= star
-                          ? 'var(--color-solidOne)'
-                          : 'var(--color-moringa-muted)'
-                      }
-                      onClick={() => setReview({ ...review, rating: star })}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: 'var(--color-textColor)' }}
-                >
-                  Your Review
-                </label>
-                <textarea
-                  value={review.comment}
-                  onChange={(e) => setReview({ ...review, comment: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border outline-none resize-none"
-                  style={{ borderColor: '#E5E5E5', color: 'var(--color-textColor)' }}
-                  rows="4"
-                  placeholder="Share your thoughts about this product..."
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={submittingReview}
-                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-solid)' }}
-              >
-                {submittingReview ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                {submittingReview ? 'Submitting...' : 'Submit Review'}
-              </button>
-            </form>
-          </div>
+          {/* Reviews are written per completed order, from My Orders */}
+          <p className="mb-6 text-sm" style={{ color: 'var(--color-moringa-muted)' }}>
+            Ordered from this vendor?{' '}
+            <Link to="/my-orders" className="underline" style={{ color: 'var(--color-solid)' }}>
+              Leave a review from My Orders
+            </Link>{' '}
+            once your order is completed.
+          </p>
 
           {/* Reviews List */}
           <div className="space-y-4">
@@ -693,8 +604,10 @@ const ProductDetails = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-semibold" style={{ color: 'var(--color-textColor)' }}>
-                        {reviewItem.user?.firstName || 'Anonymous'}{' '}
-                        {reviewItem.user?.lastName?.charAt(0) || ''}.
+                        {reviewItem.customer?.firstName || 'Anonymous'}
+                        {reviewItem.customer?.lastName
+                          ? ` ${reviewItem.customer.lastName.charAt(0)}.`
+                          : ''}
                       </p>
                       <div className="flex gap-1 mt-1">
                         {[1, 2, 3, 4, 5].map((star) => (

@@ -28,7 +28,7 @@ import DashboardNotifications from './pages/DashboardNotifications';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, switchRole } = useAppContext();
+  const { user, isAuthenticated, isLoading, switchRole, logout } = useAppContext();
   const { settings } = usePlatformSettings();
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdminRole, setIsAdminRole] = useState(false);
@@ -144,11 +144,7 @@ const AdminDashboard = () => {
             {settings.maintenanceMode && ' The platform is currently in maintenance mode.'}
           </p>
           <button
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              navigate('/admin/login');
-            }}
+            onClick={() => logout()}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
           >
             Login with Admin Account
