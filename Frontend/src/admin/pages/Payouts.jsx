@@ -31,6 +31,21 @@ const ShopAdminPayouts = () => {
   const [payoutsLoading, setPayoutsLoading] = useState(true);
   const [recentPayouts, setRecentPayouts] = useState([]);
   const [business, setBusiness] = useState(null);
+  const [summary, setSummary] = useState({
+    balance: 0,
+    availableBalance: 0,
+    heldAmount: 0,
+    releases: [],
+    pendingAmount: 0,
+    minimumWithdrawal: 5000,
+    holdDays: 0,
+    intervalDays: 0,
+    nextRequestAt: null,
+  });
+  const [requestForm, setRequestForm] = useState({ open: false, amount: '', submitting: false });
+  const [showLedger, setShowLedger] = useState(false);
+  const [ledger, setLedger] = useState([]);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -74,27 +89,92 @@ const ShopAdminPayouts = () => {
       }
     };
 
-    const fetchPayouts = async () => {
-      try {
-        setPayoutsLoading(true);
-        const data = await payoutService.getMyPayouts();
-        if (!isMounted) return;
-        setRecentPayouts(data.payouts || []);
-      } catch (error) {
-        if (!isMounted) return;
-        console.error('Failed to fetch payouts:', error);
-        setRecentPayouts([]);
-      } finally {
-        if (isMounted) setPayoutsLoading(false);
-      }
-    };
-
     fetchData();
-    fetchPayouts();
+    fetchPayouts(() => isMounted);
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // Balance, pending requests and history come from one call.
+  const fetchPayouts = async (isMounted = () => true) => {
+    try {
+      setPayoutsLoading(true);
+      const data = await payoutService.getMyPayouts();
+      if (!isMounted()) return;
+      setRecentPayouts(data.payouts || []);
+      setSummary({
+        balance: data.balance || 0,
+        availableBalance: data.availableBalance ?? data.balance ?? 0,
+        heldAmount: data.heldAmount || 0,
+        releases: data.releases || [],
+        pendingAmount: data.pendingAmount || 0,
+        minimumWithdrawal: data.minimumWithdrawal || 5000,
+        holdDays: data.holdDays || 0,
+        intervalDays: data.intervalDays || 0,
+        nextRequestAt: data.nextRequestAt || null,
+      });
+    } catch (error) {
+      if (!isMounted()) return;
+      console.error('Failed to fetch payouts:', error);
+      setRecentPayouts([]);
+    } finally {
+      if (isMounted()) setPayoutsLoading(false);
+    }
+  };
+
+  const fetchLedger = async () => {
+    setLedgerLoading(true);
+    try {
+      const data = await payoutService.getLedger();
+      setLedger(data.entries || []);
+    } catch (error) {
+      console.error('Failed to fetch balance history:', error);
+      setLedger([]);
+    } finally {
+      setLedgerLoading(false);
+    }
+  };
+
+  const hasPayoutDetails =
+    preferredMethod === 'mobile'
+      ? !!formData.mobilePhone?.trim()
+      : !!formData.accountNumber?.trim() && !!formData.bankName?.trim();
+
+  const openRequestForm = () => {
+    if (!hasPayoutDetails) {
+      toast.error('Add your payout details below (and save) before requesting a payout');
+      setIsEditing(true);
+      return;
+    }
+    if (summary.nextRequestAt) {
+      toast.error(
+        `You can request one payout every ${summary.intervalDays} days. Next request possible ${formatDate(summary.nextRequestAt)}.`
+      );
+      return;
+    }
+    setRequestForm({ open: true, amount: String(summary.availableBalance), submitting: false });
+  };
+
+  const submitPayoutRequest = async () => {
+    const amount = Number(requestForm.amount);
+    if (!amount || amount < summary.minimumWithdrawal || amount > summary.availableBalance) {
+      toast.error(
+        `Enter an amount between ${formatAmount(summary.minimumWithdrawal)} and ${formatAmount(summary.availableBalance)}`
+      );
+      return;
+    }
+    setRequestForm((f) => ({ ...f, submitting: true }));
+    try {
+      await payoutService.requestPayout({ amount, method: preferredMethod });
+      toast.success('Payout requested. ChopNow will send it to your payout method.');
+      setRequestForm({ open: false, amount: '', submitting: false });
+      await fetchPayouts();
+    } catch (error) {
+      toast.error(error.message || 'Could not request payout');
+      setRequestForm((f) => ({ ...f, submitting: false }));
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -158,7 +238,10 @@ const ShopAdminPayouts = () => {
     const styles = {
       completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
       pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      requested: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      cancelled: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
     };
 
     return (
@@ -189,24 +272,111 @@ const ShopAdminPayouts = () => {
         </button>
       </div>
 
-      {/* Payout Schedule Notice */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      {/* Balance & payout request */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg shrink-0">
+              <Wallet className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Your balance</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                {payoutsLoading ? '…' : formatAmount(summary.balance)}
+              </p>
+              {!payoutsLoading && summary.heldAmount > 0 && (
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  {formatAmount(summary.availableBalance)} ready to withdraw right now
+                </p>
+              )}
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Your earnings from completed mobile-money orders, after ChopNow&apos;s fee.
+                {summary.pendingAmount > 0 &&
+                  ` ${formatAmount(summary.pendingAmount)} already requested and on its way.`}
+              </p>
+              {summary.heldAmount > 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5 flex items-start gap-1">
+                  <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>
+                    {summary.availableBalance > 0
+                      ? `${formatAmount(summary.availableBalance)} is ready to pay out now - the rest, ${formatAmount(summary.heldAmount)}, is still settling`
+                      : `Nothing is ready to cash out just yet - ${formatAmount(summary.heldAmount)} is still settling from a recent order`}
+                    {summary.releases?.[0]
+                      ? ` and unlocks ${formatDate(summary.releases[0].availableAt)}`
+                      : ''}
+                    {summary.holdDays
+                      ? `. New earnings are held ${summary.holdDays} day${summary.holdDays === 1 ? '' : 's'} so there's time to catch any refunds first.`
+                      : ''}
+                  </span>
+                </p>
+              )}
+              {summary.nextRequestAt && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5 shrink-0" />
+                  Next payout request possible {formatDate(summary.nextRequestAt)} (one every{' '}
+                  {summary.intervalDays} days)
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">
-              Payout Schedule
-            </h3>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              Payouts are automatically released on the{' '}
-              <span className="font-semibold">1st day</span> and{' '}
-              <span className="font-semibold">15th day</span> of each month. Please ensure your
-              payout information is up to date.
-            </p>
-          </div>
+          <button
+            onClick={openRequestForm}
+            disabled={
+              payoutsLoading ||
+              summary.availableBalance < summary.minimumWithdrawal ||
+              !!summary.nextRequestAt
+            }
+            className="flex items-center gap-2 px-4 py-2.5 bg-solid hover:bg-tertiary text-white rounded-lg transition-colors font-medium text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Request payout
+          </button>
         </div>
+        {!payoutsLoading &&
+          !summary.nextRequestAt &&
+          summary.availableBalance < summary.minimumWithdrawal && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" />
+              You can request a payout once your available balance reaches{' '}
+              {formatAmount(summary.minimumWithdrawal)}.
+            </p>
+          )}
+
+        {requestForm.open && (
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Amount (RWF)
+              </label>
+              <input
+                type="number"
+                min={summary.minimumWithdrawal}
+                max={summary.availableBalance}
+                value={requestForm.amount}
+                onChange={(e) => setRequestForm((f) => ({ ...f, amount: e.target.value }))}
+                className="w-40 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200"
+              />
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 pb-2">
+              Sent to your{' '}
+              {preferredMethod === 'mobile' ? 'mobile money number' : 'bank account'} below.
+            </p>
+            <div className="flex gap-2 ml-auto">
+              <button
+                onClick={() => setRequestForm({ open: false, amount: '', submitting: false })}
+                className="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitPayoutRequest}
+                disabled={requestForm.submitting}
+                className="px-4 py-2 text-sm bg-solid hover:bg-tertiary text-white rounded-lg font-medium disabled:opacity-50"
+              >
+                {requestForm.submitting ? 'Requesting…' : 'Confirm request'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Payout Method Form */}
@@ -460,6 +630,16 @@ const ShopAdminPayouts = () => {
                     </td>
                     <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
                       {formatAmount(payout.amount)}
+                      {payout.adjustments?.length > 0 && (
+                        <span
+                          className="block text-xs font-normal text-amber-600 dark:text-amber-400"
+                          title={payout.adjustments
+                            .map((a) => `${a.reason}: ${formatAmount(a.amount)}`)
+                            .join('; ')}
+                        >
+                          Reduced from {formatAmount(payout.requestedAmount)} (refund)
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-4">{getStatusBadge(payout.status)}</td>
                   </tr>
@@ -469,6 +649,97 @@ const ShopAdminPayouts = () => {
           </table>
         </div>
       </div>
+
+      {/* Balance History (ledger) - full transparency into every credit/debit */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Balance History
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Every order earning, refund deduction and payout that changed your balance.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowLedger((v) => !v);
+              if (!showLedger) fetchLedger();
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <History className="w-4 h-4" />
+            {showLedger ? 'Hide' : 'Show'} history
+          </button>
+        </div>
+
+        {showLedger && (
+          <div className="overflow-x-auto">
+            {ledgerLoading ? (
+              <div className="py-8 flex justify-center">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : ledger.length === 0 ? (
+              <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                No balance activity yet
+              </p>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-2.5 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Date
+                    </th>
+                    <th className="text-left py-2.5 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Description
+                    </th>
+                    <th className="text-right py-2.5 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Amount
+                    </th>
+                    <th className="text-right py-2.5 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Balance after
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledger.map((entry) => (
+                    <tr
+                      key={entry._id}
+                      className="border-b border-slate-100 dark:border-slate-800"
+                    >
+                      <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {formatDate(entry.createdAt)}
+                      </td>
+                      <td className="py-2.5 px-3 text-xs text-slate-800 dark:text-slate-200">
+                        {entry.description}
+                        {entry.order?.orderNumber && (
+                          <span className="text-slate-400 dark:text-slate-500">
+                            {' '}
+                            · {entry.order.orderNumber}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className={`py-2.5 px-3 text-xs font-semibold text-right whitespace-nowrap ${
+                          entry.amount >= 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {entry.amount >= 0 ? '+' : ''}
+                        {formatAmount(entry.amount)}
+                      </td>
+                      <td className="py-2.5 px-3 text-xs text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        {formatAmount(entry.balanceAfter)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -477,6 +748,25 @@ const ShopAdminPayouts = () => {
 const WebsiteAdminPayouts = () => {
   const [messageModal, setMessageModal] = useState({ open: false, vendor: null });
   const [actionModal, setActionModal] = useState({ open: false, payout: null, action: null });
+  const [ledgerModal, setLedgerModal] = useState({
+    open: false,
+    name: '',
+    entries: [],
+    loading: false,
+  });
+
+  const openLedgerModal = async (owner) => {
+    setLedgerModal({ open: true, name: owner.name || 'Payee', entries: [], loading: true });
+    try {
+      const data = await payoutService.getLedger(
+        owner.business ? { business: owner.business } : { user: owner.user }
+      );
+      setLedgerModal((m) => ({ ...m, entries: data.entries || [], loading: false }));
+    } catch (error) {
+      console.error('Failed to fetch ledger:', error);
+      setLedgerModal((m) => ({ ...m, loading: false }));
+    }
+  };
   const [message, setMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -688,16 +978,28 @@ const WebsiteAdminPayouts = () => {
   };
 
   // Get payout method display
+  // Admins send the money, so they need the full destination: the one saved
+  // on the payout when it was requested (older payouts fall back to the
+  // vendor's current payout details).
   const getPayoutMethodDisplay = (payout) => {
+    const saved = payout.destination || {};
+    const current = payout.business?.payoutInfo || {};
     if (payout.method === 'mobile') {
+      const phone = saved.phone || current.mobilePhone || payout.user?.phone;
+      const name = saved.accountName || current.mobileAccountName;
       return {
-        type: 'Mobile Money',
-        details: `${payout.business?.payoutInfo?.mobileProvider || 'MTN'} - ****${payout.business?.payoutInfo?.mobilePhone?.slice(-4) || '0000'}`,
+        type: `Mobile Money (${saved.provider || current.mobileProvider || 'MTN'})`,
+        details: phone
+          ? `${phone}${name ? ` · ${name}` : ''}`
+          : 'No mobile money number on file - contact the payee',
       };
     }
+    const accountNumber = saved.accountNumber || current.accountNumber;
     return {
-      type: 'Bank Account',
-      details: `${payout.business?.payoutInfo?.bankName || 'Bank'} - ****${payout.business?.payoutInfo?.accountNumber?.slice(-4) || '0000'}`,
+      type: `Bank (${saved.bankName || current.bankName || 'bank not set'})`,
+      details: accountNumber
+        ? `${accountNumber} · ${saved.accountHolder || current.accountHolder || ''}`
+        : 'No bank account on file - contact the payee',
     };
   };
 
@@ -912,10 +1214,14 @@ const WebsiteAdminPayouts = () => {
                         <td className="py-3 px-4">
                           <div>
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              {payout.business?.name || 'Unknown'}
+                              {payout.business?.name ||
+                                (payout.user
+                                  ? `${payout.user.firstName || ''} ${payout.user.lastName || ''}`.trim() +
+                                    ' (rider)'
+                                  : 'Unknown')}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {payout.business?.contact?.email || ''}
+                              {payout.business?.contact?.email || payout.user?.email || ''}
                             </p>
                           </div>
                         </td>
@@ -931,13 +1237,39 @@ const WebsiteAdminPayouts = () => {
                         </td>
                         <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
                           {formatAmount(payout.amount)}
+                          {payout.adjustments?.length > 0 && (
+                            <span
+                              className="block text-xs font-normal text-amber-600 dark:text-amber-400"
+                              title={payout.adjustments
+                                .map((a) => `${a.reason}: ${formatAmount(a.amount)}`)
+                                .join('; ')}
+                            >
+                              was {formatAmount(payout.requestedAmount)} - refund adjusted
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                           {formatDate(payout.createdAt)}
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(payout.status)}</td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={() =>
+                                openLedgerModal(
+                                  payout.business
+                                    ? { business: payout.business._id, name: payout.business.name }
+                                    : {
+                                        user: payout.user?._id,
+                                        name: `${payout.user?.firstName || ''} ${payout.user?.lastName || ''}`.trim(),
+                                      }
+                                )
+                              }
+                              className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
+                            >
+                              <History className="w-3.5 h-3.5" />
+                              History
+                            </button>
                             {payout.status === 'requested' && (
                               <>
                                 <button
@@ -1149,6 +1481,85 @@ const WebsiteAdminPayouts = () => {
                 Send Message
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Balance History (ledger) - same view a payee sees, so admin and vendor
+          are looking at the same numbers when there's a question. */}
+      {ledgerModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Balance History — {ledgerModal.name}
+              </h3>
+              <button
+                onClick={() => setLedgerModal({ open: false, name: '', entries: [], loading: false })}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+            {ledgerModal.loading ? (
+              <div className="py-8 flex justify-center">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : ledgerModal.entries.length === 0 ? (
+              <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                No balance activity yet
+              </p>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-2 px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Date
+                    </th>
+                    <th className="text-left py-2 px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Description
+                    </th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Amount
+                    </th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Balance after
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledgerModal.entries.map((entry) => (
+                    <tr key={entry._id} className="border-b border-slate-100 dark:border-slate-800">
+                      <td className="py-2 px-2 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {formatDate(entry.createdAt)}
+                      </td>
+                      <td className="py-2 px-2 text-xs text-slate-800 dark:text-slate-200">
+                        {entry.description}
+                        {entry.order?.orderNumber && (
+                          <span className="text-slate-400 dark:text-slate-500">
+                            {' '}
+                            · {entry.order.orderNumber}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className={`py-2 px-2 text-xs font-semibold text-right whitespace-nowrap ${
+                          entry.amount >= 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {entry.amount >= 0 ? '+' : ''}
+                        {formatAmount(entry.amount)}
+                      </td>
+                      <td className="py-2 px-2 text-xs text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        {formatAmount(entry.balanceAfter)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

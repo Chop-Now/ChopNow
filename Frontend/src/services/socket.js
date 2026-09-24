@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { API_URL } from './api';
+import { API_URL, getAccessToken } from './api';
 
 class SocketService {
   constructor() {
@@ -8,7 +8,7 @@ class SocketService {
   }
 
   connect() {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (!token) {
       console.warn('Socket connection skipped: No authentication token found');
       return null;
@@ -19,8 +19,10 @@ class SocketService {
     }
 
     try {
-      // Connect to the base URL (remove /api/v1 if present)
-      const socketUrl = API_URL.replace('/api/v1', '');
+      // Connect to the base URL (remove /api/v1 if present). In dev, API_URL
+      // is '' (see services/api.js) - fall back to the page's own origin,
+      // which Vite's dev-server proxy forwards /socket.io from.
+      const socketUrl = API_URL ? API_URL.replace('/api/v1', '') : window.location.origin;
 
       this.socket = io(socketUrl, {
         transports: ['websocket'],

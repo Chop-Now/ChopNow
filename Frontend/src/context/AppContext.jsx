@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { authService, api, listingService, userService, cartService } from '../services';
+import { setAccessToken, clearAccessToken } from '../services/api';
 import { transformListingToProduct } from '../utils/transforms';
 
 export const AppContext = createContext();
@@ -11,23 +12,6 @@ export const useAppContext = () => {
     throw new Error('useAppContext must be used within AppContextProvider');
   }
   return context;
-};
-
-// Helper: decode JWT payload without a library
-const decodeToken = (token) => {
-  try {
-    const payload = token.split('.')[1];
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-};
-
-// Helper: check if a JWT token is expired (with 60s buffer)
-const isTokenExpired = (token) => {
-  const decoded = decodeToken(token);
-  if (!decoded || !decoded.exp) return true;
-  return decoded.exp * 1000 < Date.now() - 60000;
 };
 
 const AppContextProvider = ({ children }) => {
@@ -59,8 +43,7 @@ const AppContextProvider = ({ children }) => {
 
   // Clear all auth state helper
   const clearAuthState = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    clearAccessToken();
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
@@ -68,74 +51,51 @@ const AppContextProvider = ({ children }) => {
     setAvailableRoles([]);
   }, []);
 
-  // Check for existing session and validate token
+  // Check for existing session on mount. The access token lives only in memory
+  // (see services/api.js), so a page reload always starts with none - the only
+  // way to know whether the user is still logged in is to attempt a silent
+  // refresh against the httpOnly refresh-token cookie the backend set.
   useEffect(() => {
     const checkAuth = async () => {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        // Never logged in on this browser - skip the network round trip.
+        setIsLoading(false);
+        return;
+      }
+
+      let userData;
       try {
-        const token = localStorage.getItem('token');
-        const refreshToken = localStorage.getItem('refreshToken');
-        const storedUser = localStorage.getItem('user');
+        userData = JSON.parse(storedUser);
+      } catch {
+        clearAuthState();
+        setIsLoading(false);
+        return;
+      }
 
-        if (!token || !storedUser) {
-          // No stored session
-          setIsLoading(false);
-          return;
-        }
+      try {
+        const { data } = await api.post('/api/users/refresh-token', {});
+        setAccessToken(data.token);
 
-        let userData;
+        // Validate by fetching a fresh profile.
         try {
-          userData = JSON.parse(storedUser);
+          const profile = await authService.getProfile();
+          const freshUser = { ...userData, ...profile };
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          setUser(freshUser);
+          setIsAuthenticated(true);
+          setActiveRole(freshUser.activeRole || freshUser.role || 'consumer');
+          setAvailableRoles(freshUser.roles || [freshUser.role || 'consumer']);
         } catch {
-          // Corrupted stored user data
-          clearAuthState();
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if access token is expired
-        if (isTokenExpired(token)) {
-          // Try to refresh
-          if (refreshToken && !isTokenExpired(refreshToken)) {
-            try {
-              const { data } = await api.post('/api/users/refresh-token', { refreshToken });
-              localStorage.setItem('token', data.token);
-              if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-              }
-              // Validate by fetching fresh profile
-              try {
-                const profile = await authService.getProfile();
-                const freshUser = { ...userData, ...profile };
-                localStorage.setItem('user', JSON.stringify(freshUser));
-                setUser(freshUser);
-                setIsAuthenticated(true);
-                setActiveRole(freshUser.activeRole || freshUser.role || 'consumer');
-                setAvailableRoles(freshUser.roles || [freshUser.role || 'consumer']);
-              } catch {
-                // Profile fetch failed but token refreshed -- use stored data
-                setUser(userData);
-                setIsAuthenticated(true);
-                setActiveRole(userData.activeRole || userData.role || 'consumer');
-                setAvailableRoles(userData.roles || [userData.role || 'consumer']);
-              }
-            } catch {
-              // Refresh failed -- session is dead
-              clearAuthState();
-            }
-          } else {
-            // No valid refresh token -- session is dead
-            clearAuthState();
-          }
-        } else {
-          // Access token still valid -- restore session from storage
+          // Profile fetch failed but the refresh itself succeeded -- use stored data.
           setUser(userData);
           setIsAuthenticated(true);
           setActiveRole(userData.activeRole || userData.role || 'consumer');
           setAvailableRoles(userData.roles || [userData.role || 'consumer']);
         }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
-        setAuthError(err);
+      } catch {
+        // No valid refresh-token cookie (expired, revoked, or never existed here) -- session is dead.
+        // This is an expected, common outcome (e.g. the 7-day cookie simply expired), not an error.
         clearAuthState();
       } finally {
         setIsLoading(false);
@@ -218,7 +178,7 @@ const AppContextProvider = ({ children }) => {
       const data = await authService.login({ email, password });
 
       // Extract user data (everything except token and refreshToken)
-      const { token, refreshToken, ...userData } = data;
+      const { token, refreshToken: _refreshToken, ...userData } = data;
 
       // Set role state from response
       const userRoles = userData.roles || [userData.role || 'consumer'];
@@ -236,8 +196,7 @@ const AppContextProvider = ({ children }) => {
         }
       }
 
-      localStorage.setItem('token', token);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      setAccessToken(token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       setIsAuthenticated(true);
@@ -261,11 +220,10 @@ const AppContextProvider = ({ children }) => {
       const data = await authService.register(userData);
 
       // Extract user data (everything except token, refreshToken, and message)
-      const { token, refreshToken, message, ...userInfo } = data;
+      const { token, refreshToken: _refreshToken, message, ...userInfo } = data;
 
       // Auto-login after registration
-      localStorage.setItem('token', token);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      setAccessToken(token);
       localStorage.setItem('user', JSON.stringify(userInfo));
       setUser(userInfo);
       setIsAuthenticated(true);
@@ -288,15 +246,14 @@ const AppContextProvider = ({ children }) => {
   };
 
   // Google Login function
-  const googleAuth = async (accessToken) => {
+  const googleAuth = async (idToken) => {
     try {
-      const { data } = await api.post('/api/users/google-login', { accessToken });
+      const { data } = await api.post('/api/users/google-login', { idToken });
 
       // Extract user data (everything except token and refreshToken)
-      const { token, refreshToken, ...userData } = data;
+      const { token, refreshToken: _refreshToken, ...userData } = data;
 
-      localStorage.setItem('token', token);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      setAccessToken(token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       setIsAuthenticated(true);
@@ -417,9 +374,17 @@ const AppContextProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+  const logout = async () => {
+    // Best-effort: clear the httpOnly refresh-token cookie server-side so it
+    // can't be replayed later. Local state is cleared either way below, even
+    // if this call fails (e.g. offline, or the access token already expired).
+    try {
+      await authService.logoutSession('current');
+    } catch (err) {
+      console.error('Server-side logout failed (clearing local session anyway)', err);
+    }
+
+    clearAccessToken();
     localStorage.removeItem('user');
     localStorage.removeItem('cartItems'); // Clear cart on logout
     setUser(null);

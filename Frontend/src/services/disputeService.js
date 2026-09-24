@@ -46,6 +46,30 @@ const disputeService = {
     }
   },
 
+  // Refunds queued for manual processing (Admin/Support)
+  getRefundRequests: async (status) => {
+    try {
+      const response = await api.get('/api/disputes/refund-requests', {
+        params: status ? { status } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Record that a queued refund was paid back ('completed') or couldn't be ('failed')
+  updateRefundRequest: async (id, data) => {
+    try {
+      const response = await api.patch(`/api/disputes/refund-requests/${id}`, data, {
+        silent: true,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get dispute statistics (Admin/Support)
   getDisputeStats: async () => {
     try {
