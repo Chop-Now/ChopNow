@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../core/api/api_exception.dart';
 import '../../core/models/order_model.dart';
 import '../../core/providers/orders_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
+import '../cart/mobile_money_payment_sheet.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   final String orderId;
@@ -179,6 +183,14 @@ class _OrderDetailView extends StatelessWidget {
                 },
               ),
             ],
+            if (order.awaitingPayment) ...[
+              const SizedBox(height: 10),
+              _PayNowButton(order: order),
+            ],
+            if (order.canBeCancelled) ...[
+              const SizedBox(height: 10),
+              _CancelOrderButton(order: order),
+            ],
             const SizedBox(height: 10),
             CnSecondaryButton(
               label: 'Report an Issue',
@@ -210,7 +222,7 @@ class _OrderDetailView extends StatelessWidget {
       };
 
   String _labelForStatus(String status) => switch (status) {
-        'pending' => 'Pending Payment',
+        'pending' || 'pending_payment' => 'Pending Payment',
         'paid' => 'Payment Confirmed',
         'confirmed' => 'Preparing Your Order',
         'ready_for_pickup' => 'Ready for Pickup!',
@@ -219,6 +231,76 @@ class _OrderDetailView extends StatelessWidget {
         'cancelled' => 'Order Cancelled',
         _ => status,
       };
+}
+
+class _CancelOrderButton extends ConsumerStatefulWidget {
+  final Order order;
+  const _CancelOrderButton({required this.order});
+
+  @override
+  ConsumerState<_CancelOrderButton> createState() => _CancelOrderButtonState();
+}
+
+class _CancelOrderButtonState extends ConsumerState<_CancelOrderButton> {
+  bool _cancelling = false;
+
+  Future<void> _cancel() async {
+    final wasPaid = widget.order.status != 'pending_payment';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel this order?'),
+        content: Text(wasPaid
+            ? "Any payment you've made will be refunded. This cannot be undone."
+            : 'This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Keep order')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Cancel order',
+                  style: TextStyle(color: Color(0xFFE53935)))),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _cancelling = true);
+    try {
+      await ApiClient.instance.put(AppEndpoints.cancelOrder(widget.order.id));
+      HapticFeedback.mediumImpact();
+      ref.invalidate(orderDetailProvider(widget.order.id));
+      ref.invalidate(ordersProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(wasPaid
+              ? "Order cancelled. Any payment you've made will be refunded."
+              : 'Order cancelled.'),
+          backgroundColor: AppColors.primary,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ApiException.fromDioError(e).message),
+          backgroundColor: const Color(0xFFE53935),
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CnSecondaryButton(
+      label: 'Cancel Order',
+      icon: Icons.cancel_outlined,
+      isLoading: _cancelling,
+      onTap: _cancelling ? null : _cancel,
+    );
+  }
 }
 
 class _Card extends StatelessWidget {
@@ -249,6 +331,65 @@ class _Card extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+/// Pays an order that was placed with mobile money but not paid yet. Orders
+/// from the same multi-vendor checkout are paid together in one prompt.
+class _PayNowButton extends ConsumerStatefulWidget {
+  final Order order;
+  const _PayNowButton({required this.order});
+
+  @override
+  ConsumerState<_PayNowButton> createState() => _PayNowButtonState();
+}
+
+class _PayNowButtonState extends ConsumerState<_PayNowButton> {
+  bool _opening = false;
+
+  Future<void> _pay() async {
+    final order = widget.order;
+    setState(() => _opening = true);
+    List<Order> unpaid = [order];
+    if (order.checkoutGroup != null) {
+      try {
+        final all = await ref.read(ordersProvider.future);
+        final siblings = all
+            .where((o) =>
+                o.checkoutGroup == order.checkoutGroup &&
+                o.status == 'pending_payment')
+            .toList();
+        if (siblings.isNotEmpty) unpaid = siblings;
+      } catch (_) {
+        // Fall back to this order's details; the server still charges only
+        // what is unpaid in the checkout.
+      }
+    }
+    if (!mounted) return;
+    setState(() => _opening = false);
+
+    await showMobileMoneyPaymentSheet(
+      context: context,
+      ref: ref,
+      checkoutId: order.checkoutGroup,
+      orderId: order.checkoutGroup == null ? order.id : null,
+      orderIds: unpaid.map((o) => o.id).toList(),
+      total: unpaid.fold<double>(0, (sum, o) => sum + o.total),
+      onPaid: () {
+        ref.invalidate(orderDetailProvider(order.id));
+        ref.invalidate(ordersProvider);
+      },
+      onLater: () {},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CnPrimaryButton(
+      label: 'Complete Payment',
+      isLoading: _opening,
+      onTap: _opening ? null : _pay,
     );
   }
 }

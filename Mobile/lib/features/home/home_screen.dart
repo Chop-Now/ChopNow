@@ -16,15 +16,61 @@ import '../../shared/animations/scale_tap.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/notifications_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
 
 // ── Providers & Filters ────────────────────────────────────────────────────────
+/// Largest value on the distance slider (km); also the radius fetched.
+const double kMaxDistanceKm = 15.0;
+
+class UserPosition {
+  final double lat;
+  final double lng;
+  const UserPosition(this.lat, this.lng);
+}
+
+/// The device's current position, or null when location services are off or
+/// permission was refused. Listings then have no distance, which the UI
+/// surfaces instead of pretending every deal is 0 km away.
+final currentPositionProvider =
+    FutureProvider.autoDispose<UserPosition?>((ref) async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return null;
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return null;
+    }
+    final pos = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        timeLimit: Duration(seconds: 10),
+      ),
+    );
+    return UserPosition(pos.latitude, pos.longitude);
+  } catch (_) {
+    return null;
+  }
+});
+
 final listingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final response =
-      await ApiClient.instance.get(AppEndpoints.listings, queryParameters: {
-    'status': 'active',
-    'sort': 'offerPrice',
-    'limit': 20,
-  });
+  final position = await ref.watch(currentPositionProvider.future);
+  // With a location, /listings/nearby returns each listing's real distance
+  // (km) so the distance filter and sort actually work.
+  final response = position != null
+      ? await ApiClient.instance.get(AppEndpoints.nearbyListings, queryParameters: {
+          'lat': position.lat,
+          'lng': position.lng,
+          'radius': (kMaxDistanceKm * 1000).round(),
+          'limit': 100,
+        })
+      : await ApiClient.instance.get(AppEndpoints.listings, queryParameters: {
+          'status': 'active',
+          'sort': 'offerPrice',
+          'limit': 20,
+        });
   final data = response.data;
   if (data is Map && data['listings'] != null) {
     return List.from(data['listings']);
@@ -104,11 +150,13 @@ final filteredListingsProvider = Provider.autoDispose<AsyncValue<List<dynamic>>>
     // 4. Filter by Max Price
     var filtered = searchFiltered.where((entry) => entry.key.offerPrice <= filters.maxPrice).toList();
 
-    // 5. Filter by Max Distance
-    if (filters.maxDistance < 15.0) {
+    // 5. Filter by Max Distance. A listing with an unknown distance (no
+    // location permission) can't be claimed to be within the radius, so it is
+    // excluded rather than silently treated as 0 km away.
+    if (filters.maxDistance < kMaxDistanceKm) {
       filtered = filtered.where((entry) {
-        final dist = entry.key.distance ?? 0.0;
-        return dist <= filters.maxDistance;
+        final dist = entry.key.distance;
+        return dist != null && dist <= filters.maxDistance;
       }).toList();
     }
 
@@ -129,7 +177,15 @@ final filteredListingsProvider = Provider.autoDispose<AsyncValue<List<dynamic>>>
     } else if (filters.sortBy == 'rating') {
       filtered.sort((a, b) => (b.key.rating ?? 0.0).compareTo(a.key.rating ?? 0.0));
     } else if (filters.sortBy == 'distance') {
-      filtered.sort((a, b) => (a.key.distance ?? 999.0).compareTo(b.key.distance ?? 999.0));
+      // Unknown distances sort last.
+      filtered.sort((a, b) {
+        final da = a.key.distance;
+        final db = b.key.distance;
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return da.compareTo(db);
+      });
     }
 
     // Return the original raw maps since ListingCard expects them
@@ -180,6 +236,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final listingsAsync = ref.watch(filteredListingsProvider);
+    final locationUnavailable = ref.watch(currentPositionProvider).maybeWhen(
+          data: (position) => position == null,
+          orElse: () => false,
+        );
     final auth = ref.watch(authProvider);
     final user = auth is AuthAuthenticated ? auth.user : null;
     final selectedCat = ref.watch(selectedCategoryProvider);
@@ -590,6 +650,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            if (locationUnavailable)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => ref.invalidate(currentPositionProvider),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.location_off_outlined,
+                              size: 20, color: AppColors.textSecondary),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Turn on location to see how far each deal is and '
+                              'filter by distance. Tap to retry.',
+                              style: TextStyle(
+                                  fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
             // ── Listings grid ──
             listingsAsync.when(
