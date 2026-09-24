@@ -137,32 +137,47 @@ const getListings = async (req, res) => {
  */
 const getNearbyListings = async (req, res) => {
   try {
-    const { lat, lng, radius = 5000, category } = req.query;
+    const { category } = req.query;
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+    // Radius in meters, capped so one request can't scan the whole country.
+    const radius = Math.min(parseInt(req.query.radius) || 5000, 50000);
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
-    if (!lat || !lng) {
-      return res.status(400).json({ message: 'Please provide latitude and longitude' });
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    ) {
+      return res.status(400).json({ message: 'Please provide a valid latitude and longitude' });
     }
 
-    // First, find businesses near the location
-    const nearbyBusinesses = await Business.find({
-      status: 'active',
-      'address.location': {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)],
-          },
-          $maxDistance: parseInt(radius),
+    // Businesses store coordinates in the top-level `location` field, which is
+    // the one with the 2dsphere index (createBusiness moves them there and
+    // deletes address.location). $geoNear also gives each business its
+    // distance, which clients need to filter/sort by - this endpoint used to
+    // query the unindexed `address.location` path (which MongoDB rejects) and
+    // never returned a distance at all.
+    const nearbyBusinesses = await Business.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [lng, lat] },
+          distanceField: 'distanceMeters',
+          maxDistance: radius,
+          spherical: true,
+          query: { status: 'active' },
         },
       },
-    })
-      .select('_id')
-      .lean();
+      { $project: { _id: 1, distanceMeters: 1 } },
+    ]);
 
     const businessIds = nearbyBusinesses.map((b) => b._id);
+    const distanceKmByBusiness = new Map(
+      nearbyBusinesses.map((b) => [String(b._id), Math.round(b.distanceMeters / 100) / 10])
+    );
 
     // Then find active listings from those businesses
     const query = {
@@ -187,7 +202,11 @@ const getNearbyListings = async (req, res) => {
     const total = await Listing.countDocuments(query);
 
     res.json({
-      listings,
+      // Distance in km (one decimal), from the listing's business.
+      listings: listings.map((l) => ({
+        ...l,
+        distance: distanceKmByBusiness.get(String(l.business?._id || l.business)),
+      })),
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,

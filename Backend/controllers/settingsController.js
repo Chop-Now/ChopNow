@@ -22,6 +22,11 @@ const getPublicSettings = async (req, res) => {
       enableReviews: settings.enableReviews,
       enableNotifications: settings.enableNotifications,
       maintenanceMode: settings.maintenanceMode,
+      // Checkout options the clients show before the server quote arrives
+      cashPaymentsEnabled: settings.cashPaymentsEnabled,
+      deliveryFee: settings.deliveryFee,
+      taxPercent: settings.taxPercent,
+      taxLabel: settings.taxLabel,
     });
   } catch (error) {
     logger.error({ err: error }, 'Settings error');
@@ -62,6 +67,9 @@ const updateSettings = async (req, res) => {
       settings,
     });
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
     logger.error({ err: error }, 'Settings error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -80,7 +88,8 @@ const getCommissionRate = async (req, res) => {
     res.json({
       platformFeePercent: settings.platformFeePercent,
       minimumWithdrawal: settings.minimumWithdrawal,
-      payoutSchedule: settings.payoutSchedule,
+      payoutHoldDays: settings.payoutHoldDays,
+      payoutIntervalDays: settings.payoutIntervalDays,
     });
   } catch (error) {
     logger.error({ err: error }, 'Settings error');

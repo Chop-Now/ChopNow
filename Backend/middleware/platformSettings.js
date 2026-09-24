@@ -142,12 +142,14 @@ const getPayoutSettings = async () => {
     const settings = await PlatformSettings.getSettings();
     return {
       minimumWithdrawal: settings.minimumWithdrawal,
-      payoutSchedule: settings.payoutSchedule,
+      payoutHoldDays: settings.payoutHoldDays,
+      payoutIntervalDays: settings.payoutIntervalDays,
     };
   } catch (_error) {
     return {
       minimumWithdrawal: 5000,
-      payoutSchedule: 'biweekly',
+      payoutHoldDays: 7,
+      payoutIntervalDays: 7,
     };
   }
 };

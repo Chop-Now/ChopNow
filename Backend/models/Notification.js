@@ -40,6 +40,8 @@ const notificationSchema = new Schema(
         // Vendor notifications
         'new_order',
         'order_status_changed',
+        // Payee (vendor/rider) money notifications
+        'payout_update',
         // Review notifications
         'new_review',
         'review_response',

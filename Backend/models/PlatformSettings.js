@@ -31,10 +31,55 @@ const platformSettingsSchema = new mongoose.Schema(
       type: Number,
       default: 5000, // RWF
     },
-    payoutSchedule: {
+    // Earnings from a completed order are held this many days before they can
+    // be withdrawn, so refunds/disputes in that window come out of held money.
+    payoutHoldDays: {
+      type: Number,
+      default: 7,
+      min: 0,
+      max: 60,
+    },
+    // A payee can request at most one payout per this many days.
+    payoutIntervalDays: {
+      type: Number,
+      default: 7,
+      min: 0,
+      max: 60,
+    },
+
+    // Checkout pricing & payment options
+    // Cash is off by default: the vendor keeps cash in hand, so the platform
+    // has no way to collect its commission on it.
+    cashPaymentsEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    // Flat delivery fee (RWF) charged per vendor order - set by the platform,
+    // not by vendors or riders, so customers are never overcharged.
+    deliveryFee: {
+      type: Number,
+      default: 1000,
+      min: 0,
+    },
+    // Platform's share of each delivery fee; the rider earns the rest.
+    deliveryCommissionPercent: {
+      type: Number,
+      default: 10,
+      min: 0,
+      max: 100,
+    },
+    // Tax added on top of (items + delivery). 0 = no tax line at checkout.
+    taxPercent: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    taxLabel: {
       type: String,
-      enum: ['weekly', 'biweekly', 'monthly'],
-      default: 'biweekly',
+      default: 'VAT',
+      trim: true,
+      maxlength: 30,
     },
 
     // Feature Toggles
@@ -119,7 +164,13 @@ platformSettingsSchema.statics.updateSettings = async function (updates, adminId
     'supportPhone',
     'platformFeePercent',
     'minimumWithdrawal',
-    'payoutSchedule',
+    'payoutHoldDays',
+    'payoutIntervalDays',
+    'cashPaymentsEnabled',
+    'deliveryFee',
+    'deliveryCommissionPercent',
+    'taxPercent',
+    'taxLabel',
     'allowNewRegistrations',
     'requireEmailVerification',
     'allowGuestCheckout',

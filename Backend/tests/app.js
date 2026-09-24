@@ -20,10 +20,20 @@ process.env.NODE_ENV = 'test';
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 
 // Import routes
 const userRoutes = require('../routes/userRoutes');
+const businessRoutes = require('../routes/businessRoutes');
+const listingRoutes = require('../routes/listingRoutes');
+const orderRoutes = require('../routes/orderRoutes');
+const deliveryRoutes = require('../routes/deliveryRoutes');
+const disputeRoutes = require('../routes/disputeRoutes');
+const payoutRoutes = require('../routes/payoutRoutes');
+const paymentRoutes = require('../routes/paymentRoutes');
+const reviewRoutes = require('../routes/reviewRoutes');
+const settingsRoutes = require('../routes/settingsRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('../middleware/errorHandler');
@@ -38,6 +48,7 @@ app.use(requestId);
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(cookieParser());
 
 // ── Security well-known ──
 app.get('/.well-known/security.txt', (req, res) => {
@@ -79,6 +90,15 @@ app.get('/', (req, res) => {
 // ── API routes ──
 app.use('/api/v1/users', userRoutes);
 app.use('/api/users', userRoutes); // backward compatibility
+app.use('/api/v1/businesses', businessRoutes);
+app.use('/api/v1/listings', listingRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/deliveries', deliveryRoutes);
+app.use('/api/v1/disputes', disputeRoutes);
+app.use('/api/v1/payouts', payoutRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 
 // ── Error handling ──
 app.use(notFound);

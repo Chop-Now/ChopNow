@@ -3,9 +3,12 @@ const Order = require('../models/Order');
 const Business = require('../models/Business');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const Payment = require('../models/Payment');
+const { recordEntry } = require('../services/ledgerService');
 const logger = require('../utils/logger');
 const socketManager = require('../socket');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+const { completeOrderAtomically, cancelOrderAndRestoreInventory } = require('./orderController');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -18,6 +21,18 @@ const emitSafe = (room, event, data) => {
   } catch {
     // Socket.io not initialised (tests / CLI) — silently skip
   }
+};
+
+/**
+ * What the rider is credited for delivering this order: the delivery fee less
+ * the platform's commission. Orders placed before the fee split existed have
+ * neither riderAmount nor deliveryCommission set - they pay the full fee.
+ */
+const riderEarningFor = (order, delivery) => {
+  if (order.payment?.paymentMethod === 'cash') return 0;
+  const p = order.pricing || {};
+  if (p.riderAmount || p.deliveryCommission) return p.riderAmount || 0;
+  return delivery.deliveryFee || 0;
 };
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
@@ -58,6 +73,18 @@ const createDelivery = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // Only dispatch live, paid orders - otherwise a rider could be credited a
+    // delivery fee for an order that was cancelled or never paid.
+    if (['completed', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ message: `Order is already '${order.status}'` });
+    }
+    const paymentSettled =
+      order.payment?.paymentMethod === 'cash' ||
+      ['completed', 'refund_pending', 'refunded'].includes(order.payment?.paymentStatus);
+    if (!paymentSettled) {
+      return res.status(400).json({ message: 'This order has not been paid yet' });
+    }
+
     // Prevent duplicate delivery records
     const existing = await Delivery.findOne({ order: orderId });
     if (existing) {
@@ -80,14 +107,36 @@ const createDelivery = async (req, res) => {
         ? dd.address
         : `${dd.address?.street || ''}, ${dd.address?.city || ''}`.trim();
 
-    // Coordinates may not be present for manual addresses — default to [0,0]
-    const dropoffCoords = dd.address?.coordinates || dd.coordinates || [0, 0];
+    // Orders store GeoJSON at deliveryDetails.address.location (see
+    // normalizeDeliveryDetails in orderController). Coordinates may be absent
+    // for manual addresses — default to [0,0].
+    const dropoffCoords = dd.address?.location?.coordinates || [0, 0];
 
     const recipientName =
       dd.recipientName ||
       `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() ||
       'Customer';
-    const recipientPhone = dd.recipientPhone || order.customer?.phone || '';
+    // Neither client collects a recipient phone, and many customers have none on
+    // their profile - fall back to the number that paid for the order (the
+    // customer's mobile money line) before giving up.
+    let recipientPhone = dd.recipientPhone || order.customer?.phone || '';
+    if (!recipientPhone) {
+      const payment = await Payment.findOne({
+        $or: [{ order: order._id }, { orders: order._id }],
+        status: 'completed',
+      })
+        .select('payerPhoneNumber')
+        .lean();
+      recipientPhone = payment?.payerPhoneNumber
+        ? `+${payment.payerPhoneNumber.replace(/^\+/, '')}`
+        : '';
+    }
+    if (!recipientPhone) {
+      return res.status(400).json({
+        message:
+          'No contact phone for this customer - ask them to add a phone number to their profile',
+      });
+    }
 
     const delivery = await Delivery.create({
       order: order._id,
@@ -187,8 +236,8 @@ const getAvailableDeliveries = async (req, res) => {
     if (lat && lng) {
       query['pickupLocation.location'] = {
         $geoWithin: {
-          $centerSphere: [[parseFloat(lng), parseFloat(lat)], parseFloat(radius) / 6378.1] // radius in radians
-        }
+          $centerSphere: [[parseFloat(lng), parseFloat(lat)], parseFloat(radius) / 6378.1], // radius in radians
+        },
       };
     }
 
@@ -300,8 +349,12 @@ const assignRider = async (req, res) => {
     delivery.riderPhone = rider.phone || '';
     await delivery.updateStatus('assigned');
 
-    // Update order status to out_for_delivery
-    await Order.findByIdAndUpdate(delivery.order._id, { status: 'out_for_delivery' });
+    // Update order status to out_for_delivery - never out of a terminal state,
+    // or a cancelled order could be revived and later completed (and credited).
+    await Order.findOneAndUpdate(
+      { _id: delivery.order._id, status: { $nin: ['completed', 'cancelled'] } },
+      { status: 'out_for_delivery' }
+    );
 
     // Notify customer
     const order = delivery.order;
@@ -372,6 +425,19 @@ const updateDeliveryStatus = async (req, res) => {
       return res.status(403).json({ message: 'Only admins can cancel a delivery' });
     }
 
+    // C6 fix: delivered/cancelled/failed are terminal - nothing may transition
+    // out of them. Previously, validTransitions had no entry at all for a
+    // terminal delivery.status, so `validTransitions[delivery.status]` was
+    // undefined and the guard below was silently skipped - replaying
+    // `status: 'delivered'` on an already-delivered delivery slipped straight
+    // through and re-ran the rider balance credit every time it was called.
+    const TERMINAL_STATUSES = ['delivered', 'cancelled', 'failed'];
+    if (TERMINAL_STATUSES.includes(delivery.status)) {
+      return res.status(400).json({
+        message: `Delivery is already '${delivery.status}' and cannot be updated further`,
+      });
+    }
+
     // Validate transition
     const validTransitions = {
       assigned: ['picked_up', 'cancelled'],
@@ -385,24 +451,74 @@ const updateDeliveryStatus = async (req, res) => {
       });
     }
 
+    // C6 fix: the actual status write is an atomic compare-and-swap (matches
+    // only if the delivery is STILL non-terminal at write time), not a plain
+    // read-then-save - closing the race where two near-simultaneous requests
+    // both pass the checks above using the same stale in-memory `delivery`
+    // read, then both proceed to credit the rider's balance. Only one request
+    // can ever match this filter, so the block below can only run once.
+    const statusTimestampMap = {
+      picked_up: 'pickedUpAt',
+      delivered: 'deliveredAt',
+      cancelled: 'cancelledAt',
+    };
+    const timestampField = statusTimestampMap[status];
+    const updateDoc = { status };
+    if (timestampField) {
+      updateDoc[`statusTimestamps.${timestampField}`] = new Date();
+    }
     if (req.body.cancellationReason && status === 'cancelled') {
-      delivery.cancellationReason = req.body.cancellationReason;
+      updateDoc.cancellationReason = req.body.cancellationReason;
     }
 
-    await delivery.updateStatus(status);
+    const updatedDelivery = await Delivery.findOneAndUpdate(
+      { _id: delivery._id, status: { $nin: TERMINAL_STATUSES } },
+      { $set: updateDoc },
+      { new: true }
+    );
+    if (!updatedDelivery) {
+      return res.status(400).json({
+        message: 'Delivery is already in a terminal state',
+      });
+    }
+
     const order = delivery.order;
 
-    // Sync order status
+    // Sync order status.
+    // C7 fix: this used to be a plain Order.findByIdAndUpdate that only ever
+    // set status: 'completed', bypassing completeOrderAtomically entirely -
+    // for delivery-fulfillment orders (the customer never calls
+    // verifyPickupCode/the generic order-status endpoint; the order becomes
+    // 'completed' via THIS delivery status transition), that meant
+    // Business.stats.balance was never credited at all. Same idempotency
+    // guarantee applies here as everywhere else completeOrderAtomically is
+    // called: safe to call even on a retried request.
     if (status === 'delivered') {
-      await Order.findByIdAndUpdate(order._id, { status: 'completed' });
+      await completeOrderAtomically(order._id);
 
-      // Credit the rider's balance atomically
-      if (delivery.rider) {
-        await User.findByIdAndUpdate(delivery.rider, {
-          $inc: { 'stats.riderBalance': delivery.deliveryFee || 0 },
+      // Credit the rider's balance - safe to run unconditionally here since
+      // the atomic update above (on the Delivery document) guarantees this
+      // code path is reached at most once per delivery.
+      // The rider earns the delivery fee minus ChopNow's commission - and only
+      // on mobile-money orders: for cash the rider collects the fee at the door,
+      // and the platform holds nothing to pay out.
+      const riderEarning = riderEarningFor(order, delivery);
+      if (delivery.rider && riderEarning > 0) {
+        const rider = await User.findByIdAndUpdate(
+          delivery.rider,
+          { $inc: { 'stats.riderBalance': riderEarning } },
+          { new: true }
+        ).select('+stats.riderBalance');
+        await recordEntry({
+          user: delivery.rider,
+          type: 'delivery_earning',
+          amount: riderEarning,
+          balanceAfter: rider?.stats?.riderBalance,
+          order: order._id,
+          description: `Delivery of order ${order.orderNumber}: ${delivery.deliveryFee || 0} fee - ChopNow commission`,
         });
         logger.info(
-          { riderId: delivery.rider, amount: delivery.deliveryFee },
+          { riderId: delivery.rider, amount: riderEarning },
           'Credited rider balance for delivery completion'
         );
       }
@@ -417,7 +533,19 @@ const updateDeliveryStatus = async (req, res) => {
       });
       emitSafe(`user_${order.customer.toString()}`, 'order_delivered', { orderId: order._id });
     } else if (status === 'cancelled' || status === 'failed') {
-      await Order.findByIdAndUpdate(order._id, { status: 'cancelled' });
+      // H7 fix: this used to be a plain Order.findByIdAndUpdate({status:
+      // 'cancelled'}), which never restored the reserved inventory - the
+      // listing's stock stayed permanently down by whatever this order had
+      // reserved. `order` here only has `listing` as a bare ObjectId (it came
+      // from Delivery.findById(...).populate('order'), not a populate on
+      // Order.listing itself), which cancelOrderAndRestoreInventory handles.
+      const orderDoc = await Order.findById(order._id);
+      if (orderDoc) {
+        await cancelOrderAndRestoreInventory(orderDoc, {
+          requestedBy: req.user._id,
+          reason: `Delivery ${status}`,
+        });
+      }
     }
 
     // Emit delivery status to tracking subscribers
@@ -427,7 +555,7 @@ const updateDeliveryStatus = async (req, res) => {
     });
 
     logger.info({ deliveryId: delivery._id, status }, 'Delivery status updated');
-    res.json(delivery);
+    res.json(updatedDelivery);
   } catch (error) {
     logger.error({ err: error }, 'Update delivery status failed');
     res.status(500).json({

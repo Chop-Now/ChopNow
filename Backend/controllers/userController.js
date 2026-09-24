@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const PlatformSettings = require('../models/PlatformSettings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -13,20 +14,36 @@ const {
   sendSensitiveChangeOTP,
 } = require('../utils/emailService');
 const { OAuth2Client } = require('google-auth-library');
-const axios = require('axios');
+const {
+  REFRESH_TOKEN_COOKIE,
+  setAuthCookies,
+  clearAuthCookies,
+  csrfHeaderMatchesCookie,
+} = require('../utils/authCookies');
 
 const _client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Generate JWT Access Token (short-lived)
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+// Roles a person can grant themselves through public registration. 'admin' must
+// only ever be created out-of-band (scripts/makeAdmin.js); 'rider' is only granted
+// by an admin approving a rider application (see reviewRider) after KYC review.
+// This is enforced here independent of request-body validation, so a bypassed or
+// future new entry point can never grant a self-registering user either role.
+const SELF_REGISTERABLE_ROLES = ['consumer', 'business_owner'];
+
+// Generate JWT Access Token (short-lived).
+// tokenVersion is embedded so it can be compared against the user's current
+// tokenVersion at verification time (see middleware/auth.js) - bumping the
+// stored value (on password change or "logout all devices") immediately
+// invalidates every token issued before the bump, regardless of expiresIn.
+const generateToken = (id, tokenVersion = 0) => {
+  return jwt.sign({ id, tokenVersion }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
 };
 
 // Generate JWT Refresh Token (longer-lived)
-const generateRefreshToken = (id) => {
-  return jwt.sign({ id, type: 'refresh' }, process.env.JWT_SECRET, {
+const generateRefreshToken = (id, tokenVersion = 0) => {
+  return jwt.sign({ id, tokenVersion, type: 'refresh' }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 };
@@ -55,6 +72,13 @@ const registerUser = async (req, res) => {
       userRoles = role === 'business_owner' ? ['consumer', 'business_owner'] : [role];
     } else {
       userRoles = ['consumer']; // Default to consumer
+    }
+
+    // Hard filter to the self-registerable set regardless of what validation
+    // already checked - never trust request input for privilege assignment.
+    userRoles = userRoles.filter((r) => SELF_REGISTERABLE_ROLES.includes(r));
+    if (userRoles.length === 0) {
+      userRoles = ['consumer'];
     }
 
     // Check if user exists
@@ -98,6 +122,9 @@ const registerUser = async (req, res) => {
         verificationToken
       ).catch((err) => logger.error({ err }, 'Failed to send verification email'));
 
+      const refreshTokenValue = generateRefreshToken(user._id, user.tokenVersion);
+      const csrfToken = setAuthCookies(res, refreshTokenValue);
+
       res.status(201).json({
         _id: user._id,
         email: user.email,
@@ -107,8 +134,9 @@ const registerUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         emailVerified: user.emailVerified,
-        token: generateToken(user._id),
-        refreshToken: generateRefreshToken(user._id),
+        token: generateToken(user._id, user.tokenVersion),
+        refreshToken: refreshTokenValue,
+        csrfToken,
         message: 'Registration successful. Please check your email to verify your account.',
       });
     }
@@ -138,7 +166,9 @@ const loginUser = async (req, res) => {
     }
 
     // Check user - include passwordHash since it's select:false
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+passwordHash');
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select(
+      '+passwordHash +tokenVersion'
+    );
     if (!user) {
       logger.warn({ email }, 'Login attempt - user not found');
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -163,7 +193,24 @@ const loginUser = async (req, res) => {
       return res.status(403).json({ message: 'Account suspended' });
     }
 
+    // Enforced only while the admin "Require email verification" setting is on.
+    // Admins are exempt so a misconfigured email provider can never lock out
+    // the only people able to switch the setting off.
+    if (!user.emailVerified && !user.roles.includes('admin')) {
+      const settings = await PlatformSettings.getSettings();
+      if (settings.requireEmailVerification) {
+        return res.status(403).json({
+          message: 'Please verify your email address before logging in.',
+          code: 'EMAIL_NOT_VERIFIED',
+          email: user.email,
+        });
+      }
+    }
+
     logger.info({ email, userId: user._id }, 'User logged in successfully');
+
+    const refreshTokenValue = generateRefreshToken(user._id, user.tokenVersion);
+    const csrfToken = setAuthCookies(res, refreshTokenValue);
 
     res.json({
       _id: user._id,
@@ -174,8 +221,9 @@ const loginUser = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
-      token: generateToken(user._id),
-      refreshToken: generateRefreshToken(user._id),
+      token: generateToken(user._id, user.tokenVersion),
+      refreshToken: refreshTokenValue,
+      csrfToken,
     });
   } catch (error) {
     logger.error({ err: error }, 'Login error');
@@ -426,7 +474,7 @@ const getUsersForAdmin = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
-    if (!token) {
+    if (!token || typeof token !== 'string') {
       return res.status(400).json({ message: 'Verification token is required' });
     }
 
@@ -464,15 +512,18 @@ const resendVerificationEmail = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
+    // Same generic response whether the account is missing, already verified,
+    // or just re-sent - distinct 404/400 responses let anyone enumerate which
+    // emails are registered.
+    const genericResponse = {
+      message: 'If an unverified account exists for that email, a new link has been sent.',
+    };
+
     const user = await User.findOne({ email }).select(
       '+verificationToken +verificationTokenExpires'
     );
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    if (user.emailVerified) {
-      return res.status(400).json({ message: 'Email already verified' });
+    if (!user || user.emailVerified) {
+      return res.json(genericResponse);
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -489,10 +540,13 @@ const resendVerificationEmail = async (req, res) => {
     if (sent) {
       logger.info({ email: user.email }, 'Verification email sent successfully');
     } else {
-      logger.error({ email: user.email }, 'Failed to send verification email (service error or address rejected)');
+      logger.error(
+        { email: user.email },
+        'Failed to send verification email (service error or address rejected)'
+      );
     }
     // Always return 200 to avoid leaking whether the email was accepted
-    res.json({ message: 'Verification email sent' });
+    res.json(genericResponse);
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -541,7 +595,10 @@ const forgotPassword = async (req, res) => {
     if (sent) {
       logger.info({ email: normalizedEmail }, 'Password reset OTP code sent successfully');
     } else {
-      logger.error({ email: normalizedEmail }, 'Failed to send password reset OTP email (email service error or address rejected)');
+      logger.error(
+        { email: normalizedEmail },
+        'Failed to send password reset OTP email (email service error or address rejected)'
+      );
     }
     // Always return 200 to prevent email enumeration and avoid 500 on email service failures
     res.json({ message: successMessage });
@@ -573,7 +630,10 @@ const verifyResetOTP = async (req, res) => {
     });
 
     if (!user) {
-      logger.warn({ email: normalizedEmail, otp }, 'Invalid or expired OTP verification attempt');
+      logger.warn(
+        { email: normalizedEmail, otpProvided: Boolean(otp) },
+        'Invalid or expired OTP verification attempt'
+      );
       return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
@@ -614,11 +674,14 @@ const resetPassword = async (req, res) => {
     }
 
     const user = await User.findOne(query).select(
-      '+passwordHash +resetPasswordToken +resetPasswordExpires'
+      '+passwordHash +resetPasswordToken +resetPasswordExpires +tokenVersion'
     );
 
     if (!user) {
-      logger.warn({ token, email }, 'Password reset failed - invalid or expired token/code');
+      logger.warn(
+        { tokenProvided: Boolean(token), email },
+        'Password reset failed - invalid or expired token/code'
+      );
       return res.status(400).json({ message: 'Invalid or expired reset token/code' });
     }
 
@@ -627,6 +690,10 @@ const resetPassword = async (req, res) => {
     user.passwordHash = await bcrypt.hash(password, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    // H3 fix: see changePassword - a "forgot password" reset must also
+    // invalidate tokens issued before it (this is the account-recovery path,
+    // where an attacker having a live session is precisely the threat model).
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     logger.info({ email: user.email, userId: user._id }, 'Password reset completed successfully');
@@ -703,7 +770,7 @@ const verifyOTP = async (req, res) => {
       email,
       otpCode: otp,
       otpExpires: { $gt: Date.now() },
-    }).select('+otpCode +otpExpires');
+    }).select('+otpCode +otpExpires +tokenVersion');
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -714,10 +781,15 @@ const verifyOTP = async (req, res) => {
       return res.status(403).json({ message: 'Account suspended' });
     }
 
-    // Clear OTP
+    // Clear OTP. Receiving and entering a code sent to this inbox proves the
+    // user controls the address, so it also counts as email verification.
     user.otpCode = undefined;
     user.otpExpires = undefined;
+    user.emailVerified = true;
     await user.save();
+
+    const refreshTokenValue = generateRefreshToken(user._id, user.tokenVersion);
+    const csrfToken = setAuthCookies(res, refreshTokenValue);
 
     res.json({
       _id: user._id,
@@ -728,8 +800,9 @@ const verifyOTP = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
-      token: generateToken(user._id),
-      refreshToken: generateRefreshToken(user._id),
+      token: generateToken(user._id, user.tokenVersion),
+      refreshToken: refreshTokenValue,
+      csrfToken,
     });
   } catch (error) {
     res.status(500).json({
@@ -745,17 +818,30 @@ const verifyOTP = async (req, res) => {
  */
 const googleLogin = async (req, res) => {
   try {
-    const { accessToken } = req.body;
+    const { idToken } = req.body;
 
-    if (!accessToken) {
-      return res.status(400).json({ message: 'Access Token is required' });
+    if (!idToken) {
+      return res.status(400).json({ message: 'ID token is required' });
     }
 
-    // Verify Google Access Token and get user profile (using Authorization header for security)
-    const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const payload = googleResponse.data;
+    // H5 fix: verify the ID token's signature, issuer, expiry, and - critically -
+    // its audience against our own GOOGLE_CLIENT_ID. The previous implementation
+    // called the userinfo endpoint with a bare access token, which only proves
+    // the token is valid for *some* Google OAuth client, not necessarily ours -
+    // an access token minted for a completely different app could be replayed
+    // here to authenticate as that email address.
+    let googlePayload;
+    try {
+      const ticket = await _client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      googlePayload = ticket.getPayload();
+    } catch (verifyError) {
+      logger.warn({ err: verifyError }, 'Google ID token verification failed');
+      return res.status(401).json({ message: 'Invalid Google ID token' });
+    }
+
     const {
       sub: googleId,
       email,
@@ -763,12 +849,12 @@ const googleLogin = async (req, res) => {
       family_name: lastName,
       picture: avatar,
       email_verified,
-    } = payload;
+    } = googlePayload;
 
     // Check if user exists by googleId or email
     let user = await User.findOne({
       $or: [{ googleId }, { email: email.toLowerCase() }],
-    });
+    }).select('+tokenVersion');
 
     if (!user) {
       // Create new user if not exists
@@ -806,6 +892,9 @@ const googleLogin = async (req, res) => {
       }
     }
 
+    const refreshTokenValue = generateRefreshToken(user._id, user.tokenVersion);
+    const csrfToken = setAuthCookies(res, refreshTokenValue);
+
     res.json({
       _id: user._id,
       email: user.email,
@@ -815,8 +904,9 @@ const googleLogin = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.avatar,
-      token: generateToken(user._id),
-      refreshToken: generateRefreshToken(user._id),
+      token: generateToken(user._id, user.tokenVersion),
+      refreshToken: refreshTokenValue,
+      csrfToken,
     });
   } catch (error) {
     logger.error({ err: error }, 'Google login error');
@@ -1061,7 +1151,9 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    const user = await User.findById(req.user._id).select('+passwordHash +otpCode +otpExpires');
+    const user = await User.findById(req.user._id).select(
+      '+passwordHash +otpCode +otpExpires +tokenVersion'
+    );
 
     // Verify OTP
     if (!user.otpCode || user.otpCode !== otp) {
@@ -1079,6 +1171,10 @@ const changePassword = async (req, res) => {
     // Clear OTP
     user.otpCode = undefined;
     user.otpExpires = undefined;
+    // H3 fix: changing the password must invalidate every access/refresh token
+    // issued before this point - otherwise a token stolen before the change
+    // (the actual reason someone changes their password) keeps working.
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     // Send confirmation email
@@ -1236,6 +1332,7 @@ const getLoginActivity = async (req, res) => {
 const logoutSession = async (req, res) => {
   try {
     // Session management not yet implemented - acknowledge the request
+    clearAuthCookies(res);
     res.json({ message: 'Session logged out successfully' });
   } catch (error) {
     logger.error({ err: error }, 'Logout session failed');
@@ -1252,8 +1349,11 @@ const logoutSession = async (req, res) => {
  */
 const logoutAllDevices = async (req, res) => {
   try {
-    // Token invalidation not yet implemented - acknowledge the request
-    // In production, use a token blacklist or increment a tokenVersion in the schema
+    // H3 fix: bump tokenVersion so every access/refresh token issued before now
+    // - on this device and any other - is rejected by protect/optionalAuth and
+    // refreshAccessToken from this point on.
+    await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } });
+    clearAuthCookies(res);
     res.json({ message: 'Logged out from all devices successfully' });
   } catch (error) {
     logger.error({ err: error }, 'Logout all devices failed');
@@ -1396,9 +1496,20 @@ const addRole = async (req, res) => {
  */
 const refreshAccessToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    // H2 fix: prefer the httpOnly cookie (web); fall back to the request body
+    // (Mobile, which stores the refresh token via secure device storage rather
+    // than a cookie jar). A cookie-sourced refresh token was attached to this
+    // request automatically by the browser, so it must clear the CSRF
+    // double-submit check below; a body-sourced one was explicitly supplied by
+    // the calling app and isn't CSRF-exposed the same way.
+    const fromCookie = Boolean(req.cookies?.[REFRESH_TOKEN_COOKIE]);
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE] || req.body.refreshToken;
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    if (fromCookie && !csrfHeaderMatchesCookie(req)) {
+      return res.status(403).json({ message: 'Invalid or missing CSRF token' });
     }
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
@@ -1406,7 +1517,7 @@ const refreshAccessToken = async (req, res) => {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
-    const user = await User.findById(decoded.id).select('-passwordHash');
+    const user = await User.findById(decoded.id).select('-passwordHash +tokenVersion');
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -1415,9 +1526,23 @@ const refreshAccessToken = async (req, res) => {
       return res.status(403).json({ message: 'Account suspended' });
     }
 
+    // H3 fix: a refresh token issued before a password change / "logout all
+    // devices" must not be usable to mint new access tokens - otherwise that
+    // revocation is cosmetic (an attacker holding a still-valid refresh token
+    // could just keep refreshing forever).
+    if ((decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
+      return res
+        .status(401)
+        .json({ message: 'Refresh token has been revoked, please login again' });
+    }
+
+    const newRefreshToken = generateRefreshToken(user._id, user.tokenVersion);
+    const csrfToken = setAuthCookies(res, newRefreshToken);
+
     res.json({
-      token: generateToken(user._id),
-      refreshToken: generateRefreshToken(user._id),
+      token: generateToken(user._id, user.tokenVersion),
+      refreshToken: newRefreshToken,
+      csrfToken,
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

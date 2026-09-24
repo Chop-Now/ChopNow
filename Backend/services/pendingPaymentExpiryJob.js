@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
-const Listing = require('../models/Listing');
 const Payment = require('../models/Payment');
 const logger = require('../utils/logger');
+const { cancelOrderAndRestoreInventory } = require('../controllers/orderController');
 
 const PENDING_PAYMENT_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 const JOB_INTERVAL_MS = 5 * 60 * 1000; // Run every 5 minutes
@@ -12,6 +12,14 @@ let jobTimer = null;
 /**
  * Cancel all orders stuck in pending_payment for more than 30 minutes
  * and atomically release their reserved listing inventory.
+ *
+ * Goes through cancelOrderAndRestoreInventory (claim-by-status inside a
+ * transaction) rather than a blind update: an order paid, or cancelled by the
+ * customer, between the find below and the write is left alone instead of
+ * being cancelled over the top of a payment or having its stock released
+ * twice. Any pending Payment is marked TIMEOUT-failed in the same transaction;
+ * a late COMPLETED callback for it is still honoured as a refund (see
+ * applyDepositOutcome in paymentController).
  */
 async function expirePendingPayments() {
   const cutoff = new Date(Date.now() - PENDING_PAYMENT_TIMEOUT_MS);
@@ -20,7 +28,7 @@ async function expirePendingPayments() {
   const staleOrders = await Order.find({
     status: 'pending_payment',
     createdAt: { $lt: cutoff },
-  }).lean();
+  });
 
   if (staleOrders.length === 0) return;
 
@@ -29,21 +37,19 @@ async function expirePendingPayments() {
   for (const order of staleOrders) {
     const session = await mongoose.startSession();
     try {
+      let cancelled = false;
       await session.withTransaction(async () => {
-        // Mark order as cancelled
-        await Order.findByIdAndUpdate(
-          order._id,
-          {
-            status: 'cancelled',
-            'payment.paymentStatus': 'failed',
-            'statusTimestamps.cancelledAt': new Date(),
-          },
-          { session }
-        );
+        cancelled = await cancelOrderAndRestoreInventory(order, {
+          fromStatuses: ['pending_payment'],
+          paymentStatus: 'failed',
+          reason: 'Payment not completed in time',
+          session,
+        });
+        if (!cancelled) return;
 
         // Mark any linked pending payment as failed
-        await Payment.findOneAndUpdate(
-          { order: order._id, status: 'pending' },
+        await Payment.updateMany(
+          { $or: [{ order: order._id }, { orders: order._id }], status: 'pending' },
           {
             status: 'failed',
             'failureReason.code': 'TIMEOUT',
@@ -51,25 +57,14 @@ async function expirePendingPayments() {
           },
           { session }
         );
-
-        // Release reserved listing inventory
-        const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-        const listing = await Listing.findById(order.listing).session(session);
-        if (listing) {
-          listing.inventory.quantity += totalQuantity;
-          listing.inventory.reserved = Math.max(0, listing.inventory.reserved - totalQuantity);
-          // Re-activate if it was marked sold_out
-          if (listing.status === 'sold_out' && listing.inventory.quantity > 0) {
-            listing.status = 'active';
-          }
-          await listing.save({ session });
-        }
       });
 
-      logger.info(
-        { orderNumber: order.orderNumber },
-        'pendingPaymentExpiryJob: stale order cancelled and stock released'
-      );
+      if (cancelled) {
+        logger.info(
+          { orderNumber: order.orderNumber },
+          'pendingPaymentExpiryJob: stale order cancelled and stock released'
+        );
+      }
     } catch (err) {
       logger.error(
         { err: err.message, orderId: order._id },
@@ -110,4 +105,8 @@ function stopPendingPaymentExpiryJob() {
   }
 }
 
-module.exports = { startPendingPaymentExpiryJob, stopPendingPaymentExpiryJob };
+module.exports = {
+  startPendingPaymentExpiryJob,
+  stopPendingPaymentExpiryJob,
+  expirePendingPayments,
+};

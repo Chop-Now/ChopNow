@@ -12,11 +12,11 @@ const _User = require('../models/User');
  */
 const createReview = async (req, res) => {
   try {
-    const { order, business, rating, comment } = req.body;
+    const { order, rating, comment } = req.body;
 
     // Validation
-    if (!order || !business || !rating) {
-      return res.status(400).json({ message: 'Please provide order, business, and rating' });
+    if (!order || !rating) {
+      return res.status(400).json({ message: 'Please provide order and rating' });
     }
 
     // Verify order exists and belongs to user
@@ -39,6 +39,11 @@ const createReview = async (req, res) => {
     if (existingReview) {
       return res.status(400).json({ message: 'Review already exists for this order' });
     }
+
+    // The reviewed business always comes from the order itself - a client-
+    // supplied `business` was previously trusted, letting a buyer attach a
+    // review to any business, not the one they actually bought from.
+    const business = orderDoc.business;
 
     const review = await Review.create({
       order,
