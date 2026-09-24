@@ -112,9 +112,10 @@ const getBusinesses = async (req, res) => {
       query.$text = { $search: search };
     }
 
-    // Geospatial search (nearby businesses)
+    // Geospatial search (nearby businesses). `location` is the 2dsphere-indexed
+    // field createBusiness populates; `address.location` is deleted on create.
     if (lat && lng) {
-      query['address.location'] = {
+      query.location = {
         $near: {
           $geometry: {
             type: 'Point',

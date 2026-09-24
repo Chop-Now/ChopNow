@@ -36,16 +36,21 @@ const validateRegister = [
     .withMessage('Last name must be between 2 and 50 characters'),
   // Support both 'role' (legacy single role) and 'roles' (new array format)
   // Both are optional - controller defaults to ['consumer'] if neither provided
+  //
+  // 'admin' and 'rider' are deliberately NOT self-registerable: admin accounts
+  // must be created out-of-band (see scripts/makeAdmin.js), and 'rider' is only
+  // granted by an admin approving a rider application (reviewRider) after KYC
+  // review - see registerUser's SELF_REGISTERABLE_ROLES for the enforcement.
   body('role')
     .optional()
-    .isIn(['consumer', 'business_owner', 'rider', 'admin'])
-    .withMessage('Role must be consumer, business_owner, rider, or admin'),
+    .isIn(['consumer', 'business_owner'])
+    .withMessage('Role must be consumer or business_owner'),
   body('roles')
     .optional()
     .isArray({ min: 1 })
     .withMessage('Roles must be a non-empty array')
     .custom((roles) => {
-      const validRoles = ['consumer', 'business_owner', 'rider', 'admin'];
+      const validRoles = ['consumer', 'business_owner'];
       for (const role of roles) {
         if (!validRoles.includes(role)) {
           throw new Error(`Invalid role: ${role}. Must be one of: ${validRoles.join(', ')}`);
@@ -140,13 +145,15 @@ const validateCreateListing = [
 ];
 
 // Order creation validation
+// C4 fix: no longer validates a client-supplied unitPrice - the controller
+// (createOrder) now always computes item.unitPrice from the listing's own
+// stored price server-side and ignores whatever the client sends, so there is
+// nothing meaningful to validate about it here (an absent or bogus value has
+// zero effect on the resulting order).
 const validateCreateOrder = [
   body('listing').isMongoId().withMessage('Valid listing ID is required'),
   body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Item quantity must be at least 1'),
-  body('items.*.unitPrice')
-    .isFloat({ min: 0 })
-    .withMessage('Item unit price must be a positive number'),
   body('fulfillmentType')
     .isIn(['pickup', 'delivery'])
     .withMessage('Fulfillment type must be pickup or delivery'),
@@ -154,27 +161,25 @@ const validateCreateOrder = [
     .if(body('fulfillmentType').equals('delivery'))
     .notEmpty()
     .withMessage('Delivery address is required for delivery orders'),
+  // C5 fix: 'card' removed - there is no real card gateway integration.
   body('payment.paymentMethod')
-    .isIn(['card', 'mobile_money', 'cash'])
-    .withMessage('Payment method must be card, mobile_money, or cash'),
+    .isIn(['mobile_money', 'cash'])
+    .withMessage('Payment method must be mobile_money or cash'),
   handleValidationErrors,
 ];
 
 // Order status update validation
+// H7 fix: 'cancelled' removed - cancellation must always go through the
+// dedicated PUT /orders/:id/cancel endpoint (cancelOrder), which is the only
+// path that restores reserved inventory. The generic status endpoint never
+// did that restore, so a vendor cancelling via this endpoint silently left
+// the listing's stock permanently reserved/unavailable.
 const validateUpdateOrderStatus = [
   param('id').isMongoId().withMessage('Valid order ID is required'),
   body('status')
-    .isIn([
-      'pending',
-      'pending_payment',
-      'paid',
-      'confirmed',
-      'preparing',
-      'ready_for_pickup',
-      'out_for_delivery',
-      'completed',
-      'cancelled',
-    ])
+    // 'paid' is set only by the payment flow and 'pending_payment' only at
+    // creation - letting a vendor set 'paid' would mark an unpaid order paid.
+    .isIn(['confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery', 'completed'])
     .withMessage('Invalid order status'),
   handleValidationErrors,
 ];
@@ -182,7 +187,8 @@ const validateUpdateOrderStatus = [
 // Review creation validation
 const validateCreateReview = [
   body('order').isMongoId().withMessage('Valid order ID is required'),
-  body('business').isMongoId().withMessage('Valid business ID is required'),
+  // `business` is derived from the order server-side (reviewController); any
+  // client-supplied value is ignored.
   body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
   body('comment')
     .optional()
@@ -233,6 +239,36 @@ const validateVerifyResetOTP = [
   handleValidationErrors,
 ];
 
+// Google login validation - H5 fix companion: this only guards the request
+// shape (the actual security fix, audience verification, happens in
+// googleLogin via _client.verifyIdToken).
+const validateGoogleLogin = [
+  body('idToken').notEmpty().isString().withMessage('idToken is required'),
+  handleValidationErrors,
+];
+
+// Send OTP (email login) validation - C3 fix: this route previously had no
+// validation at all, so a non-string 'email' (e.g. a Mongo operator object like
+// {"$ne": null}) reached User.findOne({ email }) unvalidated.
+const validateSendOTP = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  handleValidationErrors,
+];
+
+// Verify OTP (email login) validation - same C3 fix, for the endpoint that
+// actually authenticates the user from the submitted code.
+const validateVerifyOTP = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('otp')
+    .notEmpty()
+    .withMessage('OTP code is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('OTP must be exactly 6 digits')
+    .isNumeric()
+    .withMessage('OTP must contain only numbers'),
+  handleValidationErrors,
+];
+
 // Payout request validation
 const validatePayoutRequest = [
   body('amount').isFloat({ min: 1 }).withMessage('Amount must be a positive number'),
@@ -263,9 +299,27 @@ const validateCreateDispute = [
     .withMessage('Reason is required')
     .isLength({ min: 10, max: 1000 })
     .withMessage('Reason must be between 10 and 1000 characters'),
+  body('description')
+    .trim()
+    .notEmpty()
+    .withMessage('Description is required')
+    .isLength({ min: 10, max: 2000 })
+    .withMessage('Description must be between 10 and 2000 characters'),
+  body('title')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Title must be at most 200 characters'),
   body('type')
     .optional()
-    .isIn(['quality', 'missing_items', 'wrong_order', 'late_delivery', 'other'])
+    .isIn([
+      'refund',
+      'missing_item',
+      'vendor_unresponsive',
+      'delivery_issue',
+      'poor_quality',
+      'other',
+    ])
     .withMessage('Invalid dispute type'),
   handleValidationErrors,
 ];
@@ -301,6 +355,9 @@ module.exports = {
   validateResetPassword,
   validateForgotPassword,
   validateVerifyResetOTP,
+  validateSendOTP,
+  validateVerifyOTP,
+  validateGoogleLogin,
   validatePayoutRequest,
   validatePayoutStatus,
   validateCreateDispute,

@@ -164,6 +164,16 @@ const userSchema = new Schema(
       select: false,
     },
 
+    // H3 fix: bumped on password change and "logout all devices" so previously
+    // issued access/refresh tokens (embedding the tokenVersion they were signed
+    // with) stop working immediately, instead of remaining valid for up to their
+    // full 7-day lifetime after a user tries to revoke them.
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
     // Status
     status: {
       type: String,
@@ -187,6 +197,10 @@ const userSchema = new Schema(
         type: Number,
         default: 0,
         min: 0,
+      },
+      // When the rider last requested a payout - enforces payoutIntervalDays.
+      lastPayoutRequestedAt: {
+        type: Date,
       },
     },
     // Rider Details
@@ -288,6 +302,7 @@ userSchema.set('toJSON', {
     delete ret.resetPasswordExpires;
     delete ret.otpCode;
     delete ret.otpExpires;
+    delete ret.tokenVersion;
     delete ret.__v;
     return ret;
   },

@@ -29,6 +29,7 @@ const disputeSchema = new Schema(
         'other',
       ],
       required: true,
+      default: 'other',
     },
     priority: {
       type: String,

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   createOrder,
+  quoteCheckout,
+  createCheckout,
   getOrders,
   getOrderById,
   updateOrderStatus,
@@ -42,6 +44,13 @@ const { validateCreateOrder, validateUpdateOrderStatus } = require('../middlewar
  *         description: Order created
  */
 router.post('/', protect, validateCreateOrder, createOrder);
+
+// Multi-vendor checkout: price a cart, then place it (one order per vendor,
+// one payment). Input is validated in services/checkoutService.js.
+// The quote is public (it only prices public listings) so the cart can show
+// real totals before sign-in.
+router.post('/quote', quoteCheckout);
+router.post('/checkout', protect, createCheckout);
 /**
  * @swagger
  * /orders:

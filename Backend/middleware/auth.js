@@ -16,11 +16,28 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+      // H1 fix: access and refresh tokens are signed with the same secret and
+      // verified by the same jwt.verify call above - without this check, a 7-day
+      // refresh token (which lives in the same client-side storage as the access
+      // token, so is equally exposed to theft) works as a full 1h-access-token
+      // replacement for its entire 7-day lifetime. Refresh tokens must only ever
+      // be usable at POST /refresh-token, never as a Bearer access token.
+      if (decoded.type === 'refresh') {
+        return res.status(401).json({ message: 'Not authorized, refresh token cannot be used as an access token' });
+      }
+
       // Get user from token (exclude password)
-      req.user = await User.findById(decoded.id).select('-passwordHash');
+      req.user = await User.findById(decoded.id).select('-passwordHash +tokenVersion');
 
       if (!req.user) {
         return res.status(401).json({ message: 'User not found' });
+      }
+
+      // H3 fix: a token issued before a password change / "logout all devices"
+      // must stop working immediately rather than remaining valid for its full
+      // 1h/7d lifetime - see the tokenVersion field on the User model.
+      if ((decoded.tokenVersion || 0) !== (req.user.tokenVersion || 0)) {
+        return res.status(401).json({ message: 'Not authorized, token has been revoked' });
       }
 
       if (req.user.status === 'suspended') {
@@ -97,7 +114,12 @@ const optionalAuth = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-passwordHash');
+      if (decoded.type !== 'refresh') {
+        const candidate = await User.findById(decoded.id).select('-passwordHash +tokenVersion');
+        if (candidate && (decoded.tokenVersion || 0) === (candidate.tokenVersion || 0)) {
+          req.user = candidate;
+        }
+      }
     } catch (_error) {
       // Token invalid but don't block the request
       req.user = null;
