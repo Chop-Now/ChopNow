@@ -16,6 +16,13 @@ class CartScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(cartProvider);
     final total = ref.watch(cartTotalProvider);
+    // Real savings versus each listing's original price.
+    final savings = items.fold<double>(
+        0,
+        (sum, i) =>
+            sum +
+            (i.listing.price - i.listing.offerPrice).clamp(0, double.infinity) *
+                i.quantity);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -173,19 +180,16 @@ class CartScreen extends ConsumerWidget {
                           value: 'RWF ${total.toStringAsFixed(0)}'),
                       const SizedBox(height: 8),
                       const _PriceLine(
-                        label: 'Service Fee',
-                        value: 'Free',
-                        valueColor: AppColors.success,
-                        valueStyle: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w700),
+                        label: 'Delivery & taxes',
+                        value: 'Calculated at checkout',
                       ),
-                      const SizedBox(height: 8),
-                      _PriceLine(
-                          label: 'Estimated Savings',
-                          value: '~RWF ${(total * 0.7).toStringAsFixed(0)}',
-                          valueColor: AppColors.primary),
+                      if (savings > 0) ...[
+                        const SizedBox(height: 8),
+                        _PriceLine(
+                            label: 'You save',
+                            value: 'RWF ${savings.toStringAsFixed(0)}',
+                            valueColor: AppColors.primary),
+                      ],
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(color: AppColors.border),
@@ -240,12 +244,8 @@ class _PriceLine extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  final TextStyle? valueStyle;
   const _PriceLine(
-      {required this.label,
-      required this.value,
-      this.valueColor,
-      this.valueStyle});
+      {required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -256,12 +256,11 @@ class _PriceLine extends StatelessWidget {
             style:
                 const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         Text(value,
-            style: valueStyle ??
-                TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: valueColor ?? AppColors.textPrimary,
-                )),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppColors.textPrimary,
+            )),
       ],
     );
   }
