@@ -30,8 +30,10 @@ const getPlatformOverview = async (req, res) => {
       Order.countDocuments(),
       Business.countDocuments(),
       User.countDocuments({ roles: { $in: ['consumer'] } }),
+      // Real terminal status is 'completed' - 'delivered' isn't in the Order
+      // status enum at all, so this always matched zero documents before.
       Order.aggregate([
-        { $match: { status: 'delivered' } },
+        { $match: { status: 'completed' } },
         { $group: { _id: null, total: { $sum: '$pricing.total' } } },
       ]),
       Business.aggregate([
@@ -142,12 +144,16 @@ const getBusinessOverview = async (req, res) => {
       monthlyImpact,
       categoryImpact,
       betterRankedBusinesses,
+      fulfillmentFacet,
     ] = await Promise.all([
+        // Real terminal status is 'completed' - 'delivered' isn't in the
+        // Order status enum at all, so this (and topProductsIds below)
+        // always matched zero documents before.
         Order.aggregate([
           {
             $match: {
               business: business._id,
-              status: 'delivered',
+              status: 'completed',
               createdAt: { $gte: thirtyDaysAgo },
             },
           },
@@ -161,13 +167,16 @@ const getBusinessOverview = async (req, res) => {
           { $sort: { _id: 1 } },
         ]),
         Order.aggregate([
-          { $match: { business: business._id, status: 'delivered' } },
+          { $match: { business: business._id, status: 'completed' } },
           { $unwind: '$items' },
           {
             $group: {
               _id: '$items.listing',
               count: { $sum: '$items.quantity' },
-              revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+              // orderItemSchema has no `price` field (that's why this was
+              // silently always 0/undefined too) - `subtotal` already is
+              // unitPrice * quantity, so no need to re-multiply by quantity.
+              revenue: { $sum: '$items.subtotal' },
             },
           },
           { $sort: { count: -1 } },
@@ -201,6 +210,18 @@ const getBusinessOverview = async (req, res) => {
         Business.countDocuments({
           'stats.impact.mealsRescued': { $gt: business.stats?.impact?.mealsRescued || 0 },
         }),
+        // Order fulfillment breakdown - real counts for the "Order Fulfillment
+        // Status" chart, replacing the old fixed 85/10/5% placeholder.
+        Order.aggregate([
+          { $match: { business: business._id } },
+          {
+            $facet: {
+              completed: [{ $match: { status: 'completed' } }, { $count: 'count' }],
+              cancelled: [{ $match: { status: 'cancelled' } }, { $count: 'count' }],
+              total: [{ $count: 'count' }],
+            },
+          },
+        ]),
       ]);
 
     // Populate top product names — filter out any listings deleted since the order was placed
@@ -219,6 +240,21 @@ const getBusinessOverview = async (req, res) => {
     const completedOrders = revenueData[0]?.count || 0;
     const completedRevenue = revenueData[0]?.total || 0;
     const avgOrderValue = completedOrders > 0 ? Math.round(completedRevenue / completedOrders) : 0;
+
+    // Real order-status split for the "Order Fulfillment Status" chart. No
+    // "late delivery" status is tracked anywhere in the Order model, so this
+    // reports Completed/Cancelled/In Progress rather than fabricating one.
+    const fulfillmentTotal = fulfillmentFacet[0]?.total[0]?.count || 0;
+    const fulfillmentCompleted = fulfillmentFacet[0]?.completed[0]?.count || 0;
+    const fulfillmentCancelled = fulfillmentFacet[0]?.cancelled[0]?.count || 0;
+    const fulfillmentInProgress = fulfillmentTotal - fulfillmentCompleted - fulfillmentCancelled;
+    const pct = (n) => (fulfillmentTotal > 0 ? Math.round((n / fulfillmentTotal) * 1000) / 10 : 0);
+    const fulfillmentBreakdown = {
+      total: fulfillmentTotal,
+      completed: { count: fulfillmentCompleted, percent: pct(fulfillmentCompleted) },
+      cancelled: { count: fulfillmentCancelled, percent: pct(fulfillmentCancelled) },
+      inProgress: { count: fulfillmentInProgress, percent: pct(fulfillmentInProgress) },
+    };
 
     res.json({
       stats: business.stats,
@@ -250,6 +286,7 @@ const getBusinessOverview = async (req, res) => {
       monthlyImpact,
       categoryImpact,
       platformRank: betterRankedBusinesses + 1,
+      fulfillmentBreakdown,
     });
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');
