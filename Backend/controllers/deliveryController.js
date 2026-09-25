@@ -788,7 +788,9 @@ const getRiderStats = async (req, res) => {
         totalEarnings,
         totalTrips,
         activeTrips,
-        rating: 4.9, // Default standing rating or dynamic if reviews implemented
+        // No rider review/rating system exists yet - report this honestly as
+        // unavailable rather than a made-up number. See L5 (fix checklist).
+        rating: null,
         weeklyEarningsSum,
         weeklyData: orderedDays,
       },
@@ -835,7 +837,7 @@ const getRiderDashboardStats = async (req, res) => {
       stats: {
         totalDeliveries,
         todayEarnings,
-        rating: 4.9,
+        rating: null,
       },
     });
   } catch (error) {
@@ -923,7 +925,9 @@ const getRiderEarnings = async (req, res) => {
       thisWeek,
       today,
       totalDeliveries,
-      averageRating: 4.9,
+      // No rider review/rating system exists yet - report this honestly as
+      // unavailable rather than a made-up number. See L5 (fix checklist).
+      averageRating: null,
       weeklyData,
     });
   } catch (error) {
