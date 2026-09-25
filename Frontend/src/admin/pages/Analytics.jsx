@@ -801,42 +801,101 @@ export const Overview = () => {
 };
 
 // Shop Admin Reports Component
+const SHOP_REPORT_CATEGORY_COLORS = [
+  '#10b981',
+  '#f59e0b',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ef4444',
+  '#64748b',
+];
+
 const ShopAdminReports = () => {
-  // Revenue breakdown data
-  const revenueData = [
-    { month: 'Jan', revenue: 95000, cost: 68000 },
-    { month: 'Feb', revenue: 118000, cost: 82000 },
-    { month: 'Mar', revenue: 102000, cost: 75000 },
-    { month: 'Apr', revenue: 145000, cost: 98000 },
-    { month: 'May', revenue: 132000, cost: 89000 },
-    { month: 'Jun', revenue: 168000, cost: 112000 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [businessData, setBusinessData] = useState(null);
 
-  // Product category distribution
-  const categoryData = [
-    { name: 'Vegetables', value: 28, color: '#10b981' },
-    { name: 'Fruits', value: 22, color: '#f59e0b' },
-    { name: 'Dairy', value: 18, color: '#3b82f6' },
-    { name: 'Grains', value: 16, color: '#8b5cf6' },
-    { name: 'Others', value: 16, color: '#64748b' },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReportsData = async () => {
+      try {
+        setLoading(true);
+        const response = await analyticsService.getBusinessOverview();
+        if (!isMounted) return;
+        setBusinessData(response);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error fetching shop reports data:', err);
+        setError(err.message || 'Failed to load reports data');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchReportsData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Peak sales hours
-  const peakHoursData = [
-    { hour: '6AM', orders: 12 },
-    { hour: '9AM', orders: 28 },
-    { hour: '12PM', orders: 45 },
-    { hour: '3PM', orders: 38 },
-    { hour: '6PM', orders: 52 },
-    { hour: '9PM', orders: 18 },
-  ];
+  // Revenue vs profit, real per-month totals from completed orders.
+  const revenueData = (businessData?.monthlyRevenue || []).map((m) => ({
+    month: m.month,
+    revenue: m.revenue,
+    profit: m.profit,
+  }));
+  const hasRevenueData = revenueData.some((m) => m.revenue > 0 || m.profit > 0);
 
-  // Order fulfillment metrics
-  const fulfillmentMetrics = [
-    { status: 'On-Time Delivery', value: 85, color: '#10b981' },
-    { status: 'Late Delivery', value: 10, color: '#f59e0b' },
-    { status: 'Cancelled', value: 5, color: '#ef4444' },
-  ];
+  // Real revenue-by-category split.
+  const categoryData = (businessData?.categoryBreakdown || []).map((c, i) => ({
+    name: c.name,
+    value: c.percent,
+    color: SHOP_REPORT_CATEGORY_COLORS[i % SHOP_REPORT_CATEGORY_COLORS.length],
+  }));
+
+  // Real hourly order distribution over the last 30 days.
+  const formatHour = (hour) => {
+    const period = hour < 12 ? 'AM' : 'PM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${displayHour}${period}`;
+  };
+  const peakHoursData = (businessData?.peakHours || []).map((h) => ({
+    hour: formatHour(h.hour),
+    orders: h.orders,
+  }));
+  const hasPeakHoursData = peakHoursData.some((h) => h.orders > 0);
+
+  // Real order-status split - no "late delivery" status exists anywhere in
+  // the Order model, so this reports what's actually tracked.
+  const fb = businessData?.fulfillmentBreakdown;
+  const fulfillmentMetrics = fb
+    ? [
+        { status: 'Completed', value: fb.completed.percent, color: '#10b981' },
+        { status: 'In Progress', value: fb.inProgress.percent, color: '#3b82f6' },
+        { status: 'Cancelled', value: fb.cancelled.percent, color: '#ef4444' },
+      ]
+    : [];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading reports data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading data</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -859,116 +918,19 @@ const ShopAdminReports = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Revenue & Cost Analysis
         </h3>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-              <XAxis
-                dataKey="month"
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                width={60}
-                tickFormatter={(value) => `${value / 1000}k`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '8px',
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  padding: '8px 12px',
-                }}
-                formatter={(value, name) => [
-                  'RWF ' + value.toLocaleString(),
-                  name === 'revenue' ? 'Revenue' : 'Cost',
-                ]}
-                labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
-                itemStyle={{ fontSize: '11px' }}
-              />
-              <Bar dataKey="revenue" fill="#0F3D2E" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="cost" fill="#E8552F" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Distribution */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-            Sales by Category
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                    padding: '8px 12px',
-                  }}
-                  formatter={(value) => [`${value}%`, 'Share']}
-                  labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
-                  itemStyle={{ fontSize: '11px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+        {!hasRevenueData ? (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              No revenue data yet
+            </p>
           </div>
-          <div className="mt-4 space-y-2">
-            {categoryData.map((category) => (
-              <div key={category.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  ></div>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {category.name}
-                  </span>
-                </div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {category.value}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Peak Hours */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-            Peak Sales Hours
-          </h3>
-          <div className="h-64">
+        ) : (
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHoursData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+              <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
                 <XAxis
-                  dataKey="hour"
+                  dataKey="month"
                   stroke="#64748b"
                   fontSize={11}
                   tickLine={false}
@@ -979,7 +941,8 @@ const ShopAdminReports = () => {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  width={40}
+                  width={60}
+                  tickFormatter={(value) => `${value / 1000}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -989,14 +952,136 @@ const ShopAdminReports = () => {
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
                     padding: '8px 12px',
                   }}
-                  formatter={(value) => [value + ' orders', 'Orders']}
+                  formatter={(value, name) => [
+                    'RWF ' + value.toLocaleString(),
+                    name === 'revenue' ? 'Revenue' : 'Profit',
+                  ]}
                   labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
                   itemStyle={{ fontSize: '11px' }}
                 />
-                <Bar dataKey="orders" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="revenue" fill="#0F3D2E" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="profit" fill="#E8552F" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
+        )}
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Category Distribution */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
+            Sales by Category
+          </h3>
+          {categoryData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                No completed orders yet
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px',
+                      }}
+                      formatter={(value) => [`${value}%`, 'Share']}
+                      labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
+                      itemStyle={{ fontSize: '11px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 space-y-2">
+                {categoryData.map((category) => (
+                  <div key={category.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      ></div>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {category.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-800 dark:text-white">
+                      {category.value}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Peak Hours */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
+            Peak Sales Hours
+          </h3>
+          {!hasPeakHoursData ? (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                No orders in the last 30 days
+              </p>
+            </div>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={peakHoursData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+                  <XAxis
+                    dataKey="hour"
+                    stroke="#64748b"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#64748b"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={40}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                      padding: '8px 12px',
+                    }}
+                    formatter={(value) => [value + ' orders', 'Orders']}
+                    labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
+                    itemStyle={{ fontSize: '11px' }}
+                  />
+                  <Bar dataKey="orders" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1005,26 +1090,30 @@ const ShopAdminReports = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Order Fulfillment Status
         </h3>
-        <div className="space-y-4">
-          {fulfillmentMetrics.map((metric) => (
-            <div key={metric.status}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {metric.status}
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
-                  {metric.value}%
-                </span>
+        {fulfillmentMetrics.length === 0 || !fb.total ? (
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No orders yet</p>
+        ) : (
+          <div className="space-y-4">
+            {fulfillmentMetrics.map((metric) => (
+              <div key={metric.status}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {metric.status}
+                  </span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    {metric.value}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                  <div
+                    className="h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${metric.value}%`, backgroundColor: metric.color }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
-                <div
-                  className="h-2.5 rounded-full transition-all duration-500"
-                  style={{ width: `${metric.value}%`, backgroundColor: metric.color }}
-                ></div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1076,15 +1165,23 @@ const WebsiteAdminReports = () => {
   ];
   const hasRevenueData = revenueData.some((m) => m.revenue > 0);
 
-  // Category distribution
-  const categoryData = [
-    { name: 'Vegetables', value: 25, color: '#10b981' },
-    { name: 'Fruits', value: 20, color: '#3b82f6' },
-    { name: 'Bakery', value: 18, color: '#f59e0b' },
-    { name: 'Dairy', value: 15, color: '#8b5cf6' },
-    { name: 'Meat & Fish', value: 12, color: '#ef4444' },
-    { name: 'Others', value: 10, color: '#6b7280' },
+  // Category distribution - real revenue-by-category split from completed
+  // orders platform-wide (same field the SalesChart widget uses).
+  const CATEGORY_COLORS = [
+    '#8884d8',
+    '#82ca9d',
+    '#ffc658',
+    '#ff8042',
+    '#ffbb28',
+    '#00c49f',
+    '#0088fe',
+    '#a4de6c',
   ];
+  const categoryData = (adminStats?.categoryBreakdown || []).map((c, i) => ({
+    name: c.name,
+    value: c.percent,
+    color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+  }));
 
   // Order fulfillment data using real stats
   const completedOrders = adminStats?.orders?.completed || 0;
@@ -1258,50 +1355,62 @@ const WebsiteAdminReports = () => {
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">Sales by Category</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Product distribution</p>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-                  }}
-                  formatter={(value) => [value + '%', '']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4">
-            {categoryData.map((item, index) => (
-              <div className="flex items-center justify-between" key={index}>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs text-slate-600 dark:text-slate-400">{item.name}</span>
-                </div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-white">
-                  {item.value}%
-                </span>
+          {categoryData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                No completed orders yet
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+                      }}
+                      formatter={(value) => [value + '%', '']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4">
+                {categoryData.map((item, index) => (
+                  <div className="flex items-center justify-between" key={index}>
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {item.name}
+                      </span>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-white">
+                      {item.value}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Peak Hours */}
@@ -1431,19 +1540,6 @@ const ShopAdminInsights = () => {
     };
   }, []);
 
-  // Customer behavior data - not currently instrumented (no day-by-day
-  // new-vs-returning customer tracking exists in the backend), left as-is
-  // pending a future pass.
-  const customerBehaviorData = [
-    { day: 'Mon', newCustomers: 12, returningCustomers: 28 },
-    { day: 'Tue', newCustomers: 15, returningCustomers: 32 },
-    { day: 'Wed', newCustomers: 18, returningCustomers: 35 },
-    { day: 'Thu', newCustomers: 20, returningCustomers: 38 },
-    { day: 'Fri', newCustomers: 25, returningCustomers: 45 },
-    { day: 'Sat', newCustomers: 30, returningCustomers: 52 },
-    { day: 'Sun', newCustomers: 22, returningCustomers: 40 },
-  ];
-
   // Peak Sales Time - derived from real hourly order distribution
   const peakHours = businessData?.peakHours || [];
   const busiestHour = peakHours.reduce(
@@ -1506,31 +1602,6 @@ const ShopAdminInsights = () => {
       icon: Package,
       color: 'purple',
       trend: null,
-    },
-  ];
-
-  // Growth opportunities
-  const opportunities = [
-    {
-      title: 'Expand Fruit Selection',
-      impact: 'High',
-      effort: 'Medium',
-      description: 'Customer demand for organic fruits increased by 45%',
-      potential: '+RWF 85,000/month',
-    },
-    {
-      title: 'Evening Delivery Slots',
-      impact: 'High',
-      effort: 'Low',
-      description: 'Many customers abandon carts due to delivery time constraints',
-      potential: '+RWF 120,000/month',
-    },
-    {
-      title: 'Loyalty Program',
-      impact: 'Medium',
-      effort: 'High',
-      description: 'Reward repeat customers to increase retention rate',
-      potential: '+RWF 65,000/month',
     },
   ];
 
@@ -1621,54 +1692,10 @@ const ShopAdminInsights = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Customer Behavior (Last 7 Days)
         </h3>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={customerBehaviorData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-              <XAxis
-                dataKey="day"
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={40} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '8px',
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  padding: '8px 12px',
-                }}
-                formatter={(value, name) => [
-                  value + ' customers',
-                  name === 'newCustomers' ? 'New' : 'Returning',
-                ]}
-                labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
-                itemStyle={{ fontSize: '11px' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="newCustomers"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name="New Customers"
-              />
-              <Line
-                type="monotone"
-                dataKey="returningCustomers"
-                stroke="#0F3D2E"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name="Returning Customers"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            Day-by-day new vs. returning customer tracking is not available yet
+          </p>
         </div>
       </div>
 
@@ -1689,47 +1716,10 @@ const ShopAdminInsights = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Growth Opportunities
         </h3>
-        <div className="space-y-4">
-          {opportunities.map((opportunity) => (
-            <div
-              key={opportunity.title}
-              className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-lg transition-all duration-300"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {opportunity.title}
-                </h4>
-                <div className="flex gap-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      opportunity.impact === 'High'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                    }`}
-                  >
-                    {opportunity.impact} Impact
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      opportunity.effort === 'Low'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : opportunity.effort === 'Medium'
-                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}
-                  >
-                    {opportunity.effort} Effort
-                  </span>
-                </div>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                {opportunity.description}
-              </p>
-              <p className="text-sm font-semibold text-solid">
-                Potential Revenue: {opportunity.potential}
-              </p>
-            </div>
-          ))}
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            Personalized growth recommendations are not available yet
+          </p>
         </div>
       </div>
     </div>
@@ -1764,65 +1754,27 @@ const WebsiteAdminInsights = () => {
     };
   }, []);
 
-  // Use real data for user growth
-  const totalUsers = adminStats?.users?.total || 0;
-  const activeUsersEstimate = Math.round(totalUsers * 0.8); // Estimate 80% active
-
-  // User growth data based on real totals
+  // Real user-count comparison. There's no month-by-month user-growth
+  // history tracked anywhere in the backend (only this-month/last-month
+  // totals), so this shows the two real data points rather than fabricating
+  // a 6-month trend by multiplying the current total by made-up ratios.
   const userGrowthData = [
-    {
-      month: 'Jan',
-      users: Math.round(totalUsers * 0.68),
-      activeUsers: Math.round(totalUsers * 0.54),
-    },
-    {
-      month: 'Feb',
-      users: Math.round(totalUsers * 0.73),
-      activeUsers: Math.round(totalUsers * 0.59),
-    },
-    {
-      month: 'Mar',
-      users: Math.round(totalUsers * 0.81),
-      activeUsers: Math.round(totalUsers * 0.65),
-    },
-    {
-      month: 'Apr',
-      users: Math.round(totalUsers * 0.86),
-      activeUsers: Math.round(totalUsers * 0.69),
-    },
-    {
-      month: 'May',
-      users: Math.round(totalUsers * 0.92),
-      activeUsers: Math.round(totalUsers * 0.73),
-    },
-    { month: 'Jun', users: totalUsers, activeUsers: activeUsersEstimate },
+    { month: 'Last Month', users: adminStats?.users?.lastMonth || 0 },
+    { month: 'This Month', users: adminStats?.users?.thisMonth || 0 },
   ];
+  const hasUserGrowthData = userGrowthData.some((m) => m.users > 0);
 
-  // Vendor performance metrics
-  const vendorMetrics = [
-    { metric: 'Average Response Time', value: '12 mins', status: 'good', change: -8 },
-    { metric: 'Order Acceptance Rate', value: '94%', status: 'good', change: 5 },
-    { metric: 'Customer Satisfaction', value: '4.7/5', status: 'good', change: 3 },
-    { metric: 'Avg Delivery Time', value: '28 mins', status: 'warning', change: 2 },
-  ];
-
-  // Top performing regions
-  const regionData = [
-    { region: 'Kigali', orders: 2845, revenue: 'RWF 24.5M', growth: 18 },
-    { region: 'Nairobi', orders: 1920, revenue: 'RWF 16.8M', growth: 25 },
-    { region: 'Accra', orders: 1650, revenue: 'RWF 14.2M', growth: 12 },
-    { region: 'Lagos', orders: 1480, revenue: 'RWF 12.9M', growth: 32 },
-    { region: 'Dar es Salaam', orders: 1120, revenue: 'RWF 9.6M', growth: 15 },
-  ];
-
-  // User demographics
-  const demographicData = [
-    { age: '18-24', percentage: 22 },
-    { age: '25-34', percentage: 38 },
-    { age: '35-44', percentage: 25 },
-    { age: '45-54', percentage: 10 },
-    { age: '55+', percentage: 5 },
-  ];
+  // Real per-hour order distribution, for the Peak Performance card below.
+  const insightsPeakHours = adminStats?.peakHours || [];
+  const insightsBusiestHour = insightsPeakHours.reduce(
+    (max, h) => (h.orders > (max?.orders || 0) ? h : max),
+    null
+  );
+  const formatHourLabel = (hour) => {
+    const period = hour < 12 ? 'AM' : 'PM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${displayHour}${period}`;
+  };
 
   if (loading) {
     return (
@@ -1856,154 +1808,88 @@ const WebsiteAdminInsights = () => {
         </p>
       </div>
 
-      {/* User Growth Chart */}
+      {/* New Signups Chart */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">User Growth Trend</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Total users vs active users</p>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">New Signups</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            New user registrations, last month vs this month
+          </p>
         </div>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={userGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-              <XAxis
-                dataKey="month"
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={50} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '8px',
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                }}
-                formatter={(value) => [value.toLocaleString(), '']}
-              />
-              <Line
-                type="monotone"
-                dataKey="users"
-                stroke="#0F3D2E"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-                name="Total Users"
-              />
-              <Line
-                type="monotone"
-                dataKey="activeUsers"
-                stroke="#3b82f6"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-                name="Active Users"
-                strokeDasharray="5 5"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {!hasUserGrowthData ? (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              No signups recorded yet
+            </p>
+          </div>
+        ) : (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={userGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+                <XAxis
+                  dataKey="month"
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={50}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  }}
+                  formatter={(value) => [value.toLocaleString(), '']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  stroke="#0F3D2E"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  name="New Signups"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
-      {/* Vendor Performance Metrics */}
+      {/* Vendor Performance Metrics - response time, acceptance rate,
+          satisfaction and delivery time are not tracked anywhere in the
+          backend yet, so this is an honest placeholder rather than the
+          fabricated "12 mins" / "94%" / "4.7/5" figures that were here. */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Vendor Performance Metrics
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {vendorMetrics.map((metric, index) => (
-            <div key={index} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                {metric.metric}
-              </p>
-              <p className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                {metric.value}
-              </p>
-              <div className="flex items-center gap-1">
-                {metric.change > 0 ? (
-                  <TrendingUp
-                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-green-500' : 'text-red-500'}`}
-                  />
-                ) : (
-                  <TrendingDown
-                    className={`w-3.5 h-3.5 ${metric.status === 'good' ? 'text-green-500' : 'text-red-500'}`}
-                  />
-                )}
-                <span
-                  className={`text-xs font-semibold ${metric.status === 'good' ? 'text-green-500' : 'text-yellow-500'}`}
-                >
-                  {Math.abs(metric.change)}% {metric.status === 'warning' ? 'slower' : 'better'}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            Vendor response time, acceptance rate and delivery time tracking is not available yet
+          </p>
         </div>
       </div>
 
-      {/* Top Performing Regions & Demographics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Performing Regions */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-            Top Performing Regions
-          </h3>
-          <div className="space-y-3">
-            {regionData.map((region, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-slate-900 dark:text-white">{region.region}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
-                      {region.orders} orders
-                    </span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
-                      {region.revenue}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-                  <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400" />
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                    {region.growth}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Regional breakdown and user demographics aren't tracked anywhere in
+          the backend - the old cards here fabricated a five-city, multi-
+          country breakdown (Kigali/Nairobi/Accra/Lagos/Dar es Salaam) that
+          implied an international footprint the platform doesn't have. */}
 
-        {/* User Demographics */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-            User Demographics
-          </h3>
-          <div className="space-y-4">
-            {demographicData.map((demo, index) => (
-              <div key={index}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {demo.age} years
-                  </span>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {demo.percentage}%
-                  </span>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
-                  <div
-                    className="h-2.5 rounded-full bg-linear-to-r from-solid to-tertiary"
-                    style={{ width: `${demo.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Key Insights Cards */}
+      {/* Key Insights Cards - each derived from real adminStats fields
+          rather than fabricated prose ("Orders peak at 6PM with 320 average
+          orders", "growing by 18%", "Lagos shows 32% growth" were all
+          invented, and the CO2-per-meal figure even contradicted the app's
+          own real constant of 2.5kg used elsewhere - see IMPACT_FACTORS in
+          Backend/controllers/analyticsController.js). */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
@@ -2015,8 +1901,9 @@ const WebsiteAdminInsights = () => {
                 Peak Performance
               </h4>
               <p className="text-xs text-blue-700 dark:text-blue-300">
-                Orders peak at 6PM with 320 average orders. Consider increasing vendor capacity
-                during this time.
+                {insightsBusiestHour
+                  ? `Orders peak around ${formatHourLabel(insightsBusiestHour.hour)}, with ${insightsBusiestHour.orders} orders in the last 30 days. Consider increasing vendor capacity during this time.`
+                  : 'Not enough order history yet to identify a peak hour.'}
               </p>
             </div>
           </div>
@@ -2032,8 +1919,13 @@ const WebsiteAdminInsights = () => {
                 Sustainability Impact
               </h4>
               <p className="text-xs text-green-700 dark:text-green-300">
-                Each rescued meal saves an average of 0.3kg CO2e and 15L of water. Impact growing by
-                18%.
+                {adminStats?.impact?.mealsRescued
+                  ? `${adminStats.impact.mealsRescued.toLocaleString()} meals rescued so far, saving ${adminStats.impact.co2Saved.toLocaleString()}kg of CO2e${
+                      adminStats.impact.percentChange
+                        ? ` (${adminStats.impact.percentChange > 0 ? '+' : ''}${adminStats.impact.percentChange}% this month)`
+                        : ''
+                    }.`
+                  : 'No completed orders yet to measure impact from.'}
               </p>
             </div>
           </div>
@@ -2046,10 +1938,12 @@ const WebsiteAdminInsights = () => {
             </div>
             <div>
               <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
-                Growth Opportunity
+                Vendor Growth
               </h4>
               <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                Lagos shows 32% growth - highest among all regions. Consider vendor expansion here.
+                {adminStats?.businesses?.percentChange
+                  ? `Active vendors are ${adminStats.businesses.percentChange > 0 ? 'up' : 'down'} ${Math.abs(adminStats.businesses.percentChange)}% this month (${adminStats.businesses.active} active).`
+                  : `${adminStats?.businesses?.active || 0} active vendors on the platform.`}
               </p>
             </div>
           </div>
