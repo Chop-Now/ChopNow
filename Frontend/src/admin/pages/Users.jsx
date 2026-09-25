@@ -679,6 +679,12 @@ export const AllUsers = () => {
           </table>
         </div>
 
+        {!loading && currentUsers.length === 0 && (
+          <div className="p-12 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">No users found</p>
+          </div>
+        )}
+
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
           <div className="text-xs text-gray-600">
