@@ -9,7 +9,6 @@ import '../../features/onboarding/splash_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
-import '../../features/auth/otp_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/listings/listing_detail_screen.dart';
@@ -43,7 +42,6 @@ import '../../features/rider/active_delivery_screen.dart';
 import '../../features/rider/rider_earnings_screen.dart';
 import '../../features/rider/rider_profile_screen.dart';
 import '../../features/rider/become_rider_screen.dart';
-import '../../features/auth/reset_password_screen.dart';
 import '../../features/home/browse_screen.dart';
 import '../../features/profile/settings_screen.dart';
 import '../../features/profile/favorites_screen.dart';
@@ -64,9 +62,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/onboarding',
         '/auth/login',
         '/auth/register',
-        '/auth/otp',
         '/auth/forgot-password',
-        '/auth/reset-password'
       ];
 
       if (auth is AuthInitial) {
@@ -128,18 +124,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/auth/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(
-        path: '/auth/otp',
-        builder: (_, state) {
-          final phone = state.uri.queryParameters['phone'] ?? '';
-          return OtpScreen(phone: phone);
-        },
-      ),
-      GoRoute(
           path: '/auth/forgot-password',
           builder: (_, __) => const ForgotPasswordScreen()),
-      GoRoute(
-          path: '/auth/reset-password',
-          builder: (_, __) => const ResetPasswordScreen()),
 
       // ── Consumer Pages (Root Level to prevent duplicate shells & clashing keys) ──
       GoRoute(

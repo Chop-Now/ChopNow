@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-fufu px-4">
           <div className="max-w-md w-full text-center">
             <div className="mb-6">
               <svg

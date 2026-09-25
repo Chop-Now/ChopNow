@@ -195,6 +195,8 @@ const notifyBuyersUpcomingExpiry = async () => {
   }
 };
 
+let jobTimers = [];
+
 /**
  * Start the background expiry job.
  * Call once after the database connection is ready.
@@ -208,15 +210,27 @@ const startExpiryJob = () => {
   notifyUpcomingExpiry();
   notifyBuyersUpcomingExpiry();
 
-  setInterval(expireListings, FIVE_MIN);
-  setInterval(notifyUpcomingExpiry, THIRTY_MIN);
-  setInterval(notifyBuyersUpcomingExpiry, FIVE_MIN);
+  jobTimers = [
+    setInterval(expireListings, FIVE_MIN),
+    setInterval(notifyUpcomingExpiry, THIRTY_MIN),
+    setInterval(notifyBuyersUpcomingExpiry, FIVE_MIN),
+  ];
 
   logger.info('Listing expiry job started — runs every 5 min');
 };
 
+/**
+ * Stop the recurring timers (used during graceful shutdown, so the process
+ * doesn't start new expiry work while it's already on its way out).
+ */
+const stopExpiryJob = () => {
+  jobTimers.forEach(clearInterval);
+  jobTimers = [];
+};
+
 module.exports = {
   startExpiryJob,
+  stopExpiryJob,
   expireListings,
   notifyUpcomingExpiry,
   notifyBuyersUpcomingExpiry,

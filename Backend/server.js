@@ -37,6 +37,8 @@ const riderRoutes = require('./routes/riderRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const requestId = require('./middleware/requestId');
 const sanitizeInput = require('./middleware/sanitizeInput');
+const { optionalAuth } = require('./middleware/auth');
+const { checkMaintenanceMode } = require('./middleware/platformSettings');
 const logger = require('./utils/logger');
 const metrics = require('./utils/metrics');
 
@@ -61,12 +63,32 @@ if (isProduction) {
     logger.error('Production requires ALLOWED_ORIGINS to be set (e.g. https://app.chopnow.com).');
     process.exit(1);
   }
-  const unsafeSecrets = ['changeme', 'your_jwt_secret', 'your_secure_random', 'example', 'test'];
+  const unsafeSecrets = ['changeme', 'yourjwtsecret', 'yoursecurerandom', 'example', 'test', 'secret', 'password'];
   const jwt = String(process.env.JWT_SECRET);
-  if (jwt.length < 32 || unsafeSecrets.some((s) => jwt.toLowerCase().includes(s))) {
+  // Strip separators before matching, so "change_me_..." / "change-me-..."
+  // (e.g. docker-compose.yml's own placeholder) are still caught - a plain
+  // substring check against 'changeme' misses those.
+  const jwtNormalized = jwt.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (jwt.length < 32 || unsafeSecrets.some((s) => jwtNormalized.includes(s))) {
     logger.error(
       'Production requires a strong JWT_SECRET (at least 32 characters, no placeholders).'
     );
+    process.exit(1);
+  }
+  // M6: PAWAPAY_ENVIRONMENT being left unset/misspelled previously fell back
+  // to sandbox-permissive behavior everywhere it was checked (payment
+  // webhook signature verification, test-mode payment simulation) without
+  // the server failing to start - the exact silent-fail-open this catches
+  // at boot instead. PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is a sandbox-only
+  // escape hatch (utils/pawapaySignatures.js) and must never be live here.
+  if (process.env.PAWAPAY_ENVIRONMENT !== 'production') {
+    logger.error(
+      `Production requires PAWAPAY_ENVIRONMENT=production (got: ${JSON.stringify(process.env.PAWAPAY_ENVIRONMENT)}).`
+    );
+    process.exit(1);
+  }
+  if (process.env.PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS === 'true') {
+    logger.error('Production must not set PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.');
     process.exit(1);
   }
 }
@@ -284,6 +306,13 @@ app.get('/', (req, res) => {
   });
 });
 
+// M13 fix: enforce maintenance mode server-side, not just at the frontend's
+// discretion. optionalAuth runs first so req.user is populated when a valid
+// token is present (without requiring one, or blocking the request if it's
+// missing/invalid) - checkMaintenanceMode needs that to let admins bypass.
+app.use(optionalAuth);
+app.use(checkMaintenanceMode);
+
 // Auth routes with stricter limiter. userRoutes is mounted at BOTH /api/v1/users
 // and the backward-compatible /api/users (which the web frontend calls), so
 // every limiter must cover both prefixes - previously only /api/v1 was
@@ -343,9 +372,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/rider', riderRoutes);
 
 // Database connection and server start
-const { connectDB, setupGracefulShutdown, healthCheck } = require('./config/database');
+const { connectDB, closeDB, healthCheck } = require('./config/database');
 const redis = require('./config/redis');
-const { startExpiryJob } = require('./services/listingExpiryJob');
+const { startExpiryJob, stopExpiryJob } = require('./services/listingExpiryJob');
 const {
   startPendingPaymentExpiryJob,
   stopPendingPaymentExpiryJob,
@@ -466,8 +495,79 @@ if (process.env.SENTRY_DSN && String(process.env.SENTRY_DSN).trim() !== '') {
 
 app.use(errorHandler);
 
-// Setup graceful shutdown handlers
-setupGracefulShutdown();
+// Set once the HTTP server exists, so the shutdown handler below (registered
+// now, at module load, before the server is listening) can reach it.
+let httpServerRef = null;
+
+// M12 fix: ONE shutdown sequence, not two competing ones (see the note in
+// config/database.js for what that used to look like). Order matters: stop
+// starting new background work first, then stop taking new HTTP/Socket.IO
+// connections and let in-flight ones finish, then close the datastores. A
+// hard timeout guarantees the process still exits even if something above
+// hangs (e.g. a socket that never disconnects).
+const SHUTDOWN_TIMEOUT_MS = 20000;
+let shuttingDown = false;
+
+const gracefulShutdown = async (signal) => {
+  if (shuttingDown) return; // a second SIGTERM/SIGINT mid-shutdown is a no-op
+  shuttingDown = true;
+  logger.info({ signal }, `Received ${signal}. Starting graceful shutdown...`);
+
+  const forceExit = setTimeout(() => {
+    logger.error({ timeoutMs: SHUTDOWN_TIMEOUT_MS }, 'Graceful shutdown timed out - forcing exit');
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
+  try {
+    stopExpiryJob();
+    stopPendingPaymentExpiryJob();
+
+    // Disconnects Socket.IO clients and stops the HTTP server from accepting
+    // new connections; resolves once in-flight HTTP requests have completed.
+    try {
+      socketManager.getIO().close();
+    } catch {
+      // Socket.IO was never initialized (e.g. startServer failed before
+      // reaching it) - nothing to close.
+    }
+    await socketManager.closeAdapter();
+    if (httpServerRef) {
+      await new Promise((resolve) => {
+        try {
+          httpServerRef.close(resolve);
+        } catch {
+          resolve(); // already closed by io.close() above
+        }
+      });
+    }
+
+    await closeDB();
+    await redis.close();
+
+    clearTimeout(forceExit);
+    logger.info('Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    clearTimeout(forceExit);
+    logger.error({ err: error }, 'Error during graceful shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+process.on('uncaughtException', async (error) => {
+  logger.error({ err: error }, 'Uncaught exception');
+  await closeDB().catch(() => {});
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason) => {
+  logger.error({ reason }, 'Unhandled promise rejection - shutting down');
+  await closeDB().catch(() => {});
+  process.exit(1);
+});
 
 // Connect to database and start server
 const startServer = async () => {
@@ -486,9 +586,10 @@ const startServer = async () => {
 
     const port = process.env.PORT || 5000;
     const httpServer = createServer(app);
+    httpServerRef = httpServer;
 
     // Initialize Socket.io
-    socketManager.init(httpServer, allowedOrigins);
+    await socketManager.init(httpServer, allowedOrigins);
 
     const server = httpServer.listen(port, () => {
       logger.info(
@@ -506,16 +607,5 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
-// Handle graceful shutdown for Redis
-process.on('SIGTERM', async () => {
-  stopPendingPaymentExpiryJob();
-  await redis.close();
-});
-
-process.on('SIGINT', async () => {
-  stopPendingPaymentExpiryJob();
-  await redis.close();
-});
 
 startServer();

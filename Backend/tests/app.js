@@ -34,10 +34,13 @@ const payoutRoutes = require('../routes/payoutRoutes');
 const paymentRoutes = require('../routes/paymentRoutes');
 const reviewRoutes = require('../routes/reviewRoutes');
 const settingsRoutes = require('../routes/settingsRoutes');
+const analyticsRoutes = require('../routes/analyticsRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('../middleware/errorHandler');
 const requestId = require('../middleware/requestId');
+const { optionalAuth } = require('../middleware/auth');
+const { checkMaintenanceMode } = require('../middleware/platformSettings');
 
 const app = express();
 
@@ -87,6 +90,10 @@ app.get('/', (req, res) => {
   });
 });
 
+// M13: same maintenance-mode gate as server.js, so it can actually be tested.
+app.use(optionalAuth);
+app.use(checkMaintenanceMode);
+
 // ── API routes ──
 app.use('/api/v1/users', userRoutes);
 app.use('/api/users', userRoutes); // backward compatibility
@@ -99,6 +106,8 @@ app.use('/api/v1/payouts', payoutRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ── Error handling ──
 app.use(notFound);

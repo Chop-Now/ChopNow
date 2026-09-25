@@ -1208,7 +1208,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
                 onClick={async () => {
                   try {
                     await switchRole('consumer');
-                    window.location.href = '/shop';
+                    navigate('/shop');
                   } catch (error) {
                     console.error('Failed to switch role:', error);
                   }

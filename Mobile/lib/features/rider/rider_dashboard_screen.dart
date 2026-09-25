@@ -207,7 +207,8 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen>
     final todayEarningsVal = stats['todayEarnings'];
     final todayEarnings =
         todayEarningsVal is num ? 'RWF ${_fmt(todayEarningsVal.toInt())}' : '-';
-    final rating = stats['rating']?.toString() ?? '4.9';
+    final ratingVal = stats['rating'];
+    final rating = ratingVal is num ? ratingVal.toStringAsFixed(1) : '-';
 
     return Scaffold(
       backgroundColor: AppColors.background,

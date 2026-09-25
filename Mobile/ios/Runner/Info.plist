@@ -49,8 +49,6 @@
 		<string>ChopNow needs access to your camera to take photos of surplus food listings.</string>
 		<key>NSFaceIDUsageDescription</key>
 		<string>ChopNow uses Face ID to securely sign you in without typing your password each time.</string>
-		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>ChopNow needs access to your location to autofill store and delivery addresses and track active deliveries.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>ChopNow needs access to your location to autofill store and delivery addresses.</string>
 		<key>NSPhotoLibraryUsageDescription</key>

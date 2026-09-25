@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../utils/constants.dart';
 import '../services/auth_service.dart';
+import '../services/socket_service.dart';
 import 'api_endpoints.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:flutter/foundation.dart';
@@ -53,6 +54,17 @@ class ApiClient {
                 final newToken = response.data['token'] as String?;
                 if (newToken != null) {
                   await AuthService.saveAccessToken(newToken);
+                  // M27: the socket authenticates once, at connect time
+                  // (see Backend/socket.js's io.use() middleware) - without
+                  // this, it keeps running under the token that was just
+                  // refreshed (i.e. one we already know is stale/expiring),
+                  // until it happens to drop and reconnect for some
+                  // unrelated reason. reconnectWithToken (not a plain
+                  // disconnect+connect) preserves room memberships across
+                  // the reconnect - see socket_service.dart.
+                  if (SocketService().isConnected) {
+                    SocketService().reconnectWithToken(newToken);
+                  }
                   // Retry original request with new token
                   error.requestOptions.headers['Authorization'] =
                       'Bearer $newToken';

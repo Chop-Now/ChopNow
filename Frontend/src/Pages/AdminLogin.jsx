@@ -57,7 +57,7 @@ const AdminLogin = () => {
       }
 
       toast.success('Admin login successful!');
-      window.location.href = '/admin';
+      navigate('/admin');
     } catch (err) {
       console.error('Google Login error:', err);
       toast.error(err.message || 'Google login failed');
@@ -99,7 +99,7 @@ const AdminLogin = () => {
       }
 
       toast.success('Admin login successful!');
-      window.location.href = '/admin';
+      navigate('/admin');
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error.message || 'Login failed. Please check your credentials.');

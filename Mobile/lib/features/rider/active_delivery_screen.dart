@@ -85,6 +85,10 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
   Map<String, dynamic> _orderData = {};
   StreamSubscription<Position>? _locationSubscription;
   String? _fetchError;
+  // M28: the customer's tracking map goes stale silently if this isn't
+  // surfaced - the rider is the only one in a position to notice and fix it
+  // (move somewhere with signal, toggle location permission back on, etc.).
+  bool _locationTrackingFailed = false;
 
   // Kigali city center — only used as last-resort fallback
   static const _kigaliCenter = LatLng(-1.9441, 30.0619);
@@ -159,6 +163,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
         if (!mounted) return;
         setState(() {
           _currentPosition = LatLng(position.latitude, position.longitude);
+          _locationTrackingFailed = false;
         });
 
         // Emit location via Socket
@@ -167,8 +172,19 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
       },
       onError: (e) {
         if (kDebugMode) debugPrint('Error in location tracking stream: $e');
+        if (!mounted) return;
+        setState(() => _locationTrackingFailed = true);
       },
     );
+  }
+
+  /// Stop and restart the position stream - the usual fix for a stream that
+  /// errored out (permission got revoked then re-granted, GPS was toggled
+  /// off then on, etc.).
+  void _retryLocationTracking() {
+    setState(() => _locationTrackingFailed = false);
+    _stopLocationTracking();
+    _startLocationTracking();
   }
 
   void _stopLocationTracking() {
@@ -516,6 +532,48 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen>
             right: 16,
             child: _PhaseProgressBar(current: _phase),
           ),
+
+          // ── Location tracking failure banner (M28) ───────────────────────
+          if (_locationTrackingFailed)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 110,
+              left: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: _retryLocationTracking,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: AppColors.char.withValues(alpha: 0.2),
+                          blurRadius: 10)
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.location_off_rounded,
+                          color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Location tracking stopped - the customer can't see your live position. Tap to retry.",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Icon(Icons.refresh_rounded,
+                          color: Colors.white, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // ── Recenter FAB ─────────────────────────────────────────────────
           Positioned(

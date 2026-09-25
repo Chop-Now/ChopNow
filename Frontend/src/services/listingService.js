@@ -17,6 +17,21 @@ const listingService = {
     }
   },
 
+  // Get listings near a location, with real per-listing distance in km (public)
+  getNearbyListings: async (lat, lng, filters = {}, options = {}) => {
+    try {
+      const params = new URLSearchParams({ lat, lng });
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+
+      const response = await api.get(`/api/listings/nearby?${params.toString()}`, options);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get listings by business (public)
   getListingsByBusiness: async (businessId, status) => {
     try {

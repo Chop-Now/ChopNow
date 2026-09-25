@@ -85,11 +85,22 @@ dependencies:
   flutter_animate: ^4.5.2
   connectivity_plus: ^7.1.1
   flutter_native_splash: ^2.4.1
+  firebase_crashlytics: ^4.3.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Test-only: lets tests fake Firebase.app() via the public
+  # `Firebase.delegatePackingProperty` seam (see test/helpers/fake_firebase.dart)
+  # instead of hitting a real platform channel. Already resolved transitively
+  # through firebase_core; declared directly so the version is pinned and
+  # `flutter analyze` doesn't flag it as an undeclared import.
+  firebase_core_platform_interface: ^6.0.2
+  # Test-only: lets tests fake GeolocatorPlatform.instance for
+  # active_delivery_screen_test.dart's M28 tracking-failure banner (see
+  # test/helpers/fake_geolocator.dart). Also already resolved transitively.
+  geolocator_platform_interface: ^4.2.6
   flutter_lints: ^4.0.0
   build_runner: ^2.4.12
   riverpod_generator: ^2.4.3

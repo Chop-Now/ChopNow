@@ -15,6 +15,7 @@ import {
   Maximize2,
   ShoppingCart,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAdminMode } from '../context/AdminModeContext';
 import { useAppContext } from '../../context/AppContext';
 import { listingService, businessService } from '../../services';
@@ -47,6 +48,7 @@ const categoryMap = {
 };
 
 export const AllListings = () => {
+  const navigate = useNavigate();
   const { adminMode, isAdmin } = useAdminMode();
   const { user } = useAppContext();
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -299,7 +301,7 @@ export const AllListings = () => {
             You need to complete your business setup to manage listings.
           </p>
           <button
-            onClick={() => (window.location.href = '/business-verification')}
+            onClick={() => navigate('/business-verification')}
             className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
           >
             Complete Business Setup
@@ -578,6 +580,7 @@ export const AllListings = () => {
 };
 
 export const NewListing = () => {
+  const navigate = useNavigate();
   const { user } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [businessId, setBusinessId] = useState(null);
@@ -832,7 +835,7 @@ export const NewListing = () => {
             You need to have a verified business to create listings.
           </p>
           <button
-            onClick={() => (window.location.href = '/business-verification')}
+            onClick={() => navigate('/business-verification')}
             className="px-6 py-2 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors"
           >
             Complete Business Setup

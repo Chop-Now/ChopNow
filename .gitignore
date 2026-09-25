@@ -17,6 +17,7 @@ Frontend/.env
 *.crt
 credentials.json
 secrets.json
+Backend/config/firebase-service-account.json
 
 # Logs
 logs

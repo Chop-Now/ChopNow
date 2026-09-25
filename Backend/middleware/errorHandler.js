@@ -2,6 +2,7 @@
  * Error handler middleware
  */
 const logger = require('../utils/logger');
+const { redact } = require('../utils/redactPaths');
 
 const errorHandler = (err, req, res, _next) => {
   // Prefer structured logging; fall back to console if logger unavailable
@@ -11,7 +12,18 @@ const errorHandler = (err, req, res, _next) => {
       'Unhandled error'
     );
   } catch {
-    console.error(err.stack); // eslint-disable-line no-console
+    // pino itself threw, so its redaction never ran - redact this fallback
+    // payload independently rather than dumping err.stack (and any custom
+    // properties attached to err, e.g. err.body) raw to console.
+    console.error(
+      redact({
+        message: err?.message,
+        stack: err?.stack,
+        path: req?.originalUrl,
+        method: req?.method,
+        ...err,
+      })
+    ); // eslint-disable-line no-console
   }
 
   // Mongoose validation error

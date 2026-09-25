@@ -44,6 +44,7 @@ const upload = require('../middleware/upload');
 const uploadDocs = require('../middleware/uploadDocs');
 const {
   validateRegister,
+  validateUpdateProfile,
   validateLogin,
   validateResetPassword,
   validateForgotPassword,
@@ -138,11 +139,14 @@ router.post('/refresh-token', refreshAccessToken);
 
 // Protected routes (MUST be defined BEFORE parameterized routes like /:id)
 router.get('/profile', protect, getUserProfile);
-router.put('/profile', protect, updateUserProfile);
+router.put('/profile', protect, validateUpdateProfile, updateUserProfile);
 
 // Password change with OTP verification
 router.post('/profile/password/request-otp', protect, requestPasswordChangeOTP);
-router.put('/profile/password', protect, changePassword);
+// validateResetPassword already aliases otp->token and newPassword->password,
+// so it applies here unchanged - one strength rule (8+ chars, upper/lower/
+// digit), not two (M3).
+router.put('/profile/password', protect, validateResetPassword, changePassword);
 
 // Sensitive information change OTP (for vendors)
 router.post('/request-sensitive-change-otp', protect, requestSensitiveChangeOTP);

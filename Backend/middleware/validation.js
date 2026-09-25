@@ -66,6 +66,31 @@ const validateRegister = [
   handleValidationErrors,
 ];
 
+// Profile update validation - same format rules as registration, but every
+// field is optional since this is a partial update, not a full replacement.
+const validateUpdateProfile = [
+  body('firstName')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('First name cannot be empty')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+  body('lastName')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Last name cannot be empty')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
+  body('phone')
+    .optional()
+    .trim()
+    .matches(/^\+?[1-9]\d{1,14}$/)
+    .withMessage('Please provide a valid phone number'),
+  handleValidationErrors,
+];
+
 // User login validation
 const validateLogin = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
@@ -346,6 +371,7 @@ module.exports = {
   handleValidationErrors,
   sanitizePagination,
   validateRegister,
+  validateUpdateProfile,
   validateLogin,
   validateCreateBusiness,
   validateCreateListing,
