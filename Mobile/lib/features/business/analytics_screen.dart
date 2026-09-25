@@ -73,7 +73,7 @@ class _AnalyticsBody extends StatelessWidget {
 
     final walletBalance = (rawStats['balance'] as num? ?? 0.0).toDouble();
     final activeListings = rawStats['totalListings'] as int? ?? 0;
-    final rating = (rawStats['averageRating'] as num? ?? 5.0).toDouble();
+    final rating = (rawStats['averageRating'] as num?)?.toDouble() ?? 0.0;
 
     final avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0.0;
 
@@ -167,7 +167,7 @@ class _AnalyticsBody extends StatelessWidget {
                   children: [
                     _QuickStat(
                       label: 'Store Rating',
-                      value: rating.toStringAsFixed(1),
+                      value: rating > 0 ? rating.toStringAsFixed(1) : '—',
                       icon: Icons.star_border_rounded,
                       color: AppColors.warning,
                     ),
