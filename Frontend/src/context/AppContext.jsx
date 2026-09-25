@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { authService, api, listingService, userService, cartService } from '../services';
 import { setAccessToken, clearAccessToken } from '../services/api';
 import { transformListingToProduct } from '../utils/transforms';
+import { useGeolocation } from '../Components/maps/useGeolocation';
 
 export const AppContext = createContext();
 
@@ -22,6 +23,7 @@ const AppContextProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const { getCurrentLocation } = useGeolocation();
 
   // Initialize cart from localStorage
   const [cartItems, setCartItems] = useState(() => {
@@ -248,7 +250,9 @@ const AppContextProvider = ({ children }) => {
   // Google Login function
   const googleAuth = async (idToken) => {
     try {
-      const { data } = await api.post('/api/users/google-login', { idToken });
+      // M21: use the shared authService.googleLogin() instead of duplicating
+      // the raw api.post call here.
+      const data = await authService.googleLogin({ idToken });
 
       // Extract user data (everything except token and refreshToken)
       const { token, refreshToken: _refreshToken, ...userData } = data;
@@ -272,7 +276,11 @@ const AppContextProvider = ({ children }) => {
       return { user: userData, token };
     } catch (error) {
       console.error('Google Login failed', error);
-      toast.error(error.response?.data?.message || 'Google Login failed');
+      // authService.googleLogin() throws the response body directly (not a
+      // raw axios error), so error.message covers that case; the
+      // error.response?.data?.message check stays for safety in case
+      // something upstream ever throws a raw axios error instead.
+      toast.error(error.response?.data?.message || error.message || 'Google Login failed');
       throw error;
     }
   };
@@ -451,6 +459,7 @@ const AppContextProvider = ({ children }) => {
             soldCount: transformed.soldCount || 0,
             totalQuantity: transformed.totalQuantity || 0,
             createdAt: transformed.createdAt,
+            distance: null,
           };
         })
         .filter(Boolean); // Remove null entries
@@ -465,6 +474,41 @@ const AppContextProvider = ({ children }) => {
 
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  // If the browser grants geolocation, enrich the already-loaded products with
+  // real per-listing distance (km) from the nearby endpoint. Runs after the
+  // initial generic fetch so the shop page never blocks on a permission
+  // prompt; if permission is denied or unavailable, products simply keep
+  // distance: null and no badge/sort-by-distance data is shown.
+  useEffect(() => {
+    getCurrentLocation(
+      async ({ lat, lng }) => {
+        try {
+          const response = await listingService.getNearbyListings(
+            lat,
+            lng,
+            { status: 'active', limit: 100 },
+            { silent: true }
+          );
+          const nearby = response.listings || response || [];
+          const distanceById = new Map(nearby.map((l) => [l._id, l.distance]));
+          if (distanceById.size > 0) {
+            setProducts((prev) =>
+              prev.map((p) =>
+                distanceById.has(p._id) ? { ...p, distance: distanceById.get(p._id) } : p
+              )
+            );
+          }
+        } catch (e) {
+          console.error('Error fetching nearby distance data:', e);
+        }
+      },
+      () => {
+        // Permission denied or geolocation unavailable - no-op, products keep distance: null.
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cart Logic (Local state for now, can be moved to backend later)

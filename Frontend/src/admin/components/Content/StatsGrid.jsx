@@ -56,41 +56,37 @@ const StatsGrid = () => {
     return value.toLocaleString();
   };
 
-  // Calculate change percentage (placeholder - would need historical data)
-  const getChange = (current, previous) => {
-    if (!previous || previous === 0) return { value: '+0%', trend: 'up' };
-    const change = (((current - previous) / previous) * 100).toFixed(1);
-    return {
-      value: change >= 0 ? `+${change}%` : `${change}%`,
-      trend: change >= 0 ? 'up' : 'down',
-    };
-  };
+  // No historical-comparison endpoint exists for a single business's stats
+  // (only the platform-wide admin stats compute real month-over-month deltas
+  // - see the websiteAdminStats block below). Report that honestly instead
+  // of fabricating a percentage.
+  const NO_HISTORY = { value: null, trend: 'up' };
 
   const shopAdminStats = stats
     ? [
         {
           title: 'Total Revenue',
-          value: formatCurrency(stats.totalRevenue || stats.revenue || 0),
-          change: getChange(stats.totalRevenue, stats.previousRevenue).value,
-          trend: getChange(stats.totalRevenue, stats.previousRevenue).trend,
+          value: formatCurrency(stats.revenue || 0),
+          change: NO_HISTORY.value,
+          trend: NO_HISTORY.trend,
           icon: <Wallet className="w-6 h-6" />,
           bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
           textColor: 'text-black dark:text-white',
         },
         {
           title: 'Total Orders',
-          value: formatNumber(stats.totalOrders || stats.ordersCount || 0),
-          change: getChange(stats.totalOrders, stats.previousOrders).value,
-          trend: getChange(stats.totalOrders, stats.previousOrders).trend,
+          value: formatNumber(stats.stats?.totalOrders || 0),
+          change: NO_HISTORY.value,
+          trend: NO_HISTORY.trend,
           icon: <ShoppingBasket className="w-6 h-6" />,
           bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
           textColor: 'text-grey-200 dark:text-white',
         },
         {
           title: 'CO2e Saved',
-          value: `${formatNumber(stats.co2Saved || stats.impact?.co2Saved || 0)} kg`,
-          change: '+5.1%',
-          trend: 'up',
+          value: `${formatNumber(stats.stats?.impact?.co2Saved || 0)} kg`,
+          change: NO_HISTORY.value,
+          trend: NO_HISTORY.trend,
           icon: (
             <svg
               className="w-6 h-6"
@@ -119,9 +115,9 @@ const StatsGrid = () => {
         },
         {
           title: 'Average Rating',
-          value: `${(stats.averageRating || stats.rating || 0).toFixed(1)}/5`,
-          change: '+2.3%',
-          trend: 'up',
+          value: `${(stats.stats?.averageRating || 0).toFixed(1)}/5`,
+          change: NO_HISTORY.value,
+          trend: NO_HISTORY.trend,
           icon: (
             <svg
               className="w-6 h-6"
@@ -353,19 +349,27 @@ const StatsGrid = () => {
                   {stat.value}
                 </p>
                 <div className="flex items-center space-x-1.5">
-                  {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  {stat.change === null ? (
+                    <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                      No historical data yet
+                    </span>
                   ) : (
-                    <ArrowDownRight className="w-3 h-3 text-red-500" />
+                    <>
+                      {stat.trend === 'up' ? (
+                        <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                      ) : (
+                        <ArrowDownRight className="w-3 h-3 text-red-500" />
+                      )}
+                      <span
+                        className={`text-xs font-semibold ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}
+                      >
+                        {stat.change}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        vs Last Month
+                      </span>
+                    </>
                   )}
-                  <span
-                    className={`text-xs font-semibold ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}
-                  >
-                    {stat.change}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    vs Last Month
-                  </span>
                 </div>
               </div>
               <div

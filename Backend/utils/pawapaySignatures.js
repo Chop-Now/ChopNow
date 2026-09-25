@@ -53,24 +53,32 @@ async function fetchPublicKey() {
   return null;
 }
 
+// M6: whether verification may be skipped requires this EXPLICIT, opt-in
+// flag - never inferred from PAWAPAY_ENVIRONMENT alone. That string can be
+// left unset or misspelled in a real deployment and still boot the server
+// fine (nothing else depends on it being exactly right), which would
+// silently fail this check open and accept forged/unsigned payment
+// callbacks. Sandbox testing must deliberately set this to 'true'; it
+// defaults to not-allowed, so a missing/misconfigured env is the SAFE
+// failure mode, not the dangerous one.
+const bypassAllowed = () => process.env.PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS === 'true';
+
 /**
  * Verify RFC-9421 HTTP Message Signature for pawaPay callbacks
  * @param {object} req Express request object
- * @returns {Promise<boolean>} True if signature is valid, or allowed by environment policy
+ * @returns {Promise<boolean>} True if signature is valid, or explicitly allowed by PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS
  */
 async function verifySignature(req) {
   const signatureHeader = req.headers['signature'];
   const signatureInputHeader = req.headers['signature-input'];
 
-  const isProduction = process.env.PAWAPAY_ENVIRONMENT === 'production';
-
-  // 1. If headers are missing, handle based on environment
+  // 1. If headers are missing, handle based on the explicit bypass flag
   if (!signatureHeader || !signatureInputHeader) {
-    if (isProduction) {
-      logger.error('Rejecting callback: Missing signature headers in production.');
+    if (!bypassAllowed()) {
+      logger.error('Rejecting callback: missing signature headers and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.');
       return false;
     }
-    logger.warn('Signature headers missing. Allowing in sandbox/development mode.');
+    logger.warn('Signature headers missing. Allowing because PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.');
     return true;
   }
 
@@ -121,11 +129,11 @@ async function verifySignature(req) {
     // 5. Fetch public key
     const pkDetails = await fetchPublicKey();
     if (!pkDetails) {
-      if (isProduction) {
-        logger.error('Public key unavailable. Rejecting callback in production.');
+      if (!bypassAllowed()) {
+        logger.error('Rejecting callback: public key unavailable and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.');
         return false;
       }
-      logger.warn('Public key unavailable. Allowing in sandbox/development mode.');
+      logger.warn('Public key unavailable. Allowing because PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.');
       return true;
     }
 

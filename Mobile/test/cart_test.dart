@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chopnow/core/models/listing_model.dart';
 import 'package:chopnow/core/providers/cart_provider.dart';
+import 'package:chopnow/core/services/local_storage_service.dart';
 
 /// A minimal listing for testing
 Listing _makeListing({
@@ -29,6 +31,7 @@ void main() {
     late CartNotifier notifier;
 
     setUp(() {
+      SharedPreferences.setMockInitialValues({});
       container = ProviderContainer();
       notifier = container.read(cartProvider.notifier);
     });
@@ -115,6 +118,63 @@ void main() {
 
     test('quantityOf returns 0 for unknown listing', () {
       expect(notifier.quantityOf('unknown'), 0);
+    });
+  });
+
+  group('CartNotifier persistence (M22)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('addItem persists the cart so a fresh notifier restores it', () async {
+      final container = ProviderContainer();
+      final notifier = container.read(cartProvider.notifier);
+      notifier.addItem(_makeListing(id: 'l1', title: 'Persisted Meal'));
+      // saveCart() is fire-and-forget from addItem's perspective - give the
+      // microtask queue a turn to actually write it before reading back.
+      await Future.delayed(const Duration(milliseconds: 20));
+      final storedRaw = await LocalStorageService.loadCart();
+      expect(storedRaw, isNotNull, reason: 'cart should be persisted after addItem');
+      container.dispose();
+
+      final freshContainer = ProviderContainer();
+      // Providers are lazy - force construction now (this is what kicks off
+      // _restore()), THEN wait for it, or the read below just sees the
+      // notifier's initial (pre-restore) empty state.
+      freshContainer.read(cartProvider.notifier);
+      await Future.delayed(const Duration(milliseconds: 20));
+      final restored = freshContainer.read(cartProvider);
+      expect(restored, hasLength(1));
+      expect(restored.first.listing.id, 'l1');
+      expect(restored.first.listing.title, 'Persisted Meal');
+      expect(restored.first.quantity, 1);
+      freshContainer.dispose();
+    });
+
+    test('clear() removes the persisted cart, not just the in-memory state',
+        () async {
+      final container = ProviderContainer();
+      final notifier = container.read(cartProvider.notifier);
+      notifier.addItem(_makeListing());
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect(await LocalStorageService.loadCart(), isNotNull);
+
+      notifier.clear();
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect(await LocalStorageService.loadCart(), isNull);
+      container.dispose();
+    });
+
+    test('a corrupted stored cart is ignored, not a crash on startup',
+        () async {
+      await LocalStorageService.saveCart('not valid json{{{');
+      final container = ProviderContainer();
+      // Constructing the notifier must not throw even though storage holds
+      // garbage.
+      container.read(cartProvider.notifier);
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect(container.read(cartProvider), isEmpty);
+      container.dispose();
     });
   });
 

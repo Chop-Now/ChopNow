@@ -46,35 +46,27 @@ class BiometricService {
     await _storage.write(
         key: _biometricEnabledKey, value: enabled ? 'true' : 'false');
     if (!enabled) {
-      await clearCredentials();
+      await clearRefreshToken();
     }
   }
 
-  // ── Credentials Storage ──────────────────────────────────────────────────────
-  static const _biometricEmailKey = 'chopnow_biometric_email';
-  static const _biometricPasswordKey = 'chopnow_biometric_password';
+  // ── Refresh Token Storage ────────────────────────────────────────────────────
+  // Stores a copy of the app's refresh token (see AuthService.saveRefreshToken)
+  // behind the biometric gate, so a successful Face ID/fingerprint check can
+  // mint a fresh access token instead of replaying the account password.
+  static const _biometricRefreshTokenKey = 'chopnow_biometric_refresh_token';
 
-  static Future<void> saveCredentials(String email, String password) async {
-    await Future.wait([
-      _storage.write(key: _biometricEmailKey, value: email),
-      _storage.write(key: _biometricPasswordKey, value: password),
-    ]);
+  static Future<void> saveRefreshToken(String refreshToken) async {
+    await _storage.write(
+        key: _biometricRefreshTokenKey, value: refreshToken);
   }
 
-  static Future<Map<String, String>?> getCredentials() async {
-    final email = await _storage.read(key: _biometricEmailKey);
-    final password = await _storage.read(key: _biometricPasswordKey);
-    if (email != null && password != null) {
-      return {'email': email, 'password': password};
-    }
-    return null;
+  static Future<String?> getRefreshToken() async {
+    return _storage.read(key: _biometricRefreshTokenKey);
   }
 
-  static Future<void> clearCredentials() async {
-    await Future.wait([
-      _storage.delete(key: _biometricEmailKey),
-      _storage.delete(key: _biometricPasswordKey),
-    ]);
+  static Future<void> clearRefreshToken() async {
+    await _storage.delete(key: _biometricRefreshTokenKey);
   }
 
   // ── Authentication ───────────────────────────────────────────────────────────

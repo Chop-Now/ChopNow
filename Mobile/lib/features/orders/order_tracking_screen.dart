@@ -41,7 +41,18 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   LatLng? _riderPosition;
   bool _socketInitialized = false;
 
+  // M28: a "staleness" indicator for the customer - the live marker on the
+  // map otherwise just sits wherever it last was with no sign anything's
+  // wrong if the rider's location stream (or their connectivity) drops.
+  DateTime? _lastLocationUpdateAt;
+  Timer? _stalenessTimer;
+  static const _staleAfter = Duration(seconds: 45);
 
+  bool get _isLocationStale {
+    final last = _lastLocationUpdateAt;
+    if (last == null) return false;
+    return DateTime.now().difference(last) > _staleAfter;
+  }
 
   @override
   void initState() {
@@ -49,11 +60,19 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     _pulseCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1200))
       ..repeat(reverse: true);
+    // Nothing to compute against a clock changes on its own in Flutter -
+    // this just forces a rebuild every few seconds so _isLocationStale (a
+    // getter based on DateTime.now()) gets re-evaluated and the banner can
+    // appear without needing a NEW location update to trigger it.
+    _stalenessTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted && _lastLocationUpdateAt != null) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _locationSubscription?.cancel();
+    _stalenessTimer?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -63,6 +82,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     final auth = ref.read(authProvider);
     if (auth is AuthAuthenticated) {
       _socketInitialized = true;
+      // Start the staleness clock as soon as we start expecting updates -
+      // if the rider's tracking is broken from the very start of the
+      // delivery (never sends a single update), that must still count as
+      // stale, not silently look "not stale yet" forever because nothing
+      // ever arrived to compare against.
+      _lastLocationUpdateAt = DateTime.now();
       final socketService = SocketService();
       socketService.connect(auth.token);
       socketService.trackOrder(widget.orderId);
@@ -79,6 +104,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
               (data['lat'] as num).toDouble(),
               (data['lng'] as num).toDouble(),
             );
+            _lastLocationUpdateAt = DateTime.now();
           });
         }
       });
@@ -180,22 +206,63 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         border: Border.all(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
-      child: FlutterMap(
-        options: MapOptions(
-          initialCenter: initialCenter,
-          initialZoom: 14.0,
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-          ),
-        ),
+      child: Stack(
         children: [
-          TileLayer(
-            urlTemplate:
-                'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            userAgentPackageName: 'com.chopnow.app',
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: initialCenter,
+              initialZoom: 14.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+                userAgentPackageName: 'com.chopnow.app',
+              ),
+              MarkerLayer(markers: markers),
+            ],
           ),
-          MarkerLayer(markers: markers),
+          // M28: tells the customer the marker they're looking at might not
+          // reflect the rider's real position right now, instead of letting
+          // a frozen dot quietly look like a live one.
+          if (_isLocationStale)
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.warningSurface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.warning_amber_rounded,
+                        size: 15, color: AppColors.warning),
+                    SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        "Live location may be delayed",
+                        style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.warning),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

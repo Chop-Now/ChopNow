@@ -399,15 +399,22 @@ export const CustomerComplaints = () => {
     status: dispute.status,
   });
 
-  // Get appropriate actions based on dispute type
+  // Get appropriate actions based on dispute type. These strings must match
+  // the real Dispute.type enum (models/Dispute.js) - they previously used
+  // short-form values ('missing', 'vendor', 'delivery') that never matched
+  // any real dispute, so every dispute silently fell through to `default`.
+  // (No 'track' action: there's no order-tracking view in the admin
+  // frontend to send an admin to - see M15 in the audit checklist.)
   const getActionsForType = (type) => {
     switch (type) {
-      case 'missing':
+      case 'missing_item':
         return ['call', 'refund', 'alert', 'resolve'];
-      case 'vendor':
+      case 'vendor_unresponsive':
         return ['call', 'message', 'alert', 'resolve'];
-      case 'delivery':
-        return ['call', 'track', 'alert', 'resolve'];
+      case 'delivery_issue':
+        return ['call', 'alert', 'resolve'];
+      case 'refund':
+        return ['call', 'refund', 'alert', 'resolve'];
       default:
         return ['call', 'message', 'alert', 'resolve'];
     }
@@ -624,30 +631,44 @@ export const CustomerComplaints = () => {
     switch (action) {
       case 'call':
         return (
-          <button className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+          <a
+            href={issue.customer?.phone && issue.customer.phone !== 'N/A' ? `tel:${issue.customer.phone}` : undefined}
+            onClick={(e) => {
+              if (!issue.customer?.phone || issue.customer.phone === 'N/A') {
+                e.preventDefault();
+                toast.error('No phone number on file for this customer');
+              }
+            }}
+            className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+          >
             <Phone className="w-4 h-4" />
             Call
-          </button>
+          </a>
         );
       case 'message':
         return (
-          <button className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+          <a
+            href={issue.customer?.email ? `mailto:${issue.customer.email}?subject=${encodeURIComponent(`ChopNow: your dispute on order ${issue.orderId}`)}` : undefined}
+            onClick={(e) => {
+              if (!issue.customer?.email) {
+                e.preventDefault();
+                toast.error('No email on file for this customer');
+              }
+            }}
+            className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+          >
             <MessageSquare className="w-4 h-4" />
             Message
-          </button>
+          </a>
         );
       case 'refund':
         return (
-          <button className="flex items-center gap-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+          <button
+            onClick={() => handleResolve(issue.id)}
+            className="flex items-center gap-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+          >
             <BadgeDollarSign className="w-4 h-4" />
             Refund
-          </button>
-        );
-      case 'track':
-        return (
-          <button className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
-            <TruckIcon className="w-4 h-4" />
-            Track
           </button>
         );
       case 'alert':
@@ -1249,26 +1270,6 @@ export const CustomerComplaints = () => {
                           </p>
                         </div>
                       </div>
-                      {selectedIssue.type === 'delivery' &&
-                        selectedIssue.deliveryStatus === 'in_transit' && (
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Reassign order ${selectedIssue.orderId} to a different rider?`
-                                )
-                              ) {
-                                alert(
-                                  'Order reassignment initiated. A new rider will be assigned shortly.'
-                                );
-                              }
-                            }}
-                            className="w-full mt-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-3 text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
-                          >
-                            <RotateCw className="w-3.5 h-3.5" />
-                            Reassign to Another Rider
-                          </button>
-                        )}
                     </div>
                   </div>
                 )}

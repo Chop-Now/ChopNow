@@ -102,6 +102,7 @@ class AppEndpoints {
 
   // ── Rider ─────────────────────────────────────────────────────────────────
   static const String riderStats = '/rider/stats';
+  static const String riderStatsFull = '/deliveries/rider-stats';
   static const String riderEarnings = '/rider/earnings';
   static const String applyRider = '/users/apply-rider';
   static const String riderAvailability = '/rider/availability';

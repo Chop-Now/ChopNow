@@ -1,4 +1,4 @@
-import { ShoppingCart, Flame, Users } from 'lucide-react';
+import { ShoppingCart, Flame, Users, MapPin } from 'lucide-react';
 import React, { useCallback, memo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -103,11 +103,14 @@ const ProductCard = memo(({ product }) => {
           className="flex items-center gap-1 text-xs mb-0.5"
           style={{ color: 'var(--color-moringa-muted)' }}
         >
-          <span>{product.vendor || 'Unknown Vendor'}</span>
-          <span>•</span>
-          <span className="font-medium" style={{ color: 'var(--color-solid)' }}>
-            {product.location?.Near === 'True' ? '1km' : '5km'}
-          </span>
+          <span className="truncate">{product.vendor || 'Unknown Vendor'}</span>
+          {product.distance != null && (
+            <span className="flex items-center gap-0.5 shrink-0 whitespace-nowrap">
+              <span aria-hidden="true">·</span>
+              <MapPin className="w-3 h-3" aria-hidden="true" />
+              {product.distance} km
+            </span>
+          )}
         </div>
 
         {/* Pickup time row */}

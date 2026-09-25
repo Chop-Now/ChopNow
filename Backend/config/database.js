@@ -235,41 +235,15 @@ const healthCheck = async () => {
   }
 };
 
-/**
- * Setup graceful shutdown handlers
- */
-const setupGracefulShutdown = () => {
-  const shutdown = async (signal) => {
-    logger.info({ signal }, `Received ${signal}. Starting graceful shutdown...`);
-
-    try {
-      await closeDB();
-      logger.info('Graceful shutdown completed');
-      process.exit(0);
-    } catch (error) {
-      logger.error({ err: error }, 'Error during graceful shutdown');
-      process.exit(1);
-    }
-  };
-
-  // Handle various shutdown signals
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-
-  // Handle uncaught exceptions
-  process.on('uncaughtException', async (error) => {
-    logger.error({ err: error }, 'Uncaught exception');
-    await closeDB();
-    process.exit(1);
-  });
-
-  // Handle unhandled promise rejections - exit to prevent undefined state
-  process.on('unhandledRejection', async (reason, _promise) => {
-    logger.error({ reason }, 'Unhandled promise rejection - shutting down');
-    await closeDB();
-    process.exit(1);
-  });
-};
+// M12 fix: this used to register its own SIGTERM/SIGINT/uncaughtException/
+// unhandledRejection handlers (calling process.exit() as soon as MongoDB
+// closed), completely independent of server.js's own SIGTERM/SIGINT handlers
+// (which stopped the background jobs and closed Redis). Node calls every
+// listener for a signal, so on shutdown BOTH fired - and whichever's
+// process.exit() ran first could tear the process down before the other had
+// finished closing Redis or draining in-flight HTTP/Socket.IO connections.
+// There is now exactly one shutdown sequence, owned by server.js, which calls
+// closeDB() (and everything else) in order; this module just exposes it.
 
 module.exports = {
   connectDB,
@@ -277,6 +251,5 @@ module.exports = {
   getConnectionStatus,
   getPoolStats,
   healthCheck,
-  setupGracefulShutdown,
   getConnectionOptions,
 };

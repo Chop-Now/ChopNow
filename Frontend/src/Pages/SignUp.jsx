@@ -15,19 +15,24 @@ import {
   UtensilsCrossed,
   Croissant,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import LocationPicker from '../Components/maps/LocationPicker';
 import { useGeolocation } from '../Components/maps/useGeolocation';
 import { reverseGeocode, searchAddress } from '../services/geocoding';
 import { businessService } from '../services';
+import PasswordStrengthMeter from '../Components/ui/PasswordStrengthMeter';
 import toast from 'react-hot-toast';
 
 import { GoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
+
+// Deferred: LocationPicker pulls in Leaflet (~190KB) and only ever renders
+// for buyers who reach the location step, so it shouldn't block the
+// initial SignUp page load/switch from Login.
+const LocationPicker = lazy(() => import('../Components/maps/LocationPicker'));
 
 // Business categories with their verification requirements
 // ALL categories require document verification for platform safety
@@ -74,6 +79,13 @@ const SignUp = () => {
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
   const [businessCategory, setBusinessCategory] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [phone, setPhone] = useState('');
@@ -124,11 +136,6 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const form = e.target;
-    const email = form.querySelector('input[type="email"]').value;
-    const password = form.querySelector('input[placeholder="Password"]').value;
-    const confirmPassword = form.querySelector('input[placeholder="Confirm password"]').value;
-
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -156,9 +163,6 @@ const SignUp = () => {
     if (userType === 'business') {
       // Handle business signup - create account AND business profile
       try {
-        const businessName = form.querySelector('input[placeholder="Business name"]').value;
-        const contactPerson = form.querySelector('input[placeholder="Contact person"]').value;
-
         // Validate business category
         if (!businessCategory) {
           toast.error('Please select a business category');
@@ -179,17 +183,17 @@ const SignUp = () => {
           .trim()
           .split(' ')
           .filter((part) => part.length > 0);
-        const firstName = nameParts[0] || contactPerson;
+        const parsedFirstName = nameParts[0] || contactPerson;
         // Get last name from remaining parts, or use first name if not provided
-        let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        let parsedLastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
         // Backend requires min 2 chars for lastName - use firstName if lastName is too short
-        if (lastName.length < 2) {
-          lastName = firstName;
+        if (parsedLastName.length < 2) {
+          parsedLastName = parsedFirstName;
         }
 
         // Validate name lengths
-        if (firstName.length < 2) {
+        if (parsedFirstName.length < 2) {
           toast.error('Contact person name must be at least 2 characters');
           return;
         }
@@ -200,8 +204,8 @@ const SignUp = () => {
 
         // Step 1: Register user as business_owner (with consumer role too for dual-role)
         const userData = {
-          firstName,
-          lastName,
+          firstName: parsedFirstName,
+          lastName: parsedLastName,
           email,
           password,
           roles: ['consumer', 'business_owner'], // Dual-role: can shop and manage business
@@ -240,7 +244,7 @@ const SignUp = () => {
         } else {
           toast.success('Account created successfully! You can start listing your products.');
           // Redirect directly to dashboard for non-verification businesses
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }
       } catch (error) {
         console.error('Business signup error:', error);
@@ -254,9 +258,6 @@ const SignUp = () => {
     } else {
       // Handle buyer signup
       try {
-        const firstName = form.querySelector('input[placeholder="First name"]').value;
-        const lastName = form.querySelector('input[placeholder="Last name"]').value;
-
         const userData = {
           firstName,
           lastName,
@@ -326,7 +327,7 @@ const SignUp = () => {
                 <button
                   type="button"
                   onClick={() => setUserType('buyer')}
-                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <PersonStanding className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
@@ -340,7 +341,7 @@ const SignUp = () => {
                 <button
                   type="button"
                   onClick={() => setUserType('business')}
-                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <Handshake className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
@@ -377,7 +378,7 @@ const SignUp = () => {
                   <button
                     type="button"
                     onClick={() => setUserType(null)}
-                    className="absolute right-0 top-0 text-sm hover:underline cursor-pointer"
+                    className="absolute right-0 top-0 text-sm hover:underline focus-visible:outline-none focus-visible:underline rounded cursor-pointer"
                     style={{ color: 'var(--color-solid)' }}
                   >
                     Back
@@ -422,21 +423,25 @@ const SignUp = () => {
 
                     {/* First Name & Last Name */}
                     <div className="flex gap-3">
-                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                         <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                         <input
                           type="text"
                           placeholder="First name"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
                           className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
                           required
                         />
                       </div>
-                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                      <div className="flex items-center flex-1 bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                         <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                         <input
                           type="text"
                           placeholder="Last name"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
                           className="bg-transparent outline-none text-sm w-full h-full"
                           style={{ color: 'var(--color-textColor)' }}
                           required
@@ -445,11 +450,13 @@ const SignUp = () => {
                     </div>
 
                     {/* Email Input */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
                         placeholder="Email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -466,7 +473,7 @@ const SignUp = () => {
                         searchPlaceholder="Search country"
                         placeholder="Choose your country"
                         containerClass="w-full"
-                        inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent"
+                        inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent focus:!ring-2 focus:!ring-solid focus:!border-solid"
                         buttonClass="!border-gray-300 !rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100"
                         dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
                         searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"
@@ -475,11 +482,13 @@ const SignUp = () => {
                     </div>
 
                     {/* Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -487,7 +496,7 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="shrink-0"
+                        className="shrink-0 rounded hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                       >
                         {showPassword ? (
                           <EyeOff
@@ -502,13 +511,16 @@ const SignUp = () => {
                         )}
                       </button>
                     </div>
+                    <PasswordStrengthMeter password={password} />
 
                     {/* Confirm Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -516,7 +528,7 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="shrink-0"
+                        className="shrink-0 rounded hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                       >
                         {showConfirmPassword ? (
                           <EyeOff
@@ -565,7 +577,7 @@ const SignUp = () => {
                           );
                         }}
                         disabled={isLoadingLocation}
-                        className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all disabled:opacity-50 disabled:active:scale-100"
                       >
                         <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                         <span
@@ -578,7 +590,7 @@ const SignUp = () => {
 
                       {/* Manual Address Input */}
                       <div className="mt-3 relative">
-                        <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                        <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                           <MapPin
                             className="w-5 h-5"
                             style={{ color: 'var(--color-moringa-muted)' }}
@@ -638,7 +650,7 @@ const SignUp = () => {
                                 }
                               }
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                             style={{ backgroundColor: 'var(--color-solid)' }}
                           >
                             Search
@@ -655,18 +667,24 @@ const SignUp = () => {
 
                       {/* Map */}
                       <div className="mt-4">
-                        <LocationPicker
-                          selectedLocation={location}
-                          onLocationSelect={async (latlng) => {
-                            setLocation({ lat: latlng.lat, lng: latlng.lng });
-                            try {
-                              const result = await reverseGeocode(latlng.lat, latlng.lng);
-                              setAddress(result.display_name || 'Location selected');
-                            } catch {
-                              setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-                            }
-                          }}
-                        />
+                        <Suspense
+                          fallback={
+                            <div className="h-64 w-full rounded-lg bg-gray-100 animate-pulse" />
+                          }
+                        >
+                          <LocationPicker
+                            selectedLocation={location}
+                            onLocationSelect={async (latlng) => {
+                              setLocation({ lat: latlng.lat, lng: latlng.lng });
+                              try {
+                                const result = await reverseGeocode(latlng.lat, latlng.lng);
+                                setAddress(result.display_name || 'Location selected');
+                              } catch {
+                                setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+                              }
+                            }}
+                          />
+                        </Suspense>
                       </div>
                     </div>
                   </>
@@ -674,7 +692,7 @@ const SignUp = () => {
                   // Business Form
                   <>
                     {/* Business Name */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Handshake
                         className="w-5 h-5"
                         style={{ color: 'var(--color-moringa-muted)' }}
@@ -682,6 +700,8 @@ const SignUp = () => {
                       <input
                         type="text"
                         placeholder="Business name"
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -699,7 +719,7 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                        className="flex items-center justify-between w-full bg-transparent border border-gray-300 h-12 rounded-lg px-4 cursor-pointer hover:border-gray-400 transition-colors"
+                        className="flex items-center justify-between w-full bg-transparent border border-gray-300 h-12 rounded-lg px-4 cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-solid transition-all"
                       >
                         {businessCategory ? (
                           <div className="flex items-center gap-3">
@@ -749,7 +769,7 @@ const SignUp = () => {
                                   setBusinessCategory(category.value);
                                   setShowCategoryDropdown(false);
                                 }}
-                                className={`flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${businessCategory === category.value ? 'bg-gray-50' : ''}`}
+                                className={`flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-solid transition-colors cursor-pointer ${businessCategory === category.value ? 'bg-fufu-dim' : ''}`}
                               >
                                 <IconComponent
                                   className="w-5 h-5"
@@ -799,11 +819,13 @@ const SignUp = () => {
                     </div>
 
                     {/* Contact Person */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <User className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="text"
                         placeholder="Contact person"
+                        value={contactPerson}
+                        onChange={(e) => setContactPerson(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -811,11 +833,13 @@ const SignUp = () => {
                     </div>
 
                     {/* Email Input */}
-                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4">
+                    <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 mt-4 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
                         placeholder="Email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -832,7 +856,7 @@ const SignUp = () => {
                         searchPlaceholder="Search country"
                         placeholder="Business phone number"
                         containerClass="w-full"
-                        inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent"
+                        inputClass="!w-full !h-12 !border-gray-300 !rounded-lg !text-sm !bg-transparent focus:!ring-2 focus:!ring-solid focus:!border-solid"
                         buttonClass="!border-gray-300 !rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100"
                         dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
                         searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"
@@ -841,11 +865,13 @@ const SignUp = () => {
                     </div>
 
                     {/* Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -853,7 +879,7 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="shrink-0"
+                        className="shrink-0 rounded hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                       >
                         {showPassword ? (
                           <EyeOff
@@ -868,13 +894,16 @@ const SignUp = () => {
                         )}
                       </button>
                     </div>
+                    <PasswordStrengthMeter password={password} />
 
                     {/* Confirm Password Input */}
-                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                    <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className="bg-transparent outline-none text-sm w-full h-full"
                         style={{ color: 'var(--color-textColor)' }}
                         required
@@ -882,7 +911,7 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="shrink-0"
+                        className="shrink-0 rounded hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                       >
                         {showConfirmPassword ? (
                           <EyeOff
@@ -903,7 +932,7 @@ const SignUp = () => {
                 {/* Create Account Button */}
                 <button
                   type="submit"
-                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
                   Create Account

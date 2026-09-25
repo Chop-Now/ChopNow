@@ -163,6 +163,32 @@ class Listing {
     );
   }
 
+  /// Flat shape matching the non-nested branches `fromJson` already parses -
+  /// used for local persistence (M22), not sent to the backend.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'price': price,
+        'offerPrice': offerPrice,
+        'quantity': quantity,
+        'photos': photos,
+        'category': category,
+        'status': status,
+        'expiresAt': expiresAt?.toIso8601String(),
+        'availableUntil': availableUntil?.toIso8601String(),
+        'business': business,
+        'distance': distance,
+        'rating': rating,
+        'reviewCount': reviewCount,
+        'allergens': allergens,
+        'co2Saved': co2Saved,
+        'calories': calories,
+        'protein': protein,
+        'carbs': carbs,
+        'fats': fats,
+      };
+
   int get discountPercent {
     if (price <= 0) return 0;
     return ((price - offerPrice) / price * 100).round();

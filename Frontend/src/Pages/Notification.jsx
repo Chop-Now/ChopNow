@@ -358,7 +358,7 @@ const Notification = () => {
 
               {/* Order/Listing Details */}
               {(meta.orderNumber || meta.listingTitle) && (
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <div className="bg-fufu-dim rounded-xl p-4 mb-4">
                   {meta.listingImage && (
                     <div className="mb-3">
                       <img

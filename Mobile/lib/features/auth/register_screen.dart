@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/services/google_auth_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/buttons/google_auth_button.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
 import '../../shared/widgets/layout/auth_shell.dart';
 
@@ -29,6 +31,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   String _selectedRole = 'consumer';
   bool _obscurePassword = true;
   bool _agreedToTerms = false;
+  bool _googleSigningIn = false;
 
   @override
   void initState() {
@@ -106,6 +109,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             ],
           ),
           const SizedBox(height: 24),
+
+          // Google sign-up - consumer only; a business account needs
+          // role-specific onboarding fields a bare Google credential can't
+          // supply, matching the web app's SignUp.jsx.
+          if (_selectedRole == 'consumer') ...[
+            GoogleAuthButton(
+              label: 'Sign up with Google',
+              onTap: _googleSigningIn ? null : _signUpWithGoogle,
+              isLoading: _googleSigningIn,
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                    child: Container(height: 1, color: AppColors.border)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('or',
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12.5)),
+                ),
+                Expanded(
+                    child: Container(height: 1, color: AppColors.border)),
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
 
           // Form
           Form(
@@ -261,6 +291,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _signUpWithGoogle() async {
+    HapticFeedback.mediumImpact();
+    setState(() => _googleSigningIn = true);
+    try {
+      final idToken = await GoogleAuthService.signIn();
+      if (idToken == null) return; // cancelled
+      await ref
+          .read(authProvider.notifier)
+          .loginWithGoogle(idToken, preferredRole: 'consumer');
+    } finally {
+      if (mounted) setState(() => _googleSigningIn = false);
+    }
   }
 
   Future<void> _submit() async {

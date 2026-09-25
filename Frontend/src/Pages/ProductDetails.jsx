@@ -4,7 +4,7 @@ import ProductCard from '../Components/ProductCard';
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Home, Star, ShoppingCart, Trash2, Share2, Heart, Loader2 } from 'lucide-react';
+import { Home, Star, ShoppingCart, Trash2, Share2, Heart, Loader2, MapPin } from 'lucide-react';
 import { reviewService, favoriteService } from '../services';
 import toast from 'react-hot-toast';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
@@ -312,10 +312,15 @@ const ProductDetails = () => {
               <p className="text-sm" style={{ color: 'var(--color-moringa-muted)' }}>
                 {product.vendor}
               </p>
-              <span style={{ color: 'var(--color-moringa-muted)' }}>•</span>
-              <p className="text-sm font-medium" style={{ color: 'var(--color-solid)' }}>
-                {product.location?.Near === 'True' ? '1km away' : '5km away'}
-              </p>
+              {product.distance != null && (
+                <p
+                  className="flex items-center gap-1 text-sm"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
+                  <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
+                  {product.distance} km away
+                </p>
+              )}
             </div>
 
             {/* Rating */}

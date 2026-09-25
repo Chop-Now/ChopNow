@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { encryptField, decryptField } = require('../utils/fieldEncryption');
 
 const addressSchema = new Schema(
   {
@@ -214,13 +215,19 @@ const userSchema = new Schema(
         type: String,
         enum: ['bicycle', 'motorcycle', 'car', 'walking'],
       },
+      // M5: encrypted at rest (AES-256-GCM, see utils/fieldEncryption.js).
+      // encryptField() trims the plaintext itself - schema-level `trim`
+      // doesn't compose with a custom `set` the way you'd expect, so it's
+      // deliberately left off here rather than kept as dead configuration.
       licensePlate: {
         type: String,
-        trim: true,
+        set: encryptField,
+        get: decryptField,
       },
       nationalId: {
         type: String,
-        trim: true,
+        set: encryptField,
+        get: decryptField,
       },
       phone: {
         type: String,
@@ -294,6 +301,11 @@ userSchema.pre('save', async function () {
 // Ensure virtuals are included and sensitive fields stripped in JSON
 userSchema.set('toJSON', {
   virtuals: true,
+  // M5: without this, riderDetails.nationalId/licensePlate would serialize
+  // as raw ciphertext in every API response (res.json() goes through
+  // toJSON) instead of the decrypted value - getters only apply to direct
+  // property access on a live document by default, not to serialization.
+  getters: true,
   transform: (doc, ret) => {
     delete ret.passwordHash;
     delete ret.verificationToken;
@@ -307,7 +319,7 @@ userSchema.set('toJSON', {
     return ret;
   },
 });
-userSchema.set('toObject', { virtuals: true });
+userSchema.set('toObject', { virtuals: true, getters: true });
 
 const User = mongoose.model('User', userSchema);
 

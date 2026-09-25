@@ -191,7 +191,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                                 if (activeRole !== 'business_owner') {
                                   await switchRole('business_owner');
                                   setShowProfileMenu(false);
-                                  window.location.href = '/dashboard';
+                                  navigate('/dashboard');
                                 }
                               }}
                               className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
@@ -459,7 +459,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
                         if (activeRole !== 'business_owner') {
                           await switchRole('business_owner');
                           setOpen(false);
-                          window.location.href = '/dashboard';
+                          navigate('/dashboard');
                         }
                       }}
                       className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${

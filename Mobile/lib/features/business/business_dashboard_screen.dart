@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,17 +6,84 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/business_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/models/business_model.dart';
+import '../../core/models/order_model.dart';
+import '../../core/services/socket_service.dart';
 import '../../core/theme/app_colors.dart';
 import 'widgets/biz_ui.dart';
 import '../../shared/widgets/feedback/cn_states.dart';
 
-class BusinessDashboardScreen extends ConsumerWidget {
+class BusinessDashboardScreen extends ConsumerStatefulWidget {
   const BusinessDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BusinessDashboardScreen> createState() =>
+      _BusinessDashboardScreenState();
+}
+
+class _BusinessDashboardScreenState
+    extends ConsumerState<BusinessDashboardScreen> {
+  StreamSubscription<Map<String, dynamic>>? _newOrderSub;
+  String? _joinedBusinessId;
+
+  @override
+  void initState() {
+    super.initState();
+    // M25: surface new orders the moment they arrive, not only after a
+    // manual pull-to-refresh.
+    _newOrderSub = SocketService().newOrderStream.listen(_onNewOrder);
+  }
+
+  @override
+  void dispose() {
+    _newOrderSub?.cancel();
+    super.dispose();
+  }
+
+  void _onNewOrder(Map<String, dynamic> data) {
+    if (!mounted) return;
+    // Stats (revenue/order count) come from myBusinessesProvider - refresh
+    // it so the numbers on screen reflect this order too.
+    ref.invalidate(myBusinessesProvider);
+    Order? order;
+    try {
+      order = Order.fromJson(data);
+    } catch (_) {
+      order = null;
+    }
+    final amount =
+        order != null ? 'RWF ${order.total.toStringAsFixed(0)}' : '';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          order != null
+              ? 'New order received - $amount'
+              : 'New order received',
+        ),
+        backgroundColor: AppColors.moringa,
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'View',
+          textColor: AppColors.fufu,
+          onPressed: () => context.push('/business/orders'),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final asyncBusinesses = ref.watch(myBusinessesProvider);
     final user = ref.watch(currentUserProvider);
+
+    // Join this business's socket room as soon as we know its id - the
+    // backend only broadcasts new_order to sockets that have joined
+    // business_<id> (see socket_service.dart's joinBusinessRoom).
+    asyncBusinesses.whenData((businesses) {
+      if (businesses.isNotEmpty && _joinedBusinessId != businesses.first.id) {
+        _joinedBusinessId = businesses.first.id;
+        SocketService().joinBusinessRoom(_joinedBusinessId!);
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,

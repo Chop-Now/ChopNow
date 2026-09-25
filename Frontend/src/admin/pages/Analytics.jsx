@@ -467,40 +467,29 @@ const WebsiteAdminOverview = () => {
   const totalCo2Saved = platformData?.impact?.totalCo2Saved || 0;
   const totalWaterSaved = platformData?.impact?.totalWaterSaved || 0;
 
-  // CO2e saved trend data (placeholder - can be connected to backend later)
-  const co2TrendData = [
-    {
-      week: 'Week 1',
-      co2Saved: Math.round(totalCo2Saved * 0.2),
-      target: Math.round(totalCo2Saved * 0.18),
-    },
-    {
-      week: 'Week 2',
-      co2Saved: Math.round(totalCo2Saved * 0.22),
-      target: Math.round(totalCo2Saved * 0.2),
-    },
-    {
-      week: 'Week 3',
-      co2Saved: Math.round(totalCo2Saved * 0.25),
-      target: Math.round(totalCo2Saved * 0.23),
-    },
-    {
-      week: 'Week 4',
-      co2Saved: Math.round(totalCo2Saved * 0.33),
-      target: Math.round(totalCo2Saved * 0.28),
-    },
-  ];
+  // Real per-week CO2e saved, from the platform's weekly meals-rescued aggregation
+  // (no fabricated split of the running total, no invented "target" line - there's
+  // no goal-setting system backing a target).
+  const co2TrendData = platformData?.weeklyImpact || [];
+  const hasCo2TrendData = co2TrendData.some((week) => week.co2Saved > 0);
 
   // Use fetched leaderboard or show empty state
   const vendorLeaderboard = leaderboard.length > 0 ? leaderboard : [];
 
-  const mealsChange = 25; // Placeholder - can be calculated from historical data
-  const co2Change = 18;
-  const waterChange = -10;
+  // L10: no historical-comparison endpoint exists yet to compute real
+  // month-over-month deltas here, so these are null rather than a fabricated
+  // number - the cards below render "No historical data yet" instead of a
+  // fake percentage.
+  const mealsChange = null;
+  const co2Change = null;
+  const waterChange = null;
 
   const currentWeekCo2 = co2TrendData[3]?.co2Saved || 0;
-  const previousWeekCo2 = co2TrendData[2]?.co2Saved || 1;
-  const weeklyChange = (((currentWeekCo2 - previousWeekCo2) / previousWeekCo2) * 100).toFixed(1);
+  const previousWeekCo2 = co2TrendData[2]?.co2Saved || 0;
+  const weeklyChange =
+    previousWeekCo2 > 0
+      ? (((currentWeekCo2 - previousWeekCo2) / previousWeekCo2) * 100).toFixed(1)
+      : 0;
 
   if (loading) {
     return (
@@ -547,18 +536,26 @@ const WebsiteAdminOverview = () => {
                 {totalMealsRescued.toLocaleString()}
               </p>
               <div className="flex items-center space-x-1.5">
-                {mealsChange > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                {mealsChange === null ? (
+                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    No historical data yet
+                  </span>
                 ) : (
-                  <ArrowDownRight className="w-3 h-3 text-red-500" />
+                  <>
+                    {mealsChange > 0 ? (
+                      <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <ArrowDownRight className="w-3 h-3 text-red-500" />
+                    )}
+                    <span
+                      className={`text-xs font-semibold ${mealsChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                    >
+                      {mealsChange > 0 ? '+' : ''}
+                      {mealsChange}%
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                  </>
                 )}
-                <span
-                  className={`text-xs font-semibold ${mealsChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                >
-                  {mealsChange > 0 ? '+' : ''}
-                  {mealsChange}%
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
               </div>
             </div>
             <div className="p-2.5 rounded-xl bg-solid/10 dark:bg-solid/20 group-hover:scale-110 transition-all duration-300">
@@ -578,18 +575,26 @@ const WebsiteAdminOverview = () => {
                 {totalCo2Saved.toLocaleString()} kg
               </p>
               <div className="flex items-center space-x-1.5">
-                {co2Change > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                {co2Change === null ? (
+                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    No historical data yet
+                  </span>
                 ) : (
-                  <ArrowDownRight className="w-3 h-3 text-red-500" />
+                  <>
+                    {co2Change > 0 ? (
+                      <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <ArrowDownRight className="w-3 h-3 text-red-500" />
+                    )}
+                    <span
+                      className={`text-xs font-semibold ${co2Change > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                    >
+                      {co2Change > 0 ? '+' : ''}
+                      {co2Change}%
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                  </>
                 )}
-                <span
-                  className={`text-xs font-semibold ${co2Change > 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                >
-                  {co2Change > 0 ? '+' : ''}
-                  {co2Change}%
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
               </div>
             </div>
             <div className="p-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 group-hover:scale-110 transition-all duration-300">
@@ -609,18 +614,26 @@ const WebsiteAdminOverview = () => {
                 {(totalWaterSaved / 1000).toFixed(1)}k L
               </p>
               <div className="flex items-center space-x-1.5">
-                {waterChange > 0 ? (
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                {waterChange === null ? (
+                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    No historical data yet
+                  </span>
                 ) : (
-                  <ArrowDownRight className="w-3 h-3 text-red-500" />
+                  <>
+                    {waterChange > 0 ? (
+                      <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <ArrowDownRight className="w-3 h-3 text-red-500" />
+                    )}
+                    <span
+                      className={`text-xs font-semibold ${waterChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                    >
+                      {waterChange > 0 ? '+' : ''}
+                      {waterChange}%
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                  </>
                 )}
-                <span
-                  className={`text-xs font-semibold ${waterChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                >
-                  {waterChange > 0 ? '+' : ''}
-                  {waterChange}%
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
               </div>
             </div>
             <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 group-hover:scale-110 transition-all duration-300">
@@ -639,66 +652,71 @@ const WebsiteAdminOverview = () => {
               Last 30 days breakdown by week
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                {weeklyChange > 0 ? '+' : ''}
-                {weeklyChange}% this week
-              </span>
+          {hasCo2TrendData && (
+            <div className="flex items-center gap-2">
+              <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                  {weeklyChange > 0 ? '+' : ''}
+                  {weeklyChange}% this week
+                </span>
+              </div>
             </div>
+          )}
+        </div>
+        {hasCo2TrendData ? (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={co2TrendData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="co2Gradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+                <XAxis
+                  dataKey="week"
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={40}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px',
+                  }}
+                  formatter={(value) => [value + ' kg', 'CO2e Saved']}
+                  labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
+                  itemStyle={{ fontSize: '11px' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="co2Saved"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#co2Gradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-        </div>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={co2TrendData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <defs>
-                <linearGradient id="co2Gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-              <XAxis
-                dataKey="week"
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={40} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '8px',
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  padding: '8px 12px',
-                }}
-                formatter={(value, name) => [
-                  value + ' kg',
-                  name === 'co2Saved' ? 'CO2e Saved' : 'Target',
-                ]}
-                labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
-                itemStyle={{ fontSize: '11px' }}
-              />
-              <Area
-                type="monotone"
-                dataKey="co2Saved"
-                stroke="#10b981"
-                strokeWidth={2}
-                fill="url(#co2Gradient)"
-              />
-              <Line
-                type="monotone"
-                dataKey="target"
-                stroke="#94a3b8"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        ) : (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              No order activity in the last 4 weeks yet
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Vendor Leaderboard */}
@@ -1048,39 +1066,15 @@ const WebsiteAdminReports = () => {
   const totalRevenue = adminStats?.revenue?.total || 0;
   const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  // Placeholder revenue data (can be connected to detailed reports endpoint later)
+  // Real revenue comparison from the admin stats endpoint. There's no monthly
+  // revenue history or expenses tracking anywhere in the backend, so rather than
+  // splitting the running total into six made-up months we show the two real
+  // data points we actually have.
   const revenueData = [
-    {
-      month: 'Jan',
-      revenue: Math.round(totalRevenue * 0.14),
-      expenses: Math.round(totalRevenue * 0.06),
-    },
-    {
-      month: 'Feb',
-      revenue: Math.round(totalRevenue * 0.16),
-      expenses: Math.round(totalRevenue * 0.07),
-    },
-    {
-      month: 'Mar',
-      revenue: Math.round(totalRevenue * 0.15),
-      expenses: Math.round(totalRevenue * 0.065),
-    },
-    {
-      month: 'Apr',
-      revenue: Math.round(totalRevenue * 0.18),
-      expenses: Math.round(totalRevenue * 0.075),
-    },
-    {
-      month: 'May',
-      revenue: Math.round(totalRevenue * 0.16),
-      expenses: Math.round(totalRevenue * 0.068),
-    },
-    {
-      month: 'Jun',
-      revenue: Math.round(totalRevenue * 0.21),
-      expenses: Math.round(totalRevenue * 0.082),
-    },
+    { month: 'Last Month', revenue: adminStats?.revenue?.lastMonth || 0 },
+    { month: 'This Month', revenue: adminStats?.revenue?.thisMonth || 0 },
   ];
+  const hasRevenueData = revenueData.some((m) => m.revenue > 0);
 
   // Category distribution
   const categoryData = [
@@ -1111,15 +1105,17 @@ const WebsiteAdminReports = () => {
     },
   ];
 
-  // Peak hours data (placeholder)
-  const peakHoursData = [
-    { time: '6AM', orders: 45 },
-    { time: '9AM', orders: 120 },
-    { time: '12PM', orders: 280 },
-    { time: '3PM', orders: 180 },
-    { time: '6PM', orders: 320 },
-    { time: '9PM', orders: 95 },
-  ];
+  // Real hourly order distribution over the last 30 days
+  const formatHour = (hour) => {
+    const period = hour < 12 ? 'AM' : 'PM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${displayHour}${period}`;
+  };
+  const peakHoursData = (adminStats?.peakHours || []).map((h) => ({
+    time: formatHour(h.hour),
+    orders: h.orders,
+  }));
+  const hasPeakHoursData = peakHoursData.some((h) => h.orders > 0);
 
   if (loading) {
     return (
@@ -1197,56 +1193,61 @@ const WebsiteAdminReports = () => {
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Revenue & Expenses</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Revenue</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Monthly breakdown (All values in RWF)
+              This month vs. last month (All values in RWF)
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-solid"></div>
-              <span className="text-xs text-slate-600 dark:text-slate-400">Revenue</span>
+          {hasRevenueData && (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-solid"></div>
+                <span className="text-xs text-slate-600 dark:text-slate-400">Revenue</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-solidOne"></div>
-              <span className="text-xs text-slate-600 dark:text-slate-400">Expenses</span>
-            </div>
+          )}
+        </div>
+        {hasRevenueData ? (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+                <XAxis
+                  dataKey="month"
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={60}
+                  tickFormatter={(value) => `${value / 1000000}M`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px',
+                  }}
+                  formatter={(value) => ['RWF ' + value.toLocaleString(), 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#0F3D2E" radius={[6, 6, 0, 0]} maxBarSize={80} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-              <XAxis
-                dataKey="month"
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                width={60}
-                tickFormatter={(value) => `${value / 1000000}M`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '8px',
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  padding: '8px 12px',
-                }}
-                formatter={(value) => ['RWF ' + value.toLocaleString(), '']}
-              />
-              <Bar dataKey="revenue" fill="#0F3D2E" radius={[6, 6, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="expenses" fill="#E8552F" radius={[6, 6, 0, 0]} maxBarSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        ) : (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              No completed orders yet
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Category Distribution & Peak Hours */}
@@ -1307,39 +1308,51 @@ const WebsiteAdminReports = () => {
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">Peak Order Hours</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Average orders per hour</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Orders by hour of day (last 30 days)
+            </p>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHoursData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  stroke="#64748b"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#64748b"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  width={40}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  }}
-                  formatter={(value) => [value + ' orders', '']}
-                />
-                <Bar dataKey="orders" fill="#0F3D2E" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {hasPeakHoursData ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={peakHoursData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+                  <XAxis
+                    dataKey="time"
+                    stroke="#64748b"
+                    fontSize={9}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={1}
+                  />
+                  <YAxis
+                    stroke="#64748b"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={40}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    }}
+                    formatter={(value) => [value + ' orders', '']}
+                  />
+                  <Bar dataKey="orders" fill="#0F3D2E" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                No orders in the last 30 days yet
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1392,7 +1405,35 @@ export const Reports = () => {
 
 // Shop Admin Insights Component
 const ShopAdminInsights = () => {
-  // Customer behavior data
+  const [loading, setLoading] = useState(true);
+  const [businessData, setBusinessData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchInsightsData = async () => {
+      try {
+        setLoading(true);
+        const response = await analyticsService.getBusinessOverview();
+        if (!isMounted) return;
+        setBusinessData(response);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error fetching insights data:', err);
+        setError(err.message || 'Failed to load insights data');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchInsightsData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Customer behavior data - not currently instrumented (no day-by-day
+  // new-vs-returning customer tracking exists in the backend), left as-is
+  // pending a future pass.
   const customerBehaviorData = [
     { day: 'Mon', newCustomers: 12, returningCustomers: 28 },
     { day: 'Tue', newCustomers: 15, returningCustomers: 32 },
@@ -1403,64 +1444,68 @@ const ShopAdminInsights = () => {
     { day: 'Sun', newCustomers: 22, returningCustomers: 40 },
   ];
 
-  // Product performance insights
-  const productPerformance = [
-    {
-      product: 'Fresh Vegetable Mix',
-      viewToCart: 68,
-      cartToCheckout: 85,
-      checkoutToSale: 92,
-      trend: 'up',
-    },
-    {
-      product: 'Organic Fruit Basket',
-      viewToCart: 72,
-      cartToCheckout: 78,
-      checkoutToSale: 88,
-      trend: 'up',
-    },
-    {
-      product: 'Whole Grain Bread',
-      viewToCart: 45,
-      cartToCheckout: 65,
-      checkoutToSale: 75,
-      trend: 'down',
-    },
-  ];
+  // Peak Sales Time - derived from real hourly order distribution
+  const peakHours = businessData?.peakHours || [];
+  const busiestHour = peakHours.reduce(
+    (max, h) => (h.orders > (max?.orders || 0) ? h : max),
+    null
+  );
+  const formatHour12 = (hour) => {
+    const period = hour < 12 ? 'AM' : 'PM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${displayHour}${period}`;
+  };
+  const totalPeakOrders = peakHours.reduce((sum, h) => sum + h.orders, 0);
 
-  // Key insights cards
+  // Avg Cart Value - derived from real completed-order revenue
+  const avgOrderValue = businessData?.avgOrderValue || 0;
+  const hasAvgOrderValue = avgOrderValue > 0;
+
+  // Customer Retention - derived from real repeat-customer rate
+  const returningCustomerRate = businessData?.returningCustomerRate;
+  const hasRetentionData = returningCustomerRate !== null && returningCustomerRate !== undefined;
+
+  // Key insights cards - each is real data from the business overview endpoint,
+  // or an honest "not available" state when the backend has nothing to back it.
   const insights = [
     {
       title: 'Peak Sales Time',
-      value: '6PM - 8PM',
-      description: '45% of daily sales occur during this window',
+      value: busiestHour ? formatHour12(busiestHour.hour) : null,
+      description:
+        busiestHour && totalPeakOrders > 0
+          ? `${Math.round((busiestHour.orders / totalPeakOrders) * 100)}% of orders in the last 30 days land in this hour`
+          : 'Not enough order history yet',
       icon: Clock,
       color: 'blue',
-      trend: 'Schedule promotions during peak hours',
+      trend: busiestHour ? 'Schedule promotions during peak hours' : null,
     },
     {
       title: 'Customer Retention',
-      value: '72%',
-      description: 'Returning customers contribute to most revenue',
+      value: hasRetentionData ? `${returningCustomerRate}%` : null,
+      description: hasRetentionData
+        ? 'Share of customers with more than one completed order'
+        : 'Not enough completed orders yet',
       icon: Users,
       color: 'green',
-      trend: 'Focus on loyalty programs',
+      trend: hasRetentionData ? 'Focus on loyalty programs' : null,
     },
     {
       title: 'Avg. Cart Value',
-      value: 'RWF 1,490',
-      description: 'Up 8% from last month',
+      value: hasAvgOrderValue ? `RWF ${avgOrderValue.toLocaleString()}` : null,
+      description: hasAvgOrderValue
+        ? 'Average value of completed orders'
+        : 'Not enough completed orders yet',
       icon: ShoppingCart,
       color: 'orange',
-      trend: 'Bundle deals are working',
+      trend: null,
     },
     {
       title: 'Best Category',
-      value: 'Vegetables',
-      description: '28% of total sales',
+      value: null,
+      description: 'Category-level sales tracking is not available yet',
       icon: Package,
       color: 'purple',
-      trend: 'Expand vegetable inventory',
+      trend: null,
     },
   ];
 
@@ -1488,6 +1533,28 @@ const ShopAdminInsights = () => {
       potential: '+RWF 65,000/month',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading insights data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading data</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -1534,11 +1601,17 @@ const ShopAdminInsights = () => {
             <h3 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
               {insight.title}
             </h3>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-              {insight.value}
-            </p>
+            {insight.value !== null ? (
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                {insight.value}
+              </p>
+            ) : (
+              <p className="text-sm font-medium text-slate-400 dark:text-slate-500 italic mb-2">
+                Not available yet
+              </p>
+            )}
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{insight.description}</p>
-            <p className="text-xs font-semibold text-solid">{insight.trend}</p>
+            {insight.trend && <p className="text-xs font-semibold text-solid">{insight.trend}</p>}
           </div>
         ))}
       </div>
@@ -1604,65 +1677,10 @@ const ShopAdminInsights = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Product Conversion Funnel
         </h3>
-        <div className="space-y-4">
-          {productPerformance.map((product) => (
-            <div key={product.product} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {product.product}
-                </h4>
-                {product.trend === 'up' ? (
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-red-600" />
-                )}
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">View → Cart</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${product.viewToCart}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                      {product.viewToCart}%
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Cart → Checkout</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                      <div
-                        className="bg-orange-600 h-2 rounded-full"
-                        style={{ width: `${product.cartToCheckout}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                      {product.cartToCheckout}%
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Checkout → Sale</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${product.checkoutToSale}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                      {product.checkoutToSale}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            Conversion tracking (views, cart adds, checkouts) is not available yet
+          </p>
         </div>
       </div>
 
@@ -2049,38 +2067,81 @@ export const Insights = () => {
 
 // Shop Admin Impact Component
 const ShopAdminImpact = () => {
-  // Monthly impact data for the shop
-  const monthlyImpactData = [
-    { month: 'Jan', meals: 285, co2: 85.5, water: 4275 },
-    { month: 'Feb', meals: 312, co2: 93.6, water: 4680 },
-    { month: 'Mar', meals: 298, co2: 89.4, water: 4470 },
-    { month: 'Apr', meals: 345, co2: 103.5, water: 5175 },
-    { month: 'May', meals: 368, co2: 110.4, water: 5520 },
-    { month: 'Jun', meals: 439, co2: 131.7, water: 6585 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [businessData, setBusinessData] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Impact by category
-  const categoryImpact = [
-    { category: 'Vegetables', meals: 620, co2: 186, water: 9300, percentage: 28 },
-    { category: 'Fruits', meals: 487, co2: 146, water: 7305, percentage: 22 },
-    { category: 'Dairy', meals: 398, co2: 119, water: 5970, percentage: 18 },
-    { category: 'Grains', meals: 354, co2: 106, water: 5310, percentage: 16 },
-    { category: 'Others', meals: 354, co2: 106, water: 5310, percentage: 16 },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImpactData = async () => {
+      try {
+        setLoading(true);
+        const response = await analyticsService.getBusinessOverview();
+        if (!isMounted) return;
+        setBusinessData(response);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error fetching impact data:', err);
+        setError(err.message || 'Failed to load impact data');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchImpactData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Calculate totals
-  const totalMeals = 2213;
-  const totalCo2 = 663.9; // kg
-  const totalWater = 33195; // liters
-  const shopRank = 15; // Out of all vendors
+  // Real monthly meals/CO2e/water trend for this business
+  const monthlyImpactData = businessData?.monthlyImpact || [];
 
-  // Environmental equivalents
+  // Real impact by category, with a percentage-share bar to match the old UI
+  const categoryImpact = (businessData?.categoryImpact || []).map((c) => ({
+    category: c.name,
+    meals: c.meals,
+    co2: c.co2,
+    water: c.water,
+    percentage: c.percent,
+  }));
+
+  // Real totals, straight from the business's tracked impact stats
+  const totalMeals = businessData?.stats?.impact?.mealsRescued || 0;
+  const totalCo2 = businessData?.stats?.impact?.co2Saved || 0; // kg
+  const totalWater = businessData?.stats?.impact?.waterSaved || 0; // liters
+  const shopRank = businessData?.platformRank || null; // real position among all vendors
+
+  // Environmental equivalents, computed from the real totals above (the
+  // conversion factors themselves - kg CO2/car/year, kg CO2/tree/year,
+  // liters/Olympic pool - are public reference constants, not fabricated data)
   const equivalents = {
     carsOffRoad: (totalCo2 / 4600).toFixed(1), // avg car produces 4.6 tons CO2/year
     treesPlanted: Math.round(totalCo2 / 21), // 1 tree absorbs 21kg CO2/year
     poolsFilled: (totalWater / 75000).toFixed(2), // Olympic pool = 75,000 liters
     householdsPowered: ((totalMeals * 0.5) / 30).toFixed(1), // Rough estimate
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading impact data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading data</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -2100,14 +2161,13 @@ const ShopAdminImpact = () => {
             <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/40 group-hover:scale-110 transition-all duration-300">
               <UtensilsCrossed className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">Meals Rescued</p>
           <p className="text-3xl font-bold text-blue-900 dark:text-white mb-2">
             {totalMeals.toLocaleString()}
           </p>
-          <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-            +54% vs last period
+          <p className="text-xs text-blue-500 dark:text-blue-400/70 font-medium italic">
+            No historical data yet
           </p>
         </div>
 
@@ -2156,9 +2216,11 @@ const ShopAdminImpact = () => {
           <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">
             Platform Rank
           </p>
-          <p className="text-3xl font-bold text-orange-900 dark:text-white mb-2">#{shopRank}</p>
+          <p className="text-3xl font-bold text-orange-900 dark:text-white mb-2">
+            {shopRank !== null ? `#${shopRank}` : '—'}
+          </p>
           <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-            Among all vendors
+            By meals rescued, among all vendors
           </p>
         </div>
       </div>
@@ -2268,38 +2330,49 @@ const ShopAdminImpact = () => {
               </tr>
             </thead>
             <tbody>
-              {categoryImpact.map((item) => (
-                <tr
-                  key={item.category}
-                  className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">
-                    {item.category}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
-                    {item.meals}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
-                    {item.co2}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
-                    {item.water.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 max-w-[100px] bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div
-                          className="bg-solid h-2 rounded-full"
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
+              {categoryImpact.length > 0 ? (
+                categoryImpact.map((item) => (
+                  <tr
+                    key={item.category}
+                    className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">
+                      {item.category}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
+                      {item.meals}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
+                      {item.co2}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
+                      {item.water.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 max-w-[100px] bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                          <div
+                            className="bg-solid h-2 rounded-full"
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {item.percentage}%
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {item.percentage}%
-                      </span>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-6 text-center text-sm text-slate-400 dark:text-slate-500 italic"
+                  >
+                    No completed orders yet
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -2373,9 +2446,14 @@ const ShopAdminImpact = () => {
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
               By rescuing {totalMeals.toLocaleString()} meals, you've saved{' '}
               {totalCo2.toLocaleString()} kg of CO2e from entering the atmosphere and conserved{' '}
-              {totalWater.toLocaleString()} liters of water. You're ranked{' '}
-              <strong>#{shopRank}</strong> among all vendors on ChopNow. Keep up the amazing work in
-              fighting food waste and protecting our planet! 🌍
+              {totalWater.toLocaleString()} liters of water.
+              {shopRank !== null && (
+                <>
+                  {' '}
+                  You're ranked <strong>#{shopRank}</strong> among all vendors on ChopNow.
+                </>
+              )}{' '}
+              Keep up the amazing work in fighting food waste and protecting our planet! 🌍
             </p>
           </div>
         </div>
@@ -2386,61 +2464,106 @@ const ShopAdminImpact = () => {
 
 // Website Admin Impact Component
 const WebsiteAdminImpact = () => {
-  // Monthly impact data
-  const monthlyImpactData = [
-    { month: 'Jan', meals: 6800, co2: 2040, water: 102000 },
-    { month: 'Feb', meals: 7500, co2: 2250, water: 112500 },
-    { month: 'Mar', meals: 8200, co2: 2460, water: 123000 },
-    { month: 'Apr', meals: 7900, co2: 2370, water: 118500 },
-    { month: 'May', meals: 8600, co2: 2580, water: 129000 },
-    { month: 'Jun', meals: 9230, co2: 2769, water: 138450 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [platformData, setPlatformData] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Impact by category
-  const categoryImpactData = [
-    { category: 'Vegetables', meals: 11250, co2: 3375, water: 168750, color: '#10b981' },
-    { category: 'Fruits', meals: 9020, co2: 2706, water: 135300, color: '#3b82f6' },
-    { category: 'Bakery', meals: 8115, co2: 2434, water: 121725, color: '#f59e0b' },
-    { category: 'Dairy', meals: 6770, co2: 2031, water: 101550, color: '#8b5cf6' },
-    { category: 'Meat & Fish', meals: 5410, co2: 2164, water: 81150, color: '#ef4444' },
-    { category: 'Others', meals: 4665, co2: 1399, water: 69975, color: '#6b7280' },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImpactData = async () => {
+      try {
+        setLoading(true);
+        const response = await analyticsService.getPlatformOverview();
+        if (!isMounted) return;
+        setPlatformData(response);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error fetching impact data:', err);
+        setError(err.message || 'Failed to load impact data');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchImpactData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Environmental equivalents
+  // Real monthly meals/CO2e/water trend, platform-wide
+  const monthlyImpactData = platformData?.monthlyImpact || [];
+
+  // Real impact by category, platform-wide - colors are assigned by position
+  // since the category itself is the only real, non-fabricated data
+  const CATEGORY_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#6b7280', '#06b6d4'];
+  const categoryImpactData = (platformData?.categoryImpact || []).map((c, index) => ({
+    category: c.name,
+    meals: c.meals,
+    co2: c.co2,
+    water: c.water,
+    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+  }));
+  const maxCategoryMeals = Math.max(1, ...categoryImpactData.map((c) => c.meals));
+
+  // Total cumulative impact - real, from Business.stats.impact summed platform-wide
+  const totalImpact = {
+    meals: platformData?.impact?.totalMealsRescued || 0,
+    co2: platformData?.impact?.totalCo2Saved || 0,
+    water: platformData?.impact?.totalWaterSaved || 0,
+    wasteReduced: platformData?.impact?.totalFoodWasteSaved || 0, // kg
+  };
+
+  // Environmental equivalents, computed from the real totals above (the
+  // conversion factors - kg CO2/car/year, kg CO2/tree/year, liters/Olympic
+  // pool - are public reference constants, not fabricated data)
   const environmentalEquivalents = [
     {
       title: 'Cars Off Road',
-      value: '2,956',
-      description: 'Equivalent to taking this many cars off the road for a day',
+      value: (totalImpact.co2 / 4600).toFixed(1),
+      description: 'Equivalent to taking this many cars off the road for a year',
       icon: '🚗',
     },
     {
       title: 'Trees Planted',
-      value: '678',
+      value: Math.round(totalImpact.co2 / 21).toLocaleString(),
       description: 'Equal to planting this many trees annually',
       icon: '🌳',
     },
     {
       title: 'Olympic Pools',
-      value: '271',
+      value: (totalImpact.water / 75000).toFixed(2),
       description: 'Water saved could fill this many Olympic swimming pools',
       icon: '🏊',
     },
     {
-      title: 'Households Powered',
-      value: '1,245',
-      description: 'Energy saved equivalent to powering households for a day',
+      title: 'Households Fed',
+      value: ((totalImpact.meals * 0.5) / 30).toFixed(1),
+      description: 'Rough estimate of households fed for a month',
       icon: '⚡',
     },
   ];
 
-  // Total cumulative impact
-  const totalImpact = {
-    meals: 45230,
-    co2: 13569,
-    water: 678450,
-    wasteReduced: 22615, // kg
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-solid border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading impact data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading data</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -2595,44 +2718,55 @@ const WebsiteAdminImpact = () => {
               </tr>
             </thead>
             <tbody>
-              {categoryImpactData.map((item, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      ></div>
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {item.category}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
-                    {item.meals.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">
-                    {item.co2.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    {item.water.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full"
-                        style={{
-                          width: `${(item.meals / 11250) * 100}%`,
-                          backgroundColor: item.color,
-                        }}
-                      ></div>
-                    </div>
+              {categoryImpactData.length > 0 ? (
+                categoryImpactData.map((item, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {item.category}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-sm font-semibold text-slate-900 dark:text-white">
+                      {item.meals.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">
+                      {item.co2.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      {item.water.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${(item.meals / maxCategoryMeals) * 100}%`,
+                            backgroundColor: item.color,
+                          }}
+                        ></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-6 text-center text-sm text-slate-400 dark:text-slate-500 italic"
+                  >
+                    No completed orders yet
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -11,6 +11,8 @@ const request = require('supertest');
 const app = require('./app');
 const User = require('../models/User');
 const PlatformSettings = require('../models/PlatformSettings');
+const { createAdmin, createConsumer } = require('./fixtures');
+const AuditLog = require('../models/AuditLog');
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const validUser = {
@@ -269,6 +271,52 @@ describe('GET /api/v1/users/profile', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────
+// L2: PUT /profile - explicit "was this field provided" merge + validation
+// ─────────────────────────────────────────────────────────────────────
+describe('PUT /api/v1/users/profile', () => {
+  let token;
+
+  beforeEach(async () => {
+    const res = await registerUser();
+    token = res.body.token;
+  });
+
+  it('updates only the fields provided, leaving others untouched', async () => {
+    const res = await request(app)
+      .put('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ firstName: 'Updated' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.firstName).toBe('Updated');
+    expect(res.body.lastName).toBe(validUser.lastName);
+  });
+
+  it('rejects an explicit empty-string firstName instead of silently keeping the old value', async () => {
+    const res = await request(app)
+      .put('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ firstName: '' });
+
+    expect(res.status).toBe(400);
+
+    const profile = await request(app)
+      .get('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`);
+    expect(profile.body.firstName).toBe(validUser.firstName);
+  });
+
+  it('rejects a malformed phone number', async () => {
+    const res = await request(app)
+      .put('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone: 'not-a-phone' });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
 // OTP login validation (C3) - these routes previously had zero validation,
 // so a non-string email/otp (e.g. a Mongo operator object) reached
 // User.findOne() unvalidated.
@@ -516,5 +564,324 @@ describe('Email verification (C12)', () => {
     expect(known.status).toBe(200);
     expect(unknown.status).toBe(200);
     expect(known.body).toEqual(unknown.body);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// OTP login flow (M2)
+// ─────────────────────────────────────────────────────────────────────
+describe('OTP login flow (POST /send-otp -> POST /verify-otp)', () => {
+  it('should send an OTP, then log the user in with it', async () => {
+    const reg = await registerUser({ email: 'otp-flow@example.com' });
+
+    const sendRes = await request(app)
+      .post('/api/v1/users/send-otp')
+      .send({ email: 'otp-flow@example.com' });
+    expect(sendRes.status).toBe(200);
+
+    const stored = await User.findById(reg.body._id).select('+otpCode');
+    expect(stored.otpCode).toMatch(/^\d{6}$/);
+
+    const verifyRes = await request(app)
+      .post('/api/v1/users/verify-otp')
+      .send({ email: 'otp-flow@example.com', otp: stored.otpCode });
+
+    expect(verifyRes.status).toBe(200);
+    expect(verifyRes.body.token).toBeTruthy();
+    expect(verifyRes.body._id).toBe(reg.body._id);
+
+    // The code is single-use (a second attempt with the same code fails) and
+    // marks the account verified.
+    const reuseRes = await request(app)
+      .post('/api/v1/users/verify-otp')
+      .send({ email: 'otp-flow@example.com', otp: stored.otpCode });
+    expect(reuseRes.status).toBe(400);
+
+    const afterVerify = await User.findById(reg.body._id);
+    expect(afterVerify.emailVerified).toBe(true);
+  });
+
+  it('should reject the wrong OTP code', async () => {
+    await registerUser({ email: 'otp-wrong@example.com' });
+    await request(app).post('/api/v1/users/send-otp').send({ email: 'otp-wrong@example.com' });
+
+    const res = await request(app)
+      .post('/api/v1/users/verify-otp')
+      .send({ email: 'otp-wrong@example.com', otp: '000000' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).not.toHaveProperty('token');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Forgot password / verify-reset-otp / reset-password (M2)
+// ─────────────────────────────────────────────────────────────────────
+describe('Forgot / verify-reset-otp / reset-password flow', () => {
+  it('should walk through forgot -> verify -> reset, then require the new password to log in', async () => {
+    const reg = await registerVerifiedUser({ email: 'reset-flow@example.com' });
+
+    const forgotRes = await request(app)
+      .post('/api/v1/users/forgot-password')
+      .send({ email: 'reset-flow@example.com' });
+    expect(forgotRes.status).toBe(200);
+
+    const stored = await User.findById(reg.body._id).select('+resetPasswordToken');
+    expect(stored.resetPasswordToken).toMatch(/^\d{6}$/);
+
+    const verifyRes = await request(app)
+      .post('/api/v1/users/verify-reset-otp')
+      .send({ email: 'reset-flow@example.com', otp: stored.resetPasswordToken });
+    expect(verifyRes.status).toBe(200);
+
+    const resetRes = await request(app).post('/api/v1/users/reset-password').send({
+      email: 'reset-flow@example.com',
+      token: stored.resetPasswordToken,
+      password: 'NewPassword2',
+    });
+    expect(resetRes.status).toBe(200);
+
+    const oldLogin = await request(app)
+      .post('/api/v1/users/login')
+      .send({ email: 'reset-flow@example.com', password: validUser.password });
+    expect(oldLogin.status).toBe(401);
+
+    const newLogin = await request(app)
+      .post('/api/v1/users/login')
+      .send({ email: 'reset-flow@example.com', password: 'NewPassword2' });
+    expect(newLogin.status).toBe(200);
+  });
+
+  it('should give the same generic response for a registered and an unregistered email (no enumeration)', async () => {
+    await registerVerifiedUser({ email: 'reset-known@example.com' });
+    const known = await request(app)
+      .post('/api/v1/users/forgot-password')
+      .send({ email: 'reset-known@example.com' });
+    const unknown = await request(app)
+      .post('/api/v1/users/forgot-password')
+      .send({ email: 'reset-nobody@example.com' });
+
+    expect(known.status).toBe(200);
+    expect(unknown.status).toBe(200);
+    expect(known.body).toEqual(unknown.body);
+  });
+
+  it('should reject a reset with the wrong/expired code', async () => {
+    await registerVerifiedUser({ email: 'reset-badcode@example.com' });
+    await request(app)
+      .post('/api/v1/users/forgot-password')
+      .send({ email: 'reset-badcode@example.com' });
+
+    const res = await request(app).post('/api/v1/users/reset-password').send({
+      email: 'reset-badcode@example.com',
+      token: '000000',
+      password: 'NewPassword2',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject a new password under 8 characters', async () => {
+    const reg = await registerVerifiedUser({ email: 'reset-weak@example.com' });
+    await request(app)
+      .post('/api/v1/users/forgot-password')
+      .send({ email: 'reset-weak@example.com' });
+    const stored = await User.findById(reg.body._id).select('+resetPasswordToken');
+
+    const res = await request(app).post('/api/v1/users/reset-password').send({
+      email: 'reset-weak@example.com',
+      token: stored.resetPasswordToken,
+      password: 'short1',
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Role switching (M2)
+// ─────────────────────────────────────────────────────────────────────
+describe('POST /api/v1/users/switch-role', () => {
+  it("should switch to a role the user holds and update activeRole", async () => {
+    const { token, user } = await createConsumer();
+    await User.findByIdAndUpdate(user._id, { $addToSet: { roles: 'business_owner' } });
+
+    const res = await request(app)
+      .post('/api/v1/users/switch-role')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ role: 'business_owner' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.activeRole).toBe('business_owner');
+    expect((await User.findById(user._id)).activeRole).toBe('business_owner');
+  });
+
+  it('should reject switching to a role the user does not hold', async () => {
+    const { token } = await createConsumer();
+
+    const res = await request(app)
+      .post('/api/v1/users/switch-role')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('should reject an unauthenticated request', async () => {
+    const res = await request(app).post('/api/v1/users/switch-role').send({ role: 'consumer' });
+    expect(res.status).toBe(401);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// PUT /profile/password strength rule unification (M3)
+// ─────────────────────────────────────────────────────────────────────
+describe('PUT /api/v1/users/profile/password', () => {
+  const getOtp = async (token) => {
+    const res = await request(app)
+      .post('/api/v1/users/profile/password/request-otp')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: validUser.password });
+    expect(res.status).toBe(200);
+    const decoded = require('jsonwebtoken').decode(token);
+    const stored = await User.findById(decoded.id).select('+otpCode');
+    return stored.otpCode;
+  };
+
+  it('should reject a new password under 8 characters (no more 6-char path)', async () => {
+    const reg = await registerVerifiedUser({ email: 'changepw-weak@example.com' });
+    const otp = await getOtp(reg.body.token);
+
+    const res = await request(app)
+      .put('/api/v1/users/profile/password')
+      .set('Authorization', `Bearer ${reg.body.token}`)
+      .send({ otp, newPassword: 'short1' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject a new password missing complexity (8+ chars but all lowercase)', async () => {
+    const reg = await registerVerifiedUser({ email: 'changepw-nocomplex@example.com' });
+    const otp = await getOtp(reg.body.token);
+
+    const res = await request(app)
+      .put('/api/v1/users/profile/password')
+      .set('Authorization', `Bearer ${reg.body.token}`)
+      .send({ otp, newPassword: 'alllowercase' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept a strong new password and let the user log in with it', async () => {
+    const reg = await registerVerifiedUser({ email: 'changepw-strong@example.com' });
+    const otp = await getOtp(reg.body.token);
+
+    const res = await request(app)
+      .put('/api/v1/users/profile/password')
+      .set('Authorization', `Bearer ${reg.body.token}`)
+      .send({ otp, newPassword: 'NewStrongPass2' });
+    expect(res.status).toBe(200);
+
+    const login = await request(app)
+      .post('/api/v1/users/login')
+      .send({ email: 'changepw-strong@example.com', password: 'NewStrongPass2' });
+    expect(login.status).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Admin user management (M2) - includes a C1-payload regression test at
+// this endpoint too, alongside the one already covering registration above.
+// ─────────────────────────────────────────────────────────────────────
+describe('Admin user management (GET /api/v1/users, PUT /api/v1/users/:id)', () => {
+  it('should block a non-admin from listing users', async () => {
+    const { token } = await createConsumer();
+    const res = await request(app).get('/api/v1/users').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('should block a non-admin from updating another user (C1-style payload included)', async () => {
+    const { token } = await createConsumer();
+    const { user: target } = await createConsumer();
+
+    const res = await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ roles: ['admin'] });
+
+    expect(res.status).toBe(403);
+    expect((await User.findById(target._id)).roles).not.toContain('admin');
+  });
+
+  it('should let an admin list users', async () => {
+    const { token } = await createAdmin();
+    await createConsumer();
+
+    const res = await request(app).get('/api/v1/users').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.users)).toBe(true);
+    expect(res.body.users.length).toBeGreaterThan(0);
+  });
+
+  it('should let an admin update a user - status and roles', async () => {
+    const { token } = await createAdmin();
+    const { user: target } = await createConsumer();
+
+    const res = await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'suspended', roles: ['consumer', 'rider'] });
+
+    expect(res.status).toBe(200);
+    const updated = await User.findById(target._id);
+    expect(updated.status).toBe('suspended');
+    expect(updated.roles).toEqual(expect.arrayContaining(['consumer', 'rider']));
+  });
+
+  it('should write an audit-log entry when an admin grants the admin role (M4)', async () => {
+    const admin = await createAdmin();
+    const { user: target } = await createConsumer();
+
+    const res = await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ roles: ['consumer', 'admin'] });
+    expect(res.status).toBe(200);
+
+    const entries = await AuditLog.find({ targetUser: target._id, action: 'grant_admin_role' });
+    expect(entries).toHaveLength(1);
+    expect(entries[0].actor.toString()).toBe(admin.user._id.toString());
+    expect(entries[0].rolesBefore).toEqual(['consumer']);
+    expect(entries[0].rolesAfter).toEqual(expect.arrayContaining(['consumer', 'admin']));
+    expect(entries[0].createdAt).toBeTruthy();
+  });
+
+  it('should NOT write an audit-log entry for a role update that does not grant admin', async () => {
+    const { token } = await createAdmin();
+    const { user: target } = await createConsumer();
+
+    await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ roles: ['consumer', 'rider'] });
+
+    const entries = await AuditLog.find({ targetUser: target._id });
+    expect(entries).toHaveLength(0);
+  });
+
+  it('should NOT write a duplicate audit-log entry when re-saving an already-admin user', async () => {
+    const admin = await createAdmin();
+    const { user: target } = await createConsumer();
+    await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ roles: ['consumer', 'admin'] });
+
+    // A second, unrelated update (still holding admin) must not log again.
+    await request(app)
+      .put(`/api/v1/users/${target._id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ firstName: 'Renamed' });
+
+    const entries = await AuditLog.find({ targetUser: target._id });
+    expect(entries).toHaveLength(1);
   });
 });

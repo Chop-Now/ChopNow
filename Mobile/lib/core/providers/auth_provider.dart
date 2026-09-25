@@ -9,6 +9,7 @@ import '../services/socket_service.dart';
 import '../services/notification_service.dart';
 import '../services/biometric_service.dart';
 import '../models/user_model.dart';
+import '../utils/constants.dart';
 
 // ── Auth States ───────────────────────────────────────────────────────────────
 sealed class AuthState {
@@ -80,12 +81,84 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final res = await ApiClient.instance.post(AppEndpoints.login,
           data: {'email': email, 'password': password});
       await _saveAndSetState(res.data, preferredRole: preferredRole);
-      // Save credentials for quick biometric sign-in
-      await BiometricService.saveCredentials(email, password);
+      // Stash the refresh token behind the biometric gate for quick sign-in
+      final refreshToken = res.data['refreshToken'] as String?;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await BiometricService.saveRefreshToken(refreshToken);
+      }
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
     } catch (e) {
       state = AuthError(e.toString());
+    }
+  }
+
+  /// Signs in using the refresh token stashed behind the biometric gate
+  /// (see BiometricService), after the caller has already confirmed a
+  /// successful Face ID/fingerprint check. Returns false if there is no
+  /// stored refresh token or it's no longer valid, in which case the caller
+  /// should fall back to a normal email/password login.
+  Future<bool> loginWithBiometrics({String? preferredRole}) async {
+    final storedRefreshToken = await BiometricService.getRefreshToken();
+    if (storedRefreshToken == null) return false;
+
+    state = const AuthLoading();
+    try {
+      final refreshDio = Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl));
+      final response = await refreshDio.post(
+        AppEndpoints.refreshToken,
+        data: {'refreshToken': storedRefreshToken},
+      );
+      final accessToken = response.data['token'] as String?;
+      final rotatedRefreshToken = response.data['refreshToken'] as String?;
+      if (accessToken == null) {
+        state = const AuthUnauthenticated();
+        return false;
+      }
+
+      // Persist tokens so ApiClient's auth interceptor can use them for the
+      // profile call below, and refresh the biometric copy since the backend
+      // rotates the refresh token on every use.
+      await AuthService.saveAccessToken(accessToken);
+      if (rotatedRefreshToken != null) {
+        await AuthService.saveRefreshToken(rotatedRefreshToken);
+        await BiometricService.saveRefreshToken(rotatedRefreshToken);
+      }
+
+      final profileRes = await ApiClient.instance.get(AppEndpoints.profile);
+      var user = AppUser.fromJson(_extractUser(profileRes.data));
+      await AuthService.saveUserId(user.id);
+      await AuthService.saveActiveRole(user.activeRole);
+
+      if (preferredRole != null &&
+          preferredRole.isNotEmpty &&
+          user.activeRole != preferredRole &&
+          user.roles.contains(preferredRole)) {
+        try {
+          final switchRes = await ApiClient.instance
+              .post(AppEndpoints.switchRole, data: {'role': preferredRole});
+          user = AppUser.fromJson(_extractUser(switchRes.data));
+          await AuthService.saveActiveRole(preferredRole);
+        } catch (_) {
+          // If switch fails silently, continue with original role
+        }
+      }
+
+      state = AuthAuthenticated(user: user, token: accessToken);
+      SocketService().connect(accessToken);
+      NotificationService.instance.registerToken();
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // Stored refresh token is expired/revoked - it will never work
+        // again, so drop it and stop offering biometric sign-in.
+        await BiometricService.setEnabled(false);
+      }
+      state = AuthError(ApiException.fromDioError(e).message);
+      return false;
+    } catch (e) {
+      state = AuthError(e.toString());
+      return false;
     }
   }
 
@@ -150,6 +223,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final res = await ApiClient.instance
           .post(AppEndpoints.verifyOtp, data: {'phone': phone, 'otp': otp});
+      await _saveAndSetState(res.data, preferredRole: preferredRole);
+    } on DioException catch (e) {
+      state = AuthError(ApiException.fromDioError(e).message);
+    } catch (e) {
+      state = AuthError(e.toString());
+    }
+  }
+
+  /// Signs in (or registers, per the backend's googleLogin - see
+  /// Backend/controllers/userController.js) with a Google ID token obtained
+  /// from google_sign_in. Mirrors the web app's Login.jsx/SignUp.jsx flow,
+  /// which uses the same audience-bound ID-token credential (H5 fix) rather
+  /// than a bare access token.
+  Future<void> loginWithGoogle(String idToken, {String? preferredRole}) async {
+    state = const AuthLoading();
+    try {
+      final res = await ApiClient.instance
+          .post(AppEndpoints.googleLogin, data: {'idToken': idToken});
       await _saveAndSetState(res.data, preferredRole: preferredRole);
     } on DioException catch (e) {
       state = AuthError(ApiException.fromDioError(e).message);
@@ -292,6 +383,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await NotificationService.instance.unregisterToken();
     await AuthService.clearAll();
+    // H17: biometric sign-in stashes a refresh token behind the biometric
+    // gate - without this, it survives logout, so the next person to unlock
+    // this device could tap "Sign in with Face ID/Fingerprint" and be logged
+    // in as the previous user with no password prompt at all.
+    await BiometricService.setEnabled(false);
     SocketService().disconnect();
     state = const AuthUnauthenticated();
   }

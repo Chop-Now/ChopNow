@@ -7,8 +7,10 @@ import '../../core/providers/auth_provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/services/biometric_service.dart';
+import '../../core/services/google_auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/buttons/cn_buttons.dart';
+import '../../shared/widgets/buttons/google_auth_button.dart';
 import '../../shared/widgets/inputs/cn_text_field.dart';
 import '../../shared/animations/scale_tap.dart';
 import '../../shared/widgets/layout/auth_shell.dart';
@@ -47,6 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
   IconData _biometricIcon = Icons.vpn_key_rounded;
+  bool _googleSigningIn = false;
 
   @override
   void initState() {
@@ -86,27 +89,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         reason: 'Authenticate to sign in to ChopNow');
     if (!authenticated) return;
 
-    final credentials = await BiometricService.getCredentials();
-    if (credentials == null) {
-      setState(() => _localError =
-          'No saved biometric credentials. Please sign in with password first.');
-      return;
-    }
-
-    final email = credentials['email']!;
-    final password = credentials['password']!;
-
-    // Auto-fill fields for visual feedback
-    _emailCtrl.text = email;
-    _passwordCtrl.text = password;
-
     // Map role choice to preferred backend role
     final preferredRole =
         _selectedRole == _LoginRole.business ? 'business_owner' : 'consumer';
 
-    ref
+    final success = await ref
         .read(authProvider.notifier)
-        .login(email: email, password: password, preferredRole: preferredRole);
+        .loginWithBiometrics(preferredRole: preferredRole);
+
+    if (!success && mounted) {
+      final currentState = ref.read(authProvider);
+      if (currentState is! AuthError) {
+        setState(() => _localError =
+            'No saved biometric sign-in. Please sign in with your password first.');
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    HapticFeedback.mediumImpact();
+    _clearErrors();
+    setState(() => _googleSigningIn = true);
+    try {
+      final idToken = await GoogleAuthService.signIn();
+      if (idToken == null) {
+        // User cancelled the picker, or Play Services returned no ID token.
+        if (mounted) setState(() => _googleSigningIn = false);
+        return;
+      }
+      final preferredRole =
+          _selectedRole == _LoginRole.business ? 'business_owner' : 'consumer';
+      await ref
+          .read(authProvider.notifier)
+          .loginWithGoogle(idToken, preferredRole: preferredRole);
+    } catch (e) {
+      if (mounted) {
+        setState(() =>
+            _localError = 'Google sign-in failed. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _googleSigningIn = false);
+    }
   }
 
   void _clearErrors() {
@@ -242,6 +265,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 biometricEnabled: _biometricEnabled,
                 biometricIcon: _biometricIcon,
                 onBiometricTap: _loginWithBiometrics,
+                onGoogleTap: _signInWithGoogle,
+                googleSigningIn: _googleSigningIn,
               ),
       ),
     );
@@ -520,6 +545,8 @@ class _LoginFormStep extends StatelessWidget {
   final bool biometricEnabled;
   final IconData biometricIcon;
   final VoidCallback onBiometricTap;
+  final VoidCallback onGoogleTap;
+  final bool googleSigningIn;
 
   const _LoginFormStep({
     super.key,
@@ -542,6 +569,8 @@ class _LoginFormStep extends StatelessWidget {
     required this.biometricEnabled,
     required this.biometricIcon,
     required this.onBiometricTap,
+    required this.onGoogleTap,
+    required this.googleSigningIn,
   });
 
   @override
@@ -559,6 +588,32 @@ class _LoginFormStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Google sign-in - consumer only, mirrors the web app's Login.jsx
+          // (business accounts need role-specific onboarding a bare Google
+          // credential can't supply).
+          if (!isBusinessRole) ...[
+            GoogleAuthButton(
+              onTap: googleSigningIn ? null : onGoogleTap,
+              isLoading: googleSigningIn,
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                    child: Container(height: 1, color: AppColors.border)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('or',
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12.5)),
+                ),
+                Expanded(
+                    child: Container(height: 1, color: AppColors.border)),
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
+
           // Email / Phone switch
           Container(
             padding: const EdgeInsets.all(4),

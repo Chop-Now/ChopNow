@@ -14,6 +14,12 @@ process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'test-jwt-secret-that-is-at-least-32-characters-long';
 process.env.MONGO_URI = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/chopnow-test';
 process.env.NODE_ENV = 'test';
+process.env.FIELD_ENCRYPTION_KEY =
+  process.env.FIELD_ENCRYPTION_KEY || require('crypto').randomBytes(32).toString('base64');
+// M6: verifySignature now requires this explicit opt-in to accept an
+// unsigned pawaPay webhook - tests deliberately post to /payments/webhook
+// without real RFC-9421 signatures, so it must be on here.
+process.env.PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS = 'true';
 
 // ── Mock the logger so tests produce no pino output ──
 jest.mock('../utils/logger', () => {
