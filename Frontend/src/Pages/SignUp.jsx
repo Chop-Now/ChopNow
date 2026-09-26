@@ -15,7 +15,7 @@ import {
   UtensilsCrossed,
   Croissant,
 } from 'lucide-react';
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -100,14 +100,24 @@ const SignUp = () => {
 
   // H5 fix: see Login.jsx - ID-token credential flow, required by the backend's
   // audience verification.
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      await googleAuth(credentialResponse.credential);
-      navigate('/shop');
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // Stable references (useCallback), not inline arrows: @react-oauth/google's
+  // GoogleLogin re-invokes Google's renderButton whenever onSuccess/onError
+  // change identity, and Google's script appends a fresh button into the
+  // container each time rather than replacing it - an inline arrow recreated
+  // every render was rendering two stacked "Sign up with Google" buttons in
+  // production (found during the 2026-09-26 E2E pass).
+  const handleGoogleSuccess = useCallback(
+    async (credentialResponse) => {
+      try {
+        await googleAuth(credentialResponse.credential);
+        navigate('/shop');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [googleAuth, navigate]
+  );
+  const handleGoogleError = useCallback(() => toast.error('Google Signup Failed'), []);
 
   // Check if registrations are allowed - AFTER all hooks
   if (!isFeatureEnabled('registration')) {
@@ -409,7 +419,7 @@ const SignUp = () => {
                     <div className="w-full flex justify-center [&>div]:w-full">
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
-                        onError={() => toast.error('Google Signup Failed')}
+                        onError={handleGoogleError}
                         theme="outline"
                         size="large"
                         text="signup_with"
@@ -476,6 +486,7 @@ const SignUp = () => {
                     <div className="mt-4">
                       <PhoneInput
                         country={'rw'}
+                        disableCountryGuess={true}
                         value={phone}
                         onChange={setPhone}
                         enableSearch={true}
@@ -859,6 +870,7 @@ const SignUp = () => {
                     <div className="mt-4">
                       <PhoneInput
                         country={'rw'}
+                        disableCountryGuess={true}
                         value={phone}
                         onChange={setPhone}
                         enableSearch={true}

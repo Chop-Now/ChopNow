@@ -1,6 +1,6 @@
 import { assets } from '../assets/assets';
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -28,48 +28,58 @@ const AdminLogin = () => {
   }, [isAuthenticated, user, navigate]);
 
   // Google Login for Admin - H5 fix: see Login.jsx, ID-token credential flow.
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setIsGoogleLoading(true);
-    try {
-      const result = await googleAuth(credentialResponse.credential);
-      const loggedInUser = result.user;
+  // Stable references (useCallback), not plain functions recreated every
+  // render: @react-oauth/google's GoogleLogin re-invokes Google's
+  // renderButton whenever onSuccess/onError change identity, and Google's
+  // script appends a fresh button into the container each time rather than
+  // replacing it - this was rendering duplicate stacked buttons in production
+  // on the same-shaped Login/SignUp pages (found during the 2026-09-26 E2E
+  // pass; fixed here too for consistency).
+  const handleGoogleSuccess = useCallback(
+    async (credentialResponse) => {
+      setIsGoogleLoading(true);
+      try {
+        const result = await googleAuth(credentialResponse.credential);
+        const loggedInUser = result.user;
 
-      // Get roles from response
-      const userRoles = loggedInUser.roles || [loggedInUser.role];
+        // Get roles from response
+        const userRoles = loggedInUser.roles || [loggedInUser.role];
 
-      // Check if user has admin role
-      if (!userRoles.includes('admin')) {
-        toast.error('Access denied. This Google account does not have admin privileges.');
-        // Clear the session since they're not an admin
-        clearAccessToken();
-        localStorage.removeItem('user');
-        setIsGoogleLoading(false);
-        return;
-      }
-
-      // Switch to admin role if not already active
-      if (loggedInUser.activeRole !== 'admin') {
-        try {
-          await userService.switchRole('admin');
-        } catch (switchError) {
-          console.warn('Could not switch to admin role:', switchError);
+        // Check if user has admin role
+        if (!userRoles.includes('admin')) {
+          toast.error('Access denied. This Google account does not have admin privileges.');
+          // Clear the session since they're not an admin
+          clearAccessToken();
+          localStorage.removeItem('user');
+          setIsGoogleLoading(false);
+          return;
         }
+
+        // Switch to admin role if not already active
+        if (loggedInUser.activeRole !== 'admin') {
+          try {
+            await userService.switchRole('admin');
+          } catch (switchError) {
+            console.warn('Could not switch to admin role:', switchError);
+          }
+        }
+
+        toast.success('Admin login successful!');
+        navigate('/admin');
+      } catch (err) {
+        console.error('Google Login error:', err);
+        toast.error(err.message || 'Google login failed');
+        setIsGoogleLoading(false);
       }
+    },
+    [googleAuth, navigate]
+  );
 
-      toast.success('Admin login successful!');
-      navigate('/admin');
-    } catch (err) {
-      console.error('Google Login error:', err);
-      toast.error(err.message || 'Google login failed');
-      setIsGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleError = (error) => {
+  const handleGoogleError = useCallback((error) => {
     console.error('Google Login Failed:', error);
     toast.error('Google login failed. Please try again.');
     setIsGoogleLoading(false);
-  };
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();

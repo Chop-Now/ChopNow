@@ -371,6 +371,7 @@ const RiderRegistration = () => {
                   </label>
                   <PhoneInput
                     country={'rw'}
+                    disableCountryGuess={true}
                     value={phone}
                     onChange={(val) => {
                       setPhone(val);

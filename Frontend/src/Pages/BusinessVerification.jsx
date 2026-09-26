@@ -252,6 +252,7 @@ const BusinessVerification = () => {
                 </label>
                 <PhoneInput
                   country={'rw'}
+                  disableCountryGuess={true}
                   value={phone}
                   onChange={(value) => {
                     setPhone(value);

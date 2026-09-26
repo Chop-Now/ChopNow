@@ -24,6 +24,12 @@ import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentMo
 // Mirrors Order.canBeCancelled() on the backend, which is what actually
 // enforces this - the button is just hidden for other states.
 const CANCELLABLE_STATUSES = ['pending_payment', 'paid', 'confirmed'];
+
+// Mirrors Order.js's payment.paymentMethod enum - friendly labels for display.
+const PAYMENT_METHOD_LABELS = {
+  mobile_money: 'Mobile Money',
+  cash: 'Cash',
+};
 import toast from 'react-hot-toast';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -287,8 +293,14 @@ const MyOrders = () => {
       type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
       order_type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
       createdAt: order.createdAt,
-      paymentMethod: order.payment?.method || 'COD',
-      isPaid: order.payment?.status === 'paid',
+      // Was reading order.payment?.method (not a real field - the schema
+      // calls it paymentMethod) and order.payment?.status (also not real -
+      // it's paymentStatus), so this always fell back to the hardcoded
+      // defaults regardless of the real order: every order showed "COD" and
+      // "Unpaid" even after a real payment completed (found during the
+      // 2026-09-26 E2E pass - a real MTN MoMo payment still showed as COD).
+      paymentMethod: PAYMENT_METHOD_LABELS[order.payment?.paymentMethod] || order.payment?.paymentMethod || 'Cash',
+      isPaid: order.payment?.paymentStatus === 'completed',
       items:
         order.items?.map((item) => ({
           quantity: item.quantity,
@@ -299,6 +311,7 @@ const MyOrders = () => {
             offerPrice: item.unitPrice || 0,
           },
         })) || [],
+      pricing: order.pricing || null,
     };
   };
 
@@ -961,16 +974,21 @@ const MyOrders = () => {
                           .toLocaleString()}
                       </p>
                     </div>
-                    {selectedOrder.type === 'Delivery' && (
-                      <div className="flex justify-between">
-                        <p className="text-gray-600">Delivery Charges</p>
-                        <p className="font-medium">RWF 1,000</p>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <p className="text-gray-600">Container Charge</p>
-                      <p className="font-medium">RWF 500</p>
-                    </div>
+                    {selectedOrder.type === 'Delivery' &&
+                      (selectedOrder.pricing?.deliveryFee || 0) > 0 && (
+                        <div className="flex justify-between">
+                          <p className="text-gray-600">Delivery Charges</p>
+                          <p className="font-medium">
+                            RWF {selectedOrder.pricing.deliveryFee.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    {/* "Container Charge: RWF 500" used to render here unconditionally
+                        on every order - there's no such fee anywhere in the backend's
+                        pricing model (Order.js's pricing has no containerCharge field),
+                        and it was never included in the real Total below. Found during
+                        the 2026-09-26 E2E pass; removed rather than wired up, since
+                        there's no real fee to wire it to. */}
                     <div className="flex justify-between pt-2 border-t">
                       <p className="font-semibold text-base">Total</p>
                       <p className="font-semibold text-base">

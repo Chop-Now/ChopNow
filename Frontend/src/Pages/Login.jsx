@@ -9,7 +9,7 @@ import {
   MapPin,
   LocateFixed,
 } from 'lucide-react';
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useCallback, Suspense, lazy } from 'react';
 
 import { useGeolocation } from '../Components/maps/useGeolocation';
 import { reverseGeocode, searchAddress } from '../services/geocoding';
@@ -42,15 +42,25 @@ const Login = () => {
   // issues an audience-bound ID token through this flow, and the backend now
   // requires one to verify the login is actually for this app (see
   // Backend/controllers/userController.js googleLogin).
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      await googleAuth(credentialResponse.credential);
-      // Redirect consumers to shop
-      navigate('/shop');
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // Stable references (useCallback), not inline arrows: @react-oauth/google's
+  // GoogleLogin re-invokes Google's renderButton whenever onSuccess/onError
+  // change identity, and Google's script appends a fresh button into the
+  // container each time rather than replacing it - an inline arrow recreated
+  // every render was rendering two stacked "Sign in with Google" buttons in
+  // production (found during the 2026-09-26 E2E pass, same bug as SignUp.jsx).
+  const handleGoogleSuccess = useCallback(
+    async (credentialResponse) => {
+      try {
+        await googleAuth(credentialResponse.credential);
+        // Redirect consumers to shop
+        navigate('/shop');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [googleAuth, navigate]
+  );
+  const handleGoogleError = useCallback(() => toast.error('Google Login Failed'), []);
 
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
@@ -168,7 +178,7 @@ const Login = () => {
                     <div className="w-full flex justify-center [&>div]:w-full">
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
-                        onError={() => toast.error('Google Login Failed')}
+                        onError={handleGoogleError}
                         theme="outline"
                         size="large"
                         text="continue_with"

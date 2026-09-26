@@ -411,6 +411,7 @@ const MyProfile = () => {
                   </label>
                   <PhoneInput
                     country={'rw'}
+                    disableCountryGuess={true}
                     value={profile.phone}
                     onChange={(phone) => setProfile((prev) => ({ ...prev, phone }))}
                     enableSearch={true}

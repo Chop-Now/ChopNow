@@ -1,11 +1,24 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// In dev, requests go through Vite's own dev-server proxy (see vite.config.js)
-// as same-origin relative paths, so the refresh-token cookie is stored as a
-// same-site cookie - see the proxy config's comment for why. The production
-// build has no dev server / proxy, so it always talks to the real API URL.
-const API_URL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Both dev (Vite's own dev-server proxy, see vite.config.js) and production
+// (Vercel's /api rewrite, see vercel.json) forward API calls as same-origin
+// relative requests, so the refresh-token/CSRF cookies stay first-party
+// instead of cross-site. Talking to the backend's absolute URL directly (as
+// this used to do in production) makes the browser treat those cookies as
+// third-party and silently refuse to store them at all on Safari and an
+// increasing share of Chrome - found live during the 2026-09-26 E2E pass,
+// where it silently logged every user out on every page reload. Never revert
+// this to an absolute URL.
+const API_URL = '';
+
+// The backend's real absolute origin - still needed for the Socket.IO
+// connection, since a WebSocket upgrade isn't something the /api rewrite
+// above proxies. Dev relies on Vite's own /socket.io proxy instead, so this
+// is production-only (see services/socket.js).
+export const BACKEND_ORIGIN = import.meta.env.DEV
+  ? ''
+  : import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // H2 fix: the refresh token now lives only in an httpOnly cookie the backend
 // sets (never reachable from JS - that's the point). The access token is kept

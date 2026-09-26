@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { API_URL, getAccessToken } from './api';
+import { BACKEND_ORIGIN, getAccessToken } from './api';
 
 class SocketService {
   constructor() {
@@ -19,10 +19,14 @@ class SocketService {
     }
 
     try {
-      // Connect to the base URL (remove /api/v1 if present). In dev, API_URL
+      // Connect to the backend's real origin (remove /api/v1 if present) -
+      // Socket.IO's WebSocket upgrade isn't proxied the way plain HTTP API
+      // calls are, so it still needs the absolute URL. In dev, BACKEND_ORIGIN
       // is '' (see services/api.js) - fall back to the page's own origin,
       // which Vite's dev-server proxy forwards /socket.io from.
-      const socketUrl = API_URL ? API_URL.replace('/api/v1', '') : window.location.origin;
+      const socketUrl = BACKEND_ORIGIN
+        ? BACKEND_ORIGIN.replace('/api/v1', '')
+        : window.location.origin;
 
       this.socket = io(socketUrl, {
         transports: ['websocket'],

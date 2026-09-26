@@ -127,7 +127,15 @@ const ProductDetails = () => {
       toast.error(`Only ${product.quantity} items available in stock`);
       return;
     }
-    addToCart(product._id);
+    // Only add a unit if this item isn't in the cart yet - previously this
+    // unconditionally called addToCart even when the item was already there,
+    // so clicking Buy Now on an item you'd already added bumped the quantity
+    // up by one instead of just taking you to checkout with what you'd
+    // already selected (found during the 2026-09-26 E2E pass: 1 already in
+    // cart, "Buy Now" silently made it 2).
+    if (currentQuantity === 0) {
+      addToCart(product._id);
+    }
     navigate('/cart');
   };
 
