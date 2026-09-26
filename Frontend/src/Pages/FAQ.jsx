@@ -65,7 +65,7 @@ const FAQ = () => {
     {
       question: 'What payment methods do you support?',
       answer:
-        'We support mobile money, bank transfers, and card payments. Funds are deposited to your account based on your chosen payout schedule—daily, weekly, or monthly.',
+        "Customers pay you via MTN Mobile Money or Airtel Money - there's no card payment option. Your earnings build up in your ChopNow balance as orders are completed, and you request a payout to your mobile money account or bank account whenever you want it - there's no fixed daily/weekly/monthly schedule.",
     },
     {
       question: 'Do I need special equipment or training?',
