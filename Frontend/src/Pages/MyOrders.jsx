@@ -299,7 +299,10 @@ const MyOrders = () => {
       // defaults regardless of the real order: every order showed "COD" and
       // "Unpaid" even after a real payment completed (found during the
       // 2026-09-26 E2E pass - a real MTN MoMo payment still showed as COD).
-      paymentMethod: PAYMENT_METHOD_LABELS[order.payment?.paymentMethod] || order.payment?.paymentMethod || 'Cash',
+      paymentMethod:
+        PAYMENT_METHOD_LABELS[order.payment?.paymentMethod] ||
+        order.payment?.paymentMethod ||
+        'Cash',
       isPaid: order.payment?.paymentStatus === 'completed',
       items:
         order.items?.map((item) => ({
