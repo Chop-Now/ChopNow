@@ -85,7 +85,15 @@ const AppContextProvider = ({ children }) => {
       }
 
       try {
-        const { data } = await api.post('/api/users/refresh-token', {});
+        // silent:true - a failed refresh here is the normal, expected case
+        // for any logged-out visitor (backend returns 400 "Refresh token is
+        // required"/similar when there's no cookie at all). Without this,
+        // that 400 falls through api.js's response interceptor's generic
+        // catch-all (only 401 is treated specially there) and shows the raw
+        // backend message as an error toast to every first-time visitor on
+        // page load - confirmed live, 2026-09-26, in a real browser hitting
+        // the production homepage logged out.
+        const { data } = await api.post('/api/users/refresh-token', {}, { silent: true });
         setAccessToken(data.token);
 
         // Validate by fetching a fresh profile.
