@@ -9,7 +9,7 @@ import {
   MapPin,
   LocateFixed,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 
 import { useGeolocation } from '../Components/maps/useGeolocation';
 import { reverseGeocode, searchAddress } from '../services/geocoding';
@@ -18,13 +18,19 @@ import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { businessService, authService } from '../services';
-import LocationPicker from '../Components/maps/LocationPicker';
+
+// Deferred: LocationPicker pulls in Leaflet (~190KB) and only ever renders
+// for buyers who reach the location step, so it shouldn't block the
+// initial Login page load/switch from SignUp.
+const LocationPicker = lazy(() => import('../Components/maps/LocationPicker'));
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();
   const navigate = useNavigate();
   const [userType, setUserType] = useState(null); // null, 'buyer', or 'business'
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState(null);
   const [resending, setResending] = useState(false);
 
@@ -89,7 +95,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setUserType('buyer')}
-                  className="w-full mt-8 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                  className="w-full mt-8 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <PersonStanding className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
@@ -103,7 +109,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setUserType('business')}
-                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                  className="w-full mt-4 bg-gray-100 border border-solid border-gray-300 flex items-center justify-center h-14 rounded-lg hover:bg-gray-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3">
                     <Handshake className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
@@ -140,7 +146,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setUserType(null)}
-                    className="absolute right-0 top-0 text-sm hover:underline"
+                    className="absolute right-0 top-0 text-sm hover:underline focus-visible:outline-none focus-visible:underline rounded"
                     style={{ color: 'var(--color-solid)' }}
                   >
                     Back
@@ -183,11 +189,13 @@ const Login = () => {
                 )}
 
                 {/* Email Input */}
-                <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                   <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type="email"
                     placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
                     required
@@ -195,11 +203,13 @@ const Login = () => {
                 </div>
 
                 {/* Password Input */}
-                <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                <div className="flex items-center mt-4 w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                   <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="bg-transparent outline-none text-sm w-full h-full"
                     style={{ color: 'var(--color-textColor)' }}
                     required
@@ -207,7 +217,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="shrink-0"
+                    className="shrink-0 rounded hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                   >
                     {showPassword ? (
                       <EyeOff
@@ -226,7 +236,11 @@ const Login = () => {
                 {/* Remember me & Forgot password */}
                 <div className="w-full flex items-center justify-between mt-6">
                   <div className="flex items-center gap-2">
-                    <input className="w-4 h-4 cursor-pointer" type="checkbox" id="checkbox" />
+                    <input
+                      className="w-4 h-4 cursor-pointer rounded focus:ring-solid focus:ring-offset-0"
+                      type="checkbox"
+                      id="checkbox"
+                    />
                     <label
                       className="text-sm cursor-pointer"
                       htmlFor="checkbox"
@@ -278,7 +292,7 @@ const Login = () => {
                         );
                       }}
                       disabled={isLoadingLocation}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all disabled:opacity-50 disabled:active:scale-100"
                     >
                       <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
                       <span
@@ -291,7 +305,7 @@ const Login = () => {
 
                     {/* Manual Address Input */}
                     <div className="mt-3 relative">
-                      <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3">
+                      <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
                         <MapPin
                           className="w-5 h-5"
                           style={{ color: 'var(--color-moringa-muted)' }}
@@ -351,7 +365,7 @@ const Login = () => {
                               }
                             }
                           }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
                           style={{ backgroundColor: 'var(--color-solid)' }}
                         >
                           Search
@@ -368,18 +382,24 @@ const Login = () => {
 
                     {/* Map */}
                     <div className="mt-4">
-                      <LocationPicker
-                        selectedLocation={location}
-                        onLocationSelect={async (latlng) => {
-                          setLocation({ lat: latlng.lat, lng: latlng.lng });
-                          try {
-                            const result = await reverseGeocode(latlng.lat, latlng.lng);
-                            setAddress(result.display_name || 'Location selected');
-                          } catch {
-                            setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-                          }
-                        }}
-                      />
+                      <Suspense
+                        fallback={
+                          <div className="h-64 w-full rounded-lg bg-gray-100 animate-pulse" />
+                        }
+                      >
+                        <LocationPicker
+                          selectedLocation={location}
+                          onLocationSelect={async (latlng) => {
+                            setLocation({ lat: latlng.lat, lng: latlng.lng });
+                            try {
+                              const result = await reverseGeocode(latlng.lat, latlng.lng);
+                              setAddress(result.display_name || 'Location selected');
+                            } catch {
+                              setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+                            }
+                          }}
+                        />
+                      </Suspense>
                     </div>
                   </div>
                 )}
@@ -389,15 +409,6 @@ const Login = () => {
                   type="submit"
                   onClick={async (e) => {
                     e.preventDefault();
-                    // Get email and password from inputs
-                    const form = e.target.closest('form');
-                    const emailInput = form.querySelector('input[type="email"]');
-                    // Password input type changes when "show password" is toggled, so use placeholder to find it
-                    const passwordInput = form.querySelector('input[placeholder="Password"]');
-
-                    const email = emailInput?.value;
-                    const password = passwordInput?.value;
-
                     if (!email || !password) {
                       toast.error('Please enter email and password');
                       return;
@@ -421,7 +432,7 @@ const Login = () => {
                             'This account is not registered as a business. You can add a business from your profile.'
                           );
                           // Redirect to shop instead since they're a consumer
-                          window.location.href = '/shop';
+                          navigate('/shop');
                           return;
                         }
 
@@ -434,7 +445,7 @@ const Login = () => {
 
                           if (businesses.length === 0) {
                             // No business created yet, redirect to verification
-                            window.location.href = '/business-verification';
+                            navigate('/business-verification');
                             return;
                           }
 
@@ -450,26 +461,26 @@ const Login = () => {
 
                           if (isApproved) {
                             // Approved/auto-verified business - go to dashboard
-                            window.location.href = '/dashboard';
+                            navigate('/dashboard');
                           } else if (verificationStatus === 'pending') {
                             // Documents submitted, waiting for review
-                            window.location.href = '/pending-review';
+                            navigate('/pending-review');
                           } else if (verificationStatus === 'unverified') {
                             // Restaurant/cafe that needs to submit documents
-                            window.location.href = '/business-verification';
+                            navigate('/business-verification');
                           } else {
                             // Any other state - go to verification page
-                            window.location.href = '/business-verification';
+                            navigate('/business-verification');
                           }
                         } catch (bizError) {
                           console.error('Error fetching business:', bizError);
                           // If we can't fetch business, redirect to verification
-                          window.location.href = '/business-verification';
+                          navigate('/business-verification');
                         }
                       } else {
                         // Consumer login - redirect to shop
                         toast.success('Login successful!');
-                        window.location.href = '/shop';
+                        navigate('/shop');
                       }
                     } catch (error) {
                       console.error('Login error:', error);
@@ -480,7 +491,7 @@ const Login = () => {
                       toast.error(error.message || 'Login failed');
                     }
                   }}
-                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
                   Login
@@ -506,7 +517,7 @@ const Login = () => {
                           setResending(false);
                         }
                       }}
-                      className="font-medium underline disabled:opacity-50"
+                      className="font-medium underline hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid rounded transition-all disabled:opacity-50"
                     >
                       {resending ? 'Sending…' : 'Resend verification email'}
                     </button>

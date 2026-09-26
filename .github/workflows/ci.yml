@@ -150,8 +150,8 @@ jobs:
 
       - name: Audit Backend
         working-directory: Backend
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
 
       - name: Audit Frontend
         working-directory: Frontend
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high

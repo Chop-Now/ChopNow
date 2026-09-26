@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const PlatformSettings = require('../models/PlatformSettings');
+const AuditLog = require('../models/AuditLog');
+const { decryptField } = require('../utils/fieldEncryption');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -259,9 +261,9 @@ const updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-      user.firstName = req.body.firstName || user.firstName;
-      user.lastName = req.body.lastName || user.lastName;
-      user.phone = req.body.phone || user.phone;
+      if (req.body.firstName !== undefined) user.firstName = req.body.firstName;
+      if (req.body.lastName !== undefined) user.lastName = req.body.lastName;
+      if (req.body.phone !== undefined) user.phone = req.body.phone;
 
       if (req.body.preferences) {
         user.preferences = { ...user.preferences, ...req.body.preferences };
@@ -910,20 +912,14 @@ const googleLogin = async (req, res) => {
     });
   } catch (error) {
     logger.error({ err: error }, 'Google login error');
-    // Log detailed error for debugging
     if (error.response) {
       logger.error(
         { status: error.response.status, data: error.response.data },
         'Google API error'
       );
-    } else {
-      logger.error({ err: error }, 'Google login error details');
     }
 
-    // Return more specific error message if possible
-    const errorMessage =
-      error.response?.data?.error_description || error.message || 'Google authentication failed';
-    res.status(500).json({ message: 'Google authentication failed', error: errorMessage });
+    res.status(500).json({ message: 'Google authentication failed' });
   }
 };
 
@@ -939,6 +935,11 @@ const updateUserByAdmin = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    // M4: snapshot roles before any mutation below, so we can tell whether
+    // this request is the one that newly granted 'admin' (as opposed to an
+    // update that just re-saves an account that already had it).
+    const rolesBefore = [...user.roles];
 
     // Update allowed fields
     const allowedFields = ['firstName', 'lastName', 'phone', 'status'];
@@ -986,6 +987,24 @@ const updateUserByAdmin = async (req, res) => {
     }
 
     await user.save();
+
+    // M4: an admin-only, append-only trail of who granted the admin role to
+    // whom and when - written only on the transition (didn't have it, now
+    // does), not on every save of an already-admin account. Awaited (not
+    // fire-and-forget) so the log is durable before the response returns.
+    if (!rolesBefore.includes('admin') && user.roles.includes('admin')) {
+      try {
+        await AuditLog.create({
+          action: 'grant_admin_role',
+          actor: req.user._id,
+          targetUser: user._id,
+          rolesBefore,
+          rolesAfter: [...user.roles],
+        });
+      } catch (err) {
+        logger.error({ err, targetUserId: user._id }, 'Failed to write admin-grant audit log');
+      }
+    }
 
     res.json({
       message: 'User updated successfully',
@@ -1146,10 +1165,8 @@ const changePassword = async (req, res) => {
     if (!otp || !newPassword) {
       return res.status(400).json({ message: 'Please provide OTP and new password' });
     }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
+    // Strength (8+ chars, upper/lower/digit) is enforced upstream by
+    // validateResetPassword on this route (M3) - no separate, weaker check here.
 
     const user = await User.findById(req.user._id).select(
       '+passwordHash +otpCode +otpExpires +tokenVersion'
@@ -1685,7 +1702,18 @@ const applyRider = async (req, res) => {
       success: true,
       message: 'Rider application submitted successfully. Pending admin review.',
       riderStatus: user.riderStatus,
-      riderDetails: user.riderDetails,
+      // M5: an embedded subdocument pulled out into a plain object like this
+      // serializes through its OWN toJSON/toObject, not the parent User
+      // document's - confirmed by testing that this does NOT inherit
+      // userSchema's `getters: true`, and that even an explicit
+      // `.toObject({ getters: true })` call on the subdocument itself still
+      // returns raw ciphertext (a Mongoose quirk, not something to rely on).
+      // decryptField() directly is the reliable fix.
+      riderDetails: {
+        ...user.riderDetails.toObject(),
+        nationalId: decryptField(user.riderDetails.nationalId),
+        licensePlate: decryptField(user.riderDetails.licensePlate),
+      },
     });
   } catch (error) {
     logger.error({ err: error }, 'Rider application failed');
@@ -1723,9 +1751,24 @@ const getRidersForAdmin = async (req, res) => {
       User.countDocuments(query),
     ]);
 
+    // M5: .lean() returns plain objects, which skip Mongoose getters - the
+    // encrypted nationalId/licensePlate need decrypting by hand here, or
+    // admins would see raw ciphertext instead of the value they need to
+    // verify a rider's application.
+    const decryptedRiders = riders.map((rider) => ({
+      ...rider,
+      riderDetails: rider.riderDetails
+        ? {
+            ...rider.riderDetails,
+            nationalId: decryptField(rider.riderDetails.nationalId),
+            licensePlate: decryptField(rider.riderDetails.licensePlate),
+          }
+        : rider.riderDetails,
+    }));
+
     res.json({
       success: true,
-      riders,
+      riders: decryptedRiders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,

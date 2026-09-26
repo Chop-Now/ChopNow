@@ -12,27 +12,79 @@ const logger = require('../utils/logger');
  */
 const getPlatformOverview = async (req, res) => {
   try {
+    const now = new Date();
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 4 * 7);
+
     // Run all independent queries in parallel
-    const [totalOrders, totalBusinesses, totalUsers, revenueResult, impactResult] =
-      await Promise.all([
-        Order.countDocuments(),
-        Business.countDocuments(),
-        User.countDocuments({ roles: { $in: ['consumer'] } }),
-        Order.aggregate([
-          { $match: { status: 'delivered' } },
-          { $group: { _id: null, total: { $sum: '$pricing.total' } } },
-        ]),
-        Business.aggregate([
-          {
-            $group: {
-              _id: null,
-              totalCo2Saved: { $sum: '$stats.impact.co2Saved' },
-              totalMealsRescued: { $sum: '$stats.impact.mealsRescued' },
-              totalWaterSaved: { $sum: '$stats.impact.waterSaved' },
-            },
+    const [
+      totalOrders,
+      totalBusinesses,
+      totalUsers,
+      revenueResult,
+      impactResult,
+      weeklyImpactData,
+      monthlyImpact,
+      categoryImpact,
+    ] = await Promise.all([
+      Order.countDocuments(),
+      Business.countDocuments(),
+      User.countDocuments({ roles: { $in: ['consumer'] } }),
+      // Real terminal status is 'completed' - 'delivered' isn't in the Order
+      // status enum at all, so this always matched zero documents before.
+      Order.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+      ]),
+      Business.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalCo2Saved: { $sum: '$stats.impact.co2Saved' },
+            totalMealsRescued: { $sum: '$stats.impact.mealsRescued' },
+            totalWaterSaved: { $sum: '$stats.impact.waterSaved' },
           },
-        ]),
-      ]);
+        },
+      ]),
+      // Meals rescued platform-wide, bucketed by week, so we can derive a real
+      // week-over-week CO2e trend instead of splitting the running total into
+      // made-up fractions.
+      Order.aggregate([
+        { $match: { status: 'completed', createdAt: { $gte: fourWeeksAgo } } },
+        { $unwind: '$items' },
+        {
+          $group: {
+            _id: {
+              week: {
+                $floor: { $divide: [{ $subtract: [now, '$createdAt'] }, 7 * 24 * 60 * 60 * 1000] },
+              },
+            },
+            meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+          },
+        },
+      ]),
+      // Real monthly meals/CO2e/water trend and category split, platform-wide -
+      // replaces the old fully-hardcoded Monthly Impact Trend / Impact by
+      // Category tables on the Platform Impact page.
+      calculateMonthlyImpact(null, 'platform'),
+      calculateCategoryImpact(null),
+    ]);
+
+    const weekMap = {};
+    (weeklyImpactData || []).forEach((r) => {
+      weekMap[r._id.week] = r.meals;
+    });
+    const weeklyImpact = [];
+    for (let i = 3; i >= 0; i--) {
+      const meals = weekMap[i] || 0;
+      weeklyImpact.push({
+        week: `Week ${4 - i}`,
+        meals,
+        co2Saved: Math.round(meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+      });
+    }
+
+    const totalMealsRescued = impactResult.length > 0 ? impactResult[0].totalMealsRescued : 0;
 
     res.json({
       overview: {
@@ -43,12 +95,20 @@ const getPlatformOverview = async (req, res) => {
       },
       impact:
         impactResult.length > 0
-          ? impactResult[0]
+          ? {
+              ...impactResult[0],
+              totalFoodWasteSaved:
+                Math.round(totalMealsRescued * IMPACT_FACTORS.AVG_MEAL_WEIGHT * 10) / 10,
+            }
           : {
               totalCo2Saved: 0,
               totalMealsRescued: 0,
               totalWaterSaved: 0,
+              totalFoodWasteSaved: 0,
             },
+      weeklyImpact,
+      monthlyImpact,
+      categoryImpact,
     });
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');
@@ -70,45 +130,140 @@ const getBusinessOverview = async (req, res) => {
       return res.status(404).json({ message: 'Business not found' });
     }
 
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
     // Run independent aggregations in parallel
-    const [weeklySales, topProductsIds] = await Promise.all([
-      Order.aggregate([
-        {
-          $match: {
-            business: business._id,
-            status: 'delivered',
-            createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+    const [
+      weeklySales,
+      topProductsIds,
+      peakHoursData,
+      customerOrderCounts,
+      revenueData,
+      monthlyRevenue,
+      categoryBreakdown,
+      monthlyImpact,
+      categoryImpact,
+      betterRankedBusinesses,
+      fulfillmentFacet,
+    ] = await Promise.all([
+        // Real terminal status is 'completed' - 'delivered' isn't in the
+        // Order status enum at all, so this (and topProductsIds below)
+        // always matched zero documents before.
+        Order.aggregate([
+          {
+            $match: {
+              business: business._id,
+              status: 'completed',
+              createdAt: { $gte: thirtyDaysAgo },
+            },
           },
-        },
-        {
-          $group: {
-            _id: { $week: '$createdAt' },
-            sales: { $sum: '$pricing.total' },
-            orders: { $sum: 1 },
+          {
+            $group: {
+              _id: { $week: '$createdAt' },
+              sales: { $sum: '$pricing.total' },
+              orders: { $sum: 1 },
+            },
           },
-        },
-        { $sort: { _id: 1 } },
-      ]),
-      Order.aggregate([
-        { $match: { business: business._id, status: 'delivered' } },
-        { $unwind: '$items' },
-        {
-          $group: {
-            _id: '$items.listing',
-            count: { $sum: '$items.quantity' },
-            revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          { $sort: { _id: 1 } },
+        ]),
+        Order.aggregate([
+          { $match: { business: business._id, status: 'completed' } },
+          { $unwind: '$items' },
+          {
+            $group: {
+              _id: '$items.listing',
+              count: { $sum: '$items.quantity' },
+              // orderItemSchema has no `price` field (that's why this was
+              // silently always 0/undefined too) - `subtotal` already is
+              // unitPrice * quantity, so no need to re-multiply by quantity.
+              revenue: { $sum: '$items.subtotal' },
+            },
           },
-        },
-        { $sort: { count: -1 } },
-        { $limit: 5 },
-      ]),
-    ]);
+          { $sort: { count: -1 } },
+          { $limit: 5 },
+        ]),
+        // Orders per hour-of-day over the last 30 days, for a real peak-hours chart
+        Order.aggregate([
+          { $match: { business: business._id, createdAt: { $gte: thirtyDaysAgo } } },
+          {
+            $group: {
+              _id: { $hour: '$createdAt' },
+              orders: { $sum: 1 },
+            },
+          },
+        ]),
+        // Distinct customers vs. customers with more than one completed order,
+        // to compute a real returning-customer rate
+        Order.aggregate([
+          { $match: { business: business._id, status: 'completed' } },
+          { $group: { _id: '$customer', orders: { $sum: 1 } } },
+        ]),
+        Order.aggregate([
+          { $match: { business: business._id, status: 'completed' } },
+          { $group: { _id: null, total: { $sum: '$pricing.total' }, count: { $sum: 1 } } },
+        ]),
+        calculateMonthlyRevenue(business._id),
+        calculateCategoryBreakdown(business._id),
+        calculateMonthlyImpact(business._id, 'business'),
+        calculateCategoryImpact(business._id),
+        // Real platform rank: how many businesses have rescued more meals than this one
+        Business.countDocuments({
+          'stats.impact.mealsRescued': { $gt: business.stats?.impact?.mealsRescued || 0 },
+        }),
+        // Order fulfillment breakdown - real counts for the "Order Fulfillment
+        // Status" chart, replacing the old fixed 85/10/5% placeholder.
+        Order.aggregate([
+          { $match: { business: business._id } },
+          {
+            $facet: {
+              completed: [{ $match: { status: 'completed' } }, { $count: 'count' }],
+              cancelled: [{ $match: { status: 'cancelled' } }, { $count: 'count' }],
+              total: [{ $count: 'count' }],
+            },
+          },
+        ]),
+      ]);
 
     // Populate top product names — filter out any listings deleted since the order was placed
     const topProducts = await Listing.populate(topProductsIds, { path: '_id', select: 'title' });
 
+    const peakHours = Array.from({ length: 24 }, (_, hour) => ({ hour, orders: 0 }));
+    peakHoursData.forEach((r) => {
+      if (r._id >= 0 && r._id < 24) peakHours[r._id].orders = r.orders;
+    });
+
+    const totalCustomers = customerOrderCounts.length;
+    const returningCustomers = customerOrderCounts.filter((c) => c.orders > 1).length;
+    const returningCustomerRate =
+      totalCustomers > 0 ? Math.round((returningCustomers / totalCustomers) * 1000) / 10 : null;
+
+    const completedOrders = revenueData[0]?.count || 0;
+    const completedRevenue = revenueData[0]?.total || 0;
+    const avgOrderValue = completedOrders > 0 ? Math.round(completedRevenue / completedOrders) : 0;
+
+    // Real order-status split for the "Order Fulfillment Status" chart. No
+    // "late delivery" status is tracked anywhere in the Order model, so this
+    // reports Completed/Cancelled/In Progress rather than fabricating one.
+    const fulfillmentTotal = fulfillmentFacet[0]?.total[0]?.count || 0;
+    const fulfillmentCompleted = fulfillmentFacet[0]?.completed[0]?.count || 0;
+    const fulfillmentCancelled = fulfillmentFacet[0]?.cancelled[0]?.count || 0;
+    const fulfillmentInProgress = fulfillmentTotal - fulfillmentCompleted - fulfillmentCancelled;
+    const pct = (n) => (fulfillmentTotal > 0 ? Math.round((n / fulfillmentTotal) * 1000) / 10 : 0);
+    const fulfillmentBreakdown = {
+      total: fulfillmentTotal,
+      completed: { count: fulfillmentCompleted, percent: pct(fulfillmentCompleted) },
+      cancelled: { count: fulfillmentCancelled, percent: pct(fulfillmentCancelled) },
+      inProgress: { count: fulfillmentInProgress, percent: pct(fulfillmentInProgress) },
+    };
+
     res.json({
       stats: business.stats,
+      // business.stats doesn't track a running revenue total (only
+      // balance/totalOrders/etc.) - compute it on-demand from completed
+      // orders instead of leaving the frontend with nothing to show for
+      // "Total Revenue" (see Phase 7 audit finding: this showed RWF 0 even
+      // after a completed order, because the field never existed at all).
+      revenue: completedRevenue,
       weeklyTrend: weeklySales,
       topProducts: topProducts
         .filter(
@@ -123,6 +278,15 @@ const getBusinessOverview = async (req, res) => {
           sold: p.count,
           revenue: p.revenue,
         })),
+      peakHours,
+      returningCustomerRate,
+      avgOrderValue,
+      monthlyRevenue,
+      categoryBreakdown,
+      monthlyImpact,
+      categoryImpact,
+      platformRank: betterRankedBusinesses + 1,
+      fulfillmentBreakdown,
     });
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');
@@ -423,9 +587,10 @@ const calculateMonthlyImpact = async (id, type) => {
   };
   if (type === 'consumer') {
     matchFilter.customer = id;
-  } else {
+  } else if (type === 'business') {
     matchFilter.business = id;
   }
+  // type === 'platform': no customer/business filter - aggregate across everyone
 
   // Single aggregation for all 12 months instead of 12 separate queries
   const results = await Order.aggregate([
@@ -476,6 +641,178 @@ const calculateMonthlyImpact = async (id, type) => {
   }
 
   return monthlyData;
+};
+
+/**
+ * Calculate monthly revenue for the last 12 months.
+ * @param {ObjectId} [businessId] - Restrict to one business; omit for platform-wide.
+ * "profit" is the vendorAmount (what the vendor actually nets after the
+ * platform fee) for a single business, or the platformFee (the platform's
+ * actual cut) platform-wide - there is no cost-of-goods field to derive a
+ * real margin from, so these are the closest real "profit" figures the data
+ * model supports.
+ * @returns {Array<{month: string, year: number, revenue: number, profit: number}>}
+ */
+const calculateMonthlyRevenue = async (businessId) => {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  const matchFilter = {
+    status: 'completed',
+    createdAt: { $gte: startDate },
+  };
+  if (businessId) matchFilter.business = businessId;
+
+  const results = await Order.aggregate([
+    { $match: matchFilter },
+    {
+      $group: {
+        _id: {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+        },
+        revenue: { $sum: '$pricing.total' },
+        profit: { $sum: businessId ? '$pricing.vendorAmount' : '$pricing.platformFee' },
+      },
+    },
+  ]);
+
+  const resultMap = {};
+  results.forEach((r) => {
+    resultMap[`${r._id.year}-${r._id.month}`] = r;
+  });
+
+  const monthlyData = [];
+  for (let i = 11; i >= 0; i--) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = monthDate.getFullYear();
+    const monthNum = monthDate.getMonth() + 1;
+    const key = `${year}-${monthNum}`;
+    const data = resultMap[key] || { revenue: 0, profit: 0 };
+
+    monthlyData.push({
+      month: months[monthDate.getMonth()],
+      year,
+      revenue: Math.round(data.revenue),
+      profit: Math.round(data.profit),
+    });
+  }
+
+  return monthlyData;
+};
+
+// Human-readable labels for the Listing.category enum.
+const CATEGORY_LABELS = {
+  'fruit-veg': 'Fruits & Veg',
+  'baked-goods': 'Baked Goods',
+  meals: 'Prepared Meals',
+  dairy: 'Dairy & Eggs',
+  meat: 'Meat & Seafood',
+  beverages: 'Beverages',
+  pantry: 'Pantry',
+  other: 'Other',
+};
+
+/**
+ * Break down completed-order revenue by listing category.
+ * @param {ObjectId} [businessId] - Restrict to one business; omit for platform-wide.
+ * @returns {Array<{category: string, name: string, revenue: number, percent: number}>}
+ */
+const calculateCategoryBreakdown = async (businessId) => {
+  const matchFilter = { status: 'completed' };
+  if (businessId) matchFilter.business = businessId;
+
+  const results = await Order.aggregate([
+    { $match: matchFilter },
+    { $unwind: '$items' },
+    {
+      $lookup: {
+        from: 'listings',
+        localField: 'items.listing',
+        foreignField: '_id',
+        as: 'listingInfo',
+      },
+    },
+    { $unwind: '$listingInfo' },
+    {
+      $group: {
+        _id: '$listingInfo.category',
+        revenue: { $sum: '$items.subtotal' },
+      },
+    },
+    { $sort: { revenue: -1 } },
+  ]);
+
+  const totalRevenue = results.reduce((sum, r) => sum + r.revenue, 0);
+
+  return results
+    .filter((r) => r.revenue > 0)
+    .map((r) => ({
+      category: r._id,
+      name: CATEGORY_LABELS[r._id] || r._id || 'Other',
+      revenue: Math.round(r.revenue),
+      percent: totalRevenue > 0 ? Math.round((r.revenue / totalRevenue) * 1000) / 10 : 0,
+    }));
+};
+
+/**
+ * Break down completed-order meals rescued (and the CO2e/water this implies)
+ * by listing category - the real-data equivalent of the old hardcoded
+ * "Impact by Category" tables.
+ * @param {ObjectId} [businessId] - Restrict to one business; omit for platform-wide.
+ * @returns {Array<{category: string, name: string, meals: number, co2: number, water: number, percent: number}>}
+ */
+const calculateCategoryImpact = async (businessId) => {
+  const matchFilter = { status: 'completed' };
+  if (businessId) matchFilter.business = businessId;
+
+  const results = await Order.aggregate([
+    { $match: matchFilter },
+    { $unwind: '$items' },
+    {
+      $lookup: {
+        from: 'listings',
+        localField: 'items.listing',
+        foreignField: '_id',
+        as: 'listingInfo',
+      },
+    },
+    { $unwind: '$listingInfo' },
+    {
+      $group: {
+        _id: '$listingInfo.category',
+        meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+      },
+    },
+    { $sort: { meals: -1 } },
+  ]);
+
+  const totalMeals = results.reduce((sum, r) => sum + r.meals, 0);
+
+  return results
+    .filter((r) => r.meals > 0)
+    .map((r) => ({
+      category: r._id,
+      name: CATEGORY_LABELS[r._id] || r._id || 'Other',
+      meals: r.meals,
+      co2: Math.round(r.meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+      water: Math.round(r.meals * IMPACT_FACTORS.WATER_PER_MEAL),
+      percent: totalMeals > 0 ? Math.round((r.meals / totalMeals) * 1000) / 10 : 0,
+    }));
 };
 
 /**
@@ -782,6 +1119,7 @@ const getAdminStats = async (req, res) => {
     // Calculate week boundaries for weekly trends (last 8 weeks: 4 current + 4 previous)
     const eightWeeksAgo = new Date(now);
     eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 8 * 7);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Run all independent aggregations in parallel
     const [
@@ -792,6 +1130,9 @@ const getAdminStats = async (req, res) => {
       impactStats,
       ratingData,
       weeklyTrendData,
+      peakHoursData,
+      monthlyRevenue,
+      categoryBreakdown,
     ] = await Promise.all([
       // 1. User stats - single aggregation with $facet
       User.aggregate([
@@ -937,7 +1278,29 @@ const getAdminStats = async (req, res) => {
           },
         },
       ]),
+
+      // 8. Orders per hour-of-day over the last 30 days, for a real peak-hours chart
+      Order.aggregate([
+        { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+        {
+          $group: {
+            _id: { $hour: '$createdAt' },
+            orders: { $sum: 1 },
+          },
+        },
+      ]),
+
+      // 9. Platform-wide monthly revenue/profit for the last 12 months
+      calculateMonthlyRevenue(null),
+
+      // 10. Platform-wide sales-by-category breakdown
+      calculateCategoryBreakdown(null),
     ]);
+
+    const peakHours = Array.from({ length: 24 }, (_, hour) => ({ hour, orders: 0 }));
+    (peakHoursData || []).forEach((r) => {
+      if (r._id >= 0 && r._id < 24) peakHours[r._id].orders = r.orders;
+    });
 
     // Extract user stats
     const userRoleMap = {};
@@ -1078,6 +1441,9 @@ const getAdminStats = async (req, res) => {
         count: reviewCount,
       },
       weeklyTrends,
+      peakHours,
+      monthlyRevenue,
+      categoryBreakdown,
     });
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');

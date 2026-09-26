@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../shared/widgets/feedback/cn_states.dart';
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// ── Providers ─────────────────────────────────────────────────────────────────
 
 final _earningsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  try {
-    final res = await ApiClient.instance.get(AppEndpoints.riderEarnings);
-    final data = res.data;
-    return data is Map<String, dynamic> ? data : {};
-  } catch (_) {
-    // Return demo data when endpoint isn't live yet
-    return {
-      'totalEarnings': 48500,
-      'thisWeek': 12400,
-      'today': 4200,
-      'totalDeliveries': 87,
-      'averageRating': 4.8,
-      'weeklyData': [2800, 1400, 3600, 4200, 5100, 3900, 4200],
-    };
-  }
+  final res = await ApiClient.instance.get(AppEndpoints.riderEarnings);
+  final data = res.data;
+  return data is Map<String, dynamic> ? data : {};
+});
+
+final _payoutsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final res = await ApiClient.instance
+      .get(AppEndpoints.payoutsMe, queryParameters: {'limit': 5});
+  final data = res.data;
+  final list = data is Map ? data['payouts'] : null;
+  return list is List ? List<Map<String, dynamic>>.from(list) : [];
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -40,28 +39,32 @@ class RiderEarningsScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
-        error: (e, _) => Center(child: Text(e.toString())),
+        error: (e, _) => CnErrorState(
+          message: 'Could not load your earnings',
+          onRetry: () => ref.invalidate(_earningsProvider),
+        ),
         data: (data) => _EarningsBody(data: data),
       ),
     );
   }
 }
 
-class _EarningsBody extends StatelessWidget {
+class _EarningsBody extends ConsumerWidget {
   final Map<String, dynamic> data;
   const _EarningsBody({required this.data});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final totalEarnings = data['totalEarnings'] ?? 0;
     final thisWeek = data['thisWeek'] ?? 0;
     final today = data['today'] ?? 0;
     final totalDeliveries = data['totalDeliveries'] ?? 0;
-    final rating = (data['averageRating'] ?? 4.8).toDouble();
+    final ratingVal = data['averageRating'];
+    final rating = ratingVal is num ? ratingVal.toStringAsFixed(1) : '-';
     final weeklyRaw = data['weeklyData'];
     final weeklyData = weeklyRaw is List
         ? weeklyRaw.map((v) => (v as num).toDouble()).toList()
-        : <double>[2800, 1400, 3600, 4200, 5100, 3900, 4200];
+        : <double>[0, 0, 0, 0, 0, 0, 0];
 
     return CustomScrollView(
       slivers: [
@@ -164,7 +167,7 @@ class _EarningsBody extends StatelessWidget {
                     const SizedBox(width: 12),
                     _QuickStat(
                       label: 'Rating',
-                      value: '$rating',
+                      value: rating,
                       icon: Icons.star_rounded,
                       color: AppColors.warning,
                     ),
@@ -324,20 +327,48 @@ class _EarningsBody extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Demo payout entries
-                ...[
-                  const _PayoutEntry(
-                      date: 'May 28, 2026', amount: 8400, status: 'Completed'),
-                  const _PayoutEntry(
-                      date: 'May 21, 2026', amount: 11200, status: 'Completed'),
-                  const _PayoutEntry(
-                      date: 'May 14, 2026', amount: 9600, status: 'Completed'),
-                  const _PayoutEntry(
-                      date: 'May 7, 2026', amount: 7800, status: 'Completed'),
-                ].map((p) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: p,
-                    )),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final asyncPayouts = ref.watch(_payoutsProvider);
+                    return asyncPayouts.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                              color: AppColors.primary),
+                        ),
+                      ),
+                      error: (e, _) => CnErrorState(
+                        message: 'Could not load payout history',
+                        onRetry: () => ref.invalidate(_payoutsProvider),
+                      ),
+                      data: (payouts) {
+                        if (payouts.isEmpty) {
+                          return const CnEmptyState(
+                            title: 'No payouts yet',
+                            subtitle:
+                                'Your completed payouts will show up here.',
+                            icon: Icons.account_balance_wallet_outlined,
+                          );
+                        }
+                        return Column(
+                          children: payouts
+                              .map((p) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _PayoutEntry(
+                                      date: _formatPayoutDate(p['createdAt']),
+                                      amount:
+                                          (p['amount'] as num?)?.toInt() ?? 0,
+                                      status:
+                                          _statusLabel(p['status'] as String?),
+                                    ),
+                                  ))
+                              .toList(),
+                        );
+                      },
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 24),
               ],
@@ -356,6 +387,30 @@ class _EarningsBody extends StatelessWidget {
       buf.write(s[i]);
     }
     return buf.toString();
+  }
+
+  static String _formatPayoutDate(dynamic raw) {
+    if (raw is! String) return '-';
+    final date = DateTime.tryParse(raw);
+    if (date == null) return '-';
+    return DateFormat('MMM d, yyyy').format(date.toLocal());
+  }
+
+  static String _statusLabel(String? status) {
+    switch (status) {
+      case 'requested':
+        return 'Requested';
+      case 'processing':
+        return 'Processing';
+      case 'completed':
+        return 'Completed';
+      case 'failed':
+        return 'Failed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status ?? '-';
+    }
   }
 }
 
@@ -442,6 +497,32 @@ class _PayoutEntry extends StatelessWidget {
     required this.status,
   });
 
+  Color get _statusColor {
+    switch (status) {
+      case 'Failed':
+      case 'Cancelled':
+        return AppColors.error;
+      case 'Requested':
+      case 'Processing':
+        return AppColors.warning;
+      default:
+        return AppColors.success;
+    }
+  }
+
+  Color get _statusBg {
+    switch (status) {
+      case 'Failed':
+      case 'Cancelled':
+        return AppColors.errorSurface;
+      case 'Requested':
+      case 'Processing':
+        return AppColors.warningSurface;
+      default:
+        return AppColors.successSurface;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -492,14 +573,14 @@ class _PayoutEntry extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.successSurface,
+                  color: _statusBg,
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Text(status,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.success)),
+                        color: _statusColor)),
               ),
             ],
           ),

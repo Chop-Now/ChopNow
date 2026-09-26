@@ -50,7 +50,6 @@ const Settings = ({ initialTab = 'profile' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [profileImage, setProfileImage] = useState(null);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -63,7 +62,6 @@ const Settings = ({ initialTab = 'profile' }) => {
   const [businessDetailsLoading, setBusinessDetailsLoading] = useState(false);
   const [logoutAllLoading, setLogoutAllLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [twoFALoading, setTwoFALoading] = useState(false);
 
   // Update active tab when initialTab prop changes
   useEffect(() => {
@@ -571,28 +569,6 @@ const Settings = ({ initialTab = 'profile' }) => {
   const handleCancelBusinessDetails = () => {
     toast('Changes discarded');
     setActiveTab('profile');
-  };
-
-  const handleToggle2FA = async () => {
-    const newState = !twoFactorEnabled;
-    setTwoFALoading(true);
-    try {
-      // 2FA uses OTP-based verification via existing endpoints
-      if (newState) {
-        // Enable 2FA - sends OTP to user's email for verification on each login
-        // Note: full dedicated 2FA endpoint not yet implemented; showing coming-soon notice
-        toast('Two-Factor Authentication via email OTP is coming soon.', { icon: '🔒' });
-        setTwoFALoading(false);
-        return;
-      } else {
-        toast.success('Two-Factor Authentication disabled.');
-      }
-      setTwoFactorEnabled(newState);
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Failed to toggle 2FA');
-    } finally {
-      setTwoFALoading(false);
-    }
   };
 
   const handleLogoutSession = async (sessionId) => {
@@ -1855,47 +1831,6 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </button>
                   </div>
                 )}
-              </div>
-
-              {/* Two Factor Authentication */}
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                      Two Factor Authentication
-                    </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    {twoFactorEnabled ? (
-                      <div className="flex items-center justify-center px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30">
-                        <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                          Enabled
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/30">
-                        <span className="text-xs font-medium text-red-600 dark:text-red-400">
-                          Disabled
-                        </span>
-                      </div>
-                    )}
-                    <label
-                      className={`relative inline-flex items-center ${twoFALoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={twoFactorEnabled}
-                        onChange={twoFALoading ? undefined : handleToggle2FA}
-                        disabled={twoFALoading}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
-                    </label>
-                  </div>
-                </div>
               </div>
 
               {/* Active Sessions */}

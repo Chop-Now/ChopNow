@@ -2,11 +2,14 @@
  * pawaPay webhook idempotency tests (H9)
  *
  * Covers: two webhook deliveries for the same depositId (pawaPay retries on
- * timeout, and can genuinely double-send) with a FAILED outcome must release
- * the reserved listing stock exactly once, not twice. The bug was a
- * find-then-check-then-write pattern (Payment.findOne, a callbackReceived/
- * status check, then a later payment.save()) with a real gap between the
- * read and the write for two near-simultaneous requests to land in.
+ * timeout, and can genuinely double-send) must claim the Payment exactly
+ * once - the bug was a find-then-check-then-write pattern (Payment.findOne,
+ * a callbackReceived/status check, then a later payment.save()) with a real
+ * gap between the read and the write for two near-simultaneous requests to
+ * land in. A FAILED outcome does NOT cancel the order or release stock (M9:
+ * the order stays pending_payment so the customer can retry it), so what's
+ * checked for FAILED is that the Payment is claimed once and the order/stock
+ * are left untouched either way, not "restored exactly once".
  *
  * No Signature/Signature-Input headers are sent - verifySignature allows
  * that in non-production (PAWAPAY_ENVIRONMENT is unset in tests), so these
@@ -53,7 +56,7 @@ async function createPendingMobileMoneyOrder({ quantity = 2, startingStock = 5 }
 }
 
 describe('POST /api/v1/payments/webhook - idempotency (H9)', () => {
-  it('should release reserved stock exactly once for two FAILED callbacks with the same depositId', async () => {
+  it('should claim the Payment exactly once for two concurrent FAILED callbacks, leaving stock reserved and the order retryable (M9)', async () => {
     const { listing, depositId } = await createPendingMobileMoneyOrder({
       quantity: 2,
       startingStock: 5,
@@ -71,16 +74,17 @@ describe('POST /api/v1/payments/webhook - idempotency (H9)', () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
 
+    // M9: a failed attempt no longer cancels the order or releases stock -
+    // both stay exactly as they were so the customer can retry.
     const afterWebhooks = await Listing.findById(listing._id);
-    // Must be back to 5, never 7 (which would mean stock was "restored" twice).
-    expect(afterWebhooks.inventory.quantity).toBe(5);
-    expect(afterWebhooks.inventory.reserved).toBe(0);
+    expect(afterWebhooks.inventory.quantity).toBe(3);
+    expect(afterWebhooks.inventory.reserved).toBe(2);
 
     const payment = await Payment.findOne({ depositId });
     expect(payment.status).toBe('failed');
   });
 
-  it('should mark the order cancelled exactly once and not double-process a repeated callback', async () => {
+  it('should not double-process a repeated FAILED callback for the same depositId', async () => {
     const { order, depositId } = await createPendingMobileMoneyOrder();
 
     const payload = { depositId, status: 'FAILED' };
@@ -90,8 +94,9 @@ describe('POST /api/v1/payments/webhook - idempotency (H9)', () => {
     expect(secondRes.status).toBe(200);
     expect(secondRes.body.message).toMatch(/not found or already processed/i);
 
+    // M9: order stays pending_payment (retryable), not cancelled.
     const updatedOrder = await Order.findById(order._id);
-    expect(updatedOrder.status).toBe('cancelled');
+    expect(updatedOrder.status).toBe('pending_payment');
   });
 
   it('should ignore non-final statuses instead of failing the order', async () => {

@@ -196,6 +196,30 @@ async function setPayoutRules({ holdDays = 0, intervalDays = 0 } = {}) {
 }
 
 /**
+ * Toggles maintenance mode (off by default; tests that turn it on should
+ * turn it back off in the same test so it doesn't leak into the next one).
+ */
+async function setMaintenanceMode(on) {
+  const PlatformSettings = require('../models/PlatformSettings');
+  const settings = await PlatformSettings.getSettings();
+  settings.maintenanceMode = on;
+  await settings.save();
+}
+
+/**
+ * Registers an admin via the real endpoint (roles can't self-register as
+ * admin - see the C1 fix - so this promotes one directly) and returns
+ * { token, user }.
+ */
+async function createAdmin(overrides = {}) {
+  const email = overrides.email || uniqueEmail('admin');
+  const { token, user } = await createConsumer({ email });
+  await User.findByIdAndUpdate(user._id, { $addToSet: { roles: 'admin' } });
+  const res = await request(app).post('/api/v1/users/login').send({ email, password: 'Password1' });
+  return { token: res.body.token, user };
+}
+
+/**
  * Waits (up to timeoutMs) until check() returns something truthy - for effects
  * the server runs in the background after responding (notifications).
  */
@@ -212,8 +236,10 @@ async function eventually(check, timeoutMs = 5000) {
 module.exports = {
   eventually,
   setPayoutRules,
+  setMaintenanceMode,
   enableCashPayments,
   createConsumer,
+  createAdmin,
   createBusinessOwnerWithBusiness,
   createListing,
   createRider,

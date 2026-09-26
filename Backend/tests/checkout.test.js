@@ -280,17 +280,24 @@ describe('One payment for the whole checkout', () => {
     expect(poll.body.status).toBe('completed');
   });
 
-  it('cancels every order and restores every listing if the payment fails', async () => {
+  it('leaves every order retryable and every listing reserved if the payment fails (M9)', async () => {
     const { a1, a2, b1, buyer, items } = await twoVendorCart();
     const { body } = await checkout(buyer, deliveryBody(items));
     await payCheckout(buyer, body.checkoutId, 'FAILED');
 
+    // M9: a failed checkout payment does NOT cancel the orders - they stay
+    // pending_payment so the buyer can retry the same checkout instead of
+    // rebuilding their cart, and stock stays reserved exactly as it was.
     const orders = await Order.find({ checkoutGroup: body.checkoutId });
-    expect(orders.every((o) => o.status === 'cancelled')).toBe(true);
-    for (const l of [a1, a2, b1]) {
+    expect(orders.every((o) => o.status === 'pending_payment')).toBe(true);
+    for (const [l, orderedQty] of [
+      [a1, 2],
+      [a2, 1],
+      [b1, 1],
+    ]) {
       const fresh = await Listing.findById(l._id);
-      expect(fresh.inventory.quantity).toBe(10);
-      expect(fresh.inventory.reserved).toBe(0);
+      expect(fresh.inventory.quantity).toBe(10 - orderedQty);
+      expect(fresh.inventory.reserved).toBe(orderedQty);
     }
   });
 
@@ -476,5 +483,67 @@ describe('Admin checkout settings', () => {
       .set('Authorization', `Bearer ${login.body.token}`)
       .send({ taxPercent: 150 });
     expect(res.status).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Stock-reservation race at order creation (M11)
+// ─────────────────────────────────────────────────────────────────────
+describe('POST /api/v1/orders/checkout - stock-reservation race', () => {
+  it('lets exactly one of two simultaneous buyers reserve the last unit of stock', async () => {
+    const { business } = await createBusinessOwnerWithBusiness();
+    const listing = await createListing(business, {
+      fulfillment: 'delivery',
+      pricing: { price: 4000, currency: 'RWF' },
+      inventory: { quantity: 1 },
+    });
+    const { token: buyerA } = await createConsumer();
+    const { token: buyerB } = await createConsumer();
+    const items = [{ listing: String(listing._id), quantity: 1 }];
+
+    const [resA, resB] = await Promise.all([
+      checkout(buyerA, deliveryBody(items)),
+      checkout(buyerB, deliveryBody(items)),
+    ]);
+
+    const statuses = [resA.status, resB.status].sort();
+    expect(statuses).toEqual([201, 400]);
+
+    const winner = resA.status === 201 ? resA : resB;
+    const loser = resA.status === 201 ? resB : resA;
+    expect(winner.body.checkoutId).toBeTruthy();
+    expect(loser.body.message).toMatch(/not enough stock|only .* left/i);
+
+    // Never both, never neither, never oversold.
+    const fresh = await Listing.findById(listing._id);
+    expect(fresh.inventory.quantity).toBe(0);
+    expect(fresh.inventory.reserved).toBe(1);
+
+    const orders = await Order.find({ business: business._id });
+    expect(orders).toHaveLength(1);
+  });
+
+  it('lets 3 buyers race for 2 units - exactly 2 win, stock never goes negative', async () => {
+    const { business } = await createBusinessOwnerWithBusiness();
+    const listing = await createListing(business, {
+      fulfillment: 'delivery',
+      pricing: { price: 4000, currency: 'RWF' },
+      inventory: { quantity: 2 },
+    });
+    const buyers = await Promise.all([createConsumer(), createConsumer(), createConsumer()]);
+    const items = [{ listing: String(listing._id), quantity: 1 }];
+
+    const results = await Promise.all(
+      buyers.map(({ token }) => checkout(token, deliveryBody(items)))
+    );
+
+    const succeeded = results.filter((r) => r.status === 201);
+    const failed = results.filter((r) => r.status === 400);
+    expect(succeeded).toHaveLength(2);
+    expect(failed).toHaveLength(1);
+
+    const fresh = await Listing.findById(listing._id);
+    expect(fresh.inventory.quantity).toBe(0);
+    expect(fresh.inventory.reserved).toBe(2);
   });
 });

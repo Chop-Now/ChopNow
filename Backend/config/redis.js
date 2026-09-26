@@ -87,6 +87,15 @@ const isAvailable = () => {
 };
 
 /**
+ * The underlying ioredis client, for callers that need their own dedicated
+ * connections off the same Redis instance (e.g. the Socket.IO adapter's
+ * pub/sub clients, via `getClient().duplicate()`). Returns null when Redis
+ * isn't configured/connected - callers must handle that.
+ * @returns {import('ioredis').Redis | null}
+ */
+const getClient = () => redisClient;
+
+/**
  * Get value from cache
  * @param {string} key - Cache key
  * @returns {Promise<any|null>} Cached value or null
@@ -307,6 +316,7 @@ const close = async () => {
 module.exports = {
   initRedis,
   isAvailable,
+  getClient,
   get,
   set,
   del,

@@ -1043,7 +1043,7 @@ const MyOrders = () => {
 
                         {/* Store Info Card */}
                         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden text-left">
-                          <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                          <div className="p-4 border-b border-gray-100 bg-fufu-dim/50 flex justify-between items-center">
                             <h5 className="font-semibold text-gray-800 text-sm">
                               Store Info & Directions
                             </h5>
@@ -1224,7 +1224,7 @@ const MyOrders = () => {
                             )}
                           </div>
                         ) : (
-                          <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
+                          <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
                             <span className="text-gray-600">Assigning a delivery agent...</span>
                             <span className="text-xs bg-yellow-100 text-yellow-800 font-semibold px-2.5 py-0.5 rounded-full animate-pulse">
                               Pending
@@ -1233,7 +1233,7 @@ const MyOrders = () => {
                         )}
 
                         {/* Address */}
-                        <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div className="text-sm bg-fufu-dim p-3 rounded-lg border border-gray-100">
                           <p className="text-gray-500 font-medium text-xs mb-1">DELIVERY ADDRESS</p>
                           <p className="font-semibold text-gray-800">
                             {orderDetails.delivery?.dropoffLocation?.address ||

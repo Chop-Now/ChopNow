@@ -101,7 +101,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
   }
 }
 
-class _OrderList extends StatelessWidget {
+class _OrderList extends ConsumerWidget {
   final List<Order> orders;
   final String emptyTitle;
   final String emptySubtitle;
@@ -111,7 +111,7 @@ class _OrderList extends StatelessWidget {
       required this.emptySubtitle});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (orders.isEmpty) {
       return CnEmptyState(
         title: emptyTitle,
@@ -121,7 +121,11 @@ class _OrderList extends StatelessWidget {
     }
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () async => Future.delayed(const Duration(milliseconds: 600)),
+      // M23: actually refetch (and let the RefreshIndicator's spinner track
+      // the real fetch, via .future) instead of just delaying and doing
+      // nothing - a pull-to-refresh that shows a spinner but never updates
+      // the list is worse than no pull-to-refresh at all.
+      onRefresh: () => ref.refresh(ordersProvider.future),
       child: ListView.separated(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),

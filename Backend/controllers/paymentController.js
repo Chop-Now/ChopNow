@@ -5,7 +5,7 @@ const Order = require('../models/Order');
 const Payment = require('../models/Payment');
 const logger = require('../utils/logger');
 const { verifySignature } = require('../utils/pawapaySignatures');
-const { sendNewOrderNotifications, cancelOrderAndRestoreInventory } = require('./orderController');
+const { sendNewOrderNotifications } = require('./orderController');
 const RefundRequest = require('../models/RefundRequest');
 const socketManager = require('../socket');
 
@@ -45,10 +45,11 @@ const emitOrderUpdate = (order) => {
  * - COMPLETED only moves pending_payment -> paid. If the order was cancelled
  *   meanwhile (customer cancel, expiry), the money is queued for refund
  *   instead of resurrecting the order after its stock was released.
- * - FAILED cancels via cancelOrderAndRestoreInventory only from
- *   pending_payment, and not while another attempt for the order is still
- *   live, so stock is never released twice and a later successful retry
- *   isn't undone.
+ * - FAILED/REJECTED does NOT cancel the order (M9) - it's left in
+ *   pending_payment so the customer can retry the same order via
+ *   initiatePayment rather than rebuilding their cart. pendingPaymentExpiryJob
+ *   is still what eventually cancels it and releases stock if nobody ever
+ *   successfully retries.
  *
  * @returns {Promise<{processed: boolean, payment: Payment|null}>}
  */
@@ -68,7 +69,6 @@ const applyDepositOutcome = async ({
 
   let payment = null;
   let paidOrders = [];
-  let cancelledOrders = [];
 
   // Claim + order transitions + refund/stock changes commit together: if any
   // step fails, the Payment goes back to its unclaimed state and the webhook
@@ -77,7 +77,6 @@ const applyDepositOutcome = async ({
   try {
     await session.withTransaction(async () => {
       paidOrders = [];
-      cancelledOrders = [];
 
       payment = await Payment.findOneAndUpdate(
         claimFilter,
@@ -158,25 +157,25 @@ const applyDepositOutcome = async ({
           continue;
         }
 
-        // FAILED
-        const order = await Order.findById(orderId).session(session);
+        // FAILED (or REJECTED) - M9: the order is deliberately NOT cancelled
+        // here. It stays in pending_payment so the customer can retry the
+        // same order (initiatePayment only requires status ===
+        // 'pending_payment', with no memory of a prior failed attempt)
+        // instead of having to rebuild their cart from scratch. Stock stays
+        // reserved exactly as it would for any other unpaid order; the
+        // existing pendingPaymentExpiryJob (30 min from order.createdAt)
+        // is still what eventually cancels it and releases stock if the
+        // customer never successfully retries - this failure doesn't need
+        // its own separate cleanup path.
+        const order = await Order.findById(orderId).select('orderNumber status').session(session);
         if (!order) {
           logger.error({ orderId }, 'Matching order for payment outcome not found');
           continue;
         }
-        const otherLiveAttempt = await Payment.exists({
-          _id: { $ne: payment._id },
-          $or: [{ order: order._id }, { orders: order._id }],
-          status: { $in: ['pending', 'completed'] },
-        }).session(session);
-        if (otherLiveAttempt) continue;
-        const cancelled = await cancelOrderAndRestoreInventory(order, {
-          fromStatuses: ['pending_payment'],
-          paymentStatus: 'failed',
-          reason: 'Payment failed',
-          session,
-        });
-        if (cancelled) cancelledOrders.push(order);
+        logger.info(
+          { orderNumber: order.orderNumber, orderStatus: order.status, depositId },
+          'Payment attempt failed - order left in pending_payment for the customer to retry'
+        );
       }
     });
   } finally {
@@ -195,10 +194,6 @@ const applyDepositOutcome = async ({
       );
       emitOrderUpdate(order);
     });
-  }
-  for (const order of cancelledOrders) {
-    logger.info({ orderNumber: order.orderNumber, depositId }, 'Order cancelled: payment failed.');
-    setImmediate(() => emitOrderUpdate(order));
   }
   return { processed: true, payment };
 };

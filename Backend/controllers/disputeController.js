@@ -87,7 +87,7 @@ const getBusinessDisputes = async (req, res) => {
     // If admin, return all disputes
     if (req.user.activeRole === 'admin' || req.user.roles?.includes('admin')) {
       const disputes = await Dispute.find({})
-        .populate('customer', 'firstName lastName email')
+        .populate('customer', 'firstName lastName email phone')
         .populate('business', 'name')
         .populate('order', 'orderNumber pricing status payment')
         .sort({ createdAt: -1 });
@@ -120,7 +120,7 @@ const getBusinessDisputes = async (req, res) => {
 const getAdminDisputes = async (req, res) => {
   try {
     const disputes = await Dispute.find({})
-      .populate('customer', 'firstName lastName email')
+      .populate('customer', 'firstName lastName email phone')
       .populate('business', 'name')
       .populate('order', 'orderNumber pricing status payment')
       .sort({ priority: -1, createdAt: -1 });

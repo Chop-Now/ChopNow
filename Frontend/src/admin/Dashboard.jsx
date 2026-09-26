@@ -140,7 +140,34 @@ const Dashboard = () => {
     setCurrentPage(pageId);
   };
 
+  // Get user's current role for AdminModeProvider
+  const currentUserRole = user?.activeRole || user?.role;
+  const userRoles = user?.roles || [user?.role];
+  const isAdmin = currentUserRole === 'admin' || userRoles.includes('admin');
+
+  // M18: this component is already gated to business_owner sessions by the
+  // redirect in the access-check effect above, but `currentPage` is plain
+  // React state with no validation - anything that pushes an admin-only key
+  // into it directly (React DevTools' state editor, a compromised
+  // extension, a future bug elsewhere that calls setCurrentPage) would
+  // still render the admin-only page component here. The backend already
+  // refuses the underlying data for a non-admin, but the component shell
+  // itself shouldn't render at all for a role that can never legitimately
+  // reach it - keep this switch to what a vendor can be here to see.
+  const ADMIN_ONLY_PAGES = new Set([
+    'all-users',
+    'roles',
+    'activity',
+    'all-vendors',
+    'vendor-approval',
+    'refunds',
+    'complaints',
+  ]);
+
   const renderPage = () => {
+    if (ADMIN_ONLY_PAGES.has(currentPage) && !isAdmin) {
+      return <Content onNavigate={setCurrentPage} />;
+    }
     switch (currentPage) {
       case 'dashboard':
         return <Content onNavigate={setCurrentPage} />;
@@ -153,7 +180,7 @@ const Dashboard = () => {
         return <Insights />;
       case 'impact':
         return <Impact />;
-      // Users
+      // Users (admin only)
       case 'all-users':
         return <AllUsers />;
       case 'roles':
@@ -174,12 +201,12 @@ const Dashboard = () => {
         return <AllListings />;
       case 'new-listing':
         return <NewListing />;
-      // Vendors
+      // Vendors (admin only)
       case 'all-vendors':
         return <AllVendors />;
       case 'vendor-approval':
         return <VendorApproval />;
-      // Disputes
+      // Disputes (admin only)
       case 'refunds':
         return <RefundRequests />;
       case 'complaints':
@@ -195,9 +222,6 @@ const Dashboard = () => {
         return <Content />;
     }
   };
-
-  // Get user's current role for AdminModeProvider
-  const currentUserRole = user?.activeRole || user?.role;
 
   return (
     <AdminModeProvider userRole={currentUserRole}>

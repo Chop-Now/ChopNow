@@ -2,7 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
+
+// ── Providers ─────────────────────────────────────────────────────────────────
+
+final _riderProfileStatsProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
+  try {
+    final res = await ApiClient.instance.get(AppEndpoints.riderStatsFull);
+    final data = res.data;
+    if (data is Map && data['success'] == true) {
+      return data['stats'] is Map
+          ? Map<String, dynamic>.from(data['stats'])
+          : {};
+    }
+    return data is Map<String, dynamic> ? data : {};
+  } catch (e) {
+    throw ApiException.fromDioError(e);
+  }
+});
+
+String _formatCompactEarnings(num value) {
+  final v = value.toDouble();
+  if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+  return v.toInt().toString();
+}
 
 class RiderProfileScreen extends ConsumerWidget {
   const RiderProfileScreen({super.key});
@@ -13,6 +40,15 @@ class RiderProfileScreen extends ConsumerWidget {
     final firstName = user?.firstName ?? 'Rider';
     final lastName = user?.lastName ?? '';
     final email = user?.email ?? '';
+
+    final stats = ref.watch(_riderProfileStatsProvider).value ?? {};
+    final deliveries = stats['totalTrips']?.toString() ?? '-';
+    final ratingVal = stats['rating'];
+    final rating = ratingVal is num ? ratingVal.toStringAsFixed(1) : '-';
+    final totalEarningsVal = stats['totalEarnings'];
+    final totalEarnings = totalEarningsVal is num
+        ? 'RWF ${_formatCompactEarnings(totalEarningsVal)}'
+        : '-';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -124,20 +160,20 @@ class RiderProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Stats Summary ──────────────────────────────────────────
-                  const _SectionCard(
+                  _SectionCard(
                     child: Row(children: [
                       _MiniStat(
                           icon: Icons.directions_bike_rounded,
                           label: 'Deliveries',
-                          value: '87'),
+                          value: deliveries),
                       _MiniStat(
                           icon: Icons.star_rounded,
                           label: 'Rating',
-                          value: '4.8'),
+                          value: rating),
                       _MiniStat(
                           icon: Icons.payments_outlined,
                           label: 'Total',
-                          value: 'RWF 48.5K'),
+                          value: totalEarnings),
                     ]),
                   ),
 

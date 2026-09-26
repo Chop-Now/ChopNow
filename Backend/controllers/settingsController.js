@@ -1,5 +1,15 @@
+const crypto = require('crypto');
 const PlatformSettings = require('../models/PlatformSettings');
 const logger = require('../utils/logger');
+
+// Hashing both sides to a fixed-length digest before timingSafeEqual avoids
+// leaking the recovery key's length via a length-check short-circuit, which
+// a bare string comparison (or timingSafeEqual on the raw strings) would do.
+const timingSafeStringEqual = (a, b) => {
+  const hashA = crypto.createHash('sha256').update(String(a)).digest();
+  const hashB = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+};
 
 /**
  * @desc    Get platform settings (public - limited fields)
@@ -170,7 +180,7 @@ const emergencyMaintenanceOff = async (req, res) => {
       return res.status(500).json({ message: 'Recovery key not configured on server' });
     }
 
-    if (!recoveryKey || recoveryKey !== validRecoveryKey) {
+    if (!recoveryKey || !timingSafeStringEqual(recoveryKey, validRecoveryKey)) {
       return res.status(403).json({ message: 'Invalid recovery key' });
     }
 

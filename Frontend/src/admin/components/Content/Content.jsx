@@ -29,7 +29,7 @@ const Content = ({ onNavigate }) => {
       {isAdmin && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
           <div className="xl:col-span-2 h-full">
-            <DisputesTable />
+            <DisputesTable onNavigate={onNavigate} />
           </div>
           <div className="h-full">
             <ActivityFeed />

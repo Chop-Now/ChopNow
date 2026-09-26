@@ -1,8 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { analyticsService } from '../services';
+import { useAppContext } from '../context/AppContext';
 
 const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const { isAuthenticated } = useAppContext();
+  const [co2Saved, setCo2Saved] = useState(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let isMounted = true;
+    analyticsService
+      .getMyImpact()
+      .then((data) => {
+        if (isMounted) setCo2Saved(data.co2Saved || 0);
+      })
+      .catch(() => {
+        if (isMounted) setCo2Saved(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
 
   const sortOptions = ['Distance (Nearest First)', 'Date Posted', 'A to Z', 'Vendor Rating'];
 
@@ -145,8 +165,18 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
           className="text-xs leading-relaxed text-center"
           style={{ color: 'var(--color-moringa-muted)' }}
         >
-          You've saved <strong style={{ color: 'var(--color-textColor)' }}>5kg</strong> of CO
-          <sub>2</sub> so far. Keep it up!
+          {isAuthenticated && co2Saved !== null ? (
+            <>
+              You've saved{' '}
+              <strong style={{ color: 'var(--color-textColor)' }}>
+                {co2Saved.toFixed(1)}kg
+              </strong>{' '}
+              of CO
+              <sub>2</sub> so far. Keep it up!
+            </>
+          ) : (
+            'Sign in to track your food-waste impact.'
+          )}
         </p>
       </div>
     </div>

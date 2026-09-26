@@ -53,8 +53,14 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
 
     // Sort products
     if (sortBy === 'Distance (Nearest First)') {
-      // For now, keep original order (would need location data to sort by distance)
-      filtered = [...filtered];
+      // Products without a known distance (no geolocation permission, or the
+      // listing's business has no location on file) sort to the end.
+      filtered = [...filtered].sort((a, b) => {
+        if (a?.distance == null && b?.distance == null) return 0;
+        if (a?.distance == null) return 1;
+        if (b?.distance == null) return -1;
+        return a.distance - b.distance;
+      });
     } else if (sortBy === 'Date Posted') {
       filtered = filtered.sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
     } else if (sortBy === 'A to Z') {
