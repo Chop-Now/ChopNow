@@ -635,7 +635,7 @@ const sendBusinessRejectedEmail = async (email, businessName, ownerName, reason 
         <li>Contact our support team if you have questions</li>
       </ul>
     </div>
-    <p style="color: #6b7280; font-size: 14px;">If you believe this decision was made in error, please contact our support team at support@chopnow.app.</p>
+    <p style="color: #6b7280; font-size: 14px;">If you believe this decision was made in error, please contact our support team at chopnow.app@gmail.com.</p>
   `;
 
   return sendEmail(
@@ -709,7 +709,7 @@ const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason
     <div style="text-align: center; margin: 30px 0;">
       <a href="${dashboardUrl}" style="background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Review Your Account</a>
     </div>
-    <p style="color: #6b7280; font-size: 14px;">If you have questions about this decision, please contact our support team at support@chopnow.app.</p>
+    <p style="color: #6b7280; font-size: 14px;">If you have questions about this decision, please contact our support team at chopnow.app@gmail.com.</p>
   `;
 
   return sendEmail(

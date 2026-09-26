@@ -9,7 +9,7 @@ const options = {
       description: 'API documentation for the ChopNow food rescue platform',
       contact: {
         name: 'ChopNow Support',
-        email: 'support@chopnow.com',
+        email: 'chopnow.app@gmail.com',
       },
     },
     servers: [
@@ -18,7 +18,7 @@ const options = {
         description: 'Local Development Server',
       },
       {
-        url: 'https://api.chopnow.com/api',
+        url: 'https://chopnow-backend.onrender.com/api',
         description: 'Production Server',
       },
     ],

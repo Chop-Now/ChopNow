@@ -13,7 +13,7 @@ const platformSettingsSchema = new mongoose.Schema(
     },
     supportEmail: {
       type: String,
-      default: 'support@chopnow.com',
+      default: 'chopnow.app@gmail.com',
     },
     supportPhone: {
       type: String,

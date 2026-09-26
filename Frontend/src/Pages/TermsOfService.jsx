@@ -311,7 +311,7 @@ const TermsOfService = () => {
             </p>
             <ul className="list-none text-moringa-muted space-y-2">
               <li>
-                <strong>Email:</strong> legal@chopnow.app
+                <strong>Email:</strong> chopnow.app@gmail.com
               </li>
               <li>
                 <strong>Website:</strong>{' '}

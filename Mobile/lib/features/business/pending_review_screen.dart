@@ -16,7 +16,7 @@ class PendingReviewScreen extends ConsumerWidget {
 
   void _emailSupport(BuildContext context) async {
     final uri =
-        Uri.parse('mailto:support@chopnow.com?subject=Vendor%20KYC%20Inquiry');
+        Uri.parse('mailto:chopnow.app@gmail.com?subject=Vendor%20KYC%20Inquiry');
     if (await canLaunchUrl(uri)) launchUrl(uri);
   }
 

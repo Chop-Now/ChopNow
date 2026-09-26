@@ -79,7 +79,7 @@ const ContactUs = () => {
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Mail size={18} style={{ color: 'var(--color-solid)' }} />
-              <span>support@chopnow.rw</span>
+              <span>chopnow.app@gmail.com</span>
             </div>
           </motion.div>
         </motion.div>

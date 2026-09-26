@@ -278,8 +278,8 @@ const PrivacyPolicy = () => {
               </li>
             </ul>
             <p className="text-moringa-muted leading-relaxed mt-4">
-              To exercise these rights, please contact us at privacy@chopnow.app. We will respond to
-              your request within 30 days.
+              To exercise these rights, please contact us at chopnow.app@gmail.com. We will respond
+              to your request within 30 days.
             </p>
           </section>
 
@@ -319,8 +319,8 @@ const PrivacyPolicy = () => {
             <p className="text-moringa-muted leading-relaxed">
               Our Service is not intended for children under 18 years of age. We do not knowingly
               collect personal information from children. If you believe we have collected
-              information from a child, please contact us immediately at privacy@chopnow.app, and we
-              will take steps to delete such information.
+              information from a child, please contact us immediately at chopnow.app@gmail.com, and
+              we will take steps to delete such information.
             </p>
           </section>
 
@@ -371,10 +371,10 @@ const PrivacyPolicy = () => {
             </p>
             <ul className="list-none text-moringa-muted space-y-2">
               <li>
-                <strong>Email:</strong> privacy@chopnow.app
+                <strong>Email:</strong> chopnow.app@gmail.com
               </li>
               <li>
-                <strong>General Inquiries:</strong> support@chopnow.app
+                <strong>General Inquiries:</strong> chopnow.app@gmail.com
               </li>
               <li>
                 <strong>Website:</strong>{' '}

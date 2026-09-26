@@ -126,7 +126,7 @@ const Settings = ({ initialTab = 'profile' }) => {
     // General Settings
     platformName: 'ChopNow',
     platformTagline: 'Save Food, Save Money, Save the Planet',
-    supportEmail: 'support@chopnow.com',
+    supportEmail: 'chopnow.app@gmail.com',
     supportPhone: '+250 788 000 000',
     // Commission Settings
     platformFeePercent: 10,
@@ -168,7 +168,7 @@ const Settings = ({ initialTab = 'profile' }) => {
           setPlatformSettings({
             platformName: settings.platformName || 'ChopNow',
             platformTagline: settings.platformTagline || 'Save Food, Save Money, Save the Planet',
-            supportEmail: settings.supportEmail || 'support@chopnow.com',
+            supportEmail: settings.supportEmail || 'chopnow.app@gmail.com',
             supportPhone: settings.supportPhone || '+250 788 000 000',
             platformFeePercent: settings.platformFeePercent ?? 10,
             minimumWithdrawal: settings.minimumWithdrawal ?? 5000,

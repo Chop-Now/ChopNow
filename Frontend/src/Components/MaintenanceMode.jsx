@@ -33,11 +33,11 @@ const MaintenanceMode = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href={`mailto:${settings.supportEmail || 'support@chopnow.com'}`}
+              href={`mailto:${settings.supportEmail || 'chopnow.app@gmail.com'}`}
               className="flex items-center gap-2 text-white hover:text-yellow-500 transition-colors"
             >
               <Mail className="w-5 h-5" />
-              <span>{settings.supportEmail || 'support@chopnow.com'}</span>
+              <span>{settings.supportEmail || 'chopnow.app@gmail.com'}</span>
             </a>
 
             <span className="hidden sm:block text-slate-600">|</span>

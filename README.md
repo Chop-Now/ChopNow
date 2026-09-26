@@ -261,7 +261,7 @@ This project is proprietary software. All rights reserved.
 
 ## Support
 
-For support, email support@chopnow.app or open an issue in the repository.
+For support, email chopnow.app@gmail.com or open an issue in the repository.
 
 ---
 

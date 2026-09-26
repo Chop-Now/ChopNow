@@ -206,7 +206,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _NavTile(
               icon: Icons.bug_report_outlined,
               label: 'Report a Problem',
-              onTap: () => _openUrl('mailto:support@chopnow.app')),
+              onTap: () => _openUrl('mailto:chopnow.app@gmail.com')),
 
           const SizedBox(height: 8),
           // ── Danger zone ──
@@ -383,7 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
-                'Please contact support@chopnow.app to complete account deletion.')),
+                'Please contact chopnow.app@gmail.com to complete account deletion.')),
       );
     }
   }
