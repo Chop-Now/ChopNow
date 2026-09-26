@@ -687,6 +687,7 @@ const calculateMonthlyRevenue = async (businessId) => {
         },
         revenue: { $sum: '$pricing.total' },
         profit: { $sum: businessId ? '$pricing.vendorAmount' : '$pricing.platformFee' },
+        orders: { $sum: 1 },
       },
     },
   ]);
@@ -702,13 +703,14 @@ const calculateMonthlyRevenue = async (businessId) => {
     const year = monthDate.getFullYear();
     const monthNum = monthDate.getMonth() + 1;
     const key = `${year}-${monthNum}`;
-    const data = resultMap[key] || { revenue: 0, profit: 0 };
+    const data = resultMap[key] || { revenue: 0, profit: 0, orders: 0 };
 
     monthlyData.push({
       month: months[monthDate.getMonth()],
       year,
       revenue: Math.round(data.revenue),
       profit: Math.round(data.profit),
+      orders: data.orders,
     });
   }
 
@@ -829,7 +831,7 @@ const getRecentActivity = async (req, res) => {
     // Run all 4 queries in parallel
     const [recentUsers, recentOrders, recentBusinesses, recentReviews] = await Promise.all([
       User.find({ createdAt: { $gte: sevenDaysAgo } })
-        .select('firstName lastName role createdAt')
+        .select('firstName lastName activeRole createdAt')
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
@@ -854,11 +856,16 @@ const getRecentActivity = async (req, res) => {
     ]);
 
     recentUsers.forEach((user) => {
-      const roleName = user.role === 'business_owner' ? 'vendor' : user.role;
+      // User has no `role` field - only `roles` (array) and `activeRole`.
+      // This previously read `user.role`, which is always undefined, so
+      // every entry here said "registered as a undefined" regardless of
+      // the user's real role.
+      const roleName = user.activeRole === 'business_owner' ? 'vendor' : user.activeRole;
       activities.push({
         id: `user-${user._id}`,
         type: 'user',
-        title: user.role === 'business_owner' ? 'New Vendor Registered' : 'New User Registered',
+        title:
+          user.activeRole === 'business_owner' ? 'New Vendor Registered' : 'New User Registered',
         description:
           `${user.firstName || ''} ${user.lastName || ''} has registered as a ${roleName}.`.trim(),
         timestamp: user.createdAt,
@@ -969,13 +976,13 @@ const getUserActivity = async (req, res) => {
     const [recentOrders, recentUsers, recentBusinesses, recentReviews] = await Promise.all([
       Order.find({ createdAt: { $gte: dateFilter } })
         .select('orderNumber status pricing createdAt customer business')
-        .populate('customer', 'firstName lastName email avatar role')
+        .populate('customer', 'firstName lastName email avatar activeRole')
         .populate('business', 'name')
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean(),
       User.find({ createdAt: { $gte: dateFilter } })
-        .select('firstName lastName email avatar role createdAt')
+        .select('firstName lastName email avatar activeRole createdAt')
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean(),
@@ -1008,9 +1015,9 @@ const getUserActivity = async (req, res) => {
               order.customer.avatar ||
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${order.customer.email}`,
             role:
-              order.customer.role === 'business_owner'
+              order.customer.activeRole === 'business_owner'
                 ? 'vendor'
-                : order.customer.role || 'customer',
+                : order.customer.activeRole || 'customer',
           },
           action: 'Placed a new order',
           details: `Order #${order.orderNumber} - ${order.business?.name || 'Unknown vendor'} - RWF ${(order.pricing?.total || 0).toLocaleString()}`,
@@ -1027,10 +1034,10 @@ const getUserActivity = async (req, res) => {
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
           email: user.email,
           avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
-          role: user.role === 'business_owner' ? 'vendor' : user.role || 'customer',
+          role: user.activeRole === 'business_owner' ? 'vendor' : user.activeRole || 'customer',
         },
         action: 'Account created',
-        details: `New ${user.role === 'business_owner' ? 'vendor' : user.role} registration`,
+        details: `New ${user.activeRole === 'business_owner' ? 'vendor' : user.activeRole} registration`,
         timestamp: user.createdAt,
         type: 'registration',
       });

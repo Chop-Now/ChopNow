@@ -33,6 +33,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState(null);
   const [resending, setResending] = useState(false);
+  // H16: the login button had no in-flight guard at all - a double-click or
+  // slow network could fire two concurrent login attempts.
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // H5 fix: use the ID-token credential flow (GoogleLogin), not the
   // access-token flow (useGoogleLogin) - Google's Identity Services only
@@ -407,13 +410,16 @@ const Login = () => {
                 {/* Login Button */}
                 <button
                   type="submit"
+                  disabled={isLoggingIn}
                   onClick={async (e) => {
                     e.preventDefault();
+                    if (isLoggingIn) return;
                     if (!email || !password) {
                       toast.error('Please enter email and password');
                       return;
                     }
 
+                    setIsLoggingIn(true);
                     try {
                       // Map userType to role for the login function
                       const preferredRole = userType === 'business' ? 'business_owner' : 'consumer';
@@ -489,12 +495,14 @@ const Login = () => {
                         return;
                       }
                       toast.error(error.message || 'Login failed');
+                    } finally {
+                      setIsLoggingIn(false);
                     }
                   }}
-                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer"
+                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
-                  Login
+                  {isLoggingIn ? 'Signing in...' : 'Login'}
                 </button>
 
                 {unverifiedEmail && (

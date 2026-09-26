@@ -35,81 +35,46 @@ const OrderTrendsChart = () => {
           ? await analyticsService.getBusinessOverview()
           : await analyticsService.getAdminStats();
 
-      let monthlyData, quarterlyData, annualData;
-
+      let monthlyData;
       if (adminMode === 'shop') {
         // Business overview: weeklyTrend is [{ sales, orders }, ...]
         const weekly = stats.weeklyTrend || [];
-        monthlyData =
-          weekly.length > 0
-            ? weekly.map((w, i) => ({
-                name: `Week ${i + 1}`,
-                thisMonth: w.orders || 0,
-                lastMonth: 0,
-              }))
-            : [
-                { name: 'Week 1', thisMonth: 0, lastMonth: 0 },
-                { name: 'Week 2', thisMonth: 0, lastMonth: 0 },
-                { name: 'Week 3', thisMonth: 0, lastMonth: 0 },
-                { name: 'Week 4', thisMonth: 0, lastMonth: 0 },
-              ];
-        quarterlyData = [
-          { name: 'Month 1', thisQuarter: 0, lastQuarter: 0 },
-          { name: 'Month 2', thisQuarter: 0, lastQuarter: 0 },
-          { name: 'Month 3', thisQuarter: stats.stats?.totalOrders || 0, lastQuarter: 0 },
-        ];
-        annualData = [];
+        monthlyData = weekly.map((w, i) => ({
+          name: `Week ${i + 1}`,
+          thisMonth: w.orders || 0,
+          lastMonth: 0,
+        }));
       } else {
         // Admin stats: weeklyTrends already in chart format
-        monthlyData = stats.weeklyTrends || [
-          { name: 'Week 1', thisMonth: 0, lastMonth: 0 },
-          { name: 'Week 2', thisMonth: 0, lastMonth: 0 },
-          { name: 'Week 3', thisMonth: 0, lastMonth: 0 },
-          { name: 'Week 4', thisMonth: 0, lastMonth: 0 },
-        ];
-        quarterlyData = [
-          {
-            name: 'Month 1',
-            thisQuarter: Math.round((stats.orders?.total || 0) * 0.3),
-            lastQuarter: Math.round((stats.orders?.total || 0) * 0.25),
-          },
-          {
-            name: 'Month 2',
-            thisQuarter: Math.round((stats.orders?.total || 0) * 0.35),
-            lastQuarter: Math.round((stats.orders?.total || 0) * 0.3),
-          },
-          {
-            name: 'Month 3',
-            thisQuarter: stats.orders?.thisMonth || 0,
-            lastQuarter: stats.orders?.lastMonth || 0,
-          },
-        ];
-        const totalOrders = stats.orders?.total || 0;
-        const months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-        ];
-        const currentMonth = new Date().getMonth();
-        annualData = months.map((month, idx) => {
-          const growthFactor = (idx + 1) / 12;
-          const baseOrders = Math.round(totalOrders * growthFactor * 0.15);
-          return {
-            name: month,
-            thisYear: idx <= currentMonth ? baseOrders : 0,
-            lastYear: Math.round(baseOrders * 0.8),
-          };
-        });
+        monthlyData = stats.weeklyTrends || [];
       }
+
+      // Quarterly and annually both derive from monthlyRevenue's real
+      // per-month order counts (added alongside revenue/profit - see
+      // calculateMonthlyRevenue in Backend/controllers/analyticsController.js).
+      // Previously these multiplied the running order total by made-up
+      // growth-factor constants; there was never a real quarterly/annual
+      // comparison behind them.
+      const monthly = stats.monthlyRevenue || [];
+
+      // Quarterly: this quarter = the last 3 real months, last quarter = the
+      // 3 real months before that, aligned month-by-month within the quarter.
+      const last6 = monthly.slice(-6);
+      const lastQuarterMonths = last6.slice(0, 3);
+      const thisQuarterMonths = last6.slice(3, 6);
+      const quarterlyData = [0, 1, 2].map((i) => ({
+        name: `Month ${i + 1}`,
+        thisQuarter: thisQuarterMonths[i]?.orders || 0,
+        lastQuarter: lastQuarterMonths[i]?.orders || 0,
+      }));
+
+      // Annually: only 12 real months of history exist (no prior-year data
+      // tracked anywhere), so this shows one real trailing-12-month line
+      // rather than fabricating a "last year" comparison.
+      const annualData = monthly.map((m) => ({
+        name: m.month,
+        thisYear: m.orders,
+      }));
 
       setChartData({
         monthly: monthlyData,
@@ -168,11 +133,14 @@ const OrderTrendsChart = () => {
           previousLabel: 'Last Quarter',
         };
       case 'annually':
+        // No prior-year history is tracked anywhere, so there's no real
+        // "Last Year" line to draw - only ever show the real trailing-12-
+        // month trend.
         return {
           current: 'thisYear',
-          previous: 'lastYear',
-          currentLabel: 'This Year',
-          previousLabel: 'Last Year',
+          previous: null,
+          currentLabel: 'Last 12 Months',
+          previousLabel: null,
         };
       default:
         return {
@@ -247,14 +215,21 @@ const OrderTrendsChart = () => {
             {dataKeys.currentLabel}
           </span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-linear-to-r from-solidOne to-solidTwo rounded-full"></div>
-          <span className="text-xs text-slate-600 dark:text-slate-400">
-            {dataKeys.previousLabel}
-          </span>
-        </div>
+        {dataKeys.previousLabel && (
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-linear-to-r from-solidOne to-solidTwo rounded-full"></div>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              {dataKeys.previousLabel}
+            </span>
+          </div>
+        )}
       </div>
 
+      {currentData.length === 0 ? (
+        <div className="h-64 sm:h-72 md:h-80 flex items-center justify-center">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No order data yet</p>
+        </div>
+      ) : (
       <div className="h-64 sm:h-72 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={currentData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
@@ -287,15 +262,17 @@ const OrderTrendsChart = () => {
               dot={{ fill: '#0F3D2E', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6 }}
             />
-            <Line
-              type="monotone"
-              dataKey={dataKeys.previous}
-              stroke="url(#previousGradient)"
-              strokeWidth={3}
-              dot={{ fill: '#E8552F', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6 }}
-              strokeDasharray="5 5"
-            />
+            {dataKeys.previous && (
+              <Line
+                type="monotone"
+                dataKey={dataKeys.previous}
+                stroke="url(#previousGradient)"
+                strokeWidth={3}
+                dot={{ fill: '#E8552F', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                strokeDasharray="5 5"
+              />
+            )}
             <defs>
               <linearGradient id="currentGradient" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
@@ -309,6 +286,7 @@ const OrderTrendsChart = () => {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      )}
     </div>
   );
 };

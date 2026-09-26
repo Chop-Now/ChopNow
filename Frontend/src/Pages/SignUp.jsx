@@ -93,6 +93,9 @@ const SignUp = () => {
   const [address, setAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  // H16: handleSubmit had no in-flight guard - a double-click or slow
+  // network could fire two concurrent registration attempts.
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { getCurrentLocation } = useGeolocation();
 
   // H5 fix: see Login.jsx - ID-token credential flow, required by the backend's
@@ -135,6 +138,7 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
@@ -160,6 +164,7 @@ const SignUp = () => {
       return;
     }
 
+    setIsSubmitting(true);
     if (userType === 'business') {
       // Handle business signup - create account AND business profile
       try {
@@ -254,6 +259,8 @@ const SignUp = () => {
         const errorMessage =
           error.response?.data?.message || error.message || 'Business signup failed';
         toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       // Handle buyer signup
@@ -283,6 +290,8 @@ const SignUp = () => {
 
         const errorMessage = error.response?.data?.message || error.message || 'Signup failed';
         toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -932,10 +941,11 @@ const SignUp = () => {
                 {/* Create Account Button */}
                 <button
                   type="submit"
-                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer"
+                  disabled={isSubmitting}
+                  className="mt-8 w-full h-11 rounded-lg text-white font-medium hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'var(--color-solid)' }}
                 >
-                  Create Account
+                  {isSubmitting ? 'Creating account...' : 'Create Account'}
                 </button>
 
                 {/* Terms and Privacy */}
