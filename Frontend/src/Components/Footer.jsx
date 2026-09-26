@@ -26,8 +26,13 @@ const Footer = () => {
       links: ['Contact Us', 'FAQs', 'Privacy Policy'],
     },
     {
+      // 'Delivery Information' and 'Return & Refund Policy' used to be listed
+      // here too, but neither has a real page - no route, no content, ever -
+      // so they rendered as dead `href="#"` links that looked clickable and
+      // did nothing. Removed rather than inventing policy content on the
+      // business's behalf; add them back once those pages actually exist.
       title: 'Need Help?',
-      links: ['Delivery Information', 'Return & Refund Policy', 'Terms & Conditions'],
+      links: ['Terms & Conditions'],
     },
   ];
   return (
