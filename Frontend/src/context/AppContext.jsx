@@ -57,22 +57,31 @@ const AppContextProvider = ({ children }) => {
   // (see services/api.js), so a page reload always starts with none - the only
   // way to know whether the user is still logged in is to attempt a silent
   // refresh against the httpOnly refresh-token cookie the backend set.
+  //
+  // This used to skip the refresh attempt entirely whenever localStorage had
+  // no stored user, treating that as "never logged in on this browser." But
+  // localStorage.user is only ever (re)written here and at login - the
+  // reactive 401-retry refresh in services/api.js's interceptor restores the
+  // in-memory session mid-visit without touching localStorage at all. So any
+  // page load after that reactive path had already run once - a fresh tab, a
+  // bookmark, a shared link - starts this check with no stored user even
+  // though the httpOnly cookie is still perfectly valid, and used to render
+  // logged-out despite a real, live session (found live on chopnow.app,
+  // 2026-09-26: a raw fetch to /api/users/refresh-token bypassing this gate
+  // returned 200 with a fresh token pair while the app showed "Login/Sign
+  // Up"). The httpOnly cookie is the actual source of truth, not
+  // localStorage, so this now always attempts the refresh; the cost for a
+  // genuinely logged-out visitor is one cheap POST that comes back 400.
   useEffect(() => {
     const checkAuth = async () => {
       const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        // Never logged in on this browser - skip the network round trip.
-        setIsLoading(false);
-        return;
-      }
-
-      let userData;
-      try {
-        userData = JSON.parse(storedUser);
-      } catch {
-        clearAuthState();
-        setIsLoading(false);
-        return;
+      let userData = null;
+      if (storedUser) {
+        try {
+          userData = JSON.parse(storedUser);
+        } catch {
+          userData = null;
+        }
       }
 
       try {
@@ -89,11 +98,14 @@ const AppContextProvider = ({ children }) => {
           setActiveRole(freshUser.activeRole || freshUser.role || 'consumer');
           setAvailableRoles(freshUser.roles || [freshUser.role || 'consumer']);
         } catch {
-          // Profile fetch failed but the refresh itself succeeded -- use stored data.
-          setUser(userData);
+          // Profile fetch failed but the refresh itself succeeded - use
+          // stored data if there was any (userData can now be null here,
+          // since the refresh is no longer gated on localStorage having a
+          // stored user - see the comment above).
+          setUser(userData || {});
           setIsAuthenticated(true);
-          setActiveRole(userData.activeRole || userData.role || 'consumer');
-          setAvailableRoles(userData.roles || [userData.role || 'consumer']);
+          setActiveRole(userData?.activeRole || userData?.role || 'consumer');
+          setAvailableRoles(userData?.roles || [userData?.role || 'consumer']);
         }
       } catch {
         // No valid refresh-token cookie (expired, revoked, or never existed here) -- session is dead.
