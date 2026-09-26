@@ -230,62 +230,62 @@ const OrderTrendsChart = () => {
           <p className="text-sm text-slate-400 dark:text-slate-500 italic">No order data yet</p>
         </div>
       ) : (
-      <div className="h-64 sm:h-72 md:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={currentData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
-            <XAxis
-              dataKey="name"
-              stroke="#64748b"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={40} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '8px',
-                border: 'none',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                padding: '8px 12px',
-              }}
-              formatter={(value) => [value.toLocaleString() + ' orders', '']}
-              labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
-              itemStyle={{ fontSize: '11px' }}
-            />
-            <Line
-              type="monotone"
-              dataKey={dataKeys.current}
-              stroke="url(#currentGradient)"
-              strokeWidth={3}
-              dot={{ fill: '#0F3D2E', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-            {dataKeys.previous && (
+        <div className="h-64 sm:h-72 md:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={currentData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#94a3b8" />
+              <XAxis
+                dataKey="name"
+                stroke="#64748b"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={40} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '8px',
+                  border: 'none',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  padding: '8px 12px',
+                }}
+                formatter={(value) => [value.toLocaleString() + ' orders', '']}
+                labelStyle={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}
+                itemStyle={{ fontSize: '11px' }}
+              />
               <Line
                 type="monotone"
-                dataKey={dataKeys.previous}
-                stroke="url(#previousGradient)"
+                dataKey={dataKeys.current}
+                stroke="url(#currentGradient)"
                 strokeWidth={3}
-                dot={{ fill: '#E8552F', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#0F3D2E', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
-                strokeDasharray="5 5"
               />
-            )}
-            <defs>
-              <linearGradient id="currentGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
-                <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.8} />
-              </linearGradient>
-              <linearGradient id="previousGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />
-                <stop offset="100%" stopColor="#FFC531" stopOpacity={0.8} />
-              </linearGradient>
-            </defs>
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+              {dataKeys.previous && (
+                <Line
+                  type="monotone"
+                  dataKey={dataKeys.previous}
+                  stroke="url(#previousGradient)"
+                  strokeWidth={3}
+                  dot={{ fill: '#E8552F', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6 }}
+                  strokeDasharray="5 5"
+                />
+              )}
+              <defs>
+                <linearGradient id="currentGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#0F3D2E" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#0A2A20" stopOpacity={0.8} />
+                </linearGradient>
+                <linearGradient id="previousGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#E8552F" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#FFC531" stopOpacity={0.8} />
+                </linearGradient>
+              </defs>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

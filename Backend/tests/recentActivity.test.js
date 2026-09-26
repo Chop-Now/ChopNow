@@ -49,7 +49,7 @@ describe('GET /api/v1/analytics/platform/activity (Phase 7)', () => {
 });
 
 describe('GET /api/v1/analytics/user-activity (Phase 7)', () => {
-  it('tags a registration activity with the user\'s real role', async () => {
+  it("tags a registration activity with the user's real role", async () => {
     const { token: adminToken } = await createAdmin();
     await createConsumer({ firstName: 'Real', lastName: 'Consumer' });
 
