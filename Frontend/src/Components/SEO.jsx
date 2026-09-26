@@ -4,7 +4,11 @@ const SEO = ({
   title = 'ChopNow',
   description = 'Save food, save money, save the planet. ChopNow connects you with surplus food from local businesses at discounted prices.',
   keywords = 'food waste, surplus food, discount food, sustainable, Rwanda, Kigali, food rescue',
-  image = '/og-image.png',
+  // '/og-image.png' doesn't exist anywhere in the repo - every page not
+  // passing its own `image` prop was pointing social/search crawlers at a
+  // 404. Using the one real PNG asset available as an honest stopgap (see
+  // index.html's matching fix) rather than a broken link.
+  image = '/apple-touch-icon.png',
   url,
   type = 'website',
 }) => {
