@@ -700,7 +700,7 @@ describe('Forgot / verify-reset-otp / reset-password flow', () => {
 // Role switching (M2)
 // ─────────────────────────────────────────────────────────────────────
 describe('POST /api/v1/users/switch-role', () => {
-  it("should switch to a role the user holds and update activeRole", async () => {
+  it('should switch to a role the user holds and update activeRole', async () => {
     const { token, user } = await createConsumer();
     await User.findByIdAndUpdate(user._id, { $addToSet: { roles: 'business_owner' } });
 

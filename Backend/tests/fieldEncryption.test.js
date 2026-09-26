@@ -8,7 +8,9 @@
  * the admin riders-list endpoint end to end.
  */
 jest.mock('../utils/cloudinaryUpload', () => ({
-  uploadToCloudinary: jest.fn().mockResolvedValue({ secure_url: 'https://cloudinary.example/fake.jpg' }),
+  uploadToCloudinary: jest
+    .fn()
+    .mockResolvedValue({ secure_url: 'https://cloudinary.example/fake.jpg' }),
 }));
 
 const request = require('supertest');

@@ -553,7 +553,9 @@ const WebsiteAdminOverview = () => {
                       {mealsChange > 0 ? '+' : ''}
                       {mealsChange}%
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      vs Last Month
+                    </span>
                   </>
                 )}
               </div>
@@ -592,7 +594,9 @@ const WebsiteAdminOverview = () => {
                       {co2Change > 0 ? '+' : ''}
                       {co2Change}%
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      vs Last Month
+                    </span>
                   </>
                 )}
               </div>
@@ -631,7 +635,9 @@ const WebsiteAdminOverview = () => {
                       {waterChange > 0 ? '+' : ''}
                       {waterChange}%
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">vs Last Month</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      vs Last Month
+                    </span>
                   </>
                 )}
               </div>
@@ -920,9 +926,7 @@ const ShopAdminReports = () => {
         </h3>
         {!hasRevenueData ? (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
-              No revenue data yet
-            </p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">No revenue data yet</p>
           </div>
         ) : (
           <div className="h-72">
@@ -1542,10 +1546,7 @@ const ShopAdminInsights = () => {
 
   // Peak Sales Time - derived from real hourly order distribution
   const peakHours = businessData?.peakHours || [];
-  const busiestHour = peakHours.reduce(
-    (max, h) => (h.orders > (max?.orders || 0) ? h : max),
-    null
-  );
+  const busiestHour = peakHours.reduce((max, h) => (h.orders > (max?.orders || 0) ? h : max), null);
   const formatHour12 = (hour) => {
     const period = hour < 12 ? 'AM' : 'PM';
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
@@ -2389,7 +2390,15 @@ const WebsiteAdminImpact = () => {
 
   // Real impact by category, platform-wide - colors are assigned by position
   // since the category itself is the only real, non-fabricated data
-  const CATEGORY_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#6b7280', '#06b6d4'];
+  const CATEGORY_COLORS = [
+    '#10b981',
+    '#3b82f6',
+    '#f59e0b',
+    '#8b5cf6',
+    '#ef4444',
+    '#6b7280',
+    '#06b6d4',
+  ];
   const categoryImpactData = (platformData?.categoryImpact || []).map((c, index) => ({
     category: c.name,
     meals: c.meals,

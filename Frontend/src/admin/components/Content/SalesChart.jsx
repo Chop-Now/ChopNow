@@ -4,7 +4,16 @@ import { Loader2 } from 'lucide-react';
 import { useAdminMode } from '../../context/AdminModeContext';
 import { analyticsService } from '../../../services';
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#ffbb28', '#00c49f', '#0088fe', '#a4de6c'];
+const COLORS = [
+  '#8884d8',
+  '#82ca9d',
+  '#ffc658',
+  '#ff8042',
+  '#ffbb28',
+  '#00c49f',
+  '#0088fe',
+  '#a4de6c',
+];
 
 const SalesChart = () => {
   const { adminMode } = useAdminMode();

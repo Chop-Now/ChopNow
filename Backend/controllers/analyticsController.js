@@ -146,83 +146,83 @@ const getBusinessOverview = async (req, res) => {
       betterRankedBusinesses,
       fulfillmentFacet,
     ] = await Promise.all([
-        // Real terminal status is 'completed' - 'delivered' isn't in the
-        // Order status enum at all, so this (and topProductsIds below)
-        // always matched zero documents before.
-        Order.aggregate([
-          {
-            $match: {
-              business: business._id,
-              status: 'completed',
-              createdAt: { $gte: thirtyDaysAgo },
-            },
+      // Real terminal status is 'completed' - 'delivered' isn't in the
+      // Order status enum at all, so this (and topProductsIds below)
+      // always matched zero documents before.
+      Order.aggregate([
+        {
+          $match: {
+            business: business._id,
+            status: 'completed',
+            createdAt: { $gte: thirtyDaysAgo },
           },
-          {
-            $group: {
-              _id: { $week: '$createdAt' },
-              sales: { $sum: '$pricing.total' },
-              orders: { $sum: 1 },
-            },
+        },
+        {
+          $group: {
+            _id: { $week: '$createdAt' },
+            sales: { $sum: '$pricing.total' },
+            orders: { $sum: 1 },
           },
-          { $sort: { _id: 1 } },
-        ]),
-        Order.aggregate([
-          { $match: { business: business._id, status: 'completed' } },
-          { $unwind: '$items' },
-          {
-            $group: {
-              _id: '$items.listing',
-              count: { $sum: '$items.quantity' },
-              // orderItemSchema has no `price` field (that's why this was
-              // silently always 0/undefined too) - `subtotal` already is
-              // unitPrice * quantity, so no need to re-multiply by quantity.
-              revenue: { $sum: '$items.subtotal' },
-            },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Order.aggregate([
+        { $match: { business: business._id, status: 'completed' } },
+        { $unwind: '$items' },
+        {
+          $group: {
+            _id: '$items.listing',
+            count: { $sum: '$items.quantity' },
+            // orderItemSchema has no `price` field (that's why this was
+            // silently always 0/undefined too) - `subtotal` already is
+            // unitPrice * quantity, so no need to re-multiply by quantity.
+            revenue: { $sum: '$items.subtotal' },
           },
-          { $sort: { count: -1 } },
-          { $limit: 5 },
-        ]),
-        // Orders per hour-of-day over the last 30 days, for a real peak-hours chart
-        Order.aggregate([
-          { $match: { business: business._id, createdAt: { $gte: thirtyDaysAgo } } },
-          {
-            $group: {
-              _id: { $hour: '$createdAt' },
-              orders: { $sum: 1 },
-            },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+      ]),
+      // Orders per hour-of-day over the last 30 days, for a real peak-hours chart
+      Order.aggregate([
+        { $match: { business: business._id, createdAt: { $gte: thirtyDaysAgo } } },
+        {
+          $group: {
+            _id: { $hour: '$createdAt' },
+            orders: { $sum: 1 },
           },
-        ]),
-        // Distinct customers vs. customers with more than one completed order,
-        // to compute a real returning-customer rate
-        Order.aggregate([
-          { $match: { business: business._id, status: 'completed' } },
-          { $group: { _id: '$customer', orders: { $sum: 1 } } },
-        ]),
-        Order.aggregate([
-          { $match: { business: business._id, status: 'completed' } },
-          { $group: { _id: null, total: { $sum: '$pricing.total' }, count: { $sum: 1 } } },
-        ]),
-        calculateMonthlyRevenue(business._id),
-        calculateCategoryBreakdown(business._id),
-        calculateMonthlyImpact(business._id, 'business'),
-        calculateCategoryImpact(business._id),
-        // Real platform rank: how many businesses have rescued more meals than this one
-        Business.countDocuments({
-          'stats.impact.mealsRescued': { $gt: business.stats?.impact?.mealsRescued || 0 },
-        }),
-        // Order fulfillment breakdown - real counts for the "Order Fulfillment
-        // Status" chart, replacing the old fixed 85/10/5% placeholder.
-        Order.aggregate([
-          { $match: { business: business._id } },
-          {
-            $facet: {
-              completed: [{ $match: { status: 'completed' } }, { $count: 'count' }],
-              cancelled: [{ $match: { status: 'cancelled' } }, { $count: 'count' }],
-              total: [{ $count: 'count' }],
-            },
+        },
+      ]),
+      // Distinct customers vs. customers with more than one completed order,
+      // to compute a real returning-customer rate
+      Order.aggregate([
+        { $match: { business: business._id, status: 'completed' } },
+        { $group: { _id: '$customer', orders: { $sum: 1 } } },
+      ]),
+      Order.aggregate([
+        { $match: { business: business._id, status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$pricing.total' }, count: { $sum: 1 } } },
+      ]),
+      calculateMonthlyRevenue(business._id),
+      calculateCategoryBreakdown(business._id),
+      calculateMonthlyImpact(business._id, 'business'),
+      calculateCategoryImpact(business._id),
+      // Real platform rank: how many businesses have rescued more meals than this one
+      Business.countDocuments({
+        'stats.impact.mealsRescued': { $gt: business.stats?.impact?.mealsRescued || 0 },
+      }),
+      // Order fulfillment breakdown - real counts for the "Order Fulfillment
+      // Status" chart, replacing the old fixed 85/10/5% placeholder.
+      Order.aggregate([
+        { $match: { business: business._id } },
+        {
+          $facet: {
+            completed: [{ $match: { status: 'completed' } }, { $count: 'count' }],
+            cancelled: [{ $match: { status: 'cancelled' } }, { $count: 'count' }],
+            total: [{ $count: 'count' }],
           },
-        ]),
-      ]);
+        },
+      ]),
+    ]);
 
     // Populate top product names — filter out any listings deleted since the order was placed
     const topProducts = await Listing.populate(topProductsIds, { path: '_id', select: 'title' });

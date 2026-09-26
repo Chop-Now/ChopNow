@@ -98,7 +98,11 @@ const ResolveDisputeDialog = ({ issue, submitting, onCancel, onSubmit }) => {
               {orderTotal ? ` · RWF ${orderTotal.toLocaleString()}` : ''}
             </p>
           </div>
-          <button onClick={onCancel} aria-label="Close" className="text-slate-400 hover:text-slate-600">
+          <button
+            onClick={onCancel}
+            aria-label="Close"
+            className="text-slate-400 hover:text-slate-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -632,7 +636,11 @@ export const CustomerComplaints = () => {
       case 'call':
         return (
           <a
-            href={issue.customer?.phone && issue.customer.phone !== 'N/A' ? `tel:${issue.customer.phone}` : undefined}
+            href={
+              issue.customer?.phone && issue.customer.phone !== 'N/A'
+                ? `tel:${issue.customer.phone}`
+                : undefined
+            }
             onClick={(e) => {
               if (!issue.customer?.phone || issue.customer.phone === 'N/A') {
                 e.preventDefault();
@@ -648,7 +656,11 @@ export const CustomerComplaints = () => {
       case 'message':
         return (
           <a
-            href={issue.customer?.email ? `mailto:${issue.customer.email}?subject=${encodeURIComponent(`ChopNow: your dispute on order ${issue.orderId}`)}` : undefined}
+            href={
+              issue.customer?.email
+                ? `mailto:${issue.customer.email}?subject=${encodeURIComponent(`ChopNow: your dispute on order ${issue.orderId}`)}`
+                : undefined
+            }
             onClick={(e) => {
               if (!issue.customer?.email) {
                 e.preventDefault();

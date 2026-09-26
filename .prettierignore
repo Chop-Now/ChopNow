@@ -14,3 +14,4 @@ Frontend/.vite
 # reformatting them just churns files the tooling will rewrite anyway.
 Mobile/ios
 Mobile/android
+Mobile/.dart_tool

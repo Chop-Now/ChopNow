@@ -357,8 +357,8 @@ const ShopAdminPayouts = () => {
               />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 pb-2">
-              Sent to your{' '}
-              {preferredMethod === 'mobile' ? 'mobile money number' : 'bank account'} below.
+              Sent to your {preferredMethod === 'mobile' ? 'mobile money number' : 'bank account'}{' '}
+              below.
             </p>
             <div className="flex gap-2 ml-auto">
               <button
@@ -703,10 +703,7 @@ const ShopAdminPayouts = () => {
                 </thead>
                 <tbody>
                   {ledger.map((entry) => (
-                    <tr
-                      key={entry._id}
-                      className="border-b border-slate-100 dark:border-slate-800"
-                    >
+                    <tr key={entry._id} className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
                         {formatDate(entry.createdAt)}
                       </td>
@@ -1495,7 +1492,9 @@ const WebsiteAdminPayouts = () => {
                 Balance History — {ledgerModal.name}
               </h3>
               <button
-                onClick={() => setLedgerModal({ open: false, name: '', entries: [], loading: false })}
+                onClick={() =>
+                  setLedgerModal({ open: false, name: '', entries: [], loading: false })
+                }
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 ✕

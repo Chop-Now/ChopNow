@@ -30,7 +30,13 @@ describe('GET /api/v1/analytics/business/overview (Phase 7)', () => {
           subtotal: 5000,
         },
       ],
-      pricing: { subtotal: 5000, deliveryFee: 0, platformFee: 500, vendorAmount: 4500, total: 5000 },
+      pricing: {
+        subtotal: 5000,
+        deliveryFee: 0,
+        platformFee: 500,
+        vendorAmount: 4500,
+        total: 5000,
+      },
       fulfillmentType: 'pickup',
       status: 'completed',
       payment: { paymentMethod: 'cash', paymentStatus: 'completed' },
@@ -69,9 +75,21 @@ describe('GET /api/v1/analytics/business/overview (Phase 7)', () => {
       business: business._id,
       listing: listing._id,
       items: [
-        { listing: listing._id, title: listing.title, quantity: 2, unitPrice: 3000, subtotal: 6000 },
+        {
+          listing: listing._id,
+          title: listing.title,
+          quantity: 2,
+          unitPrice: 3000,
+          subtotal: 6000,
+        },
       ],
-      pricing: { subtotal: 6000, deliveryFee: 0, platformFee: 600, vendorAmount: 5400, total: 6000 },
+      pricing: {
+        subtotal: 6000,
+        deliveryFee: 0,
+        platformFee: 600,
+        vendorAmount: 5400,
+        total: 6000,
+      },
       fulfillmentType: 'pickup',
       status: 'completed',
       payment: { paymentMethod: 'cash', paymentStatus: 'completed' },
@@ -103,12 +121,27 @@ describe('GET /api/v1/analytics/business/overview (Phase 7)', () => {
         business: business._id,
         listing: listing._id,
         items: [
-          { listing: listing._id, title: listing.title, quantity: 1, unitPrice: 1000, subtotal: 1000 },
+          {
+            listing: listing._id,
+            title: listing.title,
+            quantity: 1,
+            unitPrice: 1000,
+            subtotal: 1000,
+          },
         ],
-        pricing: { subtotal: 1000, deliveryFee: 0, platformFee: 100, vendorAmount: 900, total: 1000 },
+        pricing: {
+          subtotal: 1000,
+          deliveryFee: 0,
+          platformFee: 100,
+          vendorAmount: 900,
+          total: 1000,
+        },
         fulfillmentType: 'pickup',
         status,
-        payment: { paymentMethod: 'cash', paymentStatus: status === 'completed' ? 'completed' : 'pending' },
+        payment: {
+          paymentMethod: 'cash',
+          paymentStatus: status === 'completed' ? 'completed' : 'pending',
+        },
       });
 
     await makeOrder('completed');

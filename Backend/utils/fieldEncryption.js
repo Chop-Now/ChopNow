@@ -21,12 +21,14 @@ function getKey() {
   const raw = process.env.FIELD_ENCRYPTION_KEY;
   if (!raw) {
     throw new Error(
-      'FIELD_ENCRYPTION_KEY is not set - required to store/read encrypted rider fields (nationalId/licensePlate). Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"'
+      "FIELD_ENCRYPTION_KEY is not set - required to store/read encrypted rider fields (nationalId/licensePlate). Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\""
     );
   }
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) {
-    throw new Error('FIELD_ENCRYPTION_KEY must decode to exactly 32 bytes (base64 of a 256-bit key)');
+    throw new Error(
+      'FIELD_ENCRYPTION_KEY must decode to exactly 32 bytes (base64 of a 256-bit key)'
+    );
   }
   cachedKey = key;
   return key;

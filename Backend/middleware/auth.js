@@ -23,7 +23,9 @@ const protect = async (req, res, next) => {
       // replacement for its entire 7-day lifetime. Refresh tokens must only ever
       // be usable at POST /refresh-token, never as a Bearer access token.
       if (decoded.type === 'refresh') {
-        return res.status(401).json({ message: 'Not authorized, refresh token cannot be used as an access token' });
+        return res
+          .status(401)
+          .json({ message: 'Not authorized, refresh token cannot be used as an access token' });
       }
 
       // Get user from token (exclude password)

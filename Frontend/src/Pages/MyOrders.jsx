@@ -858,9 +858,7 @@ const MyOrders = () => {
                       </div>
                       <textarea
                         value={reviewForm.comment}
-                        onChange={(e) =>
-                          setReviewForm((f) => ({ ...f, comment: e.target.value }))
-                        }
+                        onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
                         maxLength={1000}
                         rows={3}
                         placeholder="Tell others about the food and the vendor (optional)"

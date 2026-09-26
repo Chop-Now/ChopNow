@@ -75,10 +75,14 @@ async function verifySignature(req) {
   // 1. If headers are missing, handle based on the explicit bypass flag
   if (!signatureHeader || !signatureInputHeader) {
     if (!bypassAllowed()) {
-      logger.error('Rejecting callback: missing signature headers and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.');
+      logger.error(
+        'Rejecting callback: missing signature headers and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.'
+      );
       return false;
     }
-    logger.warn('Signature headers missing. Allowing because PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.');
+    logger.warn(
+      'Signature headers missing. Allowing because PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.'
+    );
     return true;
   }
 
@@ -130,7 +134,9 @@ async function verifySignature(req) {
     const pkDetails = await fetchPublicKey();
     if (!pkDetails) {
       if (!bypassAllowed()) {
-        logger.error('Rejecting callback: public key unavailable and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.');
+        logger.error(
+          'Rejecting callback: public key unavailable and PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS is not set.'
+        );
         return false;
       }
       logger.warn('Public key unavailable. Allowing because PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS=true.');

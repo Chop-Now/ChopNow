@@ -3,7 +3,16 @@ const { REDACTED_KEYS, CENSOR } = require('./redactPaths');
 
 const level = process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
 
-const bodyKeys = ['password', 'passwordHash', 'newPassword', 'currentPassword', 'token', 'otp', 'otpCode', 'refreshToken'];
+const bodyKeys = [
+  'password',
+  'passwordHash',
+  'newPassword',
+  'currentPassword',
+  'token',
+  'otp',
+  'otpCode',
+  'refreshToken',
+];
 
 const logger = pino({
   level,

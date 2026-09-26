@@ -70,7 +70,12 @@ async function uploadToS3(zipPath, key) {
   });
   const body = fs.readFileSync(zipPath);
   await client.send(
-    new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, Body: body, ContentType: 'application/zip' })
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: 'application/zip',
+    })
   );
 }
 

@@ -63,7 +63,15 @@ if (isProduction) {
     logger.error('Production requires ALLOWED_ORIGINS to be set (e.g. https://app.chopnow.com).');
     process.exit(1);
   }
-  const unsafeSecrets = ['changeme', 'yourjwtsecret', 'yoursecurerandom', 'example', 'test', 'secret', 'password'];
+  const unsafeSecrets = [
+    'changeme',
+    'yourjwtsecret',
+    'yoursecurerandom',
+    'example',
+    'test',
+    'secret',
+    'password',
+  ];
   const jwt = String(process.env.JWT_SECRET);
   // Strip separators before matching, so "change_me_..." / "change-me-..."
   // (e.g. docker-compose.yml's own placeholder) are still caught - a plain

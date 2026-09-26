@@ -168,9 +168,7 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
           {isAuthenticated && co2Saved !== null ? (
             <>
               You've saved{' '}
-              <strong style={{ color: 'var(--color-textColor)' }}>
-                {co2Saved.toFixed(1)}kg
-              </strong>{' '}
+              <strong style={{ color: 'var(--color-textColor)' }}>{co2Saved.toFixed(1)}kg</strong>{' '}
               of CO
               <sub>2</sub> so far. Keep it up!
             </>

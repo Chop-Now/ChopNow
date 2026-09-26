@@ -29,9 +29,20 @@ const attachRedisAdapter = async () => {
     logger.info('Socket.IO Redis adapter attached - events now sync across instances');
     return true;
   } catch (err) {
-    logger.warn({ err }, 'Failed to attach Socket.IO Redis adapter - falling back to single-instance mode');
-    try { pubClient?.disconnect(); } catch {}
-    try { subClient?.disconnect(); } catch {}
+    logger.warn(
+      { err },
+      'Failed to attach Socket.IO Redis adapter - falling back to single-instance mode'
+    );
+    try {
+      pubClient?.disconnect();
+    } catch {
+      // best-effort cleanup, already falling back to single-instance mode
+    }
+    try {
+      subClient?.disconnect();
+    } catch {
+      // best-effort cleanup, already falling back to single-instance mode
+    }
     pubClient = null;
     subClient = null;
     return false;
@@ -148,10 +159,7 @@ module.exports = {
             timestamp: new Date(),
           });
         } catch (err) {
-          logger.error(
-            { err, orderId: data.orderId },
-            'Failed to save rider location from socket'
-          );
+          logger.error({ err, orderId: data.orderId }, 'Failed to save rider location from socket');
         }
       });
 
@@ -219,8 +227,16 @@ module.exports = {
   // graceful shutdown, separately from config/redis.js's own close() which
   // only owns the caching client.
   closeAdapter: async () => {
-    try { if (pubClient) await pubClient.quit(); } catch {}
-    try { if (subClient) await subClient.quit(); } catch {}
+    try {
+      if (pubClient) await pubClient.quit();
+    } catch {
+      // best-effort cleanup during shutdown
+    }
+    try {
+      if (subClient) await subClient.quit();
+    } catch {
+      // best-effort cleanup during shutdown
+    }
     pubClient = null;
     subClient = null;
   },

@@ -38,7 +38,12 @@ const isEncrypted = (v) => typeof v === 'string' && v.startsWith('v1:');
   const raw = await mongoose.connection.db
     .collection('users')
     .find(
-      { $or: [{ 'riderDetails.nationalId': { $exists: true } }, { 'riderDetails.licensePlate': { $exists: true } }] },
+      {
+        $or: [
+          { 'riderDetails.nationalId': { $exists: true } },
+          { 'riderDetails.licensePlate': { $exists: true } },
+        ],
+      },
       { projection: { 'riderDetails.nationalId': 1, 'riderDetails.licensePlate': 1 } }
     )
     .toArray();
@@ -50,8 +55,10 @@ const isEncrypted = (v) => typeof v === 'string' && v.startsWith('v1:');
   for (const doc of raw) {
     const nationalId = doc.riderDetails?.nationalId;
     const licensePlate = doc.riderDetails?.licensePlate;
-    const needsNationalId = nationalId !== undefined && nationalId !== null && !isEncrypted(nationalId);
-    const needsLicensePlate = licensePlate !== undefined && licensePlate !== null && !isEncrypted(licensePlate);
+    const needsNationalId =
+      nationalId !== undefined && nationalId !== null && !isEncrypted(nationalId);
+    const needsLicensePlate =
+      licensePlate !== undefined && licensePlate !== null && !isEncrypted(licensePlate);
 
     if (!needsNationalId && !needsLicensePlate) {
       if (nationalId || licensePlate) alreadyDone++;
@@ -67,7 +74,9 @@ const isEncrypted = (v) => typeof v === 'string' && v.startsWith('v1:');
     migrated++;
   }
 
-  console.log(`Migrated: ${migrated}, already encrypted: ${alreadyDone}, skipped (no values): ${skipped}`);
+  console.log(
+    `Migrated: ${migrated}, already encrypted: ${alreadyDone}, skipped (no values): ${skipped}`
+  );
   await mongoose.disconnect();
 })().catch(async (err) => {
   console.error('Migration failed:', err);

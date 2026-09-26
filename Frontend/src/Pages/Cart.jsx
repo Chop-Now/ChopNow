@@ -61,7 +61,6 @@ const Cart = () => {
   // What the payment modal is paying for: one checkout (all vendors) at once.
   const [paymentTarget, setPaymentTarget] = useState(null);
 
-   
   useEffect(() => {
     if (products.length > 0 && cartItems) {
       let tempArray = [];
@@ -118,7 +117,7 @@ const Cart = () => {
   }, [cartKey, fulfillmentType]);
 
   const cashEnabled = !!quote?.options?.cashPaymentsEnabled;
-   
+
   useEffect(() => {
     if (!cashEnabled && paymentMethod === 'cash') setPaymentMethod('momo');
   }, [cashEnabled, paymentMethod]);
