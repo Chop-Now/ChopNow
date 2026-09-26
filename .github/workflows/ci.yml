@@ -49,7 +49,7 @@ jobs:
         working-directory: Backend
     env:
       NODE_ENV: test
-      MONGO_URI: mongodb://localhost:27017/chopnow-test
+      MONGO_URI: mongodb://localhost:27017/chopnow-test?directConnection=true
       JWT_SECRET: test-jwt-secret-for-ci-only-not-production
     steps:
       - uses: actions/checkout@v7
@@ -78,7 +78,13 @@ jobs:
             fi
             sleep 1
           done
-          docker exec mongodb mongosh --quiet --eval 'rs.initiate()'
+          # Explicit host, not a bare rs.initiate() - with no config, MongoDB
+          # advertises the container's own (internal Docker) hostname as the
+          # replica set member, which the runner's host network can't resolve.
+          # A client using directConnection (see MONGO_URI above) skips SDAM
+          # discovery so this mostly wouldn't matter, but pin it to the
+          # actually-reachable address anyway for anything that doesn't.
+          docker exec mongodb mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
           echo "Waiting for replica set to reach PRIMARY..."
           for i in $(seq 1 30); do
             state=$(docker exec mongodb mongosh --quiet --eval 'rs.status().myState' 2>/dev/null || echo "")
