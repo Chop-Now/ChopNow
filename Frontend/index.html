@@ -54,6 +54,29 @@
     <!-- Additional SEO -->
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://chopnow.app/" />
+
+    <!-- Structured data: tells Google unambiguously what this site is and
+         how its main sections relate, which is an input into (not a
+         guarantee of) things like sitelinks in search results. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "ChopNow",
+        "url": "https://chopnow.app/",
+        "logo": "https://chopnow.app/apple-touch-icon.png",
+        "email": "chopnow.app@gmail.com",
+        "description": "ChopNow connects you with local restaurants and stores to rescue surplus food at discounted prices."
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "ChopNow",
+        "url": "https://chopnow.app/"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
