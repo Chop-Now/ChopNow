@@ -73,6 +73,8 @@ const Settings = ({ initialTab = 'profile' }) => {
     newPassword: '',
     confirmPassword: '',
   });
+  const [passwordOtpSent, setPasswordOtpSent] = useState(false);
+  const [passwordOtp, setPasswordOtp] = useState('');
 
   // Business Hours State
   const [businessHours, setBusinessHours] = useState([
@@ -387,6 +389,10 @@ const Settings = ({ initialTab = 'profile' }) => {
     }));
   };
 
+  // The backend verifies the current password and emails a one-time code
+  // before accepting a new password (protects against a hijacked logged-in
+  // session silently changing it) - this is a two-step request-OTP-then-
+  // confirm flow, not a single call.
   const handleUpdatePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('New password and confirm password do not match!');
@@ -398,9 +404,31 @@ const Settings = ({ initialTab = 'profile' }) => {
     }
     setPasswordLoading(true);
     try {
-      await authService.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      await authService.requestPasswordChangeOTP(passwordData.currentPassword);
+      setPasswordOtpSent(true);
+      toast.success('Code sent - check your email');
+    } catch (error) {
+      console.error('Error requesting password change code:', error);
+      toast.error(
+        error.response?.data?.message || error.message || 'Failed to send verification code'
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleConfirmPasswordChange = async () => {
+    if (!passwordOtp) {
+      toast.error('Enter the code sent to your email');
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      await authService.changePasswordWithOTP(passwordOtp, passwordData.newPassword);
       toast.success('Password updated successfully!');
       setShowPasswordFields(false);
+      setPasswordOtpSent(false);
+      setPasswordOtp('');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       console.error('Error updating password:', error);
@@ -595,6 +623,8 @@ const Settings = ({ initialTab = 'profile' }) => {
 
   const handleCancelSecurityChanges = () => {
     setShowPasswordFields(false);
+    setPasswordOtpSent(false);
+    setPasswordOtp('');
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
 
@@ -1823,14 +1853,33 @@ const Settings = ({ initialTab = 'profile' }) => {
                       </div>
                     </div>
 
+                    {passwordOtpSent && (
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Verification Code
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter the code sent to your email"
+                          value={passwordOtp}
+                          onChange={(e) => setPasswordOtp(e.target.value)}
+                          className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                        />
+                      </div>
+                    )}
+
                     {/* Update Password Button */}
                     <button
-                      onClick={handleUpdatePassword}
-                      disabled={passwordLoading}
+                      onClick={passwordOtpSent ? handleConfirmPasswordChange : handleUpdatePassword}
+                      disabled={passwordLoading || (passwordOtpSent && !passwordOtp)}
                       className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-linear-to-r from-solid to-tertiary text-white rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {passwordLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {passwordLoading ? 'Updating...' : 'Update Password'}
+                      {passwordLoading
+                        ? 'Please wait...'
+                        : passwordOtpSent
+                          ? 'Confirm Change'
+                          : 'Update Password'}
                     </button>
                   </div>
                 )}

@@ -17,6 +17,8 @@ const MyProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordOtpSent, setPasswordOtpSent] = useState(false);
+  const [passwordOtp, setPasswordOtp] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const navigate = useNavigate();
 
@@ -94,8 +96,11 @@ const MyProfile = () => {
     }
   };
 
-  // Handle password change
-  const handleChangePassword = async () => {
+  // Handle password change. The backend verifies the current password and
+  // emails a one-time code before accepting a new password (so a hijacked
+  // logged-in session can't silently change the password) - this is a
+  // two-step request-OTP-then-confirm flow, not a single-call change.
+  const handleRequestPasswordOtp = async () => {
     if (passwords.newPassword !== passwords.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -107,8 +112,29 @@ const MyProfile = () => {
 
     setChangingPassword(true);
     try {
-      await authService.changePassword(passwords.currentPassword, passwords.newPassword);
+      await authService.requestPasswordChangeOTP(passwords.currentPassword);
+      setPasswordOtpSent(true);
+      toast.success('Code sent - check your email');
+    } catch (error) {
+      console.error('Error requesting password change code:', error);
+      toast.error(error.message || 'Failed to send verification code');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleConfirmPasswordChange = async () => {
+    if (!passwordOtp) {
+      toast.error('Enter the code sent to your email');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await authService.changePasswordWithOTP(passwordOtp, passwords.newPassword);
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordOtp('');
+      setPasswordOtpSent(false);
       toast.success('Password changed successfully');
     } catch (error) {
       console.error('Error changing password:', error);
@@ -533,26 +559,60 @@ const MyProfile = () => {
                 </div>
               </div>
 
-              <button
-                onClick={handleChangePassword}
-                disabled={
-                  changingPassword ||
-                  !passwords.currentPassword ||
-                  !passwords.newPassword ||
-                  !passwords.confirmPassword
-                }
-                className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
-                style={{ backgroundColor: '#1B5E20' }}
-                onMouseEnter={(e) =>
-                  !changingPassword && (e.currentTarget.style.backgroundColor = '#0D4A14')
-                }
-                onMouseLeave={(e) =>
-                  !changingPassword && (e.currentTarget.style.backgroundColor = '#1B5E20')
-                }
-              >
-                {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
-                {changingPassword ? 'Changing...' : 'Change password'}
-              </button>
+              {passwordOtpSent && (
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-textColor mb-2">
+                    Verification code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter the code sent to your email"
+                    value={passwordOtp}
+                    onChange={(e) => setPasswordOtp(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={passwordOtpSent ? handleConfirmPasswordChange : handleRequestPasswordOtp}
+                  disabled={
+                    changingPassword ||
+                    !passwords.currentPassword ||
+                    !passwords.newPassword ||
+                    !passwords.confirmPassword ||
+                    (passwordOtpSent && !passwordOtp)
+                  }
+                  className="px-6 py-2 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  style={{ backgroundColor: '#1B5E20' }}
+                  onMouseEnter={(e) =>
+                    !changingPassword && (e.currentTarget.style.backgroundColor = '#0D4A14')
+                  }
+                  onMouseLeave={(e) =>
+                    !changingPassword && (e.currentTarget.style.backgroundColor = '#1B5E20')
+                  }
+                >
+                  {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {changingPassword
+                    ? 'Please wait...'
+                    : passwordOtpSent
+                      ? 'Confirm change'
+                      : 'Change password'}
+                </button>
+                {passwordOtpSent && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPasswordOtpSent(false);
+                      setPasswordOtp('');
+                    }}
+                    className="px-6 py-2 rounded-lg text-sm font-medium border border-gray-300 text-textColor cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Divider */}
