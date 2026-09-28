@@ -885,3 +885,63 @@ describe('Admin user management (GET /api/v1/users, PUT /api/v1/users/:id)', () 
     expect(entries).toHaveLength(1);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// Self-service account deletion (DELETE /api/v1/users/profile). The
+// frontend has always called this exact path, but no route matched it -
+// it silently fell through to the admin-only DELETE /:id route (with
+// id="profile"), 403'ing every non-admin caller. This is the real
+// self-delete endpoint that route was missing.
+// ─────────────────────────────────────────────────────────────────────
+describe('DELETE /api/v1/users/profile (self-service account deletion)', () => {
+  it('should let a consumer delete their own account', async () => {
+    const { token, user } = await createConsumer();
+
+    const res = await request(app)
+      .delete('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(await User.findById(user._id)).toBeNull();
+  });
+
+  it('should let an admin delete their own account when other admins remain', async () => {
+    const { token, user } = await createAdmin();
+    await createAdmin();
+
+    const res = await request(app)
+      .delete('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(await User.findById(user._id)).toBeNull();
+  });
+
+  it("should refuse to delete the platform's only remaining admin", async () => {
+    const { token, user } = await createAdmin();
+
+    const res = await request(app)
+      .delete('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+    expect(await User.findById(user._id)).not.toBeNull();
+  });
+
+  it('should reject an unauthenticated delete request', async () => {
+    const res = await request(app).delete('/api/v1/users/profile');
+    expect(res.status).toBe(401);
+  });
+
+  it('should never route DELETE /api/v1/users/profile to the admin-only /:id handler', async () => {
+    // Regression guard for the exact bug: a non-admin consumer must get
+    // a real 200 here, not the admin-only route's 403.
+    const { token } = await createConsumer();
+
+    const res = await request(app)
+      .delete('/api/v1/users/profile')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).not.toBe(403);
+  });
+});

@@ -1108,6 +1108,49 @@ const deleteUserByAdmin = async (req, res) => {
 };
 
 /**
+ * @desc    Delete the logged-in user's own account. The frontend (both the
+ *          buyer MyProfile page and the admin Settings page) has always
+ *          called DELETE /api/users/profile for this, but no such route
+ *          existed - it fell through to DELETE /:id with id="profile",
+ *          which is admin-only and 403'd for every non-admin, and would
+ *          have hit a CastError for an admin (Mongoose can't cast "profile"
+ *          to an ObjectId). This is the actual self-delete this UI needs.
+ * @route   DELETE /api/users/profile
+ * @access  Private
+ */
+const deleteOwnAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Don't let the platform's last admin delete themselves and lock
+    // everyone out of the admin panel.
+    if (user.roles && user.roles.includes('admin')) {
+      const otherAdmins = await User.countDocuments({
+        roles: 'admin',
+        _id: { $ne: user._id },
+      });
+      if (otherAdmins === 0) {
+        return res.status(400).json({ message: 'Cannot delete the only remaining admin account' });
+      }
+    }
+
+    await user.deleteOne();
+    clearAuthCookies(res);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    logger.error({ err: error }, 'Delete own account failed');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
  * @desc    Request password change OTP
  * @route   POST /api/users/profile/password/request-otp
  * @access  Private
@@ -1912,6 +1955,7 @@ module.exports = {
   suspendUser,
   activateUser,
   deleteUserByAdmin,
+  deleteOwnAccount,
   requestPasswordChangeOTP,
   changePassword,
   requestSensitiveChangeOTP,

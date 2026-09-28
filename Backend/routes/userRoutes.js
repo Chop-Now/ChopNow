@@ -15,6 +15,7 @@ const {
   suspendUser,
   activateUser,
   deleteUserByAdmin,
+  deleteOwnAccount,
   requestPasswordChangeOTP,
   changePassword,
   requestSensitiveChangeOTP,
@@ -140,6 +141,7 @@ router.post('/refresh-token', refreshAccessToken);
 // Protected routes (MUST be defined BEFORE parameterized routes like /:id)
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, validateUpdateProfile, updateUserProfile);
+router.delete('/profile', protect, deleteOwnAccount);
 
 // Password change with OTP verification
 router.post('/profile/password/request-otp', protect, requestPasswordChangeOTP);
