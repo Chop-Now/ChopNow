@@ -169,3 +169,75 @@ describe('POST /api/v1/deliveries - dispatch', () => {
     expect(res.body.dropoffLocation.recipientPhone).toBe('+250780000000');
   });
 });
+
+describe('PATCH /api/v1/deliveries/:id/assign - double-claim race', () => {
+  async function pendingUnassignedDelivery() {
+    const { business } = await createBusinessOwnerWithBusiness();
+    const listing = await createListing(business, {
+      fulfillment: 'delivery',
+      pricing: { price: 5000, currency: 'RWF' },
+    });
+    const { token: consumerToken } = await createConsumer();
+    const { order } = await placePaidOrder(consumerToken, listing, {
+      fulfillmentType: 'delivery',
+      deliveryDetails: { address: { street: '1 Main St', city: 'Kigali' } },
+    });
+
+    const delivery = await Delivery.create({
+      order: order._id,
+      pickupLocation: {
+        businessName: business.name,
+        address: '123 Test St',
+        location: { type: 'Point', coordinates: [0, 0] },
+      },
+      dropoffLocation: {
+        recipientName: 'Test Consumer',
+        recipientPhone: '+250700000000',
+        address: '1 Main St',
+        location: { type: 'Point', coordinates: [0, 0] },
+      },
+      status: 'pending',
+      deliveryFee: 1000,
+    });
+
+    return { delivery };
+  }
+
+  it('should let a rider self-assign a pending, unassigned delivery', async () => {
+    const { delivery } = await pendingUnassignedDelivery();
+    const { token: riderToken, user: rider } = await createRider();
+
+    const res = await request(app)
+      .patch(`/api/v1/deliveries/${delivery._id}/assign`)
+      .set('Authorization', `Bearer ${riderToken}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.rider).toBe(rider._id.toString());
+    expect(res.body.status).toBe('assigned');
+  });
+
+  it('should let only one of two riders racing to self-assign the same delivery win, not silently overwrite', async () => {
+    const { delivery } = await pendingUnassignedDelivery();
+    const { token: tokenA, user: riderA } = await createRider();
+    const { token: tokenB, user: riderB } = await createRider();
+
+    const [resA, resB] = await Promise.all([
+      request(app)
+        .patch(`/api/v1/deliveries/${delivery._id}/assign`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({}),
+      request(app)
+        .patch(`/api/v1/deliveries/${delivery._id}/assign`)
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({}),
+    ]);
+
+    const statuses = [resA.status, resB.status].sort();
+    expect(statuses).toEqual([200, 409]);
+
+    const winner = resA.status === 200 ? riderA : riderB;
+    const final = await Delivery.findById(delivery._id);
+    expect(final.rider.toString()).toBe(winner._id.toString());
+  });
+});

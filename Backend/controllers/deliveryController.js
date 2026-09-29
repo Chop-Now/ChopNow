@@ -344,10 +344,34 @@ const assignRider = async (req, res) => {
       return res.status(400).json({ message: 'Rider account is suspended' });
     }
 
-    delivery.rider = assignedRiderId;
-    delivery.riderName = `${rider.firstName || ''} ${rider.lastName || ''}`.trim();
-    delivery.riderPhone = rider.phone || '';
-    await delivery.updateStatus('assigned');
+    // Same check-then-write race updateDeliveryStatus's C6 fix closed for
+    // status transitions: two riders self-assigning the same pending,
+    // unassigned delivery within the same instant could both pass the plain
+    // findById checks above and then both `.save()` - a read-then-write isn't
+    // enough on its own. Atomic compare-and-swap (matches only if the
+    // delivery is STILL pending and unassigned at write time) guarantees at
+    // most one of them actually gets it; the loser sees a clean 409 instead
+    // of silently overwriting the winner's assignment.
+    const assignedDelivery = await Delivery.findOneAndUpdate(
+      { _id: delivery._id, status: 'pending', rider: { $exists: false } },
+      {
+        $set: {
+          rider: assignedRiderId,
+          riderName: `${rider.firstName || ''} ${rider.lastName || ''}`.trim(),
+          riderPhone: rider.phone || '',
+          status: 'assigned',
+          'statusTimestamps.assignedAt': new Date(),
+        },
+      },
+      { new: true }
+    );
+    if (!assignedDelivery) {
+      return res.status(409).json({ message: 'Delivery already has a rider assigned' });
+    }
+    delivery.rider = assignedDelivery.rider;
+    delivery.riderName = assignedDelivery.riderName;
+    delivery.riderPhone = assignedDelivery.riderPhone;
+    delivery.status = assignedDelivery.status;
 
     // Update order status to out_for_delivery - never out of a terminal state,
     // or a cancelled order could be revived and later completed (and credited).
