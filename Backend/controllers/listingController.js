@@ -40,6 +40,20 @@ const createListing = async (req, res) => {
         .json({ message: 'Not authorized to create listing for this business' });
     }
 
+    // businessDoc.status is the same active/inactive/suspended gate
+    // approveBusiness/rejectBusiness/admin-suspend already set - a business
+    // pending KYC review (inactive) or suspended must not be able to start
+    // selling just by calling this endpoint directly, regardless of what
+    // the signup UI implies. Types exempt from verification (bakery, farmer,
+    // supermarket - see createBusiness) are created 'active' immediately, so
+    // this doesn't block them.
+    if (businessDoc.status !== 'active' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        message:
+          'This business is not yet approved to sell. Please wait for verification to complete.',
+      });
+    }
+
     const listing = await Listing.create({
       title,
       description,
