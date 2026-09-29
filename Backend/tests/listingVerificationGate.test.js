@@ -1,7 +1,7 @@
 /**
  * A business pending KYC review (or suspended by an admin) must not be able
  * to create listings just by calling POST /api/v1/listings directly - the
- * signup UI tells restaurant/cafe owners they can't sell until approved, but
+ * signup UI tells every business type it can't sell until approved, but
  * nothing on the backend actually enforced that. Found live in production:
  * a freshly-registered, still-pending business could immediately create a
  * real, publicly-visible listing.

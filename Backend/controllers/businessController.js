@@ -31,24 +31,18 @@ const createBusiness = async (req, res) => {
       delete address.location;
     }
 
-    // Determine if business type requires verification documents
-    // Restaurants and cafes need health/food preparation certificates
-    // Farmers, supermarkets, and bakeries can sell without document verification
-    const requiresVerification = ['restaurant', 'cafe'].includes(type);
+    // Every business type requires admin document verification before it
+    // can start selling - matches the signup UI, which already told every
+    // type (bakery, farmer, supermarket included) that verification was
+    // required and forced them through the KYC upload step regardless.
+    const requiresVerification = true;
 
-    // Set initial verification and status based on business type
-    const verificationData = requiresVerification
-      ? {
-          status: 'unverified',
-          documents: [],
-        }
-      : {
-          status: 'verified',
-          verifiedAt: new Date(),
-          notes: 'Auto-verified - business type does not require document verification',
-        };
+    const verificationData = {
+      status: 'unverified',
+      documents: [],
+    };
 
-    const businessStatus = requiresVerification ? 'inactive' : 'active';
+    const businessStatus = 'inactive';
 
     const business = await Business.create({
       name,
