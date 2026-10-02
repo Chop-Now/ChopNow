@@ -22,7 +22,7 @@
  */
 
 require('dotenv').config();
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');
@@ -83,7 +83,10 @@ async function uploadToS3(zipPath, key) {
   console.log(`Starting backup to ${backupPath}...`);
 
   try {
-    execSync(`mongodump --uri="${MONGO_URI}" --out="${backupPath}"`, {
+    // execFileSync (no shell): interpolating the URI into a shell string let
+    // the shell expand characters in the password (e.g. "$@" is deleted as a
+    // variable), silently corrupting the URI.
+    execFileSync('mongodump', [`--uri=${MONGO_URI}`, `--out=${backupPath}`], {
       stdio: 'inherit',
     });
     console.log(`Local mongodump completed: ${backupPath}`);

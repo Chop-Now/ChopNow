@@ -19,7 +19,7 @@
  */
 
 require('dotenv').config();
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const unzipper = require('unzipper');
@@ -95,8 +95,11 @@ async function downloadFromS3(destZipPath) {
     }
     const dumpSourceDir = path.join(extractDir, dbDirs[0]);
 
-    console.log(`Running mongorestore into ${MONGO_URI} (from backed-up db "${dbDirs[0]}") ...`);
-    execSync(`mongorestore --uri="${MONGO_URI}" --drop "${dumpSourceDir}"`, { stdio: 'inherit' });
+    // Never log the URI itself - it embeds the database password.
+    console.log(`Running mongorestore (from backed-up db "${dbDirs[0]}") ...`);
+    execFileSync('mongorestore', [`--uri=${MONGO_URI}`, '--drop', dumpSourceDir], {
+      stdio: 'inherit',
+    });
 
     fs.rmSync(RESTORE_DIR, { recursive: true, force: true });
     console.log('Restore completed successfully.');
