@@ -308,14 +308,17 @@ const assignRider = async (req, res) => {
       return res.status(404).json({ message: 'Delivery not found' });
     }
 
+    // Checked before status: an already-claimed delivery is also no longer
+    // 'pending', and callers (and the race below) must always see 409 for
+    // "someone else got it", not a 400 that depends on request timing.
+    if (delivery.rider) {
+      return res.status(409).json({ message: 'Delivery already has a rider assigned' });
+    }
+
     if (delivery.status !== 'pending') {
       return res
         .status(400)
         .json({ message: `Cannot assign rider to a delivery with status '${delivery.status}'` });
-    }
-
-    if (delivery.rider) {
-      return res.status(409).json({ message: 'Delivery already has a rider assigned' });
     }
 
     // Determine the actual rider ID

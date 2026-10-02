@@ -217,6 +217,24 @@ describe('PATCH /api/v1/deliveries/:id/assign - double-claim race', () => {
     expect(res.body.status).toBe('assigned');
   });
 
+  it('should answer 409 (not 400) to a second rider claiming an already-claimed delivery', async () => {
+    const { delivery } = await pendingUnassignedDelivery();
+    const { token: tokenA } = await createRider();
+    const { token: tokenB } = await createRider();
+
+    const first = await request(app)
+      .patch(`/api/v1/deliveries/${delivery._id}/assign`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(first.status).toBe(200);
+
+    const second = await request(app)
+      .patch(`/api/v1/deliveries/${delivery._id}/assign`)
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({});
+    expect(second.status).toBe(409);
+  });
+
   it('should let only one of two riders racing to self-assign the same delivery win, not silently overwrite', async () => {
     const { delivery } = await pendingUnassignedDelivery();
     const { token: tokenA, user: riderA } = await createRider();
