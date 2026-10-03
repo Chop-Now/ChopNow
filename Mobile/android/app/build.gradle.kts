@@ -19,6 +19,35 @@ if (keystorePropertiesFile.exists()) {
     }
 }
 
+// A Play Store upload (an App Bundle, `flutter build appbundle --release`)
+// must be signed with the real upload key. Without this guard a missing or
+// half-filled key.properties silently falls back to the debug key below and
+// produces a bundle Play rejects only after you've uploaded it. Local
+// `flutter run --release` / APK builds keep the debug-key fallback.
+val buildsPlayBundle = gradle.startParameter.taskNames.any {
+    it.contains("bundle", ignoreCase = true) && it.contains("release", ignoreCase = true)
+}
+if (buildsPlayBundle) {
+    if (!keystorePropertiesFile.exists()) {
+        throw GradleException(
+            "Release App Bundle needs android/key.properties (see android/key.properties.example " +
+                "and the 'Release signing' section of Mobile/README.md). Refusing to sign with the debug key."
+        )
+    }
+    val missing = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .filter { keystoreProperties.getProperty(it).isNullOrBlank() }
+    if (missing.isNotEmpty()) {
+        throw GradleException("android/key.properties is missing: ${missing.joinToString(", ")}")
+    }
+    val storePath = keystoreProperties.getProperty("storeFile")
+    if (!file(storePath).exists()) {
+        throw GradleException(
+            "android/key.properties storeFile points to '$storePath', which doesn't exist " +
+                "(relative paths are resolved from android/app/)."
+        )
+    }
+}
+
 android {
     namespace = "com.chopnow.chopnow"
     compileSdk = flutter.compileSdkVersion

@@ -1,0 +1,8 @@
+# Copy to android/key.properties (which is gitignored) and fill in your values.
+# NEVER commit key.properties or the .jks file.
+#
+# storeFile is resolved from android/app/ if relative; an absolute path is safest.
+storeFile=C:/Users/YOU/chopnow-keys/chopnow-upload.jks
+storePassword=CHANGE_ME
+keyAlias=upload
+keyPassword=CHANGE_ME
