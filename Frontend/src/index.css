@@ -225,6 +225,11 @@ label[for] {
     font-size: max(16px, 1rem);
   }
 
+  /* react-phone-input-2 ships its own 15px size with higher specificity. */
+  .react-tel-input .form-control {
+    font-size: 16px !important;
+  }
+
   input[type='checkbox'],
   input[type='radio'] {
     /* WCAG 2.2 AA target size is 24px; the label around it is the larger target. */

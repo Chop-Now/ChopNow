@@ -11,7 +11,7 @@ const TermsOfService = () => {
         <div className="max-w-4xl mx-auto px-6 py-4">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-moringa-muted hover:text-moringa transition"
+            className="inline-flex min-h-11 items-center gap-2 text-moringa-muted hover:text-moringa transition"
           >
             <ArrowLeft size={20} />
             <span>Back to Home</span>

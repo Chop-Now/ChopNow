@@ -1,30 +1,13 @@
 import { assets } from '../assets/assets';
 import { Eye, EyeOff, Lock, Mail, PersonStanding, Handshake } from 'lucide-react';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { businessService, authService } from '../services';
-
-// Google's button is drawn by Google at a fixed pixel width (200-400), so it
-// has to be sized to the card or it overflows on phones.
-const useContainerWidth = (min, max) => {
-  // A state-backed callback ref, so measuring starts when the element actually
-  // mounts (the button only exists after the user picks "Buyer").
-  const [el, setEl] = useState(null);
-  const [width, setWidth] = useState(max);
-  useEffect(() => {
-    if (!el) return undefined;
-    const update = () => setWidth(Math.max(min, Math.min(max, Math.floor(el.clientWidth))));
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [el, min, max]);
-  return [setEl, width];
-};
+import useContainerWidth from '../utils/useContainerWidth';
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();

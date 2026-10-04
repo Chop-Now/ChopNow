@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
+import useContainerWidth from '../utils/useContainerWidth';
 
 // Deferred: LocationPicker pulls in Leaflet (~190KB) and only ever renders
 // for buyers who reach the location step, so it shouldn't block the
@@ -89,6 +90,9 @@ const SignUp = () => {
   const [businessCategory, setBusinessCategory] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [phone, setPhone] = useState('');
+  const [googleRef, googleWidth] = useContainerWidth(200, 400);
+  // The map is heavy and takes over a phone screen, so it opens on request.
+  const [showMap, setShowMap] = useState(false);
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
@@ -416,7 +420,7 @@ const SignUp = () => {
                   // Buyer Form
                   <>
                     {/* Google Button */}
-                    <div className="w-full flex justify-center [&>div]:w-full">
+                    <div ref={googleRef} className="w-full flex justify-center">
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
@@ -424,7 +428,7 @@ const SignUp = () => {
                         size="large"
                         text="signup_with"
                         shape="rectangular"
-                        width="384"
+                        width={String(googleWidth)}
                       />
                     </div>
 
@@ -570,7 +574,7 @@ const SignUp = () => {
                         className="text-sm font-medium mb-3"
                         style={{ color: 'var(--color-textColor)' }}
                       >
-                        Your Location
+                        Your location <span className="font-normal text-gray-500">(optional)</span>
                       </h3>
 
                       {/* Use Current Location Button */}
@@ -685,26 +689,39 @@ const SignUp = () => {
                         </p>
                       )}
 
+                      <button
+                        type="button"
+                        onClick={() => setShowMap((open) => !open)}
+                        aria-expanded={showMap}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        <MapPin className="w-4 h-4" style={{ color: 'var(--color-solid)' }} />
+                        {showMap ? 'Hide map' : 'Choose on map'}
+                      </button>
+
                       {/* Map */}
-                      <div className="mt-4">
-                        <Suspense
-                          fallback={
-                            <div className="h-64 w-full rounded-lg bg-gray-100 animate-pulse" />
-                          }
-                        >
-                          <LocationPicker
-                            selectedLocation={location}
-                            onLocationSelect={async (latlng) => {
-                              setLocation({ lat: latlng.lat, lng: latlng.lng });
-                              try {
-                                const result = await reverseGeocode(latlng.lat, latlng.lng);
-                                setAddress(result.display_name || 'Location selected');
-                              } catch {
-                                setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-                              }
-                            }}
-                          />
-                        </Suspense>
+                      <div className={showMap ? 'mt-4' : 'hidden'}>
+                        {showMap && (
+                          <Suspense
+                            fallback={
+                              <div className="h-64 w-full rounded-lg bg-gray-100 animate-pulse" />
+                            }
+                          >
+                            <LocationPicker
+                              selectedLocation={location}
+                              onLocationSelect={async (latlng) => {
+                                setLocation({ lat: latlng.lat, lng: latlng.lng });
+                                try {
+                                  const result = await reverseGeocode(latlng.lat, latlng.lng);
+                                  setAddress(result.display_name || 'Location selected');
+                                } catch {
+                                  setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+                                }
+                              }}
+                            />
+                          </Suspense>
+                        )}
                       </div>
                     </div>
                   </>

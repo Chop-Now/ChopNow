@@ -64,23 +64,38 @@ const Footer = () => {
                 {section.links.map((link, i) => (
                   <li key={i}>
                     {link === 'FAQs' ? (
-                      <Link to="/faq" className="hover:underline transition">
+                      <Link
+                        to="/faq"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
                         {link}
                       </Link>
                     ) : link === 'Contact Us' ? (
-                      <Link to="/contact-us" className="hover:underline transition">
+                      <Link
+                        to="/contact-us"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
                         {link}
                       </Link>
                     ) : link === 'Privacy Policy' ? (
-                      <Link to="/privacy-policy" className="hover:underline transition">
+                      <Link
+                        to="/privacy-policy"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
                         {link}
                       </Link>
                     ) : link === 'Terms & Conditions' ? (
-                      <Link to="/terms-of-service" className="hover:underline transition">
+                      <Link
+                        to="/terms-of-service"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
                         {link}
                       </Link>
                     ) : (
-                      <a href="#" className="hover:underline transition">
+                      <a
+                        href="#"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
                         {link}
                       </a>
                     )}

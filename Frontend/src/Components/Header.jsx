@@ -35,7 +35,7 @@ const Header = () => {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Link to="/" className="flex items-end">
+          <Link to="/" aria-label="ChopNow home" className="flex min-h-11 items-center">
             <img src={assets.wordmarklogo} alt="ChopNow" className="h-10" />
           </Link>
         </motion.div>

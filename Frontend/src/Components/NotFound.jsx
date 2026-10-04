@@ -50,7 +50,7 @@ const NotFound = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Link
             to="/"
-            className="group flex items-center justify-center gap-2 bg-solid hover:bg-tertiary px-5 md:px-6 py-2.5 md:py-3 text-white text-sm rounded-full font-medium active:scale-95 transition-all shadow-lg hover:shadow-xl w-full sm:w-auto"
+            className="group flex min-h-11 items-center justify-center gap-2 bg-solid hover:bg-tertiary px-5 md:px-6 py-2.5 md:py-3 text-white text-sm rounded-full font-medium active:scale-95 transition-all shadow-lg hover:shadow-xl w-full sm:w-auto"
           >
             <Home className="w-4 h-4" />
             <span>Back to Home</span>

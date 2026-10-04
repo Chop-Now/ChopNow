@@ -271,7 +271,7 @@ const ForgotPassword = () => {
                 <div className="mt-8 text-center">
                   <Link
                     to="/login"
-                    className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-2"
+                    className="text-sm text-slate-400 hover:text-white transition-colors inline-flex min-h-11 items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Sign In
@@ -342,7 +342,7 @@ const ForgotPassword = () => {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-2"
+                    className="text-sm text-slate-400 hover:text-white transition-colors inline-flex min-h-11 items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Change Email
