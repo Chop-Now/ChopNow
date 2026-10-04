@@ -275,3 +275,89 @@ label[for] {
     background-color: #fff !important;
   }
 }
+
+/* ── Stacked tables ──
+   On phones a dashboard table becomes a list of cards (see StackedTables.jsx,
+   which fills in each cell's data-label from its column header). Unlayered so
+   it beats the tables' own padding/border utilities. */
+@media (max-width: 767px) {
+  table[data-stacked],
+  table[data-stacked] tbody,
+  table[data-stacked] tr {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  table[data-stacked] thead {
+    display: none;
+  }
+
+  table[data-stacked] tbody tr {
+    margin: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    border-radius: 0.875rem;
+    width: auto;
+  }
+
+  table[data-stacked] td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    padding: 0.375rem 0 !important;
+    border: 0 !important;
+    text-align: right;
+    white-space: normal !important;
+  }
+
+  table[data-stacked] td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-align: left;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .dark table[data-stacked] td::before {
+    color: #94a3b8;
+  }
+
+  .dark table[data-stacked] tbody tr {
+    border-color: #334155;
+    background-color: rgb(255 255 255 / 0.04);
+  }
+
+  /* Row-select checkboxes: bulk selection is a desktop workflow, and the
+     empty cell would otherwise cost every card a full row. */
+  table[data-stacked] td:has(> input[type='checkbox']:only-child) {
+    display: none;
+  }
+
+  /* Checkbox / action columns have no header, so no label and the full row. */
+  table[data-stacked] td[data-label='']::before {
+    display: none;
+  }
+
+  table[data-stacked] td[data-label=''] {
+    justify-content: flex-start;
+  }
+
+  table[data-stacked] td:last-child[data-label=''] {
+    justify-content: flex-end;
+  }
+}
+
+/* The brand's dark green is invisible on the dashboards' dark surfaces (it was
+   used for order IDs, links, spinners); use a light green there. */
+.dark .text-solid,
+.dark .text-moringa {
+  color: #34d399;
+}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useMediaQuery, { DASHBOARD_DRAWER_QUERY } from '../utils/useMediaQuery';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import StackedTables from './components/layout/StackedTables';
 import Content from './components/Content/Content';
 import { AdminModeProvider } from './context/AdminModeContext';
 import { useAppContext } from '../context/AppContext';
@@ -252,7 +253,9 @@ const Dashboard = () => {
             />
 
             <div className="flex-1 overflow-y-auto bg-transparent">
-              <div className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">{renderPage()}</div>
+              <StackedTables className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
+                {renderPage()}
+              </StackedTables>
             </div>
           </div>
         </div>
