@@ -322,7 +322,7 @@ export const AllListings = () => {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                   {stat.title}
                 </p>
                 <p className="text-xl font-bold text-slate-800 dark:text-white">{stat.value}</p>
@@ -410,25 +410,25 @@ export const AllListings = () => {
                     className="w-4 h-4 rounded border-slate-300 text-solid focus:ring-solid cursor-pointer"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Stock
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Pickup Window
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Date Created
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -481,7 +481,7 @@ export const AllListings = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                         product.status === 'active'
                           ? 'bg-solid/10 text-solid'
                           : product.status === 'inactive'

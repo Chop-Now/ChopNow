@@ -1151,13 +1151,15 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
 
   return (
     <>
-      <div className="z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4">
+      <div className="z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-3 py-2 sm:px-6 sm:py-4">
         <div className="flex items-center justify-between">
           {/*Left section*/}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={onMenuClick}
-              className="p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Open menu"
+              aria-controls="dashboard-nav"
+              className="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <MenuIcon className="w-5 h-5" />
             </button>
@@ -1165,7 +1167,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
             {/* Mobile search button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="sm:hidden p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Search"
+              className="sm:hidden p-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -1201,7 +1204,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
           </div>
 
           {/*Right side*/}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Shop as Buyer Button - Only show if user has consumer role */}
             {availableRoles && availableRoles.includes('consumer') && (
               <button
@@ -1236,7 +1239,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
             {/*Toggle switch*/}
             <button
               onClick={toggleDarkMode}
-              className="p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Toggle dark mode"
+              className="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
@@ -1247,7 +1251,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
                   setIsNotificationOpen(!isNotificationOpen);
                   if (!isNotificationOpen) fetchNotifications();
                 }}
-                className="relative p-2.5 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Notifications"
+                className="relative p-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -1260,7 +1265,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
 
               {/* Notification Dropdown */}
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-3 w-90 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-9999">
+                <div className="fixed inset-x-3 top-16 max-h-[80dvh] overflow-y-auto sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-3 sm:max-h-none sm:overflow-visible sm:w-90 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-9999">
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-2">
@@ -1277,14 +1282,15 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}
-                          className="text-xs text-solid hover:underline cursor-pointer"
+                          className="min-h-11 px-2 text-xs text-solid hover:underline cursor-pointer"
                         >
                           Mark all read
                         </button>
                       )}
                       <button
                         onClick={() => setIsNotificationOpen(false)}
-                        className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        aria-label="Close notifications"
+                        className="p-3 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                       >
                         <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                       </button>
@@ -1364,7 +1370,8 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-3 pl-4 ml-2 border-l border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity"
+                aria-label="Account menu"
+                className="flex min-h-11 items-center gap-2 pl-2 ml-1 sm:gap-3 sm:pl-4 sm:ml-2 border-l border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <img
                   src={
@@ -1393,7 +1400,7 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
 
               {/* Profile Dropdown */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-9999">
+                <div className="fixed inset-x-3 top-16 max-h-[80dvh] overflow-y-auto sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-3 sm:max-h-none sm:overflow-visible sm:w-72 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-9999">
                   {/* User Info Section */}
                   <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <p className="text-sm font-semibold text-slate-800 dark:text-white">

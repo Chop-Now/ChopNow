@@ -146,27 +146,27 @@ const RiderDashboard = () => {
     switch (status) {
       case 'completed':
         return (
-          <span className="bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider">
             Completed
           </span>
         );
       case 'requested':
       case 'processing':
         return (
-          <span className="bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider animate-pulse">
+          <span className="bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider animate-pulse">
             Pending
           </span>
         );
       case 'failed':
       case 'cancelled':
         return (
-          <span className="bg-rose-50 text-rose-700 border border-rose-200 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="bg-rose-50 text-rose-700 border border-rose-200 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider">
             Failed
           </span>
         );
       default:
         return (
-          <span className="bg-slate-50 text-slate-700 border border-slate-200 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="bg-slate-50 text-slate-700 border border-slate-200 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider">
             {status}
           </span>
         );
@@ -181,7 +181,7 @@ const RiderDashboard = () => {
           <div className="space-y-2 z-10">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-green-400 animate-pulse" />
-              <span className="text-[10px] tracking-widest text-green-400 font-bold uppercase">
+              <span className="text-xs tracking-widest text-green-400 font-bold uppercase">
                 Rider Partner Portal
               </span>
             </div>
@@ -199,7 +199,7 @@ const RiderDashboard = () => {
             {/* Go Online Switcher Card */}
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10 shrink-0 flex items-center gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                <p className="text-xs uppercase tracking-wider text-slate-400 font-medium">
                   Status
                 </p>
                 <p className="text-xs font-bold flex items-center gap-1.5 mt-0.5">
@@ -271,7 +271,7 @@ const RiderDashboard = () => {
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                 Available Balance
               </p>
               <h2 className="text-3xl font-black text-slate-900 mt-0.5">
@@ -300,7 +300,7 @@ const RiderDashboard = () => {
               <>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                       All-Time Earnings
                     </p>
                     <p className="text-2xl font-black text-slate-900">
@@ -311,7 +311,7 @@ const RiderDashboard = () => {
                     <DollarSign className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-[11px] text-green-600">
+                <div className="mt-4 flex items-center gap-1 text-xs text-green-600">
                   <TrendingUp className="w-3.5 h-3.5" />
                   <span>+{formatCurrency(stats?.weeklyEarningsSum || 0)} this week</span>
                 </div>
@@ -329,7 +329,7 @@ const RiderDashboard = () => {
               <>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                       Total Deliveries
                     </p>
                     <p className="text-2xl font-black text-slate-900">
@@ -340,7 +340,7 @@ const RiderDashboard = () => {
                     <Bike className="w-5 h-5" />
                   </div>
                 </div>
-                <p className="mt-4 text-[11px] text-slate-400">
+                <p className="mt-4 text-xs text-slate-400">
                   {stats?.activeTrips > 0 ? (
                     <span className="text-green-600 font-semibold">
                       {stats.activeTrips} active deliveries
@@ -363,7 +363,7 @@ const RiderDashboard = () => {
               <>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                       Rider Rating
                     </p>
                     <p className="text-2xl font-black text-slate-900">
@@ -374,7 +374,7 @@ const RiderDashboard = () => {
                     <UserCheck className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-[11px] text-orange-600">
+                <div className="mt-4 flex items-center gap-1 text-xs text-orange-600">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Excellent Standing (Top 5%)</span>
                 </div>
@@ -389,7 +389,7 @@ const RiderDashboard = () => {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2 space-y-6">
             <div>
               <h3 className="font-bold text-sm text-slate-900">Weekly Earnings</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Overview of earnings for the last 7 days
               </p>
             </div>
@@ -416,7 +416,7 @@ const RiderDashboard = () => {
                         <div className="relative w-full flex justify-center">
                           {/* Tooltip */}
                           {bar.amount > 0 && (
-                            <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md font-bold whitespace-nowrap shadow z-20">
+                            <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs px-2 py-0.5 rounded-md font-bold whitespace-nowrap shadow z-20">
                               {formatCurrency(bar.amount)}
                             </div>
                           )}
@@ -429,7 +429,7 @@ const RiderDashboard = () => {
                             style={{ height: `${heightPercent || 5}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-slate-500 font-medium">{bar.day}</span>
+                        <span className="text-xs text-slate-500 font-medium">{bar.day}</span>
                       </div>
                     );
                   })}
@@ -452,7 +452,7 @@ const RiderDashboard = () => {
                   <History className="w-4 h-4 text-slate-500" />
                   Payout History
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Overview of recent cashouts completed
                 </p>
               </div>
@@ -477,7 +477,7 @@ const RiderDashboard = () => {
                         <p className="text-xs font-bold text-slate-800">
                           {formatCurrency(pay.amount)}
                         </p>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-xs text-slate-400">
                           {new Date(pay.createdAt).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -515,7 +515,7 @@ const RiderDashboard = () => {
 
             <form onSubmit={handleRequestPayoutSubmit} className="p-6 space-y-6">
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                   Available Balance
                 </p>
                 <p className="text-2xl font-black text-slate-900 mt-1">

@@ -728,7 +728,7 @@ export const AllVendors = () => {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                   {stat.title}
                 </p>
                 <p className="text-xl font-bold text-slate-800 dark:text-white">{stat.value}</p>
@@ -888,16 +888,16 @@ export const AllVendors = () => {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Vendor Name
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Business Type
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -934,7 +934,7 @@ export const AllVendors = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                         vendor.status === 'approved'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                           : vendor.status === 'pending'
@@ -1370,19 +1370,19 @@ export const VendorApproval = () => {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Vendor Name
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Submission Date
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Business Type
                 </th>
-                <th className="px-6 py-3 text-left text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -1427,7 +1427,7 @@ export const VendorApproval = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                         vendor.status === 'pending'
                           ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                           : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'

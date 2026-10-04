@@ -103,7 +103,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
             <ShoppingCart className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
             {getTotalCartItems() > 0 && (
               <span
-                className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                className="absolute -top-1.5 -right-1.5 text-xs text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
                 {getTotalCartItems()}
@@ -293,7 +293,7 @@ const PageNavbar = ({ onMobileFilterClick }) => {
             <ShoppingCart className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
             {getTotalCartItems() > 0 && (
               <span
-                className="absolute -top-1.5 -right-1.5 text-[10px] text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                className="absolute -top-1.5 -right-1.5 text-xs text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
                 {getTotalCartItems()}

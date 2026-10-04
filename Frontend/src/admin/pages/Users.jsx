@@ -400,14 +400,14 @@ export const AllUsers = () => {
                 {weeklyChange >= 0 ? (
                   <>
                     <ArrowUpRight className="w-3 h-3 text-green-600 dark:text-green-400" />
-                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">
                       +{weeklyChange} this week
                     </span>
                   </>
                 ) : (
                   <>
                     <ArrowDownRight className="w-3 h-3 text-red-600 dark:text-red-400" />
-                    <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-medium">
                       {weeklyChange} this week
                     </span>
                   </>
@@ -430,7 +430,7 @@ export const AllUsers = () => {
                 {activeVendors}
               </p>
               {pendingVendors > 0 && (
-                <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium mt-1">
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
                   {pendingVendors} pending approvals
                 </p>
               )}
@@ -450,7 +450,7 @@ export const AllUsers = () => {
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {activeRiders}
               </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Available for delivery
               </p>
             </div>
@@ -575,16 +575,16 @@ export const AllUsers = () => {
                     className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -614,7 +614,7 @@ export const AllUsers = () => {
                         <div className="text-xs font-medium text-slate-900 dark:text-white">
                           {user.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {user.email}
                         </div>
                       </div>
@@ -622,14 +622,14 @@ export const AllUsers = () => {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
-                      className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}
+                      className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}
                     >
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
-                      className={`px-2 py-0.5 inline-flex items-center gap-1 text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}
+                      className={`px-2 py-0.5 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                       {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
@@ -746,14 +746,12 @@ export const AllUsers = () => {
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {selectedUser.name}
                 </h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {selectedUser.email}
-                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{selectedUser.email}</p>
               </div>
 
               {/* User ID - removed gray background */}
               <div className="mb-3 p-2 border border-slate-200 dark:border-slate-700 rounded-lg">
-                <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)} ID
                 </p>
                 <p className="text-xs font-mono font-semibold text-slate-900 dark:text-white">
@@ -764,13 +762,13 @@ export const AllUsers = () => {
               {/* Role Management Section */}
               <div className="mb-3 p-2 border border-slate-200 dark:border-slate-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     User Roles
                   </p>
                   {!editingRoles ? (
                     <button
                       onClick={() => handleEditRoles(selectedUser)}
-                      className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer"
+                      className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer"
                     >
                       Edit Roles
                     </button>
@@ -778,14 +776,14 @@ export const AllUsers = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={handleCancelEditRoles}
-                        className="text-[9px] text-slate-500 hover:text-slate-700 dark:text-slate-400 font-medium cursor-pointer"
+                        className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 font-medium cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveRoles}
                         disabled={savingRoles}
-                        className="text-[9px] text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer disabled:opacity-50"
+                        className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 font-medium cursor-pointer disabled:opacity-50"
                       >
                         {savingRoles ? 'Saving...' : 'Save'}
                       </button>
@@ -798,7 +796,7 @@ export const AllUsers = () => {
                     {(selectedUser.roles || [selectedUser.role]).map((role) => (
                       <span
                         key={role}
-                        className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                           role === 'admin'
                             ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                             : role === 'business_owner'
@@ -837,7 +835,7 @@ export const AllUsers = () => {
                           className={`w-3.5 h-3.5 rounded border-slate-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
                         />
                         <span
-                          className={`text-[10px] font-medium ${
+                          className={`text-xs font-medium ${
                             userRoles.includes(key)
                               ? `text-${color}-700 dark:text-${color}-400`
                               : 'text-slate-600 dark:text-slate-400'
@@ -846,13 +844,13 @@ export const AllUsers = () => {
                           {label}
                         </span>
                         {key === 'admin' && (
-                          <span className="text-[8px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1 rounded">
+                          <span className="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1 rounded">
                             Full Access
                           </span>
                         )}
                       </label>
                     ))}
-                    <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Admin role grants full platform access including settings management.
                     </p>
                   </div>
@@ -876,8 +874,8 @@ export const AllUsers = () => {
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                     <div>
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400">Joined</p>
-                      <p className="text-[10px] font-semibold text-slate-900 dark:text-white">
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Joined</p>
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white">
                         {new Date(selectedUser.joinedDate).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
@@ -889,8 +887,8 @@ export const AllUsers = () => {
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                     <div>
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400">Location</p>
-                      <p className="text-[10px] font-semibold text-slate-900 dark:text-white">
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Location</p>
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white">
                         {selectedUser.location}
                       </p>
                     </div>
@@ -907,7 +905,7 @@ export const AllUsers = () => {
                   </h4>
                   <div className="grid grid-cols-2 gap-1.5">
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">
                         Meals Saved
                       </p>
                       <p className="text-base font-bold text-green-700 dark:text-green-400">
@@ -915,7 +913,7 @@ export const AllUsers = () => {
                       </p>
                     </div>
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                      <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">
                         CO₂ Saved (kg)
                       </p>
                       <p className="text-base font-bold text-green-700 dark:text-green-400">
@@ -924,7 +922,7 @@ export const AllUsers = () => {
                     </div>
                     {selectedUser.impact.waterSaved !== undefined && (
                       <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
-                        <p className="text-[9px] text-slate-600 dark:text-slate-400 mb-0.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">
                           Water Saved (L)
                         </p>
                         <p className="text-base font-bold text-green-700 dark:text-green-400">
@@ -949,10 +947,10 @@ export const AllUsers = () => {
                     >
                       <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full mt-1"></div>
                       <div className="flex-1">
-                        <p className="text-[10px] font-medium text-slate-900 dark:text-white">
+                        <p className="text-xs font-medium text-slate-900 dark:text-white">
                           {activity.action}
                         </p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {new Date(activity.date).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -974,12 +972,12 @@ export const AllUsers = () => {
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder="Add notes about this user..."
-                  className="w-full p-2 text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  className="w-full p-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                   rows="2"
                 />
                 <button
                   onClick={handleSaveNote}
-                  className="mt-1.5 w-full bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-1.5 px-2 text-[10px] rounded-lg transition-colors cursor-pointer"
+                  className="mt-1.5 w-full bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors cursor-pointer"
                 >
                   Save Note
                 </button>
@@ -993,7 +991,7 @@ export const AllUsers = () => {
                 <h4 className="text-xs font-semibold text-red-900 dark:text-red-400 mb-1.5">
                   Danger Zone
                 </h4>
-                <p className="text-[10px] text-red-700 dark:text-red-400 mb-2">
+                <p className="text-xs text-red-700 dark:text-red-400 mb-2">
                   {selectedUser.status === 'suspended'
                     ? 'This account is currently suspended.'
                     : 'Suspending this account will restrict their access to the platform.'}
@@ -1001,7 +999,7 @@ export const AllUsers = () => {
                 <button
                   onClick={() => handleSuspendUser(selectedUser.id)}
                   disabled={selectedUser.status === 'suspended'}
-                  className={`w-full font-semibold py-1.5 px-2 text-[10px] rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+                  className={`w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
                     selectedUser.status === 'suspended'
                       ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                       : 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white cursor-pointer'
@@ -1102,7 +1100,7 @@ export const RolesPermissions = () => {
                   {role.description}
                 </p>
               </div>
-              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-semibold px-2 py-1 rounded-full">
+              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full">
                 {role.userCount} {role.userCount === 1 ? 'user' : 'users'}
               </span>
             </div>
@@ -1308,12 +1306,12 @@ export const UserActivity = () => {
                             <p className="text-xs font-semibold text-slate-900 dark:text-white">
                               {activity.user.name}
                             </p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               {activity.user.email}
                             </p>
                           </div>
                           <span
-                            className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                               activity.user.role === 'customer'
                                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                                 : activity.user.role === 'vendor'
@@ -1332,7 +1330,7 @@ export const UserActivity = () => {
                         </p>
                       </div>
 
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {formatTimeAgo(activity.timestamp)}
                       </p>
                     </div>

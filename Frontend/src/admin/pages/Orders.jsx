@@ -451,7 +451,7 @@ const OrdersTable = ({ title, statusFilter }) => {
         <div className="p-5 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">{title}</h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Manage and update order fulfillment processes
             </p>
           </div>
@@ -472,25 +472,25 @@ const OrdersTable = ({ title, statusFilter }) => {
                     className="w-4 h-4 rounded border-slate-300 text-solid focus:ring-solid cursor-pointer"
                   />
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Order ID
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Fulfillment Type
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                   Total
                 </th>
-                <th className="px-5 py-3 text-right text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -527,7 +527,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                       <span className="text-xs text-slate-900 dark:text-white">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
-                      <span className="text-[9px] text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
                         {new Date(order.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -537,7 +537,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                   </td>
                   <td className="px-5 py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${
+                      className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${
                         order.type === 'Delivery'
                           ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400'
                           : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400'
@@ -548,7 +548,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                   </td>
                   <td className="px-5 py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${getStatusColor(order.status)}`}
+                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide ${getStatusColor(order.status)}`}
                     >
                       {order.status}
                     </span>
@@ -571,7 +571,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'confirmed')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Accept
                         </button>
@@ -582,7 +582,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'ready_for_pickup')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Ready
                         </button>
@@ -593,7 +593,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'out_for_delivery')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Ship
                         </button>
@@ -604,7 +604,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <button
                           onClick={() => handleUpdateStatus(order.orderId, 'completed')}
                           disabled={updatingStatus}
-                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Deliver
                         </button>
@@ -614,7 +614,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                       {order.status === 'Ready' && order.type === 'Pickup' && (
                         <button
                           onClick={() => handleRowClick(order.orderId)}
-                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-bold transition-all cursor-pointer animate-pulse shrink-0"
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition-all cursor-pointer animate-pulse shrink-0"
                         >
                           Verify Code
                         </button>
@@ -632,14 +632,14 @@ const OrdersTable = ({ title, statusFilter }) => {
           <div className="p-12 text-center text-slate-500 dark:text-slate-400 space-y-2">
             <Package className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
             <p className="font-semibold text-xs">No orders found</p>
-            <p className="text-[10px]">Verify your filter conditions or reload the list.</p>
+            <p className="text-xs">Verify your filter conditions or reload the list.</p>
           </div>
         )}
 
         {/* Pagination */}
         {filteredOrders.length > 0 && (
           <div className="px-6 py-4 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between bg-slate-50/40 dark:bg-slate-900/10">
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Showing {showingFrom} to {showingTo} of {filteredOrders.length} orders
             </p>
 
@@ -647,7 +647,7 @@ const OrdersTable = ({ title, statusFilter }) => {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Previous
               </button>
@@ -656,7 +656,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                 <button
                   key={index + 1}
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-colors ${
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
                     currentPage === index + 1
                       ? 'bg-green-600 text-white shadow-md shadow-green-500/15'
                       : 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
@@ -669,7 +669,7 @@ const OrdersTable = ({ title, statusFilter }) => {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
               </button>
@@ -690,12 +690,12 @@ const OrdersTable = ({ title, statusFilter }) => {
                     Order Details
                   </h3>
                   <span
-                    className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${getStatusColor(formatStatus(selectedOrder.status))}`}
+                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold tracking-wide ${getStatusColor(formatStatus(selectedOrder.status))}`}
                   >
                     {formatStatus(selectedOrder.status)}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   ID:{' '}
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
                     {selectedOrder.orderNumber || selectedOrder._id}
@@ -718,7 +718,7 @@ const OrdersTable = ({ title, statusFilter }) => {
               {/* Order Info & Customer Card */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
+                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">
                     Order Information
                   </h4>
                   <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3.5 space-y-2">
@@ -752,7 +752,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
+                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">
                     Customer Details
                   </h4>
                   <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3.5 space-y-2">
@@ -799,23 +799,23 @@ const OrdersTable = ({ title, statusFilter }) => {
 
               {/* Items List */}
               <div className="space-y-3">
-                <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
+                <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">
                   Items Ordered
                 </h4>
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                   <table className="w-full text-left">
                     <thead className="bg-slate-50 dark:bg-slate-900">
                       <tr>
-                        <th className="px-4 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <th className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           Item
                         </th>
-                        <th className="px-4 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
+                        <th className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                           Qty
                         </th>
-                        <th className="px-4 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                        <th className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                           Price
                         </th>
-                        <th className="px-4 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                        <th className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                           Total
                         </th>
                       </tr>
@@ -865,7 +865,7 @@ const OrdersTable = ({ title, statusFilter }) => {
               {/* Delivery / Shipping details */}
               {selectedOrder.fulfillmentType === 'delivery' && (
                 <div className="space-y-3">
-                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
+                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">
                     Delivery Details
                   </h4>
                   <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
@@ -922,7 +922,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                           Verify Customer Pickup Code
                         </h5>
                       </div>
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-400">
                         Enter the customer's 6-digit pickup code to confirm pickup and complete the
                         order.
                       </p>
@@ -1144,15 +1144,15 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <CheckCircle className="w-4.5 h-4.5 text-green-600" />
                         Verification Successful!
                       </p>
-                      <p className="text-[11px] text-green-700 dark:text-green-400 mt-1">
+                      <p className="text-xs text-green-700 dark:text-green-400 mt-1">
                         Order <span className="font-bold">#{quickVerifyResult.orderId}</span> has
                         been marked as Completed.
                       </p>
-                      <p className="text-[11px] text-green-700 dark:text-green-400">
+                      <p className="text-xs text-green-700 dark:text-green-400">
                         Customer:{' '}
                         <span className="font-semibold">{quickVerifyResult.customerName}</span>
                       </p>
-                      <p className="text-[11px] text-green-700 dark:text-green-400">
+                      <p className="text-xs text-green-700 dark:text-green-400">
                         Total:{' '}
                         <span className="font-semibold">
                           RWF {quickVerifyResult.total.toLocaleString()}
@@ -1165,7 +1165,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <AlertCircle className="w-4.5 h-4.5 text-red-600" />
                         Verification Failed
                       </p>
-                      <p className="text-[11px] text-red-600 dark:text-red-400 mt-1">
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                         {quickVerifyResult.message}
                       </p>
                     </div>

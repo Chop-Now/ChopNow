@@ -82,7 +82,7 @@ const NotFound = () => {
         </div>
 
         {/* Helper Text */}
-        <p className="mt-10 text-[10px] md:text-xs text-slate-400 text-center">
+        <p className="mt-10 text-xs md:text-xs text-slate-400 text-center">
           Need help? Our support team is here for you.
         </p>
       </div>

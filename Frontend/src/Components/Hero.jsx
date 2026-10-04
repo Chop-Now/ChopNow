@@ -79,7 +79,7 @@ const Hero = () => {
                 className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-surface object-cover shrink-0"
               />
             </div>
-            <p className="text-[11px] md:text-xs font-medium text-moringa">
+            <p className="text-xs md:text-xs font-medium text-moringa">
               Trusted by 1000+ consumers across Africa
             </p>
           </div>
@@ -141,7 +141,7 @@ const Hero = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 1, ease: 'easeOut' }}
             >
-              <p className="text-[9px] md:text-[11px] font-semibold uppercase tracking-wider text-moringa-muted mb-2">
+              <p className="text-xs md:text-xs font-semibold uppercase tracking-wider text-moringa-muted mb-2">
                 Projected impact by 2027
               </p>
               <div className="grid grid-cols-4 gap-3 md:gap-5">
@@ -153,7 +153,7 @@ const Hero = () => {
                     {count1}+
                   </h4>
                   <p
-                    className="text-[8px] md:text-xs leading-tight"
+                    className="text-xs md:text-xs leading-tight"
                     style={{ color: 'var(--color-moringa-muted)' }}
                   >
                     Launch Partners
@@ -167,7 +167,7 @@ const Hero = () => {
                     {count2}K
                   </h4>
                   <p
-                    className="text-[8px] md:text-xs leading-tight"
+                    className="text-xs md:text-xs leading-tight"
                     style={{ color: 'var(--color-moringa-muted)' }}
                   >
                     Households
@@ -181,7 +181,7 @@ const Hero = () => {
                     {count3}K
                   </h4>
                   <p
-                    className="text-[8px] md:text-xs leading-tight"
+                    className="text-xs md:text-xs leading-tight"
                     style={{ color: 'var(--color-moringa-muted)' }}
                   >
                     Meals Rescued
@@ -195,7 +195,7 @@ const Hero = () => {
                     {count4}
                   </h4>
                   <p
-                    className="text-[8px] md:text-xs leading-tight"
+                    className="text-xs md:text-xs leading-tight"
                     style={{ color: 'var(--color-moringa-muted)' }}
                   >
                     Countries

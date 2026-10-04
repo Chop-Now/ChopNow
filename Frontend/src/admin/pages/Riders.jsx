@@ -189,7 +189,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     href={rider.riderDetails?.nationalIdPhoto}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] text-green-600 font-semibold hover:underline"
+                    className="text-xs text-green-600 font-semibold hover:underline"
                   >
                     Open Full
                   </a>
@@ -224,7 +224,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     href={rider.riderDetails?.vehiclePhoto}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] text-green-600 font-semibold hover:underline"
+                    className="text-xs text-green-600 font-semibold hover:underline"
                   >
                     Open Full
                   </a>
@@ -403,13 +403,13 @@ const Riders = ({ defaultStatus = 'all' }) => {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Total Applicant Entries
           </p>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalRiders}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-amber-500 border-l-4">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Pending Review
           </p>
           <p className="text-2xl font-black text-amber-600 dark:text-amber-500 mt-1">
@@ -421,7 +421,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-green-500 border-l-4">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Active Approved Riders
           </p>
           <p className="text-2xl font-black text-green-600 dark:text-green-500 mt-1">
@@ -433,7 +433,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-rose-500 border-l-4">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Rejected Entries
           </p>
           <p className="text-2xl font-black text-rose-600 dark:text-rose-500 mt-1">
@@ -464,7 +464,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-1">
               <ListFilter className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+              <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">
                 Status:
               </span>
             </div>
@@ -499,7 +499,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/40 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase border-b border-slate-200/60 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-slate-800/40 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase border-b border-slate-200/60 dark:border-slate-800">
                   <th className="p-4">Name</th>
                   <th className="p-4">Contact Info</th>
                   <th className="p-4">Vehicle Type</th>
@@ -519,7 +519,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
                     </td>
                     <td className="p-4 space-y-0.5 text-slate-600 dark:text-slate-400">
                       <div className="font-semibold">{rider.email}</div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-xs text-slate-400">
                         {rider.riderDetails?.phone || rider.phone || 'N/A'}
                       </div>
                     </td>
@@ -540,7 +540,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
                           rider.riderStatus === 'approved'
                             ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400'
                             : rider.riderStatus === 'pending'
@@ -554,7 +554,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setSelectedRider(rider)}
-                        className="py-1 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 rounded-lg font-bold text-[10px] transition-colors cursor-pointer flex items-center gap-1.5 ml-auto"
+                        className="py-1 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 ml-auto"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Review
@@ -570,21 +570,21 @@ const Riders = ({ defaultStatus = 'all' }) => {
         {/* Pagination Row */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">
               Page {currentPage} of {totalPages}
             </span>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                className="py-1 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 rounded-lg font-bold text-[10px] cursor-pointer"
+                className="py-1 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 rounded-lg font-bold text-xs cursor-pointer"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                className="py-1 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 rounded-lg font-bold text-[10px] cursor-pointer"
+                className="py-1 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 rounded-lg font-bold text-xs cursor-pointer"
               >
                 Next
               </button>

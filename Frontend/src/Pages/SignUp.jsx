@@ -810,7 +810,7 @@ const SignUp = () => {
                                   </p>
                                 </div>
                                 {category.requiresVerification && (
-                                  <span className="text-[10px] px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full">
+                                  <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full">
                                     Verification Required
                                   </span>
                                 )}

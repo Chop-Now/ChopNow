@@ -161,7 +161,7 @@ const RiderRegistration = () => {
           )}
           <div className="min-w-0">
             <p className="text-xs font-semibold text-slate-800 truncate">{file.name}</p>
-            <p className="text-[10px] text-slate-400 font-medium">{fileSizeMB} MB</p>
+            <p className="text-xs text-slate-400 font-medium">{fileSizeMB} MB</p>
           </div>
         </div>
         <button
@@ -355,7 +355,7 @@ const RiderRegistration = () => {
                           >
                             {vehicle.label}
                           </p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">{vehicle.description}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{vehicle.description}</p>
                         </div>
                       </button>
                     );
@@ -444,7 +444,7 @@ const RiderRegistration = () => {
                         <p className="text-xs font-semibold text-slate-700">
                           Click to upload document
                         </p>
-                        <p className="text-[10px] text-slate-400 font-medium">
+                        <p className="text-xs text-slate-400 font-medium">
                           PNG, JPG, PDF, DOCX or TXT (Max 5MB)
                         </p>
                       </div>
@@ -473,7 +473,7 @@ const RiderRegistration = () => {
                         <p className="text-xs font-semibold text-slate-700">
                           Click to upload document
                         </p>
-                        <p className="text-[10px] text-slate-400 font-medium">
+                        <p className="text-xs text-slate-400 font-medium">
                           PNG, JPG, PDF, DOCX or TXT (Max 5MB)
                         </p>
                       </div>
@@ -521,7 +521,7 @@ const RiderRegistration = () => {
                     'Submit Application'
                   )}
                 </button>
-                <p className="text-[10px] text-center text-slate-400 mt-3">
+                <p className="text-xs text-center text-slate-400 mt-3">
                   Applications are manually reviewed by admins. We will notify you once review is
                   complete.
                 </p>

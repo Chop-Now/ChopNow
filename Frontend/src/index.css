@@ -175,3 +175,100 @@ body {
     color: var(--color-char) !important;
   }
 }
+
+/* ── Mobile foundation ──
+   Phones and tablets are the main way people use ChopNow, so these rules apply
+   to every screen rather than page by page. They are unlayered on purpose: they
+   have to win over single-class utilities such as `text-sm` or `h-8`. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+  /* Keep content clear of notches / home indicator when installed or landscape. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+button,
+[role='button'],
+summary,
+select,
+label[for] {
+  touch-action: manipulation;
+}
+
+/* Touch devices (and any phone-width window): every control is at least 44px,
+   inputs are 16px so iOS Safari never zooms the page on focus. */
+@media (pointer: coarse), (max-width: 767px) {
+  button:not([data-compact]),
+  [role='button']:not([data-compact]),
+  summary,
+  select,
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden']),
+  textarea {
+    min-height: 44px;
+  }
+
+  button:not([data-compact]) {
+    min-width: 44px;
+  }
+
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden']),
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    /* WCAG 2.2 AA target size is 24px; the label around it is the larger target. */
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-moringa);
+  outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline-color: var(--color-yellow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility for fixed bars (bottom nav, sticky checkout): clears the home indicator. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

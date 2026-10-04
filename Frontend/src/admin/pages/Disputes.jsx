@@ -647,7 +647,7 @@ export const CustomerComplaints = () => {
                 toast.error('No phone number on file for this customer');
               }
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex min-h-11 items-center justify-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Phone className="w-4 h-4" />
             Call
@@ -667,7 +667,7 @@ export const CustomerComplaints = () => {
                 toast.error('No email on file for this customer');
               }
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex min-h-11 items-center justify-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
             Message
@@ -747,7 +747,7 @@ export const CustomerComplaints = () => {
                 <p className="text-2xl font-bold text-slate-800 dark:text-white mb-1">
                   {stat.value}
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">{stat.subtitle}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">{stat.subtitle}</p>
               </div>
               <div
                 className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-all duration-300`}
@@ -936,11 +936,11 @@ export const CustomerComplaints = () => {
                 {/* Header with Priority Tag and Time */}
                 <div className="flex items-start justify-between mb-3">
                   <span
-                    className={`inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase border ${getPriorityColor(issue.priority)}`}
+                    className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold uppercase border ${getPriorityColor(issue.priority)}`}
                   >
                     {issue.priority}
                   </span>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <Clock className="w-3.5 h-3.5" />
                     since {issue.since}
                   </div>
@@ -953,7 +953,7 @@ export const CustomerComplaints = () => {
 
                 {/* Incident Description - Fixed Height with Scrollable Content */}
                 <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg mb-3 h-[120px] overflow-y-auto">
-                  <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                     Incident:
                   </p>
                   <p className="text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -973,7 +973,7 @@ export const CustomerComplaints = () => {
 
                 {/* Customer Information */}
                 <div className="space-y-2 mb-3 grow">
-                  <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                     Customer Information:
                   </p>
                   <div className="flex items-center gap-3">
@@ -984,13 +984,13 @@ export const CustomerComplaints = () => {
                       <p className="text-[13px] font-medium text-slate-800 dark:text-white truncate">
                         {issue.customer.name}
                       </p>
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <Phone className="w-3.5 h-3.5" />
                         {issue.customer.phone}
                       </div>
                     </div>
                   </div>
-                  <span className="inline-flex px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-[11px] font-medium">
+                  <span className="inline-flex px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs font-medium">
                     {issue.customer.status}
                   </span>
                 </div>

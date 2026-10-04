@@ -838,7 +838,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                               className="hidden"
                             />
                           </label>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             JPG, PNG or GIF. Max size 2MB.
                           </p>
                         </div>
@@ -959,7 +959,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                               className="hidden"
                             />
                           </label>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             JPG, PNG or GIF. Max size 2MB.
                           </p>
                         </div>

@@ -248,7 +248,7 @@ const BusinessVerification = () => {
                   style={{ color: 'var(--color-textColor)' }}
                 >
                   Business Phone Number{' '}
-                  {errors.phone && <span className="text-red-500 text-[10px]">*Required</span>}
+                  {errors.phone && <span className="text-red-500 text-xs">*Required</span>}
                 </label>
                 <PhoneInput
                   country={'rw'}
@@ -280,7 +280,7 @@ const BusinessVerification = () => {
                 style={{ color: 'var(--color-textColor)' }}
               >
                 Business Location{' '}
-                {errors.location && <span className="text-red-500 text-[10px]">*Required</span>}
+                {errors.location && <span className="text-red-500 text-xs">*Required</span>}
               </h3>
 
               {/* Use Current Location Button */}
@@ -420,7 +420,7 @@ const BusinessVerification = () => {
               >
                 Certification{' '}
                 {errors.files && (
-                  <span className="text-red-500 text-[10px]">
+                  <span className="text-red-500 text-xs">
                     *Required - Upload at least one certificate
                   </span>
                 )}
@@ -508,10 +508,7 @@ const BusinessVerification = () => {
                           >
                             {file.name}
                           </p>
-                          <p
-                            className="text-[10px]"
-                            style={{ color: 'var(--color-moringa-muted)' }}
-                          >
+                          <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
@@ -530,7 +527,7 @@ const BusinessVerification = () => {
 
               {/* File Upload Notice */}
               <div
-                className="mt-3 text-[10px] space-y-1"
+                className="mt-3 text-xs space-y-1"
                 style={{ color: 'var(--color-moringa-muted)' }}
               >
                 <div className="flex items-center gap-1">
@@ -562,7 +559,7 @@ const BusinessVerification = () => {
                 )}
               </button>
               <p
-                className="text-[10px] text-center mt-3"
+                className="text-xs text-center mt-3"
                 style={{ color: 'var(--color-moringa-muted)' }}
               >
                 Our team will review your submission within 1-3 business days.

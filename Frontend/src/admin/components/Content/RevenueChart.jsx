@@ -67,13 +67,13 @@ const RevenueChart = () => {
               <XAxis
                 dataKey="month"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value / 1000}k`}

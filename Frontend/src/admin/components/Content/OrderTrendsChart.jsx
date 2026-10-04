@@ -237,11 +237,11 @@ const OrderTrendsChart = () => {
               <XAxis
                 dataKey="name"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={40} />
+              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={40} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'rgba(255, 255, 255, 0.95)',

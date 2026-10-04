@@ -1027,7 +1027,7 @@ const MyOrders = () => {
 
                           {/* Code details & Copy */}
                           <div className="flex-1 text-center sm:text-left space-y-2 w-full">
-                            <span className="text-[10px] tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
+                            <span className="text-xs tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
                               Your Store Pickup Pass
                             </span>
                             <div>
@@ -1080,7 +1080,7 @@ const MyOrders = () => {
                             {/* Name and Address */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-1">
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
                                   Store Name
                                 </span>
                                 <p className="font-bold text-gray-900">
@@ -1089,7 +1089,7 @@ const MyOrders = () => {
                               </div>
                               {orderDetails.pickupDetails?.pickupTime && (
                                 <div className="space-y-1">
-                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                  <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
                                     Pickup Window
                                   </span>
                                   <p className="font-semibold text-gray-700">
@@ -1101,7 +1101,7 @@ const MyOrders = () => {
 
                             <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="space-y-1 max-w-md">
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
+                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
                                   Store Address
                                 </span>
                                 <div className="flex items-start gap-1">

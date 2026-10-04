@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useMediaQuery, { DASHBOARD_DRAWER_QUERY } from '../utils/useMediaQuery';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Content from './components/Content/Content';
@@ -29,6 +30,8 @@ const Dashboard = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
+  const isMobile = useMediaQuery(DASHBOARD_DRAWER_QUERY);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
 
@@ -225,24 +228,31 @@ const Dashboard = () => {
 
   return (
     <AdminModeProvider userRole={currentUserRole}>
-      <div className="min-h-scren bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
-        <div className="flex h-screen overflow-hidden">
+      <div className="min-h-dvh bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
+        <div className="flex h-dvh overflow-hidden">
           <Sidebar
             collapsed={sideBarCollapsed}
             onToggle={() => setSideBarCollapsed(!sideBarCollapsed)}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             onPageChange={setCurrentPage}
+            isMobile={isMobile}
+            mobileOpen={mobileNavOpen}
+            onMobileClose={() => setMobileNavOpen(false)}
           />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Header
-              onMenuClick={() => setSideBarCollapsed(!sideBarCollapsed)}
+              onMenuClick={() =>
+                isMobile
+                  ? setMobileNavOpen((open) => !open)
+                  : setSideBarCollapsed(!sideBarCollapsed)
+              }
               onNavigateToSettings={handleNavigateToSettings}
               onPageChange={handlePageChange}
             />
 
             <div className="flex-1 overflow-y-auto bg-transparent">
-              <div className="p-6 space-y-6">{renderPage()}</div>
+              <div className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">{renderPage()}</div>
             </div>
           </div>
         </div>

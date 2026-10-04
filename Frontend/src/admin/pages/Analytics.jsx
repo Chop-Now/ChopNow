@@ -280,14 +280,14 @@ const ShopAdminOverview = () => {
               <XAxis
                 dataKey="week"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 yAxisId="left"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={60}
@@ -297,7 +297,7 @@ const ShopAdminOverview = () => {
                 yAxisId="right"
                 orientation="right"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={40}
@@ -683,13 +683,13 @@ const WebsiteAdminOverview = () => {
                 <XAxis
                   dataKey="week"
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   width={40}
@@ -936,13 +936,13 @@ const ShopAdminReports = () => {
                 <XAxis
                   dataKey="month"
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   width={60}
@@ -1058,13 +1058,13 @@ const ShopAdminReports = () => {
                   <XAxis
                     dataKey="hour"
                     stroke="#64748b"
-                    fontSize={11}
+                    fontSize={12}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
                     stroke="#64748b"
-                    fontSize={11}
+                    fontSize={12}
                     tickLine={false}
                     axisLine={false}
                     width={40}
@@ -1316,13 +1316,13 @@ const WebsiteAdminReports = () => {
                 <XAxis
                   dataKey="month"
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   width={60}
@@ -1433,14 +1433,14 @@ const WebsiteAdminReports = () => {
                   <XAxis
                     dataKey="time"
                     stroke="#64748b"
-                    fontSize={9}
+                    fontSize={12}
                     tickLine={false}
                     axisLine={false}
                     interval={1}
                   />
                   <YAxis
                     stroke="#64748b"
-                    fontSize={11}
+                    fontSize={12}
                     tickLine={false}
                     axisLine={false}
                     width={40}
@@ -1831,13 +1831,13 @@ const WebsiteAdminInsights = () => {
                 <XAxis
                   dataKey="month"
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   stroke="#64748b"
-                  fontSize={11}
+                  fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   width={50}
@@ -2132,14 +2132,14 @@ const ShopAdminImpact = () => {
               <XAxis
                 dataKey="month"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 yAxisId="left"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={40}
@@ -2148,7 +2148,7 @@ const ShopAdminImpact = () => {
                 yAxisId="right"
                 orientation="right"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={40}
@@ -2536,14 +2536,14 @@ const WebsiteAdminImpact = () => {
               <XAxis
                 dataKey="month"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 yAxisId="left"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={50}
@@ -2552,7 +2552,7 @@ const WebsiteAdminImpact = () => {
                 yAxisId="right"
                 orientation="right"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 width={50}

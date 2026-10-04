@@ -42,7 +42,7 @@ const PendingReview = () => {
           <div className="flex items-center justify-center mb-5">
             <div className="flex items-center gap-2 p-2.5 bg-blue-50 rounded-lg border border-blue-200">
               <Clock className="w-3.5 h-3.5 text-black" />
-              <p className="text-[10px] font-medium" style={{ color: 'var(--color-textColor)' }}>
+              <p className="text-xs font-medium" style={{ color: 'var(--color-textColor)' }}>
                 Estimated Review Time: 2-3 business days
               </p>
             </div>
@@ -84,7 +84,7 @@ const PendingReview = () => {
                   >
                     1. Admin review
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
+                  <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                     Our team is carefully reviewing your application.
                   </p>
                 </div>
@@ -102,7 +102,7 @@ const PendingReview = () => {
                   >
                     2. Approval email
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
+                  <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                     We will notify you via email once the review is complete.
                   </p>
                 </div>
@@ -120,7 +120,7 @@ const PendingReview = () => {
                   >
                     3. Full dashboard access
                   </h3>
-                  <p className="text-[10px]" style={{ color: 'var(--color-moringa-muted)' }}>
+                  <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
                     Once approved, you'll gain full access to your vendor dashboard.
                   </p>
                 </div>
@@ -139,7 +139,7 @@ const PendingReview = () => {
             >
               Have Questions?
             </h2>
-            <p className="text-[10px] mb-3" style={{ color: 'var(--color-moringa-muted)' }}>
+            <p className="text-xs mb-3" style={{ color: 'var(--color-moringa-muted)' }}>
               Find answers to common questions in our FAQ or contact our support.
             </p>
 

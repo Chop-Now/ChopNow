@@ -141,9 +141,7 @@ const MyImpact = () => {
               <div className="flex items-center justify-center mb-1">
                 <Leaf className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className="text-gray-600 text-[10px] md:text-xs font-medium mb-1">
-                Meals Rescued
-              </h3>
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">Meals Rescued</h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
                 {impactData.mealsRescued.toLocaleString()}
               </p>
@@ -169,7 +167,7 @@ const MyImpact = () => {
               <div className="flex items-center justify-center mb-1">
                 <Wind className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className="text-gray-600 text-[10px] md:text-xs font-medium mb-1">CO2e Saved</h3>
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">CO2e Saved</h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
                 {impactData.co2Saved.toLocaleString()}
                 <span className="text-sm md:text-base">kg</span>
@@ -184,7 +182,7 @@ const MyImpact = () => {
                   style={{ color: 'var(--color-solid)' }}
                 />
               </div>
-              <h3 className="text-gray-600 text-[10px] md:text-xs font-medium mb-1">Water Saved</h3>
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">Water Saved</h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
                 {impactData.waterSaved.toLocaleString()}
                 <span className="text-sm md:text-base">L</span>
@@ -196,7 +194,7 @@ const MyImpact = () => {
               <div className="flex items-center justify-center mb-1">
                 <Scale className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className="text-gray-600 text-[10px] md:text-xs font-medium mb-1">
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">
                 Food Waste Saved
               </h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
