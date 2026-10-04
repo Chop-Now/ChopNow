@@ -25,3 +25,11 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </HelmetProvider>
 );
+
+// Installable app + offline page. Production only: a service worker in dev
+// would cache stale modules from the Vite server.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
