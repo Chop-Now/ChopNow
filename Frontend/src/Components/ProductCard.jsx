@@ -4,6 +4,8 @@ import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import ExpiryCountdown from './ui/ExpiryCountdown';
 
+const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
+
 const ProductCard = memo(({ product }) => {
   const { addToCart, removeFromCart, cartItems, setSearchQuery } = useAppContext();
   const navigate = useNavigate();
@@ -53,10 +55,17 @@ const ProductCard = memo(({ product }) => {
       <div className="relative h-32 md:h-40 overflow-hidden">
         <img
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          src={product.image?.[0] || '/placeholder-food.jpg'}
+          src={product.image?.[0] || PLACEHOLDER_IMAGE}
           alt={product.name || 'Product'}
+          width="400"
+          height="300"
           loading="lazy"
           decoding="async"
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith(PLACEHOLDER_IMAGE)) {
+              e.currentTarget.src = PLACEHOLDER_IMAGE;
+            }
+          }}
         />
 
         {/* Discount badge – top right */}
@@ -138,7 +147,7 @@ const ProductCard = memo(({ product }) => {
         ) : null}
 
         {/* Price + cart control */}
-        <div className="flex items-end justify-between mt-1">
+        <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="md:text-base text-sm font-bold" style={{ color: 'var(--color-solid)' }}>
               RWF {(offerPrice || 0).toLocaleString()}
@@ -150,10 +159,10 @@ const ProductCard = memo(({ product }) => {
             )}
           </div>
 
-          <div onClick={(e) => e.stopPropagation()}>
+          <div className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
             {!cartItems[product._id] || cartItems[product._id] === 0 ? (
               <button
-                className="flex items-center justify-center gap-1 border md:w-20 w-16 h-[34px] rounded-lg font-semibold cursor-pointer hover:opacity-90 active:scale-95 transition-all text-white text-xs"
+                className="flex items-center justify-center gap-1 border w-full sm:w-20 h-11 md:h-[34px] rounded-lg font-semibold cursor-pointer hover:opacity-90 active:scale-95 transition-all text-white text-xs"
                 style={{ backgroundColor: 'var(--color-solid)', borderColor: 'var(--color-solid)' }}
                 onClick={() => addToCart(product._id)}
                 disabled={product.status !== 'active'}
@@ -164,12 +173,12 @@ const ProductCard = memo(({ product }) => {
               </button>
             ) : (
               <div
-                className="flex items-center justify-center gap-2 md:w-20 w-16 h-[34px] rounded-lg select-none"
+                className="flex items-center justify-between w-full sm:w-24 h-11 md:h-[34px] rounded-lg select-none"
                 style={{ backgroundColor: 'rgba(0, 168, 107, 0.15)' }}
               >
                 <button
                   onClick={() => removeFromCart(product._id)}
-                  className="cursor-pointer text-base px-2 h-full font-bold hover:opacity-70 transition"
+                  className="cursor-pointer text-lg md:text-base px-3 md:px-2 h-full font-bold hover:opacity-70 transition"
                   style={{ color: 'var(--color-solid)' }}
                   aria-label={`Remove one ${product.name || 'item'} from cart`}
                 >
@@ -184,7 +193,7 @@ const ProductCard = memo(({ product }) => {
                 </span>
                 <button
                   onClick={() => addToCart(product._id)}
-                  className="cursor-pointer text-base px-2 h-full font-bold hover:opacity-70 transition"
+                  className="cursor-pointer text-lg md:text-base px-3 md:px-2 h-full font-bold hover:opacity-70 transition"
                   style={{ color: 'var(--color-solid)' }}
                   aria-label={`Add another ${product.name || 'item'} to cart`}
                 >

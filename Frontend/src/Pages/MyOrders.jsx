@@ -310,7 +310,7 @@ const MyOrders = () => {
           product: {
             _id: item.listing?._id || item.listing || item.productId || order.listing?._id,
             name: item.title || item.name || order.listing?.title || 'Product',
-            image: order.listing?.photos || ['/placeholder-food.jpg'],
+            image: order.listing?.photos || ['/placeholder-food.svg'],
             offerPrice: item.unitPrice || 0,
           },
         })) || [],

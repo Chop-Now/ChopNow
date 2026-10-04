@@ -23,7 +23,7 @@ export const transformListingToProduct = (listing) => {
       (listing.pricing?.originalPrice && listing.pricing?.price
         ? Math.round((1 - listing.pricing.price / listing.pricing.originalPrice) * 100)
         : 0),
-    image: listing.images?.[0] || listing.image || '/placeholder-food.jpg',
+    image: listing.images?.[0] || listing.image || '/placeholder-food.svg',
     images: listing.images || (listing.image ? [listing.image] : []),
     category: listing.category,
     categoryDisplay: getCategoryDisplay(listing.category),
@@ -102,7 +102,7 @@ export const transformOrderForConsumer = (order) => {
       quantity: item.quantity,
       price: item.unitPrice || item.price,
       total: (item.quantity || 1) * (item.unitPrice || item.price || 0),
-      image: item.listing?.images?.[0] || item.image || '/placeholder-food.jpg',
+      image: item.listing?.images?.[0] || item.image || '/placeholder-food.svg',
     })),
     subtotal: order.subtotal || order.payment?.subtotal || 0,
     deliveryFee: order.deliveryFee || order.payment?.deliveryFee || 0,

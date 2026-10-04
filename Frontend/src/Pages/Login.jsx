@@ -1,28 +1,30 @@
 import { assets } from '../assets/assets';
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  PersonStanding,
-  Handshake,
-  MapPin,
-  LocateFixed,
-} from 'lucide-react';
-import React, { useState, useCallback, Suspense, lazy } from 'react';
+import { Eye, EyeOff, Lock, Mail, PersonStanding, Handshake } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
 
-import { useGeolocation } from '../Components/maps/useGeolocation';
-import { reverseGeocode, searchAddress } from '../services/geocoding';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { businessService, authService } from '../services';
 
-// Deferred: LocationPicker pulls in Leaflet (~190KB) and only ever renders
-// for buyers who reach the location step, so it shouldn't block the
-// initial Login page load/switch from SignUp.
-const LocationPicker = lazy(() => import('../Components/maps/LocationPicker'));
+// Google's button is drawn by Google at a fixed pixel width (200-400), so it
+// has to be sized to the card or it overflows on phones.
+const useContainerWidth = (min, max) => {
+  // A state-backed callback ref, so measuring starts when the element actually
+  // mounts (the button only exists after the user picks "Buyer").
+  const [el, setEl] = useState(null);
+  const [width, setWidth] = useState(max);
+  useEffect(() => {
+    if (!el) return undefined;
+    const update = () => setWidth(Math.max(min, Math.min(max, Math.floor(el.clientWidth))));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [el, min, max]);
+  return [setEl, width];
+};
 
 const Login = () => {
   const { login, googleAuth } = useAppContext();
@@ -62,14 +64,10 @@ const Login = () => {
   );
   const handleGoogleError = useCallback(() => toast.error('Google Login Failed'), []);
 
-  const [location, setLocation] = useState(null);
-  const [address, setAddress] = useState('');
-  const [manualAddress, setManualAddress] = useState('');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const { getCurrentLocation } = useGeolocation();
+  const [googleRef, googleWidth] = useContainerWidth(200, 400);
 
   return (
-    <div className="min-h-screen w-full flex">
+    <div className="min-h-dvh w-full flex">
       <div className="flex w-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
@@ -87,7 +85,7 @@ const Login = () => {
             <img src={assets.wordmarklogo} alt="ChopNow" className="h-12" />
           </div>
 
-          <div className="border border-gray-500/20 rounded-2xl p-8 md:p-12 w-full max-w-lg">
+          <div className="border border-gray-500/20 rounded-2xl p-5 sm:p-8 md:p-12 w-full max-w-lg">
             {/* User Type Selection */}
             {!userType ? (
               <div className="flex flex-col">
@@ -175,7 +173,7 @@ const Login = () => {
                 {userType === 'buyer' && (
                   <>
                     {/* Google Button */}
-                    <div className="w-full flex justify-center [&>div]:w-full">
+                    <div ref={googleRef} className="w-full flex justify-center">
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
@@ -183,7 +181,7 @@ const Login = () => {
                         size="large"
                         text="continue_with"
                         shape="rectangular"
-                        width="384"
+                        width={String(googleWidth)}
                       />
                     </div>
 
@@ -270,152 +268,6 @@ const Login = () => {
                     Forgot password?
                   </Link>
                 </div>
-
-                {/* Location Section - Only for Buyers */}
-                {userType === 'buyer' && (
-                  <div className="mt-6">
-                    <h3
-                      className="text-sm font-medium mb-3"
-                      style={{ color: 'var(--color-textColor)' }}
-                    >
-                      Your Location
-                    </h3>
-
-                    {/* Use Current Location Button */}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setIsLoadingLocation(true);
-                        getCurrentLocation(
-                          async (coords) => {
-                            setLocation(coords);
-                            try {
-                              const result = await reverseGeocode(coords.lat, coords.lng);
-                              setAddress(result.display_name || 'Location detected');
-                              toast.success('Location detected successfully!');
-                            } catch {
-                              toast.error('Could not fetch address');
-                            }
-                            setIsLoadingLocation(false);
-                          },
-                          (error) => {
-                            toast.error(error);
-                            setIsLoadingLocation(false);
-                          }
-                        );
-                      }}
-                      disabled={isLoadingLocation}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-gray-300 hover:bg-gray-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all disabled:opacity-50 disabled:active:scale-100"
-                    >
-                      <LocateFixed className="w-5 h-5" style={{ color: 'var(--color-solid)' }} />
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: 'var(--color-textColor)' }}
-                      >
-                        {isLoadingLocation ? 'Detecting location...' : 'Use my current location'}
-                      </span>
-                    </button>
-
-                    {/* Manual Address Input */}
-                    <div className="mt-3 relative">
-                      <div className="flex items-center w-full bg-transparent border border-gray-300 h-12 rounded-lg overflow-hidden px-4 gap-3 focus-within:ring-2 focus-within:ring-solid focus-within:border-transparent transition-all">
-                        <MapPin
-                          className="w-5 h-5"
-                          style={{ color: 'var(--color-moringa-muted)' }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Or enter address manually"
-                          value={manualAddress}
-                          onChange={(e) => setManualAddress(e.target.value)}
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (manualAddress.trim()) {
-                                try {
-                                  const results = await searchAddress(manualAddress);
-                                  if (results && results.length > 0) {
-                                    const result = results[0];
-                                    setLocation({
-                                      lat: parseFloat(result.lat),
-                                      lng: parseFloat(result.lon),
-                                    });
-                                    setAddress(result.display_name);
-                                    toast.success('Address found!');
-                                  } else {
-                                    toast.error('Address not found');
-                                  }
-                                } catch {
-                                  toast.error('Could not search address');
-                                }
-                              }
-                            }
-                          }}
-                          className="bg-transparent outline-none text-sm w-full h-full"
-                          style={{ color: 'var(--color-textColor)' }}
-                        />
-                      </div>
-                      {manualAddress && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            if (manualAddress.trim()) {
-                              try {
-                                const results = await searchAddress(manualAddress);
-                                if (results && results.length > 0) {
-                                  const result = results[0];
-                                  setLocation({
-                                    lat: parseFloat(result.lat),
-                                    lng: parseFloat(result.lon),
-                                  });
-                                  setAddress(result.display_name);
-                                  toast.success('Address found!');
-                                } else {
-                                  toast.error('Address not found');
-                                }
-                              } catch {
-                                toast.error('Could not search address');
-                              }
-                            }
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs rounded-md text-white hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solid transition-all"
-                          style={{ backgroundColor: 'var(--color-solid)' }}
-                        >
-                          Search
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Selected Address Display */}
-                    {address && (
-                      <p className="mt-2 text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
-                        Selected: {address}
-                      </p>
-                    )}
-
-                    {/* Map */}
-                    <div className="mt-4">
-                      <Suspense
-                        fallback={
-                          <div className="h-64 w-full rounded-lg bg-gray-100 animate-pulse" />
-                        }
-                      >
-                        <LocationPicker
-                          selectedLocation={location}
-                          onLocationSelect={async (latlng) => {
-                            setLocation({ lat: latlng.lat, lng: latlng.lng });
-                            try {
-                              const result = await reverseGeocode(latlng.lat, latlng.lng);
-                              setAddress(result.display_name || 'Location selected');
-                            } catch {
-                              setAddress(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-                            }
-                          }}
-                        />
-                      </Suspense>
-                    </div>
-                  </div>
-                )}
 
                 {/* Login Button */}
                 <button

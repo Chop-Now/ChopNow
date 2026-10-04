@@ -299,7 +299,7 @@ const Cart = () => {
                     >
                       <img
                         className="w-full h-full object-cover"
-                        src={product.image?.[0] || '/placeholder-food.jpg'}
+                        src={product.image?.[0] || '/placeholder-food.svg'}
                         alt={product.name || 'Product'}
                       />
                     </div>

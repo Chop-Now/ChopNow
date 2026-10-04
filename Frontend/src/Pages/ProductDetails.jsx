@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
 import { Flame, Users } from 'lucide-react';
 
+const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
+
 const ProductDetails = () => {
   const { products, addToCart, cartItems, removeAllFromCart, isAuthenticated } = useAppContext();
   const navigate = useNavigate();
@@ -193,11 +195,11 @@ const ProductDetails = () => {
 
   return (
     <div className="bg-white min-h-screen pt-20">
-      <PageNavbar />
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <PageNavbar hideTabBar />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-28 md:pb-6">
         {/* Breadcrumb */}
         <div
-          className="flex items-center gap-2 text-sm mb-6"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm mb-4 sm:mb-6"
           style={{ color: 'var(--color-moringa-muted)' }}
         >
           <Link to="/" className="hover:opacity-70">
@@ -220,13 +222,15 @@ const ProductDetails = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Left Side - Images */}
-          <div className="flex gap-4 lg:w-1/2">
-            <div className="flex flex-col gap-3">
+          <div className="flex flex-col-reverse gap-3 lg:flex-row lg:gap-4 lg:w-1/2">
+            <div className="flex gap-3 overflow-x-auto lg:flex-col lg:overflow-visible">
               {(product.image || []).map((image, index) => (
-                <div
+                <button
+                  type="button"
                   key={index}
                   onClick={() => setThumbnail(image)}
-                  className={`border rounded-lg overflow-hidden cursor-pointer hover:border-solid transition w-20 h-20 ${thumbnail === image ? 'border-2' : ''}`}
+                  aria-label={`Show photo ${index + 1}`}
+                  className={`shrink-0 border rounded-lg overflow-hidden cursor-pointer hover:border-solid transition w-16 h-16 lg:w-20 lg:h-20 ${thumbnail === image ? 'border-2' : ''}`}
                   style={{ borderColor: thumbnail === image ? 'var(--color-solid)' : '#E5E5E5' }}
                 >
                   <img
@@ -234,7 +238,7 @@ const ProductDetails = () => {
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                </div>
+                </button>
               ))}
             </div>
 
@@ -246,9 +250,14 @@ const ProductDetails = () => {
               onMouseMove={handleMouseMove}
             >
               <img
-                src={thumbnail}
-                alt="Selected product"
-                className="w-full h-full object-contain max-h-96"
+                src={thumbnail || PLACEHOLDER_IMAGE}
+                alt={product.name || 'Selected product'}
+                className="w-full h-full object-contain aspect-[4/3] max-h-96"
+                onError={(e) => {
+                  if (!e.currentTarget.src.endsWith(PLACEHOLDER_IMAGE)) {
+                    e.currentTarget.src = PLACEHOLDER_IMAGE;
+                  }
+                }}
               />
 
               {/* Magnifier Glass */}
@@ -526,24 +535,24 @@ const ProductDetails = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-surface-border bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:z-auto md:gap-4 md:border-0 md:bg-transparent md:p-0">
               {currentCartQuantity > 0 ? (
                 <button
                   onClick={handleRemoveFromCart}
-                  className="flex-1 py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 cursor-pointer hover:opacity-90"
+                  className="flex-1 min-h-12 py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 cursor-pointer hover:opacity-90"
                   style={{
                     backgroundColor: 'var(--color-solidOne)',
                     color: 'white',
                   }}
                 >
                   <Trash2 className="w-5 h-5" />
-                  Remove from Cart ({currentCartQuantity})
+                  <span className="whitespace-nowrap">Remove ({currentCartQuantity})</span>
                 </button>
               ) : (
                 <button
                   onClick={handleAddToCart}
                   disabled={product.quantity === 0}
-                  className="flex-1 py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 min-h-12 py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: 'var(--color-primary)',
                     color: 'var(--color-solid)',
@@ -557,7 +566,7 @@ const ProductDetails = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={product.quantity === 0 || currentCartQuantity >= product.quantity}
-                className="flex-1 py-3 rounded-lg font-medium text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 min-h-12 py-3 rounded-lg font-medium text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
                 Buy Now

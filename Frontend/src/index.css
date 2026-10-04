@@ -195,17 +195,6 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
-img,
-video,
-svg {
-  max-width: 100%;
-}
-
-img,
-video {
-  height: auto;
-}
-
 button,
 [role='button'],
 summary,
@@ -271,4 +260,13 @@ label[for] {
 /* Utility for fixed bars (bottom nav, sticky checkout): clears the home indicator. */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Pages with the phone tab bar reserve its height (56px + home-indicator inset). */
+@media (max-width: 767px) {
+  body.has-tab-bar {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    /* The pages that show the bar are white; keep the padding from reading as a mint strip. */
+    background-color: #fff !important;
+  }
 }

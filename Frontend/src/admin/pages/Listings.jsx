@@ -450,7 +450,7 @@ export const AllListings = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <img
-                        src={product.image?.[0] || product.images?.[0] || '/placeholder-food.jpg'}
+                        src={product.image?.[0] || product.images?.[0] || '/placeholder-food.svg'}
                         alt={product.name || product.title || 'Product'}
                         className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                       />
