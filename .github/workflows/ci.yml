@@ -172,9 +172,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      # Production dependencies only: dev tooling (nodemon -> chokidar -> braces) never
+      # ships, and braces has no patched release yet, so auditing it would block every deploy.
       - name: Audit Backend
         working-directory: Backend
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Audit Frontend
         working-directory: Frontend
