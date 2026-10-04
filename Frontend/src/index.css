@@ -225,9 +225,26 @@ label[for] {
     font-size: max(16px, 1rem);
   }
 
-  /* react-phone-input-2 ships its own 15px size with higher specificity. */
+  /* react-phone-input-2 ships its own 15px size and a 38px flag button with
+     higher specificity. */
   .react-tel-input .form-control {
     font-size: 16px !important;
+    padding-left: 60px !important;
+  }
+
+  .react-tel-input .flag-dropdown .selected-flag {
+    width: 52px !important;
+  }
+
+  .react-tel-input .flag-dropdown .selected-flag .arrow {
+    left: 28px !important;
+  }
+
+  /* Leaflet's +/- zoom buttons. */
+  div.leaflet-container .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
   }
 
   input[type='checkbox'],

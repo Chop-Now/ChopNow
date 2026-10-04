@@ -1225,12 +1225,12 @@ const Header = ({ onMenuClick, onNavigateToSettings, onPageChange, isAdminDashbo
 
             {/* Dashboard Label - Shows current dashboard type */}
             {isAdminDashboard ? (
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg">
+              <div className="hidden lg:flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg">
                 <Building2 className="w-4 h-4" />
                 <span className="text-sm font-medium">Admin Panel</span>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg">
+              <div className="hidden lg:flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2.5 bg-linear-to-r from-solid to-tertiary text-white rounded-lg">
                 <Store className="w-4 h-4" />
                 <span className="text-sm font-medium">Vendor Dashboard</span>
               </div>

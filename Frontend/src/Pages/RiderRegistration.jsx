@@ -21,6 +21,7 @@ import 'react-phone-input-2/lib/style.css';
 import { useAppContext } from '../context/AppContext';
 import userService from '../services/userService';
 import toast from 'react-hot-toast';
+import { compressImage } from '../utils/compressImage';
 
 const VEHICLES = [
   { key: 'bicycle', label: 'Bicycle', icon: Bike, description: 'Best for short urban trips' },
@@ -77,9 +78,10 @@ const RiderRegistration = () => {
     }
   };
 
-  const handleFileChange = (e, setFile, fieldName) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleFileChange = async (e, setFile, fieldName) => {
+    const picked = e.target.files[0];
+    if (!picked) return;
+    const file = await compressImage(picked);
 
     // Check size limit (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -380,7 +382,7 @@ const RiderRegistration = () => {
                       }
                     }}
                     containerClass="w-full"
-                    inputClass="!w-full !h-11 !rounded-xl !border-slate-200 !text-sm focus:!ring-2 focus:!ring-green-500/20 focus:!border-green-600"
+                    inputClass="!w-full !h-11 !rounded-xl !border-slate-200 !text-base focus:!ring-2 focus:!ring-green-500/20 focus:!border-green-600"
                     buttonClass="!bg-slate-50 !border-slate-200 !rounded-l-xl"
                   />
                 </div>

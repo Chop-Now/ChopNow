@@ -6,6 +6,7 @@ import { usePlatformSettings } from './context/PlatformSettingsContext';
 import { useAppContext } from './context/AppContext';
 import LoadingSpinner from './Components/ui/LoadingSpinner';
 import { ProtectedRoute, RoleRoute } from './Components/ProtectedRoute';
+import useMediaQuery from './utils/useMediaQuery';
 
 // Lazy-loaded page components for code splitting
 const Home = lazy(() => import('./Pages/Home'));
@@ -35,6 +36,7 @@ const VerifyEmail = lazy(() => import('./Pages/VerifyEmail'));
 const NotFound = lazy(() => import('./Components/NotFound'));
 
 const App = () => {
+  const isPhone = useMediaQuery('(max-width: 767px)');
   const { settings } = usePlatformSettings();
   const { user, isLoading } = useAppContext();
   const location = useLocation();
@@ -65,7 +67,14 @@ const App = () => {
         Skip to content
       </a>
 
-      <Toaster />
+      {/* On phones, toasts sit above the bottom tab bar (and the home indicator) rather than over the header. */}
+      <Toaster
+        position={isPhone ? 'bottom-center' : 'top-center'}
+        containerStyle={
+          isPhone ? { bottom: 'calc(5rem + env(safe-area-inset-bottom))' } : undefined
+        }
+        toastOptions={{ style: { maxWidth: 'calc(100vw - 2rem)' } }}
+      />
 
       <Suspense
         fallback={

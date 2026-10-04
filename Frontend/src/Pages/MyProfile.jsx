@@ -7,6 +7,7 @@ import { authService } from '../services';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { clearAccessToken } from '../services/api';
+import { compressImage } from '../utils/compressImage';
 
 const MyProfile = () => {
   const { addBusinessRole, availableRoles } = useAppContext();
@@ -146,8 +147,9 @@ const MyProfile = () => {
 
   // Handle avatar upload
   const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const picked = e.target.files?.[0];
+    if (!picked) return;
+    const file = await compressImage(picked, { maxDimension: 800 });
 
     const formData = new FormData();
     formData.append('avatar', file);
@@ -444,7 +446,7 @@ const MyProfile = () => {
                     searchPlaceholder="Search country"
                     placeholder="Choose your country"
                     containerClass="w-full"
-                    inputClass="!w-full !h-10 !border-gray-300 !rounded-lg !text-sm !bg-white"
+                    inputClass="!w-full !h-10 !border-gray-300 !rounded-lg !text-base !bg-white"
                     buttonClass="!border-gray-300 !rounded-l-lg !bg-white !h-10 !hover:bg-gray-100"
                     dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
                     searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"

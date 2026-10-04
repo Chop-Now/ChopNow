@@ -43,6 +43,7 @@ import {
 import LocationPicker from '../../Components/maps/LocationPicker';
 import ConfirmationModal from '../components/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { compressImage } from '../../utils/compressImage';
 
 const Settings = ({ initialTab = 'profile' }) => {
   const { adminMode } = useAdminMode();
@@ -277,9 +278,10 @@ const Settings = ({ initialTab = 'profile' }) => {
     }));
   };
 
-  const handleImageUpload = (e, type) => {
-    const file = e.target.files[0];
-    if (file) {
+  const handleImageUpload = async (e, type) => {
+    const picked = e.target.files[0];
+    if (picked) {
+      const file = await compressImage(picked, { maxDimension: 800 });
       const reader = new FileReader();
       reader.onloadend = () => {
         if (adminMode === 'shop') {

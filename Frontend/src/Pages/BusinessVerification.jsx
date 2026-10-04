@@ -22,6 +22,7 @@ import { reverseGeocode, searchAddress } from '../services/geocoding';
 import { businessService } from '../services';
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import { compressImages } from '../utils/compressImage';
 
 // Document requirements by business category
 const CATEGORY_REQUIREMENTS = {
@@ -176,9 +177,12 @@ const BusinessVerification = () => {
     }
   };
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
+  const handleFileUpload = async (e) => {
+    const picked = Array.from(e.target.files);
+    // Let the same file be picked again after removing it.
+    e.target.value = '';
+    if (picked.length > 0) {
+      const files = await compressImages(picked);
       setUploadedFiles((prev) => [...prev, ...files]);
       setErrors((prev) => ({ ...prev, files: false }));
     }
@@ -264,7 +268,7 @@ const BusinessVerification = () => {
                   searchPlaceholder="Search country"
                   placeholder="Enter phone number"
                   containerClass="w-full"
-                  inputClass={`!w-full !h-12 !rounded-lg !text-sm !bg-transparent ${errors.phone ? '!border-red-500' : '!border-gray-300'}`}
+                  inputClass={`!w-full !h-12 !rounded-lg !text-base !bg-transparent ${errors.phone ? '!border-red-500' : '!border-gray-300'}`}
                   buttonClass={`!rounded-l-lg !bg-transparent !h-12 !hover:bg-gray-100 ${errors.phone ? '!border-red-500' : '!border-gray-300'}`}
                   dropdownClass="!text-sm !bg-white !border !border-gray-300 !rounded-lg !shadow-lg"
                   searchClass="!text-sm !p-2 !border-gray-300 !m-2 !rounded-md"

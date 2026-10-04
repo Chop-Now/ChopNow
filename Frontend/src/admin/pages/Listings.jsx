@@ -20,6 +20,7 @@ import { useAdminMode } from '../context/AdminModeContext';
 import { useAppContext } from '../../context/AppContext';
 import { listingService, businessService } from '../../services';
 import toast from 'react-hot-toast';
+import { compressImages } from '../../utils/compressImage';
 
 // Map frontend category paths to backend enum values
 // Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
@@ -657,8 +658,10 @@ export const NewListing = () => {
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
+  const handleImageUpload = async (e) => {
+    const picked = Array.from(e.target.files);
+    e.target.value = '';
+    const files = await compressImages(picked);
     const newImages = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
@@ -1479,8 +1482,10 @@ const EditListing = ({ product, onBack }) => {
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
+  const handleImageUpload = async (e) => {
+    const picked = Array.from(e.target.files);
+    e.target.value = '';
+    const files = await compressImages(picked);
     const newImages = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file), // Helper for preview

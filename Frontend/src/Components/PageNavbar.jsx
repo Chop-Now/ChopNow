@@ -150,7 +150,7 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false }) => {
         className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32 py-2.5 md:py-4 border-b transition-all bg-white shadow-sm"
         style={{ borderColor: '#E5E5E5' }}
       >
-        <NavLink to="/" aria-label="ChopNow home" className="flex items-center">
+        <NavLink to="/" aria-label="ChopNow home" className="flex min-h-11 items-center">
           <img src={assets.wordmarklogo} alt="ChopNow" className="h-8 md:h-9 w-auto" />
         </NavLink>
 
