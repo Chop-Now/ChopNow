@@ -21,15 +21,26 @@
  * production up to the shop (farm, processing, transport, packaging); the
  * avoided methane from landfill and consumer-stage emissions are NOT counted.
  *
- * Sources (rounded; review before quoting in print):
- *  - Poore & Nemecek (2018), "Reducing food's environmental impacts through
- *    producers and consumers", Science 360 - via Our World in Data,
- *    "Environmental impacts of food" (kg CO2e per kg, global medians)
- *  - Mekonnen & Hoekstra (2011/2012), "The green, blue and grey water footprint
- *    of crops and derived crop products" / "...of farm animals and animal
- *    products", Water Footprint Network (litres per kg)
- *  - WRAP, "Food surplus and waste in the UK - key facts" (cross-check on the
- *    order of magnitude of embodied emissions in wasted food)
+ * Sources (checked against the published data on 2026-10-05):
+ *  - Poore & Nemecek (2018), Science 360, as published by Our World in Data
+ *    (grapher "ghg-per-kg-poore", global means in kg CO2e per kg of product)
+ *  - Mekonnen & Hoekstra (2012) farm animal products and (2011) crops, as
+ *    published by Our World in Data (m3 per tonne = litres per kg)
+ *  - WRAP, "Household food and drink waste in the UK 2022": about 16 Mt CO2e
+ *    for 6.0 Mt of food and drink wasted, i.e. roughly 2.7 kg CO2e per kg
+ *    across the whole chain (production to disposal) for a meat-heavier diet.
+ *
+ * Verified per-kg figures, for reference when changing a factor below:
+ *  CO2e: beef 33 (dairy herd) - 99 (beef herd), lamb 40, pork 12.3, poultry 9.9,
+ *    farmed fish 13.6, cheese 23.9, eggs 4.7, milk 3.2, rice 4.5, wheat 1.6,
+ *    maize 1.7, oatmeal 2.5, pulses 1.0-1.8, cane sugar 3.2, bananas 0.9,
+ *    apples 0.4, tomatoes 2.1, potatoes 0.5, other vegetables 0.5, soy milk 1.0.
+ *  Water (L/kg): beef 15,415, sheep/goat 8,763, pork 5,988, chicken 4,325,
+ *    eggs 3,265, butter 5,553, milk 1,020, cereals 1,644, pulses 4,055,
+ *    oil crops 2,364, fruits 962, starchy roots 387, vegetables 322.
+ *  NOT in those datasets, so the matching factors are our own estimates:
+ *    prepared meals, baked goods (wheat is used as the proxy), beverages
+ *    (other than soy milk and wine) and the "other" category.
  *
  * Change a number here and the whole platform follows; bump FACTORS_VERSION so
  * stored orders record which table produced them.
@@ -42,49 +53,49 @@ const CATEGORY_FACTORS = {
   meat: {
     label: 'Meat & Seafood',
     defaultWeightKg: 0.4,
-    co2ePerKg: 10, // poultry ~6, pork ~7, farmed fish ~13, beef ~60 - mixed, beef-light
-    waterPerKg: 4500,
+    co2ePerKg: 10, // = the lowest main meat (poultry 9.9); pork 12.3, fish 13.6, lamb 40, beef 33-99
+    waterPerKg: 4500, // = chicken (4,325); pork 5,988, sheep/goat 8,763, beef 15,415
   },
   dairy: {
     label: 'Dairy & Eggs',
     defaultWeightKg: 0.4,
-    co2ePerKg: 4, // milk ~3, eggs ~4.5, cheese ~21 - mostly milk, yoghurt, eggs
-    waterPerKg: 1200,
+    co2ePerKg: 4, // milk 3.2, eggs 4.7, cheese 23.9 - weighted to milk, yoghurt, eggs
+    waterPerKg: 1200, // milk 1,020; eggs 3,265 and cheese are higher
   },
   meals: {
     label: 'Prepared Meals',
     defaultWeightKg: 0.45,
-    co2ePerKg: 3, // typical mixed cooked meal (grains, legumes, veg, some meat)
-    waterPerKg: 1500,
+    co2ePerKg: 3, // our estimate: a 450 g plate of rice, chicken, veg and oil works out near 3.1; WRAP wasted food 2.7
+    waterPerKg: 1500, // same plate works out near 1,400
   },
   'baked-goods': {
     label: 'Baked Goods',
     defaultWeightKg: 0.3,
-    co2ePerKg: 1.4, // bread / wheat products ~1.4
-    waterPerKg: 1500,
+    co2ePerKg: 1.4, // our estimate; wheat & rye is 1.6 per kg of grain
+    waterPerKg: 1500, // cereals average 1,644
   },
   'fruit-veg': {
     label: 'Fruits & Veg',
     defaultWeightKg: 0.8,
-    co2ePerKg: 0.6, // vegetables ~0.4-2, most fruit ~0.4-1
-    waterPerKg: 500,
+    co2ePerKg: 0.6, // apples 0.4, bananas 0.9, veg 0.4-0.5, tomatoes 2.1; simple mean is about 0.7
+    waterPerKg: 500, // fruits 962, vegetables 322, starchy roots 387
   },
   pantry: {
     label: 'Pantry',
     defaultWeightKg: 0.5,
-    co2ePerKg: 2, // rice ~4.5, wheat/maize ~1.4-1.7, oils/sugar ~2-3.5
-    waterPerKg: 1800,
+    co2ePerKg: 2, // rice 4.5, wheat 1.6, maize 1.7, oatmeal 2.5, pulses 1-1.8, cane sugar 3.2
+    waterPerKg: 1800, // cereals 1,644, pulses 4,055, oil crops 2,364
   },
   beverages: {
     label: 'Beverages',
     defaultWeightKg: 0.5,
-    co2ePerKg: 0.8, // per litre; soft drinks/juice ~0.3-1
-    waterPerKg: 400,
+    co2ePerKg: 0.8, // our estimate, per litre (soy milk 1.0, wine 1.8); not in the datasets
+    waterPerKg: 400, // our estimate (beer is about 300, wine about 870); not verified
   },
   other: {
     label: 'Other',
     defaultWeightKg: 0.4,
-    co2ePerKg: 2.5, // below the mean of the categories above, on purpose
+    co2ePerKg: 2.5, // our estimate, below the mean of the categories above, on purpose
     waterPerKg: 1200,
   },
 };
