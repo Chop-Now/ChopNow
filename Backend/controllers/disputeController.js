@@ -7,6 +7,7 @@ const RefundRequest = require('../models/RefundRequest');
 const logger = require('../utils/logger');
 const Payout = require('../models/Payout');
 const { recordEntry, notifyPayee } = require('../services/ledgerService');
+const { syncOrderImpactWithRefunds } = require('../services/impactService');
 
 // Maps the mobile app's "what went wrong?" reason labels (dispute_screen.dart)
 // to the Dispute model's `type` enum, since the client never sends `type`.
@@ -433,6 +434,11 @@ const resolveDispute = async (req, res) => {
         order.payment.paymentStatus = 'refund_pending';
         await order.save({ session });
 
+        // A refunded meal was not rescued: take the same share of the order's
+        // environmental impact back (no-op until the order completes, at which
+        // point completion nets it off).
+        await syncOrderImpactWithRefunds(order._id, session);
+
         dispute.timeline.push({
           event: `Refund of ${resolutionAmount} ${order.pricing.currency} queued for manual processing (${
             fundedBy === 'vendor'
@@ -540,6 +546,19 @@ const updateRefundRequest = async (req, res) => {
       return exists
         ? res.status(400).json({ message: 'This refund has already been processed' })
         : res.status(404).json({ message: 'Refund request not found' });
+    }
+
+    // A refund that fell through means the customer keeps the food: give back
+    // the impact that was taken off when it was queued.
+    if (status === 'failed') {
+      const impactSession = await mongoose.startSession();
+      try {
+        await impactSession.withTransaction(() =>
+          syncOrderImpactWithRefunds(refund.order, impactSession)
+        );
+      } finally {
+        impactSession.endSession();
+      }
     }
 
     // Once everything owed on the order has actually been paid back, mark it

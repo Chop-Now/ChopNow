@@ -18,11 +18,7 @@ const {
   sendVendorOrderCancelledEmail,
 } = require('../utils/emailService');
 
-// Impact constants (must match analyticsController.js)
-const IMPACT_FACTORS = {
-  CO2_PER_MEAL: 2.5, // kg CO2e saved per meal rescued
-  WATER_PER_MEAL: 1000, // litres of water saved per meal
-};
+const { recordOrderImpact } = require('../services/impactService');
 const socketManager = require('../socket');
 const { CheckoutError, buildQuote, placeCheckout } = require('../services/checkoutService');
 const { recordEntry, holdUntil } = require('../services/ledgerService');
@@ -110,9 +106,6 @@ const completeOrderAtomically = async (orderId, extraFields = {}) => {
       );
       if (!order) return;
 
-      const totalMeals = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-      const co2Increment = totalMeals * IMPACT_FACTORS.CO2_PER_MEAL;
-      const waterIncrement = totalMeals * IMPACT_FACTORS.WATER_PER_MEAL;
       const platformHeldFunds = order.payment?.paymentMethod === 'mobile_money';
       const businessId = order.business._id || order.business;
       // Less any vendor-funded dispute refund granted before completion.
@@ -128,17 +121,14 @@ const completeOrderAtomically = async (orderId, extraFields = {}) => {
       const business = await Business.findOneAndUpdate(
         { _id: businessId },
         {
-          $inc: {
-            'stats.balance': earning,
-            'stats.impact.mealsRescued': totalMeals,
-            'stats.impact.co2Saved': co2Increment,
-            'stats.impact.waterSaved': waterIncrement,
-            'metrics.mealsSaved': totalMeals,
-            'metrics.co2Saved': co2Increment,
-          },
+          $inc: { 'stats.balance': earning },
         },
         { new: true, session }
       );
+
+      // Estimated food/CO2e/water rescued, stored on the order and added to the
+      // vendor's and customer's totals (net of any refund already queued).
+      await recordOrderImpact(order, session);
 
       if (earning > 0) {
         const refunded = order.pricing.vendorRefunded || 0;

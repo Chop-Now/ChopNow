@@ -131,6 +131,8 @@ const businessSchema = new Schema(
         co2Saved: { type: Number, default: 0 },
         mealsRescued: { type: Number, default: 0 },
         waterSaved: { type: Number, default: 0 },
+        // kg of food rescued (estimated)
+        kgSaved: { type: Number, default: 0 },
       },
     },
 

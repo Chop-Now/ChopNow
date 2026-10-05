@@ -4,6 +4,17 @@ const Listing = require('../models/Listing');
 const User = require('../models/User');
 const Review = require('../models/Review');
 const logger = require('../utils/logger');
+const { FACTORS_VERSION, methodology } = require('../config/impactFactors');
+
+// Impact is recorded on each order when it completes (services/impactService.js)
+// and reduced by the share of the order that was later refunded. Everything
+// below reads those stored numbers, so every screen agrees with every other.
+const COUNTED = { status: 'completed', 'impact.countedAt': { $exists: true } };
+const COMPLETED_AT = { $ifNull: ['$statusTimestamps.completedAt', '$createdAt'] };
+const NET = { $subtract: [1, { $ifNull: ['$impact.reversedFraction', 0] }] };
+const net = (field) => ({ $multiply: [{ $ifNull: [field, 0] }, NET] });
+const round1 = (n) => Math.round((n || 0) * 10) / 10;
+const round0 = (n) => Math.round(n || 0);
 
 /**
  * @desc    Get Platform Overview Stats (Admin)
@@ -43,23 +54,25 @@ const getPlatformOverview = async (req, res) => {
             totalCo2Saved: { $sum: '$stats.impact.co2Saved' },
             totalMealsRescued: { $sum: '$stats.impact.mealsRescued' },
             totalWaterSaved: { $sum: '$stats.impact.waterSaved' },
+            totalKgSaved: { $sum: '$stats.impact.kgSaved' },
           },
         },
       ]),
-      // Meals rescued platform-wide, bucketed by week, so we can derive a real
-      // week-over-week CO2e trend instead of splitting the running total into
-      // made-up fractions.
+      // Meals and CO2e rescued platform-wide, bucketed by the week the order
+      // was completed, for a real week-over-week trend.
       Order.aggregate([
-        { $match: { status: 'completed', createdAt: { $gte: fourWeeksAgo } } },
-        { $unwind: '$items' },
+        { $match: COUNTED },
+        { $addFields: { doneAt: COMPLETED_AT } },
+        { $match: { doneAt: { $gte: fourWeeksAgo } } },
         {
           $group: {
             _id: {
               week: {
-                $floor: { $divide: [{ $subtract: [now, '$createdAt'] }, 7 * 24 * 60 * 60 * 1000] },
+                $floor: { $divide: [{ $subtract: [now, '$doneAt'] }, 7 * 24 * 60 * 60 * 1000] },
               },
             },
-            meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+            meals: { $sum: net('$impact.meals') },
+            co2e: { $sum: net('$impact.co2e') },
           },
         },
       ]),
@@ -72,19 +85,19 @@ const getPlatformOverview = async (req, res) => {
 
     const weekMap = {};
     (weeklyImpactData || []).forEach((r) => {
-      weekMap[r._id.week] = r.meals;
+      weekMap[r._id.week] = r;
     });
     const weeklyImpact = [];
     for (let i = 3; i >= 0; i--) {
-      const meals = weekMap[i] || 0;
+      const row = weekMap[i];
       weeklyImpact.push({
         week: `Week ${4 - i}`,
-        meals,
-        co2Saved: Math.round(meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
+        meals: round0(row?.meals),
+        co2Saved: round1(row?.co2e),
       });
     }
 
-    const totalMealsRescued = impactResult.length > 0 ? impactResult[0].totalMealsRescued : 0;
+    const totals = impactResult[0] || {};
 
     res.json({
       overview: {
@@ -93,19 +106,14 @@ const getPlatformOverview = async (req, res) => {
         totalUsers,
         totalRevenue: revenueResult.length > 0 ? revenueResult[0].total : 0,
       },
-      impact:
-        impactResult.length > 0
-          ? {
-              ...impactResult[0],
-              totalFoodWasteSaved:
-                Math.round(totalMealsRescued * IMPACT_FACTORS.AVG_MEAL_WEIGHT * 10) / 10,
-            }
-          : {
-              totalCo2Saved: 0,
-              totalMealsRescued: 0,
-              totalWaterSaved: 0,
-              totalFoodWasteSaved: 0,
-            },
+      impact: {
+        totalCo2Saved: round1(totals.totalCo2Saved),
+        totalMealsRescued: round0(totals.totalMealsRescued),
+        totalWaterSaved: round0(totals.totalWaterSaved),
+        totalFoodWasteSaved: round1(totals.totalKgSaved),
+        estimated: true,
+        factorsVersion: FACTORS_VERSION,
+      },
       weeklyImpact,
       monthlyImpact,
       categoryImpact,
@@ -319,34 +327,64 @@ const getImpactLeaderboard = async (req, res) => {
 };
 
 /**
- * Environmental Impact Constants
- * Based on research data for food waste environmental impact
- */
-const IMPACT_FACTORS = {
-  CO2_PER_MEAL: 2.5, // kg CO2e saved per meal rescued
-  WATER_PER_MEAL: 1000, // liters of water saved per meal
-  AVG_MEAL_WEIGHT: 0.5, // average kg per meal for food waste calculation
-};
-
-/**
  * @desc    Get my impact (Consumer/Business)
  * @route   GET /api/analytics/impact/my
  * @access  Private
+ *
+ * Figures are ESTIMATES (see config/impactFactors.js and GET
+ * /api/analytics/impact/methodology). They are the sum of the impact stored on
+ * each completed order, net of any refund against it.
  */
 const getMyImpact = async (req, res) => {
   try {
     const userRole = req.user.activeRole || req.user.role;
 
+    const totalsGroup = {
+      _id: null,
+      meals: { $sum: net('$impact.meals') },
+      kg: { $sum: net('$impact.kg') },
+      co2e: { $sum: net('$impact.co2e') },
+      water: { $sum: net('$impact.water') },
+      orders: { $sum: 1 },
+    };
+    const shape = (t, extra = {}) => ({
+      mealsRescued: round0(t.meals),
+      co2Saved: round1(t.co2e),
+      waterSaved: round0(t.water),
+      foodWasteSaved: round1(t.kg),
+      ordersCount: t.orders || 0,
+      estimated: true,
+      factorsVersion: FACTORS_VERSION,
+      ...extra,
+    });
+
     if (userRole === 'consumer') {
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const mine = { ...COUNTED, customer: req.user._id };
 
-      // Use $facet to get total impact, this month, and last month in a single aggregation
-      const [impactResult, monthlyData] = await Promise.all([
+      const [totalsRows, windowRows, savingsRows, monthlyData] = await Promise.all([
+        Order.aggregate([{ $match: mine }, { $group: totalsGroup }]),
+        // This month vs last month, by the day each order was completed. (Last
+        // month is "before the 1st of this month", so its final day counts.)
         Order.aggregate([
-          { $match: { customer: req.user._id, status: 'completed' } },
+          { $match: mine },
+          { $addFields: { doneAt: COMPLETED_AT } },
+          { $match: { doneAt: { $gte: lastMonthStart } } },
+          {
+            $group: {
+              _id: { $cond: [{ $gte: ['$doneAt', thisMonthStart] }, 'this', 'last'] },
+              meals: { $sum: net('$impact.meals') },
+              co2e: { $sum: net('$impact.co2e') },
+              orders: { $sum: 1 },
+            },
+          },
+        ]),
+        // Money saved = (original price - price paid) per item, only where the
+        // vendor actually recorded an original price - never an assumed discount.
+        Order.aggregate([
+          { $match: { status: 'completed', customer: req.user._id } },
           { $unwind: '$items' },
           {
             $lookup: {
@@ -362,189 +400,88 @@ const getMyImpact = async (req, res) => {
             },
           },
           {
-            $facet: {
-              totals: [
-                {
-                  $group: {
-                    _id: null,
-                    totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
-                    totalSavings: {
-                      $sum: {
-                        $multiply: [
-                          { $ifNull: ['$items.quantity', 1] },
-                          {
-                            $subtract: [
-                              {
-                                $ifNull: [
-                                  '$itemOriginalPrice',
-                                  { $multiply: ['$items.unitPrice', 2] },
-                                ],
-                              },
-                              '$items.unitPrice',
-                            ],
-                          },
-                        ],
-                      },
+            $group: {
+              _id: null,
+              totalSavings: {
+                $sum: {
+                  $multiply: [
+                    { $ifNull: ['$items.quantity', 1] },
+                    {
+                      $max: [
+                        0,
+                        {
+                          $subtract: [
+                            { $ifNull: ['$itemOriginalPrice', '$items.unitPrice'] },
+                            '$items.unitPrice',
+                          ],
+                        },
+                      ],
                     },
-                    ordersCount: { $addToSet: '$_id' },
-                  },
+                    NET,
+                  ],
                 },
-                {
-                  $project: {
-                    totalMeals: 1,
-                    totalSavings: 1,
-                    ordersCount: { $size: '$ordersCount' },
-                  },
-                },
-              ],
-              thisMonth: [
-                { $match: { createdAt: { $gte: thisMonthStart } } },
-                {
-                  $group: {
-                    _id: null,
-                    meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
-                    ordersCount: { $addToSet: '$_id' },
-                  },
-                },
-                {
-                  $project: {
-                    meals: 1,
-                    ordersCount: { $size: '$ordersCount' },
-                  },
-                },
-              ],
-              lastMonth: [
-                { $match: { createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
-                {
-                  $group: {
-                    _id: null,
-                    meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
-                    ordersCount: { $addToSet: '$_id' },
-                  },
-                },
-                {
-                  $project: {
-                    meals: 1,
-                    ordersCount: { $size: '$ordersCount' },
-                  },
-                },
-              ],
+              },
             },
           },
         ]),
         calculateMonthlyImpact(req.user._id, 'consumer'),
       ]);
 
-      const totals = impactResult[0]?.totals[0] || {
-        totalMeals: 0,
-        totalSavings: 0,
-        ordersCount: 0,
-      };
-      const thisMonthData = impactResult[0]?.thisMonth[0] || { meals: 0, ordersCount: 0 };
-      const lastMonthData = impactResult[0]?.lastMonth[0] || { meals: 0, ordersCount: 0 };
-
-      const totalMealsRescued = totals.totalMeals;
-      const totalCo2Saved = totalMealsRescued * IMPACT_FACTORS.CO2_PER_MEAL;
-      const totalWaterSaved = totalMealsRescued * IMPACT_FACTORS.WATER_PER_MEAL;
-      const totalFoodWasteSaved = totalMealsRescued * IMPACT_FACTORS.AVG_MEAL_WEIGHT;
-      const totalSavings = totals.totalSavings || 0;
-
-      const thisMonthMeals = thisMonthData.meals;
-      const lastMonthMeals = lastMonthData.meals;
+      const totals = totalsRows[0] || { meals: 0, kg: 0, co2e: 0, water: 0, orders: 0 };
+      const byWindow = Object.fromEntries(windowRows.map((r) => [r._id, r]));
+      const thisMonth = byWindow.this || { meals: 0, co2e: 0, orders: 0 };
+      const lastMonth = byWindow.last || { meals: 0, co2e: 0, orders: 0 };
 
       const mealsChange =
-        lastMonthMeals > 0
-          ? (((thisMonthMeals - lastMonthMeals) / lastMonthMeals) * 100).toFixed(1)
-          : thisMonthMeals > 0
+        lastMonth.meals > 0
+          ? (((thisMonth.meals - lastMonth.meals) / lastMonth.meals) * 100).toFixed(1)
+          : thisMonth.meals > 0
             ? 100
             : 0;
 
-      res.json({
-        mealsRescued: totalMealsRescued,
-        co2Saved: Math.round(totalCo2Saved * 10) / 10,
-        waterSaved: Math.round(totalWaterSaved),
-        foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
-        moneySaved: Math.round(totalSavings),
-        ordersCount: totals.ordersCount,
-        monthlyData,
-        comparison: {
-          thisMonth: {
-            meals: thisMonthMeals,
-            co2: Math.round(thisMonthMeals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
-            orders: thisMonthData.ordersCount,
+      res.json(
+        shape(totals, {
+          moneySaved: Math.round(savingsRows[0]?.totalSavings || 0),
+          monthlyData,
+          comparison: {
+            thisMonth: {
+              meals: round0(thisMonth.meals),
+              co2: round1(thisMonth.co2e),
+              orders: thisMonth.orders,
+            },
+            lastMonth: {
+              meals: round0(lastMonth.meals),
+              co2: round1(lastMonth.co2e),
+              orders: lastMonth.orders,
+            },
+            percentageChange: {
+              meals: parseFloat(mealsChange),
+              trend: parseFloat(mealsChange) >= 0 ? 'up' : 'down',
+            },
           },
-          lastMonth: {
-            meals: lastMonthMeals,
-            co2: Math.round(lastMonthMeals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
-            orders: lastMonthData.ordersCount,
-          },
-          percentageChange: {
-            meals: parseFloat(mealsChange),
-            trend: parseFloat(mealsChange) >= 0 ? 'up' : 'down',
-          },
-        },
-      });
+        })
+      );
     } else if (userRole === 'business_owner' || userRole === 'manager') {
       const business = await Business.findOne({ owner: req.user._id }).lean();
       if (!business) {
         return res.status(404).json({ message: 'Business not found' });
       }
 
-      // Use aggregation instead of loading all orders into memory
-      const [impactResult, monthlyData] = await Promise.all([
+      const [totalsRows, monthlyData] = await Promise.all([
         Order.aggregate([
-          { $match: { business: business._id, status: 'completed' } },
-          { $unwind: '$items' },
-          {
-            $group: {
-              _id: null,
-              totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
-              ordersCount: { $addToSet: '$_id' },
-            },
-          },
-          {
-            $project: {
-              totalMeals: 1,
-              ordersCount: { $size: '$ordersCount' },
-            },
-          },
+          { $match: { ...COUNTED, business: business._id } },
+          { $group: totalsGroup },
         ]),
         calculateMonthlyImpact(business._id, 'business'),
       ]);
+      const totals = totalsRows[0] || { meals: 0, kg: 0, co2e: 0, water: 0, orders: 0 };
 
-      const totals = impactResult[0] || { totalMeals: 0, ordersCount: 0 };
-      const totalMealsRescued = totals.totalMeals;
-      const totalCo2Saved = totalMealsRescued * IMPACT_FACTORS.CO2_PER_MEAL;
-      const totalWaterSaved = totalMealsRescued * IMPACT_FACTORS.WATER_PER_MEAL;
-      const totalFoodWasteSaved = totalMealsRescued * IMPACT_FACTORS.AVG_MEAL_WEIGHT;
-
-      // Update business stats with real calculated values
-      await Business.findByIdAndUpdate(business._id, {
-        'stats.impact.co2Saved': totalCo2Saved,
-        'stats.impact.mealsRescued': totalMealsRescued,
-        'stats.impact.waterSaved': totalWaterSaved,
-      });
-
-      res.json({
-        mealsRescued: totalMealsRescued,
-        co2Saved: Math.round(totalCo2Saved * 10) / 10,
-        waterSaved: Math.round(totalWaterSaved),
-        foodWasteSaved: Math.round(totalFoodWasteSaved * 10) / 10,
-        moneySaved: 0,
-        ordersCount: totals.ordersCount,
-        monthlyData,
-      });
+      res.json(shape(totals, { moneySaved: 0, monthlyData }));
     } else {
       // Return empty stats for riders/admin to prevent app crash
-      res.json({
-        mealsRescued: 0,
-        co2Saved: 0,
-        waterSaved: 0,
-        foodWasteSaved: 0,
-        moneySaved: 0,
-        ordersCount: 0,
-        monthlyData: [],
-      });
+      res.json(
+        shape({ meals: 0, kg: 0, co2e: 0, water: 0, orders: 0 }, { moneySaved: 0, monthlyData: [] })
+      );
     }
   } catch (error) {
     logger.error({ err: error }, 'Analytics error');
@@ -552,6 +489,15 @@ const getMyImpact = async (req, res) => {
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
   }
+};
+
+/**
+ * @desc    How impact is estimated: the factor table and sources (public)
+ * @route   GET /api/analytics/impact/methodology
+ * @access  Public
+ */
+const getImpactMethodology = (req, res) => {
+  res.json(methodology());
 };
 
 /**
@@ -581,10 +527,7 @@ const calculateMonthlyImpact = async (id, type) => {
   const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
   // Build match filter
-  const matchFilter = {
-    status: 'completed',
-    createdAt: { $gte: startDate },
-  };
+  const matchFilter = { ...COUNTED };
   if (type === 'consumer') {
     matchFilter.customer = id;
   } else if (type === 'business') {
@@ -592,25 +535,19 @@ const calculateMonthlyImpact = async (id, type) => {
   }
   // type === 'platform': no customer/business filter - aggregate across everyone
 
-  // Single aggregation for all 12 months instead of 12 separate queries
+  // Single aggregation for all 12 months, by the month each order was completed
   const results = await Order.aggregate([
     { $match: matchFilter },
-    { $unwind: '$items' },
+    { $addFields: { doneAt: COMPLETED_AT } },
+    { $match: { doneAt: { $gte: startDate } } },
     {
       $group: {
-        _id: {
-          year: { $year: '$createdAt' },
-          month: { $month: '$createdAt' },
-        },
-        meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
-        orderIds: { $addToSet: '$_id' },
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        meals: 1,
-        orders: { $size: '$orderIds' },
+        _id: { year: { $year: '$doneAt' }, month: { $month: '$doneAt' } },
+        meals: { $sum: net('$impact.meals') },
+        kg: { $sum: net('$impact.kg') },
+        co2e: { $sum: net('$impact.co2e') },
+        water: { $sum: net('$impact.water') },
+        orders: { $sum: 1 },
       },
     },
   ]);
@@ -628,14 +565,15 @@ const calculateMonthlyImpact = async (id, type) => {
     const year = monthDate.getFullYear();
     const monthNum = monthDate.getMonth() + 1; // 1-indexed to match $month
     const key = `${year}-${monthNum}`;
-    const data = resultMap[key] || { meals: 0, orders: 0 };
+    const data = resultMap[key] || { meals: 0, kg: 0, co2e: 0, water: 0, orders: 0 };
 
     monthlyData.push({
       month: months[monthDate.getMonth()],
       year,
-      meals: data.meals,
-      co2: Math.round(data.meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
-      water: Math.round(data.meals * IMPACT_FACTORS.WATER_PER_MEAL),
+      meals: round0(data.meals),
+      co2: round1(data.co2e),
+      water: round0(data.water),
+      kg: round1(data.kg),
       orders: data.orders,
     });
   }
@@ -779,25 +717,20 @@ const calculateCategoryBreakdown = async (businessId) => {
  * @returns {Array<{category: string, name: string, meals: number, co2: number, water: number, percent: number}>}
  */
 const calculateCategoryImpact = async (businessId) => {
-  const matchFilter = { status: 'completed' };
+  const matchFilter = { ...COUNTED };
   if (businessId) matchFilter.business = businessId;
 
   const results = await Order.aggregate([
     { $match: matchFilter },
     { $unwind: '$items' },
-    {
-      $lookup: {
-        from: 'listings',
-        localField: 'items.listing',
-        foreignField: '_id',
-        as: 'listingInfo',
-      },
-    },
-    { $unwind: '$listingInfo' },
+    { $match: { 'items.impact.category': { $exists: true } } },
     {
       $group: {
-        _id: '$listingInfo.category',
-        meals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+        _id: '$items.impact.category',
+        meals: { $sum: { $multiply: [{ $ifNull: ['$items.quantity', 1] }, NET] } },
+        kg: { $sum: net('$items.impact.kg') },
+        co2e: { $sum: net('$items.impact.co2e') },
+        water: { $sum: net('$items.impact.water') },
       },
     },
     { $sort: { meals: -1 } },
@@ -810,9 +743,10 @@ const calculateCategoryImpact = async (businessId) => {
     .map((r) => ({
       category: r._id,
       name: CATEGORY_LABELS[r._id] || r._id || 'Other',
-      meals: r.meals,
-      co2: Math.round(r.meals * IMPACT_FACTORS.CO2_PER_MEAL * 10) / 10,
-      water: Math.round(r.meals * IMPACT_FACTORS.WATER_PER_MEAL),
+      meals: round0(r.meals),
+      kg: round1(r.kg),
+      co2: round1(r.co2e),
+      water: round0(r.water),
       percent: totalMeals > 0 ? Math.round((r.meals / totalMeals) * 1000) / 10 : 0,
     }));
 };
@@ -1228,35 +1162,39 @@ const getAdminStats = async (req, res) => {
         },
       ]),
 
-      // 5. Impact stats - single aggregation with $facet (replaces loading all orders into memory)
+      // 5. Impact stats (estimates) from the impact stored on each completed order,
+      // net of refunds, bucketed by the day the order was completed.
       Order.aggregate([
-        { $match: { status: 'completed' } },
-        { $unwind: '$items' },
+        { $match: COUNTED },
+        { $addFields: { doneAt: COMPLETED_AT } },
         {
           $facet: {
             total: [
               {
                 $group: {
                   _id: null,
-                  totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+                  totalMeals: { $sum: net('$impact.meals') },
+                  totalCo2e: { $sum: net('$impact.co2e') },
                 },
               },
             ],
             thisMonth: [
-              { $match: { createdAt: { $gte: thisMonthStart } } },
+              { $match: { doneAt: { $gte: thisMonthStart } } },
               {
                 $group: {
                   _id: null,
-                  totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+                  totalMeals: { $sum: net('$impact.meals') },
+                  totalCo2e: { $sum: net('$impact.co2e') },
                 },
               },
             ],
             lastMonth: [
-              { $match: { createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
+              { $match: { doneAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
               {
                 $group: {
                   _id: null,
-                  totalMeals: { $sum: { $ifNull: ['$items.quantity', 1] } },
+                  totalMeals: { $sum: net('$impact.meals') },
+                  totalCo2e: { $sum: net('$impact.co2e') },
                 },
               },
             ],
@@ -1367,12 +1305,10 @@ const getAdminStats = async (req, res) => {
           : 0;
 
     // Extract impact stats
-    const totalMealsRescued = impactStats[0]?.total[0]?.totalMeals || 0;
-    const totalCo2Saved = totalMealsRescued * IMPACT_FACTORS.CO2_PER_MEAL;
-    const mealsThisMonth = impactStats[0]?.thisMonth[0]?.totalMeals || 0;
-    const mealsLastMonth = impactStats[0]?.lastMonth[0]?.totalMeals || 0;
-    const co2ThisMonth = mealsThisMonth * IMPACT_FACTORS.CO2_PER_MEAL;
-    const co2LastMonth = mealsLastMonth * IMPACT_FACTORS.CO2_PER_MEAL;
+    const totalMealsRescued = round0(impactStats[0]?.total[0]?.totalMeals);
+    const totalCo2Saved = impactStats[0]?.total[0]?.totalCo2e || 0;
+    const co2ThisMonth = impactStats[0]?.thisMonth[0]?.totalCo2e || 0;
+    const co2LastMonth = impactStats[0]?.lastMonth[0]?.totalCo2e || 0;
     const co2PercentChange =
       co2LastMonth > 0
         ? (((co2ThisMonth - co2LastMonth) / co2LastMonth) * 100).toFixed(1)
@@ -1437,9 +1373,11 @@ const getAdminStats = async (req, res) => {
       },
       impact: {
         mealsRescued: totalMealsRescued,
-        co2Saved: Math.round(totalCo2Saved * 10) / 10,
-        co2ThisMonth: Math.round(co2ThisMonth * 10) / 10,
-        co2LastMonth: Math.round(co2LastMonth * 10) / 10,
+        co2Saved: round1(totalCo2Saved),
+        co2ThisMonth: round1(co2ThisMonth),
+        co2LastMonth: round1(co2LastMonth),
+        estimated: true,
+        factorsVersion: FACTORS_VERSION,
         percentChange: parseFloat(co2PercentChange),
         trend: parseFloat(co2PercentChange) >= 0 ? 'up' : 'down',
       },
@@ -1466,6 +1404,7 @@ module.exports = {
   getImpactLeaderboard,
   getMyImpact,
   getRecentActivity,
+  getImpactMethodology,
   getUserActivity,
   getAdminStats,
 };

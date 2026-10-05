@@ -6,6 +6,7 @@ const {
   getImpactLeaderboard,
   getMyImpact,
   getRecentActivity,
+  getImpactMethodology,
   getUserActivity,
   getAdminStats,
 } = require('../controllers/analyticsController');
@@ -23,5 +24,6 @@ router.get(
 );
 router.get('/impact/my', protect, getMyImpact);
 router.get('/impact/leaderboard', getImpactLeaderboard);
+router.get('/impact/methodology', getImpactMethodology);
 
 module.exports = router;

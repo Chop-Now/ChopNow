@@ -5,6 +5,7 @@ const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const User = require('../models/User');
 const PlatformSettings = require('../models/PlatformSettings');
+const { impactForItems } = require('../config/impactFactors');
 
 /**
  * Multi-vendor checkout.
@@ -198,8 +199,18 @@ const buildQuote = async ({ items, fulfillmentType, paymentMethod }, settings) =
   });
 
   const sum = (key) => vendors.reduce((acc, v) => acc + v.pricing[key], 0);
+
+  // Estimated impact of buying this cart, from the same function that records it
+  // when an order completes - so the cart preview never disagrees with My Impact.
+  const impactItems = vendors.flatMap((v) => v.items);
+  const impactListings = new Map(
+    listings.map((l) => [String(l._id), { category: l.category, unit: l.inventory?.unit }])
+  );
+  const { totals: impact } = impactForItems(impactItems, impactListings);
+
   return {
     vendors,
+    impact,
     totals: {
       subtotal: sum('subtotal'),
       deliveryFee: sum('deliveryFee'),

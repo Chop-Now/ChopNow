@@ -194,6 +194,13 @@ const userSchema = new Schema(
         default: 0,
         min: 0,
       },
+      // Estimated impact of this customer's completed orders (net of refunds).
+      impact: {
+        meals: { type: Number, default: 0 },
+        kgSaved: { type: Number, default: 0 },
+        co2Saved: { type: Number, default: 0 },
+        waterSaved: { type: Number, default: 0 },
+      },
       riderBalance: {
         type: Number,
         default: 0,

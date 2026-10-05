@@ -29,6 +29,22 @@ const orderItemSchema = new Schema(
       required: [true, 'Subtotal is required'],
       min: [0, 'Subtotal cannot be negative'],
     },
+    // Estimated environmental impact of this line, fixed when the order is
+    // completed (see config/impactFactors.js). Absent until then.
+    impact: {
+      _id: false,
+      type: new Schema(
+        {
+          category: String,
+          basis: { type: String, enum: ['unit', 'title', 'default'] },
+          unitKg: Number,
+          kg: Number,
+          co2e: Number,
+          water: Number,
+        },
+        { _id: false }
+      ),
+    },
   },
   { _id: true }
 );
@@ -243,6 +259,20 @@ const orderSchema = new Schema(
     },
 
     // Timestamps for status changes
+    // Estimated impact of the whole order, written once when it completes.
+    // gross = what the food was worth; reversedFraction (0..1) is the share
+    // taken back because the customer was refunded, so net = gross x (1 - it).
+    // countedAt is the marker for "impact has been recorded for this order".
+    impact: {
+      version: String,
+      meals: Number,
+      kg: Number,
+      co2e: Number,
+      water: Number,
+      reversedFraction: { type: Number, min: 0, max: 1 },
+      countedAt: Date,
+    },
+
     statusTimestamps: {
       paidAt: {
         type: Date,

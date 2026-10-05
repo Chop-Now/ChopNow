@@ -383,6 +383,7 @@ app.use('/api/rider', riderRoutes);
 const { connectDB, closeDB, healthCheck } = require('./config/database');
 const redis = require('./config/redis');
 const { startExpiryJob, stopExpiryJob } = require('./services/listingExpiryJob');
+const { ensureImpactBackfilled } = require('./services/impactService');
 const {
   startPendingPaymentExpiryJob,
   stopPendingPaymentExpiryJob,
@@ -585,6 +586,10 @@ const startServer = async () => {
 
     // Initialize Redis (optional - won't fail if unavailable)
     await redis.initRedis();
+
+    // Give orders completed before impact tracking existed an impact (runs in
+    // the background, does nothing once everything is filled in)
+    ensureImpactBackfilled();
 
     // Start listing expiry background job (marks expired listings every 5 min)
     startExpiryJob();
