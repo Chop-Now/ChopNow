@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Review = require('../models/Review');
 const logger = require('../utils/logger');
 const { FACTORS_VERSION, methodology } = require('../config/impactFactors');
+const { auditTestData } = require('../services/testDataAudit');
 
 // Impact is recorded on each order when it completes (services/impactService.js)
 // and reduced by the share of the order that was later refunded. Everything
@@ -1398,7 +1399,24 @@ const getAdminStats = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Read-only audit of how much of the data looks like test data (Admin)
+ * @route   GET /api/analytics/admin/data-audit
+ * @access  Private (Admin)
+ */
+const getTestDataAudit = async (req, res) => {
+  try {
+    res.json(await auditTestData());
+  } catch (error) {
+    logger.error({ err: error }, 'Test data audit error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
+  getTestDataAudit,
   getPlatformOverview,
   getBusinessOverview,
   getImpactLeaderboard,

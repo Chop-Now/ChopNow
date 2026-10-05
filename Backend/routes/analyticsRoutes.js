@@ -9,6 +9,7 @@ const {
   getImpactMethodology,
   getUserActivity,
   getAdminStats,
+  getTestDataAudit,
 } = require('../controllers/analyticsController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -16,6 +17,7 @@ router.get('/platform/overview', protect, authorize('admin'), getPlatformOvervie
 router.get('/platform/activity', protect, authorize('admin'), getRecentActivity);
 router.get('/user-activity', protect, authorize('admin'), getUserActivity);
 router.get('/admin/stats', protect, authorize('admin'), getAdminStats);
+router.get('/admin/data-audit', protect, authorize('admin'), getTestDataAudit);
 router.get(
   '/business/overview',
   protect,

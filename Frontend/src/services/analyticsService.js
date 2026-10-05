@@ -21,6 +21,16 @@ const analyticsService = {
     }
   },
 
+  // Admin: read-only audit of how much data looks like test data
+  getTestDataAudit: async () => {
+    try {
+      const response = await api.get('/api/analytics/admin/data-audit');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // How impact is estimated: factor table and sources (public)
   getImpactMethodology: async () => {
     try {
