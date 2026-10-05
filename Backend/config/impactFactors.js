@@ -46,7 +46,7 @@
  * stored orders record which table produced them.
  */
 
-const FACTORS_VERSION = '2026-10-v2';
+const FACTORS_VERSION = '2026-10-v3';
 
 // Keys match the Listing.category enum.
 // basis: 'published' = the factors are taken from the published data listed
@@ -57,7 +57,7 @@ const CATEGORY_FACTORS = {
     label: 'Meat & Seafood',
     basis: 'published',
     defaultWeightKg: 0.4,
-    co2ePerKg: 12, // ~pork (12.3), between poultry 9.9 and farmed fish 13.6; lamb 40, beef 33-99 are left out
+    co2ePerKg: 13.6, // = farmed fish (13.6), above pork 12.3 and poultry 9.9; lamb 40, beef 33-99 are left out
     waterPerKg: 4500, // = chicken (4,325); pork 5,988, sheep/goat 8,763, beef 15,415
   },
   dairy: {
@@ -99,8 +99,8 @@ const CATEGORY_FACTORS = {
     label: 'Beverages',
     basis: 'estimate',
     defaultWeightKg: 0.5,
-    co2ePerKg: 0.8, // our estimate, per litre (soy milk 1.0, wine 1.8); not in the datasets
-    waterPerKg: 400, // our estimate (beer is about 300, wine about 870); not verified
+    co2ePerKg: 1.0, // our estimate, per litre: soy milk 1.0, wine 1.8; not in the datasets
+    waterPerKg: 600, // our estimate: between beer (about 300) and wine (about 870); not verified
   },
   other: {
     label: 'Other',
