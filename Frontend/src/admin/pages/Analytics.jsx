@@ -571,7 +571,7 @@ const WebsiteAdminOverview = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Total CO2e Saved
+                Total CO2e Saved (est.)
               </p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
                 {totalCo2Saved.toLocaleString()} kg
@@ -612,7 +612,7 @@ const WebsiteAdminOverview = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Total Water Saved
+                Total Water Saved (est.)
               </p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
                 {(totalWaterSaved / 1000).toFixed(1)}k L
@@ -1888,9 +1888,8 @@ const WebsiteAdminInsights = () => {
       {/* Key Insights Cards - each derived from real adminStats fields
           rather than fabricated prose ("Orders peak at 6PM with 320 average
           orders", "growing by 18%", "Lagos shows 32% growth" were all
-          invented, and the CO2-per-meal figure even contradicted the app's
-          own real constant of 2.5kg used elsewhere - see IMPACT_FACTORS in
-          Backend/controllers/analyticsController.js). */}
+          invented). CO2e figures are estimates - see
+          Backend/config/impactFactors.js. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
@@ -1921,7 +1920,7 @@ const WebsiteAdminInsights = () => {
               </h4>
               <p className="text-xs text-green-700 dark:text-green-300">
                 {adminStats?.impact?.mealsRescued
-                  ? `${adminStats.impact.mealsRescued.toLocaleString()} meals rescued so far, saving ${adminStats.impact.co2Saved.toLocaleString()}kg of CO2e${
+                  ? `${adminStats.impact.mealsRescued.toLocaleString()} meals rescued so far, saving an estimated ${adminStats.impact.co2Saved.toLocaleString()}kg of CO2e${
                       adminStats.impact.percentChange
                         ? ` (${adminStats.impact.percentChange > 0 ? '+' : ''}${adminStats.impact.percentChange}% this month)`
                         : ''
@@ -2074,7 +2073,9 @@ const ShopAdminImpact = () => {
             </div>
             <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
-          <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">CO2e Saved</p>
+          <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+            CO2e Saved (est.)
+          </p>
           <p className="text-3xl font-bold text-green-900 dark:text-white mb-2">
             {totalCo2.toLocaleString()} kg
           </p>
@@ -2495,7 +2496,7 @@ const WebsiteAdminImpact = () => {
             <Leaf className="w-8 h-8 opacity-80" />
             <span className="text-3xl">🌱</span>
           </div>
-          <p className="text-sm opacity-90 mb-1">CO2e Emissions Saved</p>
+          <p className="text-sm opacity-90 mb-1">CO2e Emissions Saved (est.)</p>
           <p className="text-3xl font-bold">{totalImpact.co2.toLocaleString()} kg</p>
           <p className="text-xs opacity-75 mt-2">Carbon footprint reduced</p>
         </div>

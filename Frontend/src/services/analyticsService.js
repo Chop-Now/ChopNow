@@ -21,6 +21,16 @@ const analyticsService = {
     }
   },
 
+  // How impact is estimated: factor table and sources (public)
+  getImpactMethodology: async () => {
+    try {
+      const response = await api.get('/api/analytics/impact/methodology');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get my impact (Consumer/Business)
   getMyImpact: async () => {
     try {

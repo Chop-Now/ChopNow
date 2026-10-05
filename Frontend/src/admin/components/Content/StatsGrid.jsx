@@ -83,8 +83,8 @@ const StatsGrid = () => {
           textColor: 'text-grey-200 dark:text-white',
         },
         {
-          title: 'CO2e Saved',
-          value: `${formatNumber(stats.stats?.impact?.co2Saved || 0)} kg`,
+          title: 'CO2e Saved (est.)',
+          value: `${formatNumber(Math.round(stats.stats?.impact?.co2Saved || 0))} kg`,
           change: NO_HISTORY.value,
           trend: NO_HISTORY.trend,
           icon: (
@@ -238,7 +238,7 @@ const StatsGrid = () => {
               icon: <ShoppingBasket className="w-6 h-6" />,
             },
             {
-              title: 'CO2e Saved',
+              title: 'CO2e Saved (est.)',
               value: '0 kg',
               change: '+0%',
               trend: 'up',

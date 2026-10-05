@@ -192,8 +192,8 @@ class _ImpactContentState extends State<_ImpactContent>
                 Expanded(
                     child: _BigStatCard(
                         icon: Icons.eco_rounded,
-                        value: '${co2Saved}g',
-                        label: 'CO₂ Saved',
+                        value: _fmtKg(co2Saved as num),
+                        label: 'CO₂e Saved (est.)',
                         color: AppColors.success)),
                 const SizedBox(width: 10),
                 Expanded(
@@ -364,14 +364,19 @@ class _ImpactContentState extends State<_ImpactContent>
     return n.toStringAsFixed(0);
   }
 
+  // The API reports CO₂e in kilograms (an estimate, rounded for display).
+  static String _fmtKg(num kg) {
+    if (kg <= 0) return '0 kg';
+    return kg >= 10 ? '${kg.round()} kg' : '${kg.toStringAsFixed(1)} kg';
+  }
+
+  // `co2` is in kilograms. A typical car emits roughly 120 g of CO₂ per km.
   static String _contextMessage(num co2) {
     if (co2 <= 0) {
       return 'Every meal you rescue keeps food out of landfill and CO₂ out of the atmosphere. Start ordering to see your impact!';
     }
-    if (co2 < 500) {
-      return 'You\'ve saved ${co2}g of CO₂ — that\'s like not driving a car for ${(co2 / 120).toStringAsFixed(1)} km!';
-    }
-    return 'Amazing! You\'ve saved ${(co2 / 1000).toStringAsFixed(2)}kg of CO₂ — equivalent to planting ${(co2 / 600).round()} trees!';
+    final km = (co2 * 1000 / 120).round();
+    return 'You\'ve saved about ${_fmtKg(co2)} of CO₂e (an estimate) — about the same as not driving a car for $km km!';
   }
 
   static List<Map<String, dynamic>> _badgesForCount(int count) => [

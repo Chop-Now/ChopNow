@@ -14,19 +14,12 @@ import {
   Store,
 } from 'lucide-react';
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
 import api from '../services/api';
 import { reverseGeocode } from '../services/geocoding';
 import { toast } from 'react-hot-toast';
-
-// Mirrors Backend/controllers/analyticsController.js's IMPACT_FACTORS so the
-// cart's "your impact" preview matches what the backend actually records
-// once the order completes, instead of a fixed placeholder number.
-const IMPACT_FACTORS = {
-  CO2_PER_MEAL: 2.5, // kg CO2e saved per meal rescued
-  AVG_MEAL_WEIGHT: 0.5, // average kg per meal for food-waste calculation
-};
+import { formatImpactKg } from '../utils/impact';
 
 const formatRwf = (amount) => `RWF ${Math.round(amount || 0).toLocaleString()}`;
 
@@ -400,15 +393,24 @@ const Cart = () => {
                   className="text-xs leading-relaxed"
                   style={{ color: 'var(--color-moringa-muted)' }}
                 >
-                  This order prevents{' '}
-                  <strong style={{ color: 'var(--color-solid)' }}>
-                    {(getTotalCartItems() * IMPACT_FACTORS.AVG_MEAL_WEIGHT).toFixed(1)}kg
-                  </strong>{' '}
-                  of food waste and saves{' '}
-                  <strong style={{ color: 'var(--color-solid)' }}>
-                    {(getTotalCartItems() * IMPACT_FACTORS.CO2_PER_MEAL).toFixed(1)}kg
-                  </strong>{' '}
-                  of CO₂ emissions. Thank you!
+                  {quote?.impact ? (
+                    <>
+                      This order rescues about{' '}
+                      <strong style={{ color: 'var(--color-solid)' }}>
+                        {formatImpactKg(quote.impact.kg)}
+                      </strong>{' '}
+                      of food and avoids about{' '}
+                      <strong style={{ color: 'var(--color-solid)' }}>
+                        {formatImpactKg(quote.impact.co2e)}
+                      </strong>{' '}
+                      of CO₂e (estimates).{' '}
+                    </>
+                  ) : (
+                    'Every order rescues food that would otherwise be wasted. '
+                  )}
+                  <Link to="/how-we-calculate-impact" className="underline">
+                    How we calculate this
+                  </Link>
                 </p>
               </div>
             </div>

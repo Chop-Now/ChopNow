@@ -32,7 +32,7 @@ const Footer = () => {
       // did nothing. Removed rather than inventing policy content on the
       // business's behalf; add them back once those pages actually exist.
       title: 'Need Help?',
-      links: ['Terms & Conditions'],
+      links: ['How we calculate impact', 'Terms & Conditions'],
     },
   ];
   return (
@@ -80,6 +80,13 @@ const Footer = () => {
                     ) : link === 'Privacy Policy' ? (
                       <Link
                         to="/privacy-policy"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
+                        {link}
+                      </Link>
+                    ) : link === 'How we calculate impact' ? (
+                      <Link
+                        to="/how-we-calculate-impact"
                         className="inline-flex min-h-11 items-center hover:underline transition"
                       >
                         {link}

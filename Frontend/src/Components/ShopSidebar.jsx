@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { analyticsService } from '../services';
 import { useAppContext } from '../context/AppContext';
+import { formatImpactKg } from '../utils/impact';
 
 const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
@@ -167,10 +168,12 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
         >
           {isAuthenticated && co2Saved !== null ? (
             <>
-              You've saved{' '}
-              <strong style={{ color: 'var(--color-textColor)' }}>{co2Saved.toFixed(1)}kg</strong>{' '}
+              You've saved about{' '}
+              <strong style={{ color: 'var(--color-textColor)' }}>
+                {formatImpactKg(co2Saved)}
+              </strong>{' '}
               of CO
-              <sub>2</sub> so far. Keep it up!
+              <sub>2</sub>e so far (estimate). Keep it up!
             </>
           ) : (
             'Sign in to track your food-waste impact.'

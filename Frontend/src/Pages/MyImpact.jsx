@@ -11,7 +11,9 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { analyticsService } from '../services';
+import { formatImpactNumber } from '../utils/impact';
 
 const MyImpact = () => {
   const [loading, setLoading] = useState(true);
@@ -167,9 +169,11 @@ const MyImpact = () => {
               <div className="flex items-center justify-center mb-1">
                 <Wind className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--color-solid)' }} />
               </div>
-              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">CO2e Saved</h3>
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">
+                CO2e Saved (est.)
+              </h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
-                {impactData.co2Saved.toLocaleString()}
+                {formatImpactNumber(impactData.co2Saved)}
                 <span className="text-sm md:text-base">kg</span>
               </p>
             </div>
@@ -182,9 +186,11 @@ const MyImpact = () => {
                   style={{ color: 'var(--color-solid)' }}
                 />
               </div>
-              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">Water Saved</h3>
+              <h3 className="text-gray-600 text-xs md:text-xs font-medium mb-1">
+                Water Saved (est.)
+              </h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
-                {impactData.waterSaved.toLocaleString()}
+                {formatImpactNumber(impactData.waterSaved)}
                 <span className="text-sm md:text-base">L</span>
               </p>
             </div>
@@ -198,11 +204,18 @@ const MyImpact = () => {
                 Food Waste Saved
               </h3>
               <p className="text-lg md:text-2xl font-bold text-gray-900">
-                {impactData.foodWasteSaved.toLocaleString()}
+                {formatImpactNumber(impactData.foodWasteSaved)}
                 <span className="text-sm md:text-base">kg</span>
               </p>
             </div>
           </div>
+
+          <p className="-mt-4 mb-8 text-center text-xs text-gray-500">
+            CO2e, water and food figures are estimates based on typical weights and averages.{' '}
+            <Link to="/how-we-calculate-impact" className="underline">
+              How we calculate this
+            </Link>
+          </p>
 
           {/* Milestones Section */}
           <div className="mb-8">

@@ -31,6 +31,7 @@ const FAQ = lazy(() => import('./Pages/FAQ'));
 const ContactUs = lazy(() => import('./Pages/ContactUs'));
 const TermsOfService = lazy(() => import('./Pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./Pages/PrivacyPolicy'));
+const ImpactMethodology = lazy(() => import('./Pages/ImpactMethodology'));
 const Dashboard = lazy(() => import('./admin/Dashboard'));
 const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('./Pages/AdminLogin'));
@@ -117,6 +118,7 @@ const App = () => {
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/how-we-calculate-impact" element={<ImpactMethodology />} />
 
             {/* ===== Authenticated Routes ===== */}
             <Route

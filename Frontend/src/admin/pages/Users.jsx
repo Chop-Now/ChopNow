@@ -88,9 +88,10 @@ export const AllUsers = () => {
             joinedDate: user.createdAt?.split('T')[0] || 'N/A',
             location: user.addresses?.[0]?.city || 'N/A',
             impact: {
-              meals: user.stats?.ordersCount || 0,
-              co2Saved: (user.stats?.ordersCount || 0) * 1.5,
-              waterSaved: (user.stats?.ordersCount || 0) * 3,
+              // Estimated, from the impact recorded on this customer's completed orders.
+              meals: Math.round(user.stats?.impact?.meals || 0),
+              co2Saved: Math.round((user.stats?.impact?.co2Saved || 0) * 10) / 10,
+              waterSaved: Math.round(user.stats?.impact?.waterSaved || 0),
             },
             recentActivity: [],
           };
@@ -158,9 +159,10 @@ export const AllUsers = () => {
           joinedDate: user.createdAt?.split('T')[0] || 'N/A',
           location: user.addresses?.[0]?.city || 'N/A',
           impact: {
-            meals: user.stats?.ordersCount || 0,
-            co2Saved: (user.stats?.ordersCount || 0) * 1.5,
-            waterSaved: (user.stats?.ordersCount || 0) * 3,
+            // Estimated, from the impact recorded on this customer's completed orders.
+            meals: Math.round(user.stats?.impact?.meals || 0),
+            co2Saved: Math.round((user.stats?.impact?.co2Saved || 0) * 10) / 10,
+            waterSaved: Math.round(user.stats?.impact?.waterSaved || 0),
           },
           recentActivity: [],
         };
@@ -914,7 +916,7 @@ export const AllUsers = () => {
                     </div>
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                       <p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">
-                        CO₂ Saved (kg)
+                        CO₂e Saved (kg, est.)
                       </p>
                       <p className="text-base font-bold text-green-700 dark:text-green-400">
                         {selectedUser.impact.co2Saved}
@@ -923,7 +925,7 @@ export const AllUsers = () => {
                     {selectedUser.impact.waterSaved !== undefined && (
                       <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800 col-span-2">
                         <p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">
-                          Water Saved (L)
+                          Water Saved (L, est.)
                         </p>
                         <p className="text-base font-bold text-green-700 dark:text-green-400">
                           {selectedUser.impact.waterSaved}
