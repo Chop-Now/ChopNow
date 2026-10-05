@@ -1115,16 +1115,25 @@ const OrdersTable = ({ title, statusFilter }) => {
               </p>
 
               <div className="space-y-2">
-                <label className="block font-medium text-slate-700 dark:text-slate-300">
+                <label
+                  htmlFor="quick-pickup-code"
+                  className="block font-medium text-slate-700 dark:text-slate-300"
+                >
                   Pickup Code
                 </label>
                 <input
+                  id="quick-pickup-code"
                   type="text"
                   maxLength="6"
                   placeholder="e.g. A9B8C7"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  enterKeyHint="go"
                   value={quickCode}
                   onChange={(e) => setQuickCode(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-lg text-center font-bold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-slate-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-2xl text-center font-bold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-slate-800 dark:text-white"
                   required
                 />
               </div>
