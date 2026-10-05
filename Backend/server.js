@@ -380,7 +380,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/rider', riderRoutes);
 
 // Database connection and server start
-const { connectDB, closeDB, healthCheck } = require('./config/database');
+const { connectDB, closeDB, healthCheck, ensureGeoIndexes } = require('./config/database');
 const redis = require('./config/redis');
 const { startExpiryJob, stopExpiryJob } = require('./services/listingExpiryJob');
 const { ensureImpactBackfilled } = require('./services/impactService');
@@ -583,6 +583,9 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+
+    // "Nearby" shops need this index; production has autoIndex off
+    ensureGeoIndexes();
 
     // Initialize Redis (optional - won't fail if unavailable)
     await redis.initRedis();

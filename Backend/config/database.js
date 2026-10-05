@@ -245,8 +245,25 @@ const healthCheck = async () => {
 // There is now exactly one shutdown sequence, owned by server.js, which calls
 // closeDB() (and everything else) in order; this module just exposes it.
 
+/**
+ * Production runs with autoIndex off (indexes come from `npm run migrate`), but
+ * "nearby" shops use $geoNear, which fails with a 500 when the businesses
+ * location index does not exist. Creating it is cheap, idempotent and the
+ * same index the migration builds, so make sure it is there at startup.
+ */
+const ensureGeoIndexes = async () => {
+  try {
+    await mongoose.connection
+      .collection('businesses')
+      .createIndex({ location: '2dsphere' }, { name: 'location_2dsphere' });
+  } catch (err) {
+    logger.error({ err }, 'Could not ensure the businesses geospatial index');
+  }
+};
+
 module.exports = {
   connectDB,
+  ensureGeoIndexes,
   closeDB,
   getConnectionStatus,
   getPoolStats,

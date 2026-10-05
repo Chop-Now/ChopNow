@@ -25,6 +25,10 @@ import { compressImages } from '../../utils/compressImage';
 
 // Map frontend category paths to backend enum values
 // Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
+// Meat & Seafood has no shopper-facing tile in assets.js (tiles need artwork),
+// but vendors still need to be able to list under it.
+const EXTRA_CATEGORY_OPTIONS = [{ text: 'Meat & Seafood', path: 'Meat' }];
+
 const categoryMap = {
   // Frontend category paths from assets.js
   Vegetables: 'fruit-veg',
@@ -35,6 +39,7 @@ const categoryMap = {
   Bakery: 'baked-goods',
   Grains: 'pantry',
   Meat: 'meat',
+  Seafood: 'meat',
   Meals: 'meals',
   Pantry: 'pantry',
   Other: 'other',
@@ -998,6 +1003,11 @@ export const NewListing = () => {
                           {cat.text}
                         </option>
                       ))}
+                      {EXTRA_CATEGORY_OPTIONS.map((cat) => (
+                        <option key={cat.path} value={cat.path}>
+                          {cat.text}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1722,6 +1732,11 @@ const EditListing = ({ product, onBack }) => {
                       <option value="">Select Category</option>
                       {categories.map((cat, index) => (
                         <option key={index} value={cat.path}>
+                          {cat.text}
+                        </option>
+                      ))}
+                      {EXTRA_CATEGORY_OPTIONS.map((cat) => (
+                        <option key={cat.path} value={cat.path}>
                           {cat.text}
                         </option>
                       ))}
