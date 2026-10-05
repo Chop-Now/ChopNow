@@ -83,6 +83,16 @@ const listingService = {
     }
   },
 
+  // Admin: preview (apply: false) or apply moving fish listings from meat to seafood
+  recategoriseSeafood: async (apply = false) => {
+    try {
+      const response = await api.post('/api/listings/admin/recategorise-seafood', { apply });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Upload photos
   uploadPhotos: async (id, formData) => {
     try {

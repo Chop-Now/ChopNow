@@ -22,6 +22,7 @@ import { useAppContext } from '../../context/AppContext';
 import { listingService, businessService } from '../../services';
 import toast from 'react-hot-toast';
 import { compressImages } from '../../utils/compressImage';
+import SeafoodRecategoriser from '../components/SeafoodRecategoriser';
 
 // Map frontend category paths to backend enum values
 // Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'seafood', 'beverages', 'pantry', 'other'
@@ -339,6 +340,8 @@ export const AllListings = () => {
 
   return (
     <div className="space-y-6">
+      {adminMode === 'website' && isAdmin && <SeafoodRecategoriser onDone={fetchProducts} />}
+
       {/* Stats Cards */}
       <div className="flex snap-x gap-3 overflow-x-auto md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible [&>*]:min-w-[11rem] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:min-w-0">
         {statsCards.map((stat, index) => (
