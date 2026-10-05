@@ -4,6 +4,7 @@ import {
   Search,
   SlidersHorizontal,
   Pencil,
+  PackageX,
   Trash2,
   Package,
   CheckCircle,
@@ -156,6 +157,21 @@ export const AllListings = () => {
       isMounted = false;
     };
   }, [businessId, adminMode]);
+
+  // One tap to stop selling when the shelf is empty (customers see "Sold out").
+  const handleMarkSoldOut = async (productId) => {
+    try {
+      await listingService.updateListing(productId, { status: 'sold_out' });
+      setProducts((prev) =>
+        prev.map((product) =>
+          product._id === productId ? { ...product, status: 'sold_out' } : product
+        )
+      );
+      toast.success('Marked as sold out');
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
 
   // Toggle product status
   const handleToggleStatus = async (productId, currentStatus) => {
@@ -361,6 +377,7 @@ export const AllListings = () => {
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="sold_out">Sold out</option>
               <option value="expired">Expired</option>
             </select>
           </div>
@@ -491,7 +508,8 @@ export const AllListings = () => {
                       }`}
                     >
                       {product.status
-                        ? product.status.charAt(0).toUpperCase() + product.status.slice(1)
+                        ? product.status.charAt(0).toUpperCase() +
+                          product.status.slice(1).replace('_', ' ')
                         : 'Unknown'}
                     </span>
                   </td>
@@ -507,6 +525,16 @@ export const AllListings = () => {
                         <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-solid transition-colors duration-200"></div>
                         <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
                       </label>
+                      {adminMode === 'shop' && product.status === 'active' && (
+                        <button
+                          onClick={() => handleMarkSoldOut(product._id)}
+                          aria-label={`Mark ${product.name || product.title || 'listing'} as sold out`}
+                          title="Mark as sold out"
+                          className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                        >
+                          <PackageX className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                        </button>
+                      )}
                       {adminMode === 'shop' && (
                         <button
                           onClick={() => handleEditProduct(product)}
@@ -1268,7 +1296,7 @@ export const NewListing = () => {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-6 sm:backdrop-blur-none flex gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -1276,12 +1304,6 @@ export const NewListing = () => {
                   className="flex-1 px-6 py-3 bg-solid hover:bg-tertiary text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Publishing...' : 'Publish Listing'}
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 px-6 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-medium rounded-lg transition-colors"
-                >
-                  Save Draft
                 </button>
               </div>
             </form>
@@ -2001,7 +2023,7 @@ const EditListing = ({ product, onBack }) => {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-6 sm:backdrop-blur-none flex gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={handleUpdate}

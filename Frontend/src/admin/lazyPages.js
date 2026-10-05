@@ -25,3 +25,5 @@ export const RolesPermissions = named(() => import('./pages/Users'), 'RolesPermi
 export const UserActivity = named(() => import('./pages/Users'), 'UserActivity');
 export const AllVendors = named(() => import('./pages/Vendors'), 'AllVendors');
 export const VendorApproval = named(() => import('./pages/Vendors'), 'VendorApproval');
+
+export const Reviews = lazy(() => import('./pages/Reviews'));

@@ -4,6 +4,7 @@ import useMediaQuery, { DASHBOARD_DRAWER_QUERY } from '../utils/useMediaQuery';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import StackedTables from './components/layout/StackedTables';
+import VendorQuickBar from './components/VendorQuickBar';
 import {
   AllListings,
   AllOrders,
@@ -21,6 +22,7 @@ import {
   PendingOrders,
   RefundRequests,
   Reports,
+  Reviews,
   RolesPermissions,
   Settings,
   UserActivity,
@@ -51,6 +53,7 @@ const Dashboard = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
+  const [business, setBusiness] = useState(null);
 
   // Check authentication and business verification status
   useEffect(() => {
@@ -95,6 +98,7 @@ const Dashboard = () => {
         }
 
         const business = businesses[0];
+        setBusiness(business);
         const verificationStatus = business.verification?.status;
 
         // Check if business is approved/verified
@@ -232,6 +236,8 @@ const Dashboard = () => {
       case 'complaints':
         return <CustomerComplaints />;
       // Other
+      case 'reviews':
+        return <Reviews businessId={business?._id} />;
       case 'payouts':
         return <Payouts />;
       case 'notifications':
@@ -256,6 +262,7 @@ const Dashboard = () => {
             isMobile={isMobile}
             mobileOpen={mobileNavOpen}
             onMobileClose={() => setMobileNavOpen(false)}
+            businessName={business?.name}
           />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Header
@@ -271,6 +278,9 @@ const Dashboard = () => {
             <div className="flex-1 overflow-y-auto bg-transparent">
               <StackedTables className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
                 <h1 className="sr-only">Vendor dashboard</h1>
+                {currentPage === 'dashboard' && (
+                  <VendorQuickBar business={business} onNavigate={setCurrentPage} />
+                )}
                 <Suspense fallback={<PageFallback />}>{renderPage()}</Suspense>
               </StackedTables>
             </div>

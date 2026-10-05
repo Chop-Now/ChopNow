@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import CollapsibleFilters from '../components/CollapsibleFilters';
+import PickupScanner from '../components/PickupScanner';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   SlidersHorizontal,
@@ -20,6 +22,7 @@ import {
   AlertCircle,
   Check,
   Copy,
+  ScanLine,
 } from 'lucide-react';
 import { orderService } from '../../services';
 import toast from 'react-hot-toast';
@@ -47,6 +50,11 @@ const OrdersTable = ({ title, statusFilter }) => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showQuickVerify, setShowQuickVerify] = useState(false);
   const [quickCode, setQuickCode] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const handleScanned = useCallback((value) => {
+    setQuickCode(String(value).trim().toUpperCase().slice(0, 6));
+    setScanning(false);
+  }, []);
   const [quickVerifyResult, setQuickVerifyResult] = useState(null);
 
   const formatStatus = (status) => {
@@ -350,6 +358,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                 onClick={() => {
                   setShowQuickVerify(true);
                   setQuickCode('');
+                  setScanning(false);
                   setQuickVerifyResult(null);
                 }}
                 className="w-full md:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg text-xs font-semibold shadow-md shadow-green-500/10 hover:shadow-green-500/20 transition-all cursor-pointer whitespace-nowrap"
@@ -368,56 +377,58 @@ const OrdersTable = ({ title, statusFilter }) => {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1 w-full">
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                Date From
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
-                />
+          <CollapsibleFilters summary={dateFrom || dateTo || sortBy !== 'newest' ? '· active' : ''}>
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                  Date From
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1 w-full">
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                Date To
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
-                />
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                  Date To
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1 w-full">
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                Sort By
-              </label>
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all cursor-pointer"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="highest">Highest Amount</option>
-                  <option value="lowest">Lowest Amount</option>
-                </select>
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                  Sort By
+                </label>
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all cursor-pointer"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Amount</option>
+                    <option value="lowest">Lowest Amount</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          </CollapsibleFilters>
         </div>
       </div>
 
@@ -923,8 +934,8 @@ const OrdersTable = ({ title, statusFilter }) => {
                         </h5>
                       </div>
                       <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                        Enter the customer's 6-digit pickup code to confirm pickup and complete the
-                        order.
+                        Enter the customer's 6-character pickup code to confirm pickup and complete
+                        the order.
                       </p>
                       <div className="flex gap-2">
                         <input
@@ -1110,11 +1121,23 @@ const OrdersTable = ({ title, statusFilter }) => {
             {/* Form */}
             <form onSubmit={handleDirectQuickVerify} className="p-5 space-y-4 text-xs">
               <p className="text-slate-600 dark:text-slate-400">
-                Enter the customer's 6-digit pickup code to instantly complete the order. No need to
-                locate the order first.
+                Scan the customer's QR code or enter their 6-character pickup code to instantly
+                complete the order. No need to locate the order first.
               </p>
 
               <div className="space-y-2">
+                {scanning ? (
+                  <PickupScanner onCode={handleScanned} onClose={() => setScanning(false)} />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setScanning(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200"
+                  >
+                    <ScanLine className="h-4 w-4" aria-hidden="true" />
+                    Scan customer&apos;s QR code
+                  </button>
+                )}
                 <label
                   htmlFor="quick-pickup-code"
                   className="block font-medium text-slate-700 dark:text-slate-300"

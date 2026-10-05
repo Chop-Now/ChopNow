@@ -5,6 +5,7 @@ import {
   CircleStar,
   Coins,
   LayoutDashboard,
+  MessageSquareText,
   List,
   ServerCrash,
   Settings,
@@ -55,6 +56,11 @@ const shopAdminMenuItems = [
       { id: 'all-listings', label: 'All Listings' },
       { id: 'new-listing', label: 'New Listing' },
     ],
+  },
+  {
+    id: 'reviews',
+    icon: <MessageSquareText className="w-5 h-5 text-slate-400" />,
+    label: 'Reviews',
   },
   {
     id: 'payouts',
@@ -157,6 +163,7 @@ const Sidebar = ({
   isMobile = false,
   mobileOpen = false,
   onMobileClose,
+  businessName,
 }) => {
   const { adminMode, isAdmin } = useAdminMode();
   const { user } = useAppContext();
@@ -220,6 +227,11 @@ const Sidebar = ({
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {isAdminDashboard ? 'Admin Panel' : 'Vendor Dashboard'}
                 </p>
+                {!isAdminDashboard && businessName && (
+                  <p className="mt-0.5 max-w-44 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {businessName}
+                  </p>
+                )}
               </div>
             )}
             {isMobile && (

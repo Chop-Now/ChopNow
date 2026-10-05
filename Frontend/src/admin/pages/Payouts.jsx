@@ -254,7 +254,7 @@ const ShopAdminPayouts = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 md:block md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -379,8 +379,8 @@ const ShopAdminPayouts = () => {
         )}
       </div>
 
-      {/* Payout Method Form */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
+      {/* Payout Method Form - set-once configuration, so on phones it follows the history */}
+      <div className="order-last md:order-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Method</h2>
 
         {/* Preferred Method Selection */}
