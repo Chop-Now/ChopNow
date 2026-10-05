@@ -9,7 +9,6 @@ const {
   deleteListing,
   uploadPhotos,
   getListingsByBusiness,
-  recategoriseSeafoodListings,
 } = require('../controllers/listingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -92,14 +91,6 @@ router.delete(
   checkListingOwnership(),
   invalidateAfter('listing'),
   deleteListing
-);
-
-// Admin: one-off clean-up moving fish listings from 'meat' to 'seafood'
-router.post(
-  '/admin/recategorise-seafood',
-  protect,
-  authorize('admin'),
-  recategoriseSeafoodListings
 );
 
 // Image upload routes

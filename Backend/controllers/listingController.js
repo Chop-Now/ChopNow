@@ -2,8 +2,6 @@ const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const { uploadMultipleToCloudinary } = require('../utils/cloudinaryUpload');
 const logger = require('../utils/logger');
-const cache = require('../config/redis');
-const { recategoriseSeafood } = require('../services/seafoodRecategoriser');
 
 /**
  * @desc    Create a new listing
@@ -438,41 +436,7 @@ const getListingsByBusiness = async (req, res) => {
   }
 };
 
-/**
- * @desc    Preview or apply moving fish listings from "meat" to "seafood" (admin)
- * @route   POST /api/listings/admin/recategorise-seafood
- * @access  Private (Admin)
- * Body: { apply?: boolean } - nothing is changed unless apply is exactly true.
- */
-const recategoriseSeafoodListings = async (req, res) => {
-  try {
-    const apply = req.body?.apply === true;
-    const result = await recategoriseSeafood({ apply });
-    if (apply && result.moved.length > 0) {
-      try {
-        await cache.invalidate.listing(result.moved[0]._id);
-        for (const row of result.moved.slice(1)) await cache.del(`listing:${row._id}`);
-      } catch (error) {
-        logger.error({ err: error }, 'Cache invalidation error after recategorising seafood');
-      }
-    }
-    if (apply) {
-      logger.info(
-        { admin: req.user._id, moved: result.moved.length },
-        'Recategorised fish listings as seafood'
-      );
-    }
-    res.json(result);
-  } catch (error) {
-    logger.error({ err: error }, 'Recategorise seafood error');
-    res.status(500).json({
-      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
-    });
-  }
-};
-
 module.exports = {
-  recategoriseSeafoodListings,
   createListing,
   getListings,
   getNearbyListings,
