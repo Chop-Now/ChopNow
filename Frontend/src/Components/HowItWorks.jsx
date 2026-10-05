@@ -119,7 +119,7 @@ const HowItWorks = () => {
 
       {/* Toggle Switch */}
       <motion.div
-        className="flex justify-center mb-16"
+        className="flex justify-center mb-8 md:mb-16"
         initial={{ scale: 0.9, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}
         viewport={{ once: true }}
@@ -152,14 +152,13 @@ const HowItWorks = () => {
 
       {/* Steps */}
       <div className="relative max-w-7xl mx-auto px-6 md:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={step.id}
-              className={`bg-surface rounded-2xl p-8 shadow-lg flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
+              className={`bg-surface rounded-2xl p-5 md:p-8 md:h-[350px] shadow-lg flex flex-row md:flex-col items-center gap-4 md:gap-0 text-left md:text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl max-w-sm mx-auto md:max-w-none md:mx-0 ${
                 index === 1 || index === 3 ? 'md:mt-12' : 'md:mt-0'
               }`}
-              style={{ height: '350px' }}
               initial={{ y: 50, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
@@ -167,20 +166,26 @@ const HowItWorks = () => {
               whileHover={{ scale: 1.03 }}
             >
               {/* Step number */}
-              <p className="text-5xl font-extrabold text-moringa/15 mb-6">{step.id}</p>
+              <p className="text-4xl md:text-5xl font-extrabold text-moringa/15 md:mb-6 shrink-0">
+                {step.id}
+              </p>
 
-              {/* Title */}
-              <h3 className="font-bold text-xl mb-4 text-moringa">{step.title}</h3>
+              <div>
+                {/* Title */}
+                <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-4 text-moringa">
+                  {step.title}
+                </h3>
 
-              {/* Description */}
-              <p className="text-sm leading-relaxed text-moringa-muted">{step.description}</p>
+                {/* Description */}
+                <p className="text-sm leading-relaxed text-moringa-muted">{step.description}</p>
+              </div>
             </motion.div>
           ))}
         </div>
       </div>
       {/* Why We Are The Best Banner */}
       <motion.div
-        className="mt-24 max-w-6xl mx-auto px-4 md:px-6"
+        className="mt-12 md:mt-24 max-w-6xl mx-auto px-4 md:px-6"
         initial={{ y: 50, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
@@ -207,7 +212,7 @@ const HowItWorks = () => {
 
             {/* Right Side - Content */}
             <motion.div
-              className="flex-1 pl-8 md:pl-12"
+              className="flex-1 md:pl-12"
               initial={{ x: 50, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}

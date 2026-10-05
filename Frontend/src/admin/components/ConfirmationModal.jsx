@@ -21,7 +21,7 @@ const ConfirmationModal = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative flex flex-col items-center bg-white dark:bg-slate-800 shadow-xl rounded-xl py-6 px-5 md:w-[460px] w-[370px] border border-gray-200 dark:border-slate-700 z-10">
+      <div className="relative flex flex-col items-center bg-white dark:bg-slate-800 shadow-xl rounded-xl py-6 px-5 w-full md:w-[460px] border border-gray-200 dark:border-slate-700 z-10">
         {/* Icon */}
         <div
           className={`flex items-center justify-center p-4 rounded-full ${

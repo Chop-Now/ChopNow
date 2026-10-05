@@ -23,6 +23,7 @@ import { businessService } from '../services';
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import { compressImages } from '../utils/compressImage';
+import UploadProgress from '../Components/ui/UploadProgress';
 
 // Document requirements by business category
 const CATEGORY_REQUIREMENTS = {
@@ -61,6 +62,7 @@ const BusinessVerification = () => {
   const [manualAddress, setManualAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [errors, setErrors] = useState({
     phone: false,
@@ -165,7 +167,7 @@ const BusinessVerification = () => {
         formData.append('documents', file);
       });
 
-      await businessService.submitVerification(businessId, formData);
+      await businessService.submitVerification(businessId, formData, setUploadPercent);
 
       toast.success('Verification submitted! Our team will review your submission.');
       navigate('/pending-review');
@@ -174,6 +176,7 @@ const BusinessVerification = () => {
       toast.error(error.message || 'Failed to submit verification');
     } finally {
       setIsSubmitting(false);
+      setUploadPercent(null);
     }
   };
 
@@ -562,6 +565,7 @@ const BusinessVerification = () => {
                   'Submit for Verification'
                 )}
               </button>
+              <UploadProgress percent={isSubmitting ? uploadPercent : null} />
               <p
                 className="text-xs text-center mt-3"
                 style={{ color: 'var(--color-moringa-muted)' }}

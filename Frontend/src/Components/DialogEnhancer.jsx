@@ -17,6 +17,11 @@ const FOCUSABLE =
 const visibleFocusables = (panel) =>
   Array.from(panel.querySelectorAll(FOCUSABLE)).filter((el) => el.offsetParent !== null);
 
+// Most modals are a backdrop wrapping one panel; some put a dimming overlay (an
+// absolutely-positioned sibling) first. The panel is the first in-flow child.
+const panelOf = (backdrop) =>
+  Array.from(backdrop.children).find((child) => !child.classList.contains('absolute')) || null;
+
 const closeDialog = (backdrop, panel) => {
   const closer = Array.from(panel.querySelectorAll('button')).find((b) =>
     /^(close|cancel|dismiss|no|back)\b/i.test(
@@ -33,7 +38,7 @@ export default function DialogEnhancer() {
     let idCounter = 0;
 
     const enhance = (backdrop) => {
-      const panel = backdrop.firstElementChild;
+      const panel = panelOf(backdrop);
       if (!panel || open.has(backdrop)) return;
       open.set(backdrop, { opener: document.activeElement });
 
@@ -75,7 +80,7 @@ export default function DialogEnhancer() {
     const onKeyDown = (e) => {
       const backdrop = Array.from(open.keys()).pop();
       if (!backdrop) return;
-      const panel = backdrop.firstElementChild;
+      const panel = panelOf(backdrop);
       if (!panel) return;
       if (e.key === 'Escape') {
         e.stopPropagation();

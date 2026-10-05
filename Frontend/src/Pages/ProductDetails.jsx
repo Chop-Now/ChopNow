@@ -14,7 +14,7 @@ import { Flame, Users } from 'lucide-react';
 const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
 
 const ProductDetails = () => {
-  const { products, addToCart, cartItems, removeAllFromCart, isAuthenticated } = useAppContext();
+  const { products, addToCart, cartItems, removeFromCart, isAuthenticated } = useAppContext();
   const navigate = useNavigate();
   const { id } = useParams();
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -118,10 +118,6 @@ const ProductDetails = () => {
       return;
     }
     addToCart(product._id);
-  };
-
-  const handleRemoveFromCart = () => {
-    removeAllFromCart(product._id);
   };
 
   const handleBuyNow = () => {
@@ -549,17 +545,35 @@ const ProductDetails = () => {
             {/* Action Buttons */}
             <div className="fixed inset-x-0 bottom-0 z-30 [@media(max-height:500px)_and_(orientation:landscape)]:static flex gap-3 border-t border-surface-border bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:z-auto md:gap-4 md:border-0 md:bg-transparent md:p-0">
               {currentCartQuantity > 0 ? (
-                <button
-                  onClick={handleRemoveFromCart}
-                  className="flex-1 min-h-12 py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 cursor-pointer hover:opacity-90"
-                  style={{
-                    backgroundColor: 'var(--color-solidOne)',
-                    color: 'white',
-                  }}
+                <div
+                  className="flex min-h-12 flex-1 items-center justify-between rounded-lg border-2"
+                  style={{ borderColor: 'var(--color-solid)' }}
+                  role="group"
+                  aria-label="Quantity in your cart"
                 >
-                  <Trash2 className="w-5 h-5" />
-                  <span className="whitespace-nowrap">Remove ({currentCartQuantity})</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(product._id)}
+                    aria-label={currentCartQuantity === 1 ? 'Remove from cart' : 'Remove one'}
+                    className="flex h-full min-w-12 items-center justify-center text-xl font-bold"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    {currentCartQuantity === 1 ? <Trash2 className="h-5 w-5" /> : '−'}
+                  </button>
+                  <span className="font-semibold" aria-live="polite">
+                    {currentCartQuantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={currentCartQuantity >= product.quantity}
+                    aria-label="Add one more"
+                    className="flex h-full min-w-12 items-center justify-center text-xl font-bold disabled:opacity-40"
+                    style={{ color: 'var(--color-solid)' }}
+                  >
+                    +
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={handleAddToCart}
@@ -577,11 +591,11 @@ const ProductDetails = () => {
               )}
               <button
                 onClick={handleBuyNow}
-                disabled={product.quantity === 0 || currentCartQuantity >= product.quantity}
+                disabled={product.quantity === 0}
                 className="flex-1 min-h-12 py-3 rounded-lg font-medium text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
-                Buy Now
+                {currentCartQuantity > 0 ? 'Checkout' : 'Buy Now'}
               </button>
             </div>
           </div>

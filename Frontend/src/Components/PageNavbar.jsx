@@ -408,7 +408,10 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false }) => {
 
       {/* Mobile Search Bar - Below Navbar */}
       {!hideSearch && (
-        <div className="md:hidden px-4 py-2 bg-white border-b" style={{ borderColor: '#E5E5E5' }}>
+        <div
+          className="md:hidden sticky top-16 z-20 px-4 py-2 bg-white border-b"
+          style={{ borderColor: '#E5E5E5' }}
+        >
           <div
             className="flex items-center text-sm gap-2 pl-4 pr-1 rounded-full w-full"
             style={{ border: '1px solid var(--color-moringa-muted)' }}

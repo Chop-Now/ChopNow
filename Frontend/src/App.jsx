@@ -61,7 +61,7 @@ const App = () => {
   }
 
   return (
-    <div className="overflow-x-hidden text-textColor">
+    <div className="overflow-x-clip text-textColor">
       {/* Skip to content link for keyboard navigation */}
       <a
         href="#main-content"

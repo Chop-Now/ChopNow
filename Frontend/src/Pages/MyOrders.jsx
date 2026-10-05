@@ -1,6 +1,7 @@
 import { assets } from '../assets/assets';
 import React, { useEffect, useState } from 'react';
 import PageNavbar from '../Components/PageNavbar';
+import PickupQr from '../Components/PickupQr';
 import Footer from '../Components/Footer';
 import {
   Truck,
@@ -816,7 +817,7 @@ const MyOrders = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="p-6">
+              <div className="flex flex-col p-4 md:block md:p-6">
                 {/* Complete an unpaid mobile-money order */}
                 {selectedOrder.rawStatus === 'pending_payment' &&
                   selectedOrder.rawPaymentMethod !== 'cash' && (
@@ -1008,7 +1009,8 @@ const MyOrders = () => {
                 </div>
 
                 {selectedOrder.type === 'Pickup' && (
-                  <div className="mt-6 border-t pt-6">
+                  // On phones the pickup pass comes first: it is what you hold up at the counter.
+                  <div className="order-first mb-6 md:order-none md:mb-0 md:mt-6 md:border-t md:pt-6">
                     <h4 className="font-semibold text-lg mb-4 text-gray-800 font-medium">
                       Pickup Information
                     </h4>
@@ -1024,12 +1026,9 @@ const MyOrders = () => {
                         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
                           {/* QR Code */}
                           <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
-                            <img
-                              loading="lazy"
-                              decoding="async"
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${orderDetails.pickupDetails?.pickupCode || 'N/A'}`}
-                              alt="Pickup QR Code"
-                              className="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                            <PickupQr
+                              code={orderDetails.pickupDetails?.pickupCode}
+                              className="w-44 h-44 sm:w-32 sm:h-32 object-contain"
                             />
                           </div>
 
@@ -1043,7 +1042,7 @@ const MyOrders = () => {
                                 PICKUP CODE
                               </p>
                               <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                                <span className="text-2xl sm:text-3xl font-extrabold text-green-800 tracking-widest font-mono">
+                                <span className="text-3xl font-extrabold text-green-800 tracking-widest font-mono">
                                   {orderDetails.pickupDetails?.pickupCode || 'N/A'}
                                 </span>
                                 <button

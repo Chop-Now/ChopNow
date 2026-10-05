@@ -125,11 +125,14 @@ const userService = {
   },
 
   // Apply for rider role
-  applyRider: async (formData) => {
+  applyRider: async (formData, onProgress) => {
     try {
       const response = await api.post('/api/users/apply-rider', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (event) => {
+          if (onProgress && event.total) onProgress(Math.round((event.loaded * 100) / event.total));
         },
       });
       return response.data;

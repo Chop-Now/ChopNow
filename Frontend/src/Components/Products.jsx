@@ -137,24 +137,17 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
             <div className="w-16 h-0.5 bg-solid rounded-full"></div>
           </div>
 
-          {/* Mobile Price Slider */}
-          <div className="md:hidden flex flex-col items-end">
-            <label className="text-xs font-medium mb-1" style={{ color: 'var(--color-textColor)' }}>
-              Price: RWF {priceRange.toLocaleString()}
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100000"
-              step="1000"
-              value={priceRange}
-              onChange={(e) => setPriceRange(parseInt(e.target.value))}
-              className="w-24 h-1.5 rounded-lg appearance-none cursor-pointer"
-              style={{
-                background: `linear-gradient(to right, var(--color-solid) 0%, var(--color-solid) ${(priceRange / 100000) * 100}%, #E5E5E5 ${(priceRange / 100000) * 100}%, #E5E5E5 100%)`,
-              }}
-            />
-          </div>
+          {priceRange < 100000 && (
+            <button
+              type="button"
+              onClick={() => setPriceRange(100000)}
+              className="md:hidden inline-flex items-center gap-1 rounded-full border px-3 text-xs font-medium"
+              style={{ borderColor: 'var(--color-solid)', color: 'var(--color-solid)' }}
+              aria-label={`Remove price limit of RWF ${priceRange.toLocaleString()}`}
+            >
+              Up to RWF {priceRange.toLocaleString()} <span aria-hidden="true">✕</span>
+            </button>
+          )}
         </div>
 
         {/* Mobile Sort Modal */}
@@ -164,16 +157,47 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
               className="fixed inset-0 bg-black/30 z-40 md:hidden"
               onClick={() => setShowMobileSort(false)}
             />
-            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 md:hidden animate-slide-up">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Sort and filter"
+              className="fixed bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto bg-white rounded-t-2xl shadow-2xl z-50 md:hidden animate-slide-up pb-safe"
+            >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold" style={{ color: 'var(--color-textColor)' }}>
-                    Sort By
+                    Sort &amp; filter
                   </h3>
-                  <button onClick={() => setShowMobileSort(false)} className="text-gray-500">
+                  <button
+                    onClick={() => setShowMobileSort(false)}
+                    aria-label="Close"
+                    className="text-gray-500"
+                  >
                     ✕
                   </button>
                 </div>
+
+                <p className="mb-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                  Maximum price: RWF {priceRange.toLocaleString()}
+                </p>
+                <input
+                  type="range"
+                  min="0"
+                  max="100000"
+                  step="1000"
+                  value={priceRange}
+                  aria-label="Maximum price"
+                  onChange={(e) => setPriceRange(parseInt(e.target.value))}
+                  className="mb-5 w-full cursor-pointer appearance-none rounded-lg"
+                  style={{
+                    height: '6px',
+                    background: `linear-gradient(to right, var(--color-solid) 0%, var(--color-solid) ${(priceRange / 100000) * 100}%, #E5E5E5 ${(priceRange / 100000) * 100}%, #E5E5E5 100%)`,
+                  }}
+                />
+
+                <p className="mb-2 text-sm font-medium" style={{ color: 'var(--color-textColor)' }}>
+                  Sort by
+                </p>
                 <div className="flex flex-col gap-3">
                   {['Distance (Nearest First)', 'Date Posted', 'A to Z', 'Vendor Rating'].map(
                     (option) => (

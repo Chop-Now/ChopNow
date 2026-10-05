@@ -104,6 +104,7 @@ const ContactUs = () => {
                   className="h-12 pl-10 pr-4 w-full border-2 border-gray-200 rounded-lg outline-none transition-all duration-200 focus:border-(--color-solid)"
                   type="text"
                   placeholder="John Doe"
+                  autoComplete="name"
                   required
                 />
               </div>
@@ -121,6 +122,7 @@ const ContactUs = () => {
                   className="h-12 pl-10 pr-4 w-full border-2 border-gray-200 rounded-lg outline-none transition-all duration-200 focus:border-(--color-solid)"
                   type="email"
                   placeholder="john@example.com"
+                  autoComplete="email"
                   required
                 />
               </div>

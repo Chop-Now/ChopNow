@@ -599,7 +599,7 @@ const Cart = () => {
 
               {/* Order Summary */}
               <div
-                className="p-5 rounded-xl border"
+                className="p-5 pb-28 md:pb-5 rounded-xl border"
                 style={{ borderColor: '#E5E5E5', backgroundColor: 'var(--color-primary)' }}
               >
                 <h3
@@ -691,36 +691,40 @@ const Cart = () => {
                   </>
                 )}
 
-                <hr className="my-4" style={{ borderColor: '#E5E5E5' }} />
+                <hr className="my-4 hidden md:block" style={{ borderColor: '#E5E5E5' }} />
 
-                <div className="flex justify-between text-base font-semibold mb-6">
-                  <span style={{ color: 'var(--color-textColor)' }}>Total</span>
-                  <span style={{ color: 'var(--color-solid)' }}>
-                    {totals ? formatRwf(totals.total) : '—'}
-                  </span>
-                </div>
+                {/* On phones the total and checkout button ride above the tab bar, so they
+                    are reachable from anywhere on this long page. */}
+                <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 border-t border-surface-border bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+                  <div className="flex justify-between text-base font-semibold mb-2 md:mb-6">
+                    <span style={{ color: 'var(--color-textColor)' }}>Total</span>
+                    <span style={{ color: 'var(--color-solid)' }}>
+                      {totals ? formatRwf(totals.total) : '—'}
+                    </span>
+                  </div>
 
-                <button
-                  onClick={handleCheckout}
-                  disabled={checkoutDisabled}
-                  className="w-full py-3 rounded-lg text-sm text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'var(--color-solid)' }}
-                >
-                  {placing
-                    ? 'Placing your order…'
-                    : vendors.length > 1
-                      ? `Place ${vendors.length} orders · ${totals ? formatRwf(totals.total) : ''}`
-                      : 'Proceed to Checkout'}
-                </button>
-                {fulfillmentMethod === 'Delivery' && !deliveryLocation && (
-                  <p
-                    className="text-xs mt-2 flex items-center gap-1"
-                    style={{ color: 'var(--color-moringa-muted)' }}
+                  <button
+                    onClick={handleCheckout}
+                    disabled={checkoutDisabled}
+                    className="w-full py-3 rounded-lg text-sm text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'var(--color-solid)' }}
                   >
-                    <MapPin className="w-3.5 h-3.5" />
-                    Set your delivery address to continue
-                  </p>
-                )}
+                    {placing
+                      ? 'Placing your order…'
+                      : vendors.length > 1
+                        ? `Place ${vendors.length} orders · ${totals ? formatRwf(totals.total) : ''}`
+                        : 'Proceed to Checkout'}
+                  </button>
+                  {fulfillmentMethod === 'Delivery' && !deliveryLocation && (
+                    <p
+                      className="text-xs mt-2 flex items-center gap-1"
+                      style={{ color: 'var(--color-moringa-muted)' }}
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Set your delivery address to continue
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

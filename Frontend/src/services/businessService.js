@@ -2,11 +2,14 @@ import api from './api';
 
 const businessService = {
   // Submit KYC Verification
-  submitVerification: async (id, formData) => {
+  submitVerification: async (id, formData, onProgress) => {
     try {
       const response = await api.post(`/api/businesses/${id}/kyc`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (event) => {
+          if (onProgress && event.total) onProgress(Math.round((event.loaded * 100) / event.total));
         },
       });
       return response.data;

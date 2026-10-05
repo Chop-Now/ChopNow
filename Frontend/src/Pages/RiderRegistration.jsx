@@ -22,6 +22,7 @@ import { useAppContext } from '../context/AppContext';
 import userService from '../services/userService';
 import toast from 'react-hot-toast';
 import { compressImage } from '../utils/compressImage';
+import UploadProgress from '../Components/ui/UploadProgress';
 
 const VEHICLES = [
   { key: 'bicycle', label: 'Bicycle', icon: Bike, description: 'Best for short urban trips' },
@@ -48,6 +49,7 @@ const RiderRegistration = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -126,7 +128,7 @@ const RiderRegistration = () => {
       formData.append('vehiclePhoto', vehiclePhoto);
       formData.append('nationalIdPhoto', nationalIdPhoto);
 
-      await userService.applyRider(formData);
+      await userService.applyRider(formData, setUploadPercent);
       await refreshUser();
       toast.success('Rider application submitted successfully! 🚴');
     } catch (err) {
@@ -134,6 +136,7 @@ const RiderRegistration = () => {
       toast.error(err.message || 'Failed to submit application. Try again.');
     } finally {
       setIsSubmitting(false);
+      setUploadPercent(null);
     }
   };
 
@@ -525,6 +528,7 @@ const RiderRegistration = () => {
                     'Submit Application'
                   )}
                 </button>
+                <UploadProgress percent={isSubmitting ? uploadPercent : null} />
                 <p className="text-xs text-center text-slate-400 mt-3">
                   Applications are manually reviewed by admins. We will notify you once review is
                   complete.

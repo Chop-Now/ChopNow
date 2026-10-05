@@ -224,31 +224,39 @@ const FAQ = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
             >
-              <motion.div
-                className="flex items-center justify-between w-full cursor-pointer bg-linear-to-r from-yellow/25 via-pepper/10 to-fufu border-2 border-fufu-border p-4 rounded transition-all duration-200"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                whileHover={{
-                  scale: 1.01,
-                  borderColor: '#0F3D2E',
-                  boxShadow:
-                    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                }}
-                whileTap={{ scale: 0.99 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              >
-                <h2 className="text-sm font-medium">{faq.question}</h2>
-                <motion.div
-                  animate={{ rotate: openIndex === index ? 180 : 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+              <h2 className="w-full text-sm font-medium">
+                <motion.button
+                  type="button"
+                  aria-expanded={openIndex === index}
+                  aria-controls={`faq-answer-${index}`}
+                  className="flex items-center justify-between w-full min-h-12 cursor-pointer text-left bg-linear-to-r from-yellow/25 via-pepper/10 to-fufu border-2 border-fufu-border p-4 rounded transition-all duration-200"
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  whileHover={{
+                    scale: 1.01,
+                    borderColor: '#0F3D2E',
+                    boxShadow:
+                      '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  }}
+                  whileTap={{ scale: 0.99 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
-                  <ChevronDown
-                    className="shrink-0 ml-4"
-                    size={20}
-                    style={{ color: 'var(--color-moringa)' }}
-                  />
-                </motion.div>
-              </motion.div>
+                  <span>{faq.question}</span>
+                  <motion.div
+                    animate={{ rotate: openIndex === index ? 180 : 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  >
+                    <ChevronDown
+                      className="shrink-0 ml-4"
+                      size={20}
+                      style={{ color: 'var(--color-moringa)' }}
+                    />
+                  </motion.div>
+                </motion.button>
+              </h2>
               <motion.p
+                id={`faq-answer-${index}`}
+                role="region"
+                aria-hidden={openIndex !== index}
                 className="text-sm text-moringa-muted px-4 overflow-hidden"
                 initial={false}
                 animate={{
