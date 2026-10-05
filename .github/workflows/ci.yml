@@ -133,6 +133,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Fails if images, the entry bundle, mobile meta/PWA files or text sizes regress.
+      - name: Mobile budget
+        run: node scripts/check-mobile-budget.mjs
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:

@@ -208,12 +208,16 @@ const Hero = () => {
           {/* Right Side - Background Image */}
           <motion.div
             className="flex-1 w-full h-[280px] md:h-[520px] lg:h-[780px] flex items-start justify-center -mt-20 md:-mt-44 lg:-mt-72"
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+            // The hero photo is the page's largest paint, so it must never start
+            // invisible or wait on a delay: slide it in, but keep it visible.
+            initial={{ x: 60 }}
+            animate={{ x: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
           >
             <img
               src={assets.bg}
+              fetchPriority="high"
+              decoding="async"
               alt="ChopNow"
               className="w-full md:w-[120%] h-full md:h-[120%] object-cover"
             />
