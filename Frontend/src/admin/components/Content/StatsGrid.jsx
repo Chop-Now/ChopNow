@@ -198,7 +198,7 @@ const StatsGrid = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {[1, 2, 3, 4].map((_, index) => (
           <div
             key={index}
@@ -300,7 +300,7 @@ const StatsGrid = () => {
           ];
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {placeholderStats.map((stat, index) => (
           <div
             className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50"
@@ -322,7 +322,7 @@ const StatsGrid = () => {
                   </span>
                 </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+              <div className="hidden sm:block p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
                 <div className="text-black dark:text-white">{stat.icon}</div>
               </div>
             </div>
@@ -333,7 +333,7 @@ const StatsGrid = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
       {displayStats.map((stat, index) => {
         return (
           <div
@@ -373,7 +373,7 @@ const StatsGrid = () => {
                 </div>
               </div>
               <div
-                className={`p-2.5 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-all duration-300`}
+                className={`hidden sm:block p-2.5 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-all duration-300`}
               >
                 <div className={stat.textColor}>{stat.icon}</div>
               </div>

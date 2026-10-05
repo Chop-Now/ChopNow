@@ -203,17 +203,21 @@ const ProductDetails = () => {
           className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm mb-4 sm:mb-6"
           style={{ color: 'var(--color-moringa-muted)' }}
         >
-          <Link to="/" className="hover:opacity-70">
+          <Link
+            to="/"
+            aria-label="Home"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center hover:opacity-70"
+          >
             <Home className="w-4 h-4" />
           </Link>
           <span>/</span>
-          <Link to="/shop" className="hover:opacity-70">
+          <Link to="/shop" className="inline-flex min-h-11 items-center hover:opacity-70">
             Shop
           </Link>
           <span>/</span>
           <Link
             to={`/shop/${(product.category || 'all').toLowerCase()}`}
-            className="hover:opacity-70"
+            className="inline-flex min-h-11 items-center hover:opacity-70"
           >
             {product.category || 'All'}
           </Link>
@@ -543,7 +547,7 @@ const ProductDetails = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-surface-border bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:z-auto md:gap-4 md:border-0 md:bg-transparent md:p-0">
+            <div className="fixed inset-x-0 bottom-0 z-30 [@media(max-height:500px)_and_(orientation:landscape)]:static flex gap-3 border-t border-surface-border bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:z-auto md:gap-4 md:border-0 md:bg-transparent md:p-0">
               {currentCartQuantity > 0 ? (
                 <button
                   onClick={handleRemoveFromCart}

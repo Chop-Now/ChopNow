@@ -763,15 +763,22 @@ const Settings = ({ initialTab = 'profile' }) => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-3">
-            <nav className="space-y-1.5">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-1.5 lg:p-3">
+            {/* A compact scrolling tab row on phones, a vertical list on desktop. */}
+            <nav
+              role="tablist"
+              aria-label="Settings sections"
+              className="flex gap-1 overflow-x-auto [scrollbar-width:none] lg:block lg:space-y-1.5 lg:overflow-visible"
+            >
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
+                    role="tab"
+                    aria-selected={activeTab === item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer ${
+                    className={`flex shrink-0 items-center space-x-2.5 whitespace-nowrap px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer lg:w-full ${
                       activeTab === item.id
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -1297,7 +1304,7 @@ const Settings = ({ initialTab = 'profile' }) => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-2">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none flex items-center justify-end space-x-3 pt-2">
                 <button
                   onClick={handleCancelBusinessDetails}
                   className="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-medium cursor-pointer"
@@ -1736,7 +1743,7 @@ const Settings = ({ initialTab = 'profile' }) => {
               </div>
 
               {/* Save Button */}
-              <div className="flex items-center justify-end pt-2">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none flex items-center justify-end">
                 <button
                   onClick={handleSavePlatformSettings}
                   disabled={platformSettingsLoading}
@@ -2015,7 +2022,7 @@ const Settings = ({ initialTab = 'profile' }) => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-2">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none flex items-center justify-end space-x-3 pt-2">
                 <button
                   onClick={handleCancelSecurityChanges}
                   className="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-medium cursor-pointer"

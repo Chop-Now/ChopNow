@@ -1639,7 +1639,7 @@ const ShopAdminInsights = () => {
       </div>
 
       {/* Key Insights Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {insights.map((insight) => (
           <div
             key={insight.title}
@@ -2049,7 +2049,7 @@ const ShopAdminImpact = () => {
       </div>
 
       {/* Impact Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Meals Rescued */}
         <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 backdrop-blur-xl rounded-2xl p-5 border border-blue-200/50 dark:border-blue-700/50 hover:shadow-xl hover:shadow-blue-200/30 dark:hover:shadow-blue-900/20 transition-all duration-300 group">
           <div className="flex items-start justify-between mb-3">
@@ -2274,7 +2274,7 @@ const ShopAdminImpact = () => {
       </div>
 
       {/* Environmental Equivalents */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center gap-3 mb-2">
             <Car className="w-5 h-5 text-slate-600 dark:text-slate-400" />
@@ -2479,7 +2479,7 @@ const WebsiteAdminImpact = () => {
       </div>
 
       {/* Total Impact Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-linear-to-br from-solid to-tertiary rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <UtensilsCrossed className="w-8 h-8 opacity-80" />
@@ -2680,7 +2680,7 @@ const WebsiteAdminImpact = () => {
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
           Environmental Equivalents
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {environmentalEquivalents.map((item, index) => (
             <div
               key={index}

@@ -204,25 +204,27 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
         )}
 
         {/* Distances are opt-in: nothing asks for location until the shopper taps this. */}
-        {!productsLoading && locationStatus !== 'granted' && products.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={requestNearby}
-              disabled={locationStatus === 'locating'}
-              className="inline-flex items-center gap-2 rounded-full border px-4 text-sm font-medium disabled:opacity-60"
-              style={{ borderColor: 'var(--color-solid)', color: 'var(--color-solid)' }}
-            >
-              <MapPin className="h-4 w-4" aria-hidden="true" />
-              {locationStatus === 'locating' ? 'Finding you...' : 'Show distances from me'}
-            </button>
-            {locationStatus === 'denied' && (
-              <p className="text-xs text-gray-500" role="status">
-                Location is blocked. Allow it in your browser settings to see distances.
-              </p>
-            )}
-          </div>
-        )}
+        <div className="mt-4 flex min-h-11 flex-wrap items-center gap-3">
+          {!productsLoading && locationStatus !== 'granted' && products.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={requestNearby}
+                disabled={locationStatus === 'locating'}
+                className="inline-flex items-center gap-2 rounded-full border px-4 text-sm font-medium disabled:opacity-60"
+                style={{ borderColor: 'var(--color-solid)', color: 'var(--color-solid)' }}
+              >
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                {locationStatus === 'locating' ? 'Finding you...' : 'Show distances from me'}
+              </button>
+              {locationStatus === 'denied' && (
+                <p className="text-xs text-gray-500" role="status">
+                  Location is blocked. Allow it in your browser settings to see distances.
+                </p>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Loading State: placeholder cards hold the grid's space so the page doesn't jump */}
         {productsLoading && (
@@ -231,10 +233,10 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
             role="status"
             aria-label="Loading products"
           >
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
-                className="h-72 animate-pulse rounded-xl border bg-gray-100"
+                className="h-[22.5rem] md:h-80 animate-pulse rounded-xl border bg-gray-100"
                 style={{ borderColor: '#E5E5E5' }}
               />
             ))}

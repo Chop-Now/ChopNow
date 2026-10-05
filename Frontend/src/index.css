@@ -249,6 +249,14 @@ label[for] {
     line-height: 44px;
   }
 
+  /* A range slider is a 6px bar; padding gives it a 44px-tall touch area
+     without changing how the bar looks. */
+  input[type='range'] {
+    box-sizing: content-box;
+    padding-block: 19px;
+    touch-action: pan-y;
+  }
+
   input[type='checkbox'],
   input[type='radio'] {
     /* WCAG 2.2 AA target size is 24px; the label around it is the larger target. */
