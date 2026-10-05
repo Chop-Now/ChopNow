@@ -114,7 +114,7 @@ const MyImpact = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-green-700" />
       </div>
     );
   }
@@ -127,7 +127,7 @@ const MyImpact = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Header */}
           <div className="mb-6 text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Your Impact Summary</h2>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">Your Impact Summary</h1>
             <p className="text-sm text-gray-600">
               Thank you for making a difference! Here's a summary of your positive environmental
               impact.
@@ -147,7 +147,7 @@ const MyImpact = () => {
               </p>
               {impactData.comparison && (
                 <div
-                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-green-600' : 'text-red-500'}`}
+                  className={`flex items-center justify-center gap-1 text-xs mt-1 ${impactData.comparison.percentageChange.trend === 'up' ? 'text-green-700' : 'text-red-500'}`}
                 >
                   {impactData.comparison.percentageChange.trend === 'up' ? (
                     <TrendingUp className="w-3 h-3" />

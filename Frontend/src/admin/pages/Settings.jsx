@@ -1660,7 +1660,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                           className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 rounded-full peer after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
                             feature.key === 'maintenanceMode'
                               ? 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 peer-checked:after:translate-x-full peer-checked:bg-red-600'
-                              : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:bg-green-600'
+                              : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:bg-green-700'
                           }`}
                         ></div>
                       </label>
@@ -1728,7 +1728,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
+                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-700"></div>
                       </label>
                     </div>
                   ))}

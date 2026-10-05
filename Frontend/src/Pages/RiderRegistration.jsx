@@ -184,7 +184,7 @@ const RiderRegistration = () => {
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 mt-16 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+          <div className="mx-auto w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Application Approved!</h2>
@@ -194,7 +194,7 @@ const RiderRegistration = () => {
           </p>
           <button
             onClick={handleSwitchToRider}
-            className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 px-4 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
           >
             Go to Rider Dashboard 🚴
           </button>
@@ -261,7 +261,7 @@ const RiderRegistration = () => {
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumbs */}
         <div className="flex items-center justify-center space-x-2 text-xs text-slate-400 mb-6">
-          <span className="text-green-600 font-medium cursor-pointer" onClick={() => navigate('/')}>
+          <span className="text-green-700 font-medium cursor-pointer" onClick={() => navigate('/')}>
             ChopNow Account
           </span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -440,7 +440,7 @@ const RiderRegistration = () => {
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                       />
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-600 transition-colors shadow-sm">
+                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-700 transition-colors shadow-sm">
                           <Upload className="w-5 h-5" />
                         </div>
                         <p className="text-xs font-semibold text-slate-700">
@@ -469,7 +469,7 @@ const RiderRegistration = () => {
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                       />
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-600 transition-colors shadow-sm">
+                        <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-green-700 transition-colors shadow-sm">
                           <Upload className="w-5 h-5" />
                         </div>
                         <p className="text-xs font-semibold text-slate-700">
@@ -493,7 +493,7 @@ const RiderRegistration = () => {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="h-4 w-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
+                    className="h-4 w-4 text-green-700 border-slate-300 rounded focus:ring-green-500"
                   />
                 </div>
                 <div className="text-xs">
@@ -512,7 +512,7 @@ const RiderRegistration = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 px-4 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

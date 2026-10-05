@@ -235,7 +235,7 @@ const ForgotPassword = () => {
             {/* Step 1: Email Request */}
             {step === 1 && (
               <form onSubmit={handleRequestOtp} className="flex flex-col">
-                <h2 className="text-3xl font-bold text-white mb-2">Reset Password</h2>
+                <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
                 <p className="text-sm text-slate-400 mb-8">
                   Enter your email address below. We'll send you a 6-digit verification code to
                   reset your password.
@@ -283,7 +283,7 @@ const ForgotPassword = () => {
             {/* Step 2: Verification Code Entry */}
             {step === 2 && (
               <form onSubmit={handleVerifyOtp} className="flex flex-col">
-                <h2 className="text-3xl font-bold text-white mb-2">Verify OTP</h2>
+                <h1 className="text-3xl font-bold text-white mb-2">Verify OTP</h1>
                 <p className="text-sm text-slate-400 mb-8">
                   We've sent a 6-digit verification code to{' '}
                   <span className="text-white font-medium">{email}</span>.
@@ -354,7 +354,7 @@ const ForgotPassword = () => {
             {/* Step 3: Enter New Password */}
             {step === 3 && (
               <form onSubmit={handleResetPassword} className="flex flex-col">
-                <h2 className="text-3xl font-bold text-white mb-2">New Password</h2>
+                <h1 className="text-3xl font-bold text-white mb-2">New Password</h1>
                 <p className="text-sm text-slate-400 mb-8">
                   Choose a strong, unique password to secure your account.
                 </p>
@@ -474,7 +474,7 @@ const ForgotPassword = () => {
                   <KeyRound className="w-10 h-10" />
                 </div>
 
-                <h2 className="text-3xl font-bold text-white mb-2">Password Reset!</h2>
+                <h1 className="text-3xl font-bold text-white mb-2">Password Reset!</h1>
                 <p className="text-sm text-slate-400 mb-8">
                   Your password has been successfully updated. You can now log in using your new
                   credentials.

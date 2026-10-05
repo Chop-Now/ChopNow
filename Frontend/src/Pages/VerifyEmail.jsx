@@ -63,7 +63,7 @@ const VerifyEmail = () => {
 
         {status === 'success' && (
           <>
-            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-600" />
+            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-700" />
             <h1 className="mb-2 text-xl font-semibold" style={{ color: 'var(--color-textColor)' }}>
               Email verified
             </h1>

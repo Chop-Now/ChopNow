@@ -139,7 +139,7 @@ const MobileMoneyPaymentModal = ({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-600 transition cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
@@ -174,7 +174,7 @@ const MobileMoneyPaymentModal = ({
               }}
             />
             <p className="text-sm font-semibold text-gray-700">{statusText}</p>
-            <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+            <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
               Please check your phone for a PIN prompt to authorize RWF {amount}.
             </p>
           </div>

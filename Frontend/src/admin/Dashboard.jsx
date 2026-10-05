@@ -254,6 +254,7 @@ const Dashboard = () => {
 
             <div className="flex-1 overflow-y-auto bg-transparent">
               <StackedTables className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
+                <h1 className="sr-only">Vendor dashboard</h1>
                 {renderPage()}
               </StackedTables>
             </div>

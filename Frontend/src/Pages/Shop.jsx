@@ -19,6 +19,7 @@ const Shop = () => {
         keywords="surplus food, discount food, food deals, Kigali, food near me"
       />
       <PageNavbar onMobileFilterClick={() => productsRef.current?.openMobileSort()} />
+      <h1 className="sr-only">Shop surplus food deals</h1>
       <Categories />
 
       <div className="px-6 md:px-8 lg:px-12 xl:px-16 py-6">
@@ -33,7 +34,7 @@ const Shop = () => {
             />
           </aside>
           {/* Main Content Area */}
-          <main className="flex-1">
+          <div className="flex-1">
             <Products
               ref={productsRef}
               sortBy={sortBy}
@@ -41,7 +42,7 @@ const Shop = () => {
               setSortBy={setSortBy}
               setPriceRange={setPriceRange}
             />
-          </main>
+          </div>
         </div>
       </div>
       <Footer />

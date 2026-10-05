@@ -40,7 +40,7 @@
      text now uses `--color-moringa-muted` instead. */
   --color-primary: var(--color-scaffold); /* page ground (unchanged hex) */
   --color-solid: var(--color-moringa); /* was #00A86B green */
-  --color-solidOne: var(--color-pepper); /* was #FF7A00 orange */
+  --color-solidOne: var(--color-pepper-dark); /* was #FF7A00 orange; the darker pepper keeps white-on-it and it-on-white at 4.5:1+ */
   --color-solidTwo: var(--color-yellow); /* was #FFB366 soft orange */
   --color-tertiary: var(--color-moringa-dark); /* hover/pressed */
   --color-textColor: var(--color-char); /* was #2E2E2E neutral */
@@ -377,4 +377,44 @@ label[for] {
 .dark .text-solid,
 .dark .text-moringa {
   color: #34d399;
+}
+
+/* ── Modals become bottom sheets on phones ──
+   Every modal in the app is a fixed, flex-centred backdrop around one panel
+   (see DialogEnhancer.jsx for its behaviour). On a phone that panel docks to
+   the bottom, spans the width, scrolls inside itself and never exceeds the
+   screen, so the thumb reaches its buttons and its content is never clipped. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .fixed.inset-0.flex.items-center.justify-center {
+    align-items: flex-end;
+    padding: 0;
+    overflow-y: visible;
+  }
+
+  .fixed.inset-0.flex.items-center.justify-center > :first-child {
+    width: 100%;
+    max-width: none;
+    max-height: 92dvh;
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    animation: sheet-up 0.25s ease-out;
+  }
+}
+
+/* slate-500 text on the dashboards' dark cards is 3.7:1; lift it to slate-400 (6.9:1). */
+.dark .text-slate-500,
+.dark .dark\:text-slate-500 {
+  color: #94a3b8;
 }

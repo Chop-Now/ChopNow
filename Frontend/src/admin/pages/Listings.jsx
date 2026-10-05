@@ -452,7 +452,7 @@ export const AllListings = () => {
                     <div className="flex items-center gap-3">
                       <img
                         src={product.image?.[0] || product.images?.[0] || '/placeholder-food.svg'}
-                        alt={product.name || product.title || 'Product'}
+                        alt=""
                         className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                       />
                       <span className="text-xs font-medium text-slate-900 dark:text-white truncate max-w-xs">

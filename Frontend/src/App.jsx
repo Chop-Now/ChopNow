@@ -7,6 +7,8 @@ import { useAppContext } from './context/AppContext';
 import LoadingSpinner from './Components/ui/LoadingSpinner';
 import { ProtectedRoute, RoleRoute } from './Components/ProtectedRoute';
 import useMediaQuery from './utils/useMediaQuery';
+import DialogEnhancer from './Components/DialogEnhancer';
+import AccessibilityEnhancer from './Components/AccessibilityEnhancer';
 
 // Lazy-loaded page components for code splitting
 const Home = lazy(() => import('./Pages/Home'));
@@ -58,16 +60,18 @@ const App = () => {
   }
 
   return (
-    <main className="overflow-x-hidden text-textColor">
+    <div className="overflow-x-hidden text-textColor">
       {/* Skip to content link for keyboard navigation */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100 focus:px-4 focus:py-2 focus:bg-green-600 focus:text-white focus:rounded-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100 focus:px-4 focus:py-2 focus:bg-green-700 focus:text-white focus:rounded-lg"
       >
         Skip to content
       </a>
 
       {/* On phones, toasts sit above the bottom tab bar (and the home indicator) rather than over the header. */}
+      <DialogEnhancer />
+      <AccessibilityEnhancer />
       <Toaster
         position={isPhone ? 'bottom-center' : 'top-center'}
         containerStyle={
@@ -83,7 +87,7 @@ const App = () => {
           </div>
         }
       >
-        <div id="main-content">
+        <main id="main-content">
           <Routes>
             {/* ===== Public Routes ===== */}
             <Route path="/" element={<Home />} />
@@ -206,9 +210,9 @@ const App = () => {
             {/* ===== Catch-all ===== */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </div>
+        </main>
       </Suspense>
-    </main>
+    </div>
   );
 };
 

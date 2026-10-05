@@ -38,17 +38,8 @@ const ProductCard = memo(({ product }) => {
 
   return (
     <article
-      onClick={handleProductClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleProductClick();
-        }
-      }}
-      aria-label={`${product.name || 'Product'} - RWF ${(offerPrice || 0).toLocaleString()}${discountPercent > 0 ? `, ${discountPercent}% off` : ''}`}
-      className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500 group"
+      aria-label={`${product.name || 'Product'}, RWF ${(offerPrice || 0).toLocaleString()}${discountPercent > 0 ? `, ${discountPercent}% off` : ''}`}
+      className="relative border rounded-xl bg-white w-full shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 group"
       style={{ borderColor: '#E5E5E5' }}
     >
       {/* ── Image ── */}
@@ -56,7 +47,7 @@ const ProductCard = memo(({ product }) => {
         <img
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           src={product.image?.[0] || PLACEHOLDER_IMAGE}
-          alt={product.name || 'Product'}
+          alt=""
           width="400"
           height="300"
           loading="lazy"
@@ -101,12 +92,20 @@ const ProductCard = memo(({ product }) => {
 
       {/* ── Body ── */}
       <div className="px-3 md:px-4 pb-3 pt-2">
-        <p
-          className="font-semibold text-sm md:text-base truncate mb-0.5"
+        {/* The title is the card's link; its ::after stretches over the whole card
+            so the card is one big tap target while the cart buttons stay separate. */}
+        <a
+          href={`/shop/${product.category?.toLowerCase() || 'all'}/${product._id}`}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+            e.preventDefault();
+            handleProductClick();
+          }}
+          className="block font-semibold text-sm md:text-base truncate mb-0.5 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
           style={{ color: 'var(--color-textColor)' }}
         >
           {product.name || 'Product'}
-        </p>
+        </a>
 
         <div
           className="flex items-center gap-1 text-xs mb-0.5"
@@ -159,7 +158,7 @@ const ProductCard = memo(({ product }) => {
             )}
           </div>
 
-          <div className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="relative z-10 w-full sm:w-auto">
             {!cartItems[product._id] || cartItems[product._id] === 0 ? (
               <button
                 className="flex items-center justify-center gap-1 border w-full sm:w-20 h-11 md:h-[34px] rounded-lg font-semibold cursor-pointer hover:opacity-90 active:scale-95 transition-all text-white text-xs"

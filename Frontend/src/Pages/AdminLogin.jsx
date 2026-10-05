@@ -188,7 +188,7 @@ const AdminLogin = () => {
 
           {/* Header */}
           <div className="text-center lg:text-left mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-slate-400">Sign in to access the admin dashboard</p>
           </div>
 

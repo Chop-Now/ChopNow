@@ -131,7 +131,7 @@ const SignUp = () => {
           <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-8 h-8 text-yellow-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Registration Closed</h2>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Closed</h1>
           <p className="text-gray-600 mb-6">
             New user registrations are currently disabled. Please check back later or contact
             support at{' '}
@@ -333,12 +333,12 @@ const SignUp = () => {
             {/* User Type Selection */}
             {!userType ? (
               <div className="flex flex-col">
-                <h2
+                <h1
                   className="text-4xl font-medium text-center"
                   style={{ color: 'var(--color-textColor)' }}
                 >
                   Sign up
-                </h2>
+                </h1>
                 <p
                   className="text-sm mt-3 text-center"
                   style={{ color: 'var(--color-moringa-muted)' }}
@@ -392,12 +392,12 @@ const SignUp = () => {
             ) : (
               <form className="flex flex-col" onSubmit={handleSubmit}>
                 <div className="relative mb-4">
-                  <h2
+                  <h1
                     className="text-2xl font-medium text-center"
                     style={{ color: 'var(--color-textColor)' }}
                   >
                     {userType === 'buyer' ? 'Sign up as Buyer' : 'Sign up as Business'}
-                  </h2>
+                  </h1>
                   <button
                     type="button"
                     onClick={() => setUserType(null)}

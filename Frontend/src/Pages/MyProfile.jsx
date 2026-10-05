@@ -195,7 +195,7 @@ const MyProfile = () => {
   if (loading) {
     return (
       <div className="bg-gray-80 min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-green-700" />
       </div>
     );
   }
@@ -306,7 +306,7 @@ const MyProfile = () => {
                     </div>
                     <button
                       onClick={() => navigate('/rider-verification')}
-                      className="w-full mt-2 py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
+                      className="w-full mt-2 py-2 px-4 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer text-center"
                     >
                       Register as Rider
                     </button>
@@ -431,7 +431,7 @@ const MyProfile = () => {
                     disabled
                     className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm focus:outline-none cursor-not-allowed"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
                 <div className="w-full flex-1">
                   <label className="block text-sm font-medium text-textColor mb-2">

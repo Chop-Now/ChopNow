@@ -31,14 +31,17 @@ export default function StackedTables({ className, children }) {
     if (!root) return undefined;
     let frame = 0;
     const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => labelTables(root));
+      if (frame) return;
+      frame = setTimeout(() => {
+        frame = 0;
+        labelTables(root);
+      }, 50);
     };
     schedule();
     const observer = new MutationObserver(schedule);
     observer.observe(root, { childList: true, subtree: true });
     return () => {
-      cancelAnimationFrame(frame);
+      clearTimeout(frame);
       observer.disconnect();
     };
   }, []);

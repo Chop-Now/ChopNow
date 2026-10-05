@@ -215,7 +215,7 @@ const RiderDashboard = () => {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
                   isOnline
                     ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-green-500 hover:bg-green-700 text-white'
                 }`}
               >
                 {isToggling ? 'Syncing...' : isOnline ? 'Go Offline' : 'Go Online'}
@@ -311,7 +311,7 @@ const RiderDashboard = () => {
                     <DollarSign className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-green-600">
+                <div className="mt-4 flex items-center gap-1 text-xs text-green-700">
                   <TrendingUp className="w-3.5 h-3.5" />
                   <span>+{formatCurrency(stats?.weeklyEarningsSum || 0)} this week</span>
                 </div>
@@ -342,7 +342,7 @@ const RiderDashboard = () => {
                 </div>
                 <p className="mt-4 text-xs text-slate-400">
                   {stats?.activeTrips > 0 ? (
-                    <span className="text-green-600 font-semibold">
+                    <span className="text-green-700 font-semibold">
                       {stats.activeTrips} active deliveries
                     </span>
                   ) : (

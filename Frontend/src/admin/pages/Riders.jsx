@@ -259,7 +259,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                   <button
                     onClick={handleApprove}
                     disabled={submittingAction}
-                    className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-70 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-md"
+                    className="flex-1 py-3 bg-green-700 hover:bg-green-800 disabled:opacity-70 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-md"
                   >
                     {submittingAction && <Loader2 className="w-4 h-4 animate-spin" />}
                     Approve Application

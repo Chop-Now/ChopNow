@@ -72,12 +72,12 @@ const Login = () => {
             {/* User Type Selection */}
             {!userType ? (
               <div className="flex flex-col">
-                <h2
+                <h1
                   className="text-4xl font-medium text-center"
                   style={{ color: 'var(--color-textColor)' }}
                 >
                   Sign in
-                </h2>
+                </h1>
                 <p
                   className="text-sm mt-3 text-center"
                   style={{ color: 'var(--color-moringa-muted)' }}
@@ -131,12 +131,12 @@ const Login = () => {
             ) : (
               <form className="flex flex-col">
                 <div className="relative mb-4">
-                  <h2
+                  <h1
                     className="text-2xl font-medium text-center"
                     style={{ color: 'var(--color-textColor)' }}
                   >
                     {userType === 'buyer' ? 'Sign in as Buyer' : 'Sign in as Business'}
-                  </h2>
+                  </h1>
                   <button
                     type="button"
                     onClick={() => setUserType(null)}

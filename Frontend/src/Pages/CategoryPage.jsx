@@ -23,6 +23,7 @@ const CategoryPage = () => {
 
       <div className="px-6 md:px-8 lg:px-12 xl:px-16 py-6">
         <Breadcrumb category={displayCategory} />
+        <h1 className="sr-only">{displayCategory} deals</h1>
 
         <div className="flex gap-6 mt-6 items-start pb-20">
           {/* Left Sidebar */}
@@ -35,7 +36,7 @@ const CategoryPage = () => {
             />
           </aside>
           {/* Main Content Area */}
-          <main className="flex-1">
+          <div className="flex-1">
             <Products
               ref={productsRef}
               sortBy={sortBy}
@@ -44,7 +45,7 @@ const CategoryPage = () => {
               setSortBy={setSortBy}
               setPriceRange={setPriceRange}
             />
-          </main>
+          </div>
         </div>
       </div>
       <Footer />

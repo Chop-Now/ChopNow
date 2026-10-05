@@ -149,7 +149,7 @@ const AdminDashboard = () => {
           </p>
           <button
             onClick={() => logout()}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
           >
             Login with Admin Account
           </button>
@@ -273,6 +273,7 @@ const AdminDashboard = () => {
 
             <div className="flex-1 overflow-y-auto bg-transparent">
               <StackedTables className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
+                <h1 className="sr-only">Admin panel</h1>
                 {renderPage()}
               </StackedTables>
             </div>

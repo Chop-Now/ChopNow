@@ -59,7 +59,7 @@ const Footer = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
             >
-              <h3 className="font-semibold text-base text-moringa md:mb-5 mb-2">{section.title}</h3>
+              <h2 className="font-semibold text-base text-moringa md:mb-5 mb-2">{section.title}</h2>
               <ul className="text-sm space-y-1">
                 {section.links.map((link, i) => (
                   <li key={i}>

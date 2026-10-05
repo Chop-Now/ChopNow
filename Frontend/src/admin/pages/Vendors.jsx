@@ -330,7 +330,7 @@ const VendorDetailsModal = ({
                     onClick={() => handleAction(showActionDialog)}
                     className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer ${
                       showActionDialog === 'approve'
-                        ? 'bg-green-600 hover:bg-green-700'
+                        ? 'bg-green-700 hover:bg-green-800'
                         : showActionDialog === 'reject'
                           ? 'bg-red-600 hover:bg-red-700'
                           : showActionDialog === 'rescind'
@@ -355,7 +355,7 @@ const VendorDetailsModal = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowActionDialog('approve')}
-                  className="flex items-center gap-2 flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                  className="flex items-center gap-2 flex-1 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
                 >
                   <CheckSquare className="w-4 h-4" />
                   Approve

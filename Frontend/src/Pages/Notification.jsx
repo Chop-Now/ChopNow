@@ -334,7 +334,7 @@ const Notification = () => {
 
           {detailLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-green-700" />
             </div>
           ) : (
             <div className="p-6">
@@ -376,7 +376,7 @@ const Notification = () => {
                   <div className="space-y-2">
                     {meta.orderNumber && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Package size={16} className="text-gray-400" />
+                        <Package size={16} className="text-gray-500" />
                         <span className="text-gray-600">Order:</span>
                         <span className="font-medium text-textColor">#{meta.orderNumber}</span>
                       </div>
@@ -385,7 +385,7 @@ const Notification = () => {
                     {meta.orderTotal && (
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-gray-600 ml-6">Total:</span>
-                        <span className="font-bold text-green-600">
+                        <span className="font-bold text-green-700">
                           {meta.currency || 'RWF'} {meta.orderTotal?.toLocaleString()}
                         </span>
                       </div>
@@ -393,7 +393,7 @@ const Notification = () => {
 
                     {meta.businessName && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Store size={16} className="text-gray-400" />
+                        <Store size={16} className="text-gray-500" />
                         <span className="text-gray-600">From:</span>
                         <span className="font-medium text-textColor">{meta.businessName}</span>
                       </div>
@@ -413,10 +413,10 @@ const Notification = () => {
               {meta.pickupCode && (
                 <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4 text-center">
                   <p className="text-sm text-green-700 mb-2">Your Pickup Code</p>
-                  <p className="text-3xl font-bold text-green-600 tracking-widest">
+                  <p className="text-3xl font-bold text-green-700 tracking-widest">
                     {meta.pickupCode}
                   </p>
-                  <p className="text-xs text-green-600 mt-2">
+                  <p className="text-xs text-green-700 mt-2">
                     Show this code when you pick up your order
                   </p>
                 </div>
@@ -437,9 +437,9 @@ const Notification = () => {
               {meta.fulfillmentType && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                   {meta.fulfillmentType === 'delivery' ? (
-                    <Truck size={16} className="text-gray-400" />
+                    <Truck size={16} className="text-gray-500" />
                   ) : (
-                    <Store size={16} className="text-gray-400" />
+                    <Store size={16} className="text-gray-500" />
                   )}
                   <span className="capitalize">{meta.fulfillmentType}</span>
                 </div>
@@ -553,7 +553,7 @@ const Notification = () => {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1">
+          <div className="flex-1">
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-textColor mb-2">Notifications Center</h1>
@@ -636,7 +636,7 @@ const Notification = () => {
             <div className="space-y-4">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-4" />
+                  <Loader2 className="w-8 h-8 animate-spin text-green-700 mb-4" />
                   <p className="text-moringa-muted">Loading notifications...</p>
                 </div>
               ) : filteredNotifications.length === 0 ? (
@@ -708,7 +708,7 @@ const Notification = () => {
                                     dropdownOpen === notification.id ? null : notification.id
                                   );
                                 }}
-                                className="p-1 text-gray-400 hover:text-textColor transition-colors rounded-full hover:bg-gray-100"
+                                className="p-1 text-gray-500 hover:text-textColor transition-colors rounded-full hover:bg-gray-100"
                               >
                                 <EllipsisVertical size={18} />
                               </button>
@@ -750,7 +750,7 @@ const Notification = () => {
                 })
               )}
             </div>
-          </main>
+          </div>
         </div>
       </div>
 

@@ -200,7 +200,7 @@ const BusinessVerification = () => {
           className="flex items-center justify-center space-x-4 text-xs mb-8"
           style={{ color: 'var(--color-moringa-muted)' }}
         >
-          <p className="text-green-600 font-medium">Account creation</p>
+          <p className="text-green-700 font-medium">Account creation</p>
           <ChevronRight className="w-3 h-3" />
           <p style={{ color: 'var(--color-textColor)' }} className="font-medium">
             Business details
@@ -474,7 +474,7 @@ const BusinessVerification = () => {
               >
                 <CloudUpload className="w-10 h-10" style={{ color: 'var(--color-solid)' }} />
                 <p style={{ color: 'var(--color-moringa-muted)' }}>Drag & drop your files here</p>
-                <p className="text-gray-400 text-xs">
+                <p className="text-gray-500 text-xs">
                   Or{' '}
                   <span className="underline" style={{ color: 'var(--color-solid)' }}>
                     click

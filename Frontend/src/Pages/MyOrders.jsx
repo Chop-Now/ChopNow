@@ -471,7 +471,7 @@ const MyOrders = () => {
         <PageNavbar />
         <div className="mt-10 pb-16 px-6 md:px-16 lg:px-24 xl:px-32">
           <div className="flex flex-col items-start mb-8 mt-12">
-            <h2 className="text-2xl font-medium">Order History</h2>
+            <h1 className="text-2xl font-medium">Order History</h1>
             <p className="text-gray-600">
               Review your past and current orders. Thank you for helping reduce food waste!
             </p>
@@ -479,7 +479,7 @@ const MyOrders = () => {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-4" />
+              <Loader2 className="w-8 h-8 animate-spin text-green-700 mb-4" />
               <p className="text-gray-600">Loading your orders...</p>
             </div>
           ) : (
@@ -489,7 +489,7 @@ const MyOrders = () => {
                 <div className="flex gap-2 relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-green-600 rounded-md transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-green-700 rounded-md transition-transform duration-300 ease-in-out ${
                       selectedDeliveryType === 'Delivery'
                         ? 'transform translate-x-0'
                         : 'transform translate-x-[calc(100%+8px)]'
@@ -523,7 +523,7 @@ const MyOrders = () => {
                 <div className="bg-gray-100 rounded-full p-1 flex relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-1 bottom-1 w-1/3 bg-green-600 rounded-full transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-1 bottom-1 w-1/3 bg-green-700 rounded-full transition-transform duration-300 ease-in-out ${
                       mobileStatusFilter === 'processing'
                         ? 'transform translate-x-0'
                         : mobileStatusFilter === 'completed'
@@ -565,7 +565,7 @@ const MyOrders = () => {
                   <div className="flex flex-col">
                     <label className="text-xs font-medium mb-1.5">Search by Vendor</label>
                     <div className="relative">
-                      <Utensils className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Utensils className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <select
                         value={selectedVendor}
                         onChange={(e) => setSelectedVendor(e.target.value)}
@@ -584,7 +584,7 @@ const MyOrders = () => {
                   <div className="flex flex-col">
                     <label className="text-xs font-medium mb-1.5">Status</label>
                     <div className="relative">
-                      <Truck className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Truck className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <select
                         value={selectedStatus}
                         onChange={(e) => setSelectedStatus(e.target.value)}
@@ -603,7 +603,7 @@ const MyOrders = () => {
                   <div className="flex flex-col">
                     <label className="text-xs font-medium mb-1.5">Start Date</label>
                     <div className="relative">
-                      <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <input
                         type="date"
                         value={startDate}
@@ -616,7 +616,7 @@ const MyOrders = () => {
                   <div className="flex flex-col">
                     <label className="text-xs font-medium mb-1.5">End Date</label>
                     <div className="relative">
-                      <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <input
                         type="date"
                         value={endDate}
@@ -631,7 +631,7 @@ const MyOrders = () => {
                     <label className="text-xs font-medium mb-1.5 opacity-0">Action</label>
                     <button
                       onClick={handleFilterOrders}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
+                      className="bg-green-700 hover:bg-green-800 text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
                     >
                       Filter Orders
                     </button>
@@ -650,7 +650,7 @@ const MyOrders = () => {
                   <p className="text-gray-600 max-w-md mb-6 px-4">{getEmptyStateMessage()}</p>
                   <button
                     onClick={() => navigate('/shop')}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                    className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-md font-medium transition-colors"
                   >
                     Start Shopping
                   </button>
@@ -698,7 +698,7 @@ const MyOrders = () => {
                           <div className="text-right">
                             <button
                               onClick={() => handleViewDetails(order)}
-                              className="text-green-600 hover:text-green-700 text-sm font-medium underline cursor-pointer"
+                              className="text-green-700 hover:text-green-700 text-sm font-medium underline cursor-pointer"
                             >
                               View Details
                             </button>
@@ -764,7 +764,7 @@ const MyOrders = () => {
                         disabled={currentPage === 1}
                         className={`flex items-center gap-1 px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
                           currentPage === 1
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                             : 'bg-white text-gray-700 hover:bg-gray-50'
                         }`}
                       >
@@ -776,7 +776,7 @@ const MyOrders = () => {
                         disabled={currentPage === totalPages}
                         className={`flex items-center gap-1 px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
                           currentPage === totalPages
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                             : 'bg-white text-gray-700 hover:bg-gray-50'
                         }`}
                       >
@@ -883,7 +883,7 @@ const MyOrders = () => {
                       <button
                         onClick={() => handleSubmitReview(selectedOrder)}
                         disabled={submittingReview}
-                        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        className="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
                       >
                         {submittingReview ? 'Submitting…' : 'Submit review'}
                       </button>
@@ -1009,7 +1009,7 @@ const MyOrders = () => {
 
                     {fetchingDetails ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <Loader2 className="w-6 h-6 animate-spin text-green-700 mr-2" />
                         <span className="text-sm text-gray-600">Loading pickup details...</span>
                       </div>
                     ) : orderDetails ? (
@@ -1042,7 +1042,7 @@ const MyOrders = () => {
                                   onClick={() =>
                                     handleCopy(orderDetails.pickupDetails?.pickupCode || '', 'code')
                                   }
-                                  className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+                                  className="p-1.5 text-green-700 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
                                   title="Copy Code"
                                 >
                                   {copiedText === 'code' ? (
@@ -1069,7 +1069,7 @@ const MyOrders = () => {
                             {orderDetails.business?.contact?.phone && (
                               <a
                                 href={`tel:${orderDetails.business.contact.phone}`}
-                                className="flex items-center gap-1.5 text-xs text-green-600 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
+                                className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
                               >
                                 <Phone className="w-3.5 h-3.5" />
                                 Call Store
@@ -1080,7 +1080,7 @@ const MyOrders = () => {
                             {/* Name and Address */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-1">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
+                                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
                                   Store Name
                                 </span>
                                 <p className="font-bold text-gray-900">
@@ -1089,7 +1089,7 @@ const MyOrders = () => {
                               </div>
                               {orderDetails.pickupDetails?.pickupTime && (
                                 <div className="space-y-1">
-                                  <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
+                                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
                                     Pickup Window
                                   </span>
                                   <p className="font-semibold text-gray-700">
@@ -1101,7 +1101,7 @@ const MyOrders = () => {
 
                             <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="space-y-1 max-w-md">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">
+                                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
                                   Store Address
                                 </span>
                                 <div className="flex items-start gap-1">
@@ -1122,11 +1122,11 @@ const MyOrders = () => {
                                           'address'
                                         )
                                       }
-                                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                      className="p-1 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
                                       title="Copy Address"
                                     >
                                       {copiedText === 'address' ? (
-                                        <Check className="w-3.5 h-3.5 text-green-600" />
+                                        <Check className="w-3.5 h-3.5 text-green-700" />
                                       ) : (
                                         <Copy className="w-3.5 h-3.5" />
                                       )}
@@ -1141,7 +1141,7 @@ const MyOrders = () => {
                                     href={`https://www.google.com/maps/dir/?api=1&destination=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
+                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
                                   >
                                     <Navigation className="w-3.5 h-3.5" />
                                     Google Maps
@@ -1203,7 +1203,7 @@ const MyOrders = () => {
 
                     {fetchingDetails ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-green-600 mr-2" />
+                        <Loader2 className="w-6 h-6 animate-spin text-green-700 mr-2" />
                         <span className="text-sm text-gray-600">
                           Loading live tracking details...
                         </span>
@@ -1214,7 +1214,7 @@ const MyOrders = () => {
                         {orderDetails.delivery?.rider ? (
                           <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
                             <div className="flex items-center gap-3">
-                              <div className="bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
+                              <div className="bg-green-700 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
                                 {orderDetails.delivery.riderName?.charAt(0) || 'R'}
                               </div>
                               <div>

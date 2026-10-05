@@ -1292,7 +1292,7 @@ const WebsiteAdminPayouts = () => {
                                   onClick={() =>
                                     setActionModal({ open: true, payout, action: 'complete' })
                                   }
-                                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
+                                  className="px-3 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg text-xs font-medium transition-colors"
                                 >
                                   Mark Complete
                                 </button>
@@ -1429,7 +1429,7 @@ const WebsiteAdminPayouts = () => {
                 disabled={processingId === actionModal.payout?._id}
                 className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors font-medium disabled:opacity-50 ${
                   actionModal.action === 'complete'
-                    ? 'bg-green-600 hover:bg-green-700'
+                    ? 'bg-green-700 hover:bg-green-800'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
