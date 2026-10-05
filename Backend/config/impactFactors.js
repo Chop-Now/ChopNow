@@ -46,7 +46,7 @@
  * stored orders record which table produced them.
  */
 
-const FACTORS_VERSION = '2026-10-v1';
+const FACTORS_VERSION = '2026-10-v2';
 
 // Keys match the Listing.category enum.
 // basis: 'published' = the factors are taken from the published data listed
@@ -57,7 +57,7 @@ const CATEGORY_FACTORS = {
     label: 'Meat & Seafood',
     basis: 'published',
     defaultWeightKg: 0.4,
-    co2ePerKg: 10, // = the lowest main meat (poultry 9.9); pork 12.3, fish 13.6, lamb 40, beef 33-99
+    co2ePerKg: 12, // ~pork (12.3), between poultry 9.9 and farmed fish 13.6; lamb 40, beef 33-99 are left out
     waterPerKg: 4500, // = chicken (4,325); pork 5,988, sheep/goat 8,763, beef 15,415
   },
   dairy: {
