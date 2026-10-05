@@ -226,9 +226,9 @@ const Cart = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {getTotalCartItems() === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
+            <h1 className="text-xl font-semibold mb-4" style={{ color: 'var(--color-textColor)' }}>
               Your cart is empty
-            </p>
+            </h1>
             <button
               onClick={() => {
                 navigate('/shop');

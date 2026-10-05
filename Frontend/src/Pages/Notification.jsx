@@ -686,7 +686,7 @@ const Notification = () => {
                               </p>
 
                               {/* Quick info preview */}
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
                                 <span>{notification.timestamp}</span>
                                 {meta.orderNumber && (
                                   <span className="bg-gray-100 px-2 py-0.5 rounded">
