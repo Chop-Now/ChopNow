@@ -132,6 +132,20 @@ describe('impactForItem', () => {
   });
 });
 
+describe('seafood is its own category', () => {
+  it('uses its own factors, separate from meat', () => {
+    const fish = impactForItem({ quantity: 1, title: 'Tilapia' }, { category: 'seafood' });
+    const meat = impactForItem({ quantity: 1, title: 'Goat' }, { category: 'meat' });
+    expect(fish.category).toBe('seafood');
+    expect(fish.co2e).toBeCloseTo(
+      CATEGORY_FACTORS.seafood.defaultWeightKg * CATEGORY_FACTORS.seafood.co2ePerKg,
+      3
+    );
+    expect(CATEGORY_FACTORS.seafood.co2ePerKg).not.toBe(CATEGORY_FACTORS.meat.co2ePerKg);
+    expect(meat.category).toBe('meat');
+  });
+});
+
 describe('impactForItems', () => {
   it('sums lines, counts meals as items, and looks listings up by id', () => {
     const listings = new Map([
@@ -193,6 +207,7 @@ describe('the factor table and methodology()', () => {
     const basisOf = Object.fromEntries(methodology().categories.map((c) => [c.key, c.basis]));
     expect(basisOf).toEqual({
       meat: 'published',
+      seafood: 'partial',
       dairy: 'published',
       'fruit-veg': 'published',
       pantry: 'published',

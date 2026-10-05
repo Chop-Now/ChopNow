@@ -4,6 +4,12 @@ import { ArrowLeft } from 'lucide-react';
 import Footer from '../Components/Footer';
 import { analyticsService } from '../services';
 
+const BASIS_LABELS = {
+  published: 'Published data',
+  partial: 'Published CO₂e, estimated water',
+  estimate: 'Our estimate',
+};
+
 const ImpactMethodology = () => {
   const [method, setMethod] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -91,9 +97,7 @@ const ImpactMethodology = () => {
                           <td className="py-2 pr-4">{c.defaultWeightKg}</td>
                           <td className="py-2 pr-4">{c.co2ePerKg}</td>
                           <td className="py-2 pr-4">{c.waterPerKg.toLocaleString()}</td>
-                          <td className="py-2">
-                            {c.basis === 'published' ? 'Published data' : 'Our estimate'}
-                          </td>
+                          <td className="py-2">{BASIS_LABELS[c.basis] || 'Our estimate'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -101,10 +105,12 @@ const ImpactMethodology = () => {
                 </div>
                 <p className="mt-3">
                   <strong>Published data</strong> means the figures follow the sources listed below.{' '}
-                  <strong>Our estimate</strong> means that kind of food is not covered by those
-                  sources, so we estimated it from similar foods (for example, baked goods use wheat
-                  as a stand-in, and prepared meals are based on a typical plate of rice, chicken
-                  and vegetables). Treat those rows as less certain.
+                  <strong>Published CO₂e, estimated water</strong> means the emissions figure
+                  follows the sources but the water figure does not (fish is not in the water
+                  tables). <strong>Our estimate</strong> means that kind of food is not covered by
+                  those sources, so we estimated it from similar foods (for example, baked goods use
+                  wheat as a stand-in, and prepared meals are based on a typical plate of rice,
+                  chicken and vegetables). Treat those rows as less certain.
                 </p>
                 <p className="text-xs mt-3">Method version {method.version}</p>
               </>

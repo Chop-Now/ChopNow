@@ -40,25 +40,34 @@
  *    oil crops 2,364, fruits 962, starchy roots 387, vegetables 322.
  *  NOT in those datasets, so the matching factors are our own estimates:
  *    prepared meals, baked goods (wheat is used as the proxy), beverages
- *    (other than soy milk and wine) and the "other" category.
+ *    (other than soy milk and wine), the water footprint of fish and seafood,
+ *    and the "other" category.
  *
  * Change a number here and the whole platform follows; bump FACTORS_VERSION so
  * stored orders record which table produced them.
  */
 
-const FACTORS_VERSION = '2026-10-v3';
+const FACTORS_VERSION = '2026-10-v4';
 
 // Keys match the Listing.category enum.
 // basis: 'published' = the factors are taken from the published data listed
-// above; 'estimate' = our own estimate, because that kind of food is not in
+// above; 'partial' = CO2e is published but the water figure is our own
+// estimate; 'estimate' = our own estimate, because that kind of food is not in
 // those datasets. The methodology page shows this to the public.
 const CATEGORY_FACTORS = {
   meat: {
-    label: 'Meat & Seafood',
+    label: 'Meat & Poultry',
     basis: 'published',
     defaultWeightKg: 0.4,
-    co2ePerKg: 13.6, // = farmed fish (13.6), above pork 12.3 and poultry 9.9; lamb 40, beef 33-99 are left out
+    co2ePerKg: 12, // ~pork (12.3), between poultry 9.9 and farmed fish 13.6; lamb 40, beef 33-99 are left out
     waterPerKg: 4500, // = chicken (4,325); pork 5,988, sheep/goat 8,763, beef 15,415
+  },
+  seafood: {
+    label: 'Fish & Seafood',
+    basis: 'partial',
+    defaultWeightKg: 0.4,
+    co2ePerKg: 13.6, // = farmed fish (13.6); farmed prawns are 26.9, so this leans low
+    waterPerKg: 3000, // our estimate: fish is not in the Mekonnen & Hoekstra tables
   },
   dairy: {
     label: 'Dairy & Eggs',
