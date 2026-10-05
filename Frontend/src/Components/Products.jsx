@@ -274,7 +274,7 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
         {!productsLoading && currentProducts.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6">
             {currentProducts.map((product, index) => (
-              <ProductCard key={product._id || index} product={product} />
+              <ProductCard key={product._id || index} product={product} priority={index < 4} />
             ))}
           </div>
         )}

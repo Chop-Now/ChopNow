@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { optimizedImage, optimizedSrcSet } from '../utils/imageUrl';
 
 const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
 
@@ -35,11 +36,14 @@ export default function PhotoCarousel({ images = [], alt = '' }) {
         {photos.map((src, i) => (
           <img
             key={src + i}
-            src={src}
+            src={optimizedImage(src, 800)}
+            srcSet={optimizedSrcSet(src, [480, 800, 1200])}
+            sizes="100vw"
             alt={i === 0 ? alt : `${alt} - photo ${i + 1}`}
             width="400"
             height="300"
             loading={i === 0 ? 'eager' : 'lazy'}
+            fetchPriority={i === 0 ? 'high' : undefined}
             decoding="async"
             onError={(e) => {
               if (!e.currentTarget.src.endsWith(PLACEHOLDER_IMAGE)) {

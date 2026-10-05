@@ -3,10 +3,11 @@ import React, { useCallback, memo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import ExpiryCountdown from './ui/ExpiryCountdown';
+import { optimizedImage, optimizedSrcSet } from '../utils/imageUrl';
 
 const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
 
-const ProductCard = memo(({ product }) => {
+const ProductCard = memo(({ product, priority = false }) => {
   const { addToCart, removeFromCart, cartItems, setSearchQuery } = useAppContext();
   const navigate = useNavigate();
 
@@ -46,11 +47,14 @@ const ProductCard = memo(({ product }) => {
       <div className="relative h-32 md:h-40 overflow-hidden">
         <img
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          src={product.image?.[0] || PLACEHOLDER_IMAGE}
+          src={optimizedImage(product.image?.[0], 480) || PLACEHOLDER_IMAGE}
+          srcSet={optimizedSrcSet(product.image?.[0])}
+          sizes="(min-width: 768px) 25vw, 50vw"
           alt=""
           width="400"
           height="300"
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
           decoding="async"
           onError={(e) => {
             if (!e.currentTarget.src.endsWith(PLACEHOLDER_IMAGE)) {
