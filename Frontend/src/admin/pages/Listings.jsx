@@ -331,7 +331,7 @@ export const AllListings = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="flex snap-x gap-3 overflow-x-auto md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible [&>*]:min-w-[11rem] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:min-w-0">
         {statsCards.map((stat, index) => (
           <div
             key={index}
@@ -515,7 +515,7 @@ export const AllListings = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
                         <input
                           type="checkbox"
                           className="sr-only peer"
@@ -1215,7 +1215,7 @@ export const NewListing = () => {
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
                     Recurring Listing
                   </h3>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
                     <input
                       type="checkbox"
                       name="isRecurring"
@@ -1942,7 +1942,7 @@ const EditListing = ({ product, onBack }) => {
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
                     Recurring Listing
                   </h3>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
                     <input
                       type="checkbox"
                       name="isRecurring"

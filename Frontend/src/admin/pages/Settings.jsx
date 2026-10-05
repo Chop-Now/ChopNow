@@ -42,6 +42,7 @@ import {
 } from '../../services';
 import LocationPicker from '../../Components/maps/LocationPicker';
 import ConfirmationModal from '../components/ConfirmationModal';
+import SettingsAccordion from '../components/SettingsAccordion';
 import toast from 'react-hot-toast';
 import { compressImage } from '../../utils/compressImage';
 
@@ -156,6 +157,21 @@ const Settings = ({ initialTab = 'profile' }) => {
     sendWeeklyReport: true,
   });
   const [platformSettingsLoading, setPlatformSettingsLoading] = useState(false);
+  // The values as last loaded/saved, to tell the admin when edits aren't saved yet.
+  const [savedPlatformSettings, setSavedPlatformSettings] = useState(null);
+  const platformDirty =
+    savedPlatformSettings !== null &&
+    JSON.stringify(platformSettings) !== JSON.stringify(savedPlatformSettings);
+
+  useEffect(() => {
+    if (!platformDirty) return undefined;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [platformDirty]);
 
   // Load platform settings from API (admin only)
   useEffect(() => {
@@ -168,7 +184,7 @@ const Settings = ({ initialTab = 'profile' }) => {
           setPlatformSettingsLoading(true);
           const settings = await settingsService.getAllSettings();
           if (!isMounted) return;
-          setPlatformSettings({
+          const loaded = {
             platformName: settings.platformName || 'ChopNow',
             platformTagline: settings.platformTagline || 'Save Food, Save Money, Save the Planet',
             supportEmail: settings.supportEmail || 'chopnow.app@gmail.com',
@@ -192,7 +208,9 @@ const Settings = ({ initialTab = 'profile' }) => {
             sendPayoutNotification: settings.sendPayoutNotification ?? true,
             sendNewVendorAlert: settings.sendNewVendorAlert ?? true,
             sendWeeklyReport: settings.sendWeeklyReport ?? true,
-          });
+          };
+          setPlatformSettings(loaded);
+          setSavedPlatformSettings(loaded);
         } catch (error) {
           if (!isMounted) return;
           console.error('Error loading platform settings:', error);
@@ -642,6 +660,7 @@ const Settings = ({ initialTab = 'profile' }) => {
     try {
       setPlatformSettingsLoading(true);
       await settingsService.updateSettings(platformSettings);
+      setSavedPlatformSettings(platformSettings);
       toast.success('Platform settings saved successfully! Changes will take effect immediately.');
     } catch (error) {
       console.error('Error saving platform settings:', error);
@@ -777,7 +796,17 @@ const Settings = ({ initialTab = 'profile' }) => {
                     key={item.id}
                     role="tab"
                     aria-selected={activeTab === item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => {
+                      if (
+                        platformDirty &&
+                        activeTab === 'platform' &&
+                        item.id !== 'platform' &&
+                        !window.confirm('You have unsaved platform changes. Leave without saving?')
+                      ) {
+                        return;
+                      }
+                      setActiveTab(item.id);
+                    }}
                     className={`flex shrink-0 items-center space-x-2.5 whitespace-nowrap px-3 py-2.5 rounded-lg transition-all text-sm cursor-pointer lg:w-full ${
                       activeTab === item.id
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm'
@@ -1336,20 +1365,23 @@ const Settings = ({ initialTab = 'profile' }) => {
               </div>
 
               {/* General Settings */}
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                      General Settings
-                    </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Basic platform information
-                    </p>
-                  </div>
-                </div>
+              <SettingsAccordion
+                header={
+                  <>
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        General Settings
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Basic platform information
+                      </p>
+                    </div>
+                  </>
+                }
+              >
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -1406,23 +1438,26 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </SettingsAccordion>
 
               {/* Commission & Payout Settings */}
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                    <Percent className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                      Commission & Payouts
-                    </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Configure fees and payout schedules
-                    </p>
-                  </div>
-                </div>
+              <SettingsAccordion
+                header={
+                  <>
+                    <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                      <Percent className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        Commission & Payouts
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Configure fees and payout schedules
+                      </p>
+                    </div>
+                  </>
+                }
+              >
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -1590,23 +1625,26 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </span>
                   </label>
                 </div>
-              </div>
+              </SettingsAccordion>
 
               {/* Feature Toggles */}
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <ToggleLeft className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                      Feature Toggles
-                    </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Enable or disable platform features
-                    </p>
-                  </div>
-                </div>
+              <SettingsAccordion
+                header={
+                  <>
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <ToggleLeft className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        Feature Toggles
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Enable or disable platform features
+                      </p>
+                    </div>
+                  </>
+                }
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     {
@@ -1654,7 +1692,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                         </h3>
                         <p className="text-xs text-slate-600 dark:text-slate-400">{feature.desc}</p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
                         <input
                           type="checkbox"
                           checked={platformSettings[feature.key]}
@@ -1674,23 +1712,26 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </SettingsAccordion>
 
               {/* Notification Preferences */}
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                      Admin Notifications
-                    </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Configure which notifications you receive
-                    </p>
-                  </div>
-                </div>
+              <SettingsAccordion
+                header={
+                  <>
+                    <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        Admin Notifications
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Configure which notifications you receive
+                      </p>
+                    </div>
+                  </>
+                }
+              >
                 <div className="space-y-3">
                   {[
                     {
@@ -1726,7 +1767,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                           {notification.desc}
                         </p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
                         <input
                           type="checkbox"
                           checked={platformSettings[notification.key]}
@@ -1740,10 +1781,18 @@ const Settings = ({ initialTab = 'profile' }) => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </SettingsAccordion>
 
               {/* Save Button */}
-              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none flex items-center justify-end">
+              <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none flex items-center justify-end gap-3">
+                {platformDirty && (
+                  <p
+                    className="mr-auto text-xs font-medium text-amber-700 dark:text-amber-400"
+                    role="status"
+                  >
+                    Unsaved changes
+                  </p>
+                )}
                 <button
                   onClick={handleSavePlatformSettings}
                   disabled={platformSettingsLoading}

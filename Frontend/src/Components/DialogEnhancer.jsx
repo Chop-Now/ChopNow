@@ -78,6 +78,8 @@ export default function DialogEnhancer() {
     };
 
     const onKeyDown = (e) => {
+      // A viewer stacked on top of a dialog (e.g. a document lightbox) handles its own keys.
+      if (document.querySelector('[data-overlay-viewer]')) return;
       const backdrop = Array.from(open.keys()).pop();
       if (!backdrop) return;
       const panel = panelOf(backdrop);

@@ -21,6 +21,7 @@ import {
   ArrowDownUp,
 } from 'lucide-react';
 import { userService } from '../../services';
+import DocumentViewer from '../components/DocumentViewer';
 import toast from 'react-hot-toast';
 
 // Details Modal Component
@@ -28,6 +29,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [submittingAction, setSubmittingAction] = useState(false);
+  const [viewing, setViewing] = useState(null);
 
   const handleApprove = async () => {
     setSubmittingAction(true);
@@ -70,6 +72,13 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
   return (
     <div className="fixed inset-0 bg-black/55 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200/50 dark:border-slate-700/50 my-auto shadow-2xl animate-scaleIn">
+        {viewing && (
+          <DocumentViewer
+            url={viewing.url}
+            label={viewing.label}
+            onClose={() => setViewing(null)}
+          />
+        )}
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
           <div>
@@ -199,11 +208,21 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     src={rider.riderDetails.nationalIdPhoto}
                     alt="National ID Copy"
                     className="w-full h-40 object-cover rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer"
-                    onClick={() => window.open(rider.riderDetails.nationalIdPhoto, '_blank')}
+                    onClick={() =>
+                      setViewing({
+                        url: rider.riderDetails.nationalIdPhoto,
+                        label: `${rider.firstName || 'Rider'} - National ID`,
+                      })
+                    }
                   />
                 ) : (
                   <div
-                    onClick={() => window.open(rider.riderDetails?.nationalIdPhoto, '_blank')}
+                    onClick={() =>
+                      setViewing({
+                        url: rider.riderDetails?.nationalIdPhoto,
+                        label: `${rider.firstName || 'Rider'} - National ID`,
+                      })
+                    }
                     className="w-full h-40 bg-slate-100 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                   >
                     <FileText className="w-8 h-8 text-slate-400" />
@@ -234,11 +253,21 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     src={rider.riderDetails.vehiclePhoto}
                     alt="Vehicle Copy"
                     className="w-full h-40 object-cover rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer"
-                    onClick={() => window.open(rider.riderDetails.vehiclePhoto, '_blank')}
+                    onClick={() =>
+                      setViewing({
+                        url: rider.riderDetails.vehiclePhoto,
+                        label: `${rider.firstName || 'Rider'} - Vehicle`,
+                      })
+                    }
                   />
                 ) : (
                   <div
-                    onClick={() => window.open(rider.riderDetails?.vehiclePhoto, '_blank')}
+                    onClick={() =>
+                      setViewing({
+                        url: rider.riderDetails?.vehiclePhoto,
+                        label: `${rider.firstName || 'Rider'} - Vehicle`,
+                      })
+                    }
                     className="w-full h-40 bg-slate-100 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                   >
                     <FileText className="w-8 h-8 text-slate-400" />
@@ -401,14 +430,14 @@ const Riders = ({ defaultStatus = 'all' }) => {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm">
           <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Total Applicant Entries
           </p>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalRiders}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-amber-500 border-l-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-amber-500 border-l-4">
           <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Pending Review
           </p>
@@ -420,7 +449,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
             )}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-green-500 border-l-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-green-500 border-l-4">
           <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Active Approved Riders
           </p>
@@ -432,7 +461,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
             )}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm border-l-rose-500 border-l-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-rose-500 border-l-4">
           <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             Rejected Entries
           </p>

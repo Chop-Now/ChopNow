@@ -2,7 +2,17 @@ import { Clock, Truck, ShoppingCart, User, Store, Star, Loader2, AlertCircle } f
 import React, { useState, useEffect } from 'react';
 import { analyticsService } from '../../../services';
 
-const ActivityFeed = () => {
+// Where each kind of event is handled in the admin panel.
+const ACTIVITY_PAGE = {
+  user: 'all-users',
+  registration: 'all-users',
+  order: 'all-orders',
+  delivery: 'all-orders',
+  business: 'vendor-approval',
+  review: 'all-orders',
+};
+
+const ActivityFeed = ({ onNavigate }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -123,38 +133,43 @@ const ActivityFeed = () => {
 
       {/* Activities List */}
       {!loading && !error && activities.length > 0 && (
-        <div className="p-6 flex-1 overflow-y-auto">
-          <div className="space-y-4">
+        <div className="p-3 sm:p-6 flex-1 overflow-y-auto">
+          <ul className="space-y-1 sm:space-y-4">
             {activities.map((activity) => {
               const { Icon, color, bgColor } = getActivityConfig(activity.type, activity.icon);
+              const target = ACTIVITY_PAGE[activity.type];
               return (
-                <div
-                  key={activity.id}
-                  className="flex items-start space-x-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <div
-                    className={`p-2 rounded-lg ${bgColor} flex items-center justify-center mt-1`}
+                <li key={activity.id}>
+                  <button
+                    type="button"
+                    disabled={!onNavigate || !target}
+                    onClick={() => onNavigate(target)}
+                    className="flex min-h-11 w-full items-start space-x-3 rounded-xl p-2 text-left transition-colors hover:bg-slate-50 sm:space-x-4 sm:p-3 dark:hover:bg-slate-800/50"
                   >
-                    <Icon className={`w-4 h-4 ${color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
-                      {activity.title}
-                    </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                      {activity.description}
-                    </p>
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Clock className="w-3 h-3 text-slate-400" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatTimestamp(activity.timestamp)}
-                      </span>
+                    <div
+                      className={`p-2 rounded-lg ${bgColor} flex items-center justify-center mt-1`}
+                    >
+                      <Icon className={`w-4 h-4 ${color}`} />
                     </div>
-                  </div>
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold text-slate-800 dark:text-white">
+                        {activity.title}
+                      </span>
+                      <span className="block text-sm text-slate-600 dark:text-slate-400 truncate">
+                        {activity.description}
+                      </span>
+                      <div className="flex items-center space-x-1 mt-1">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatTimestamp(activity.timestamp)}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       )}
     </div>

@@ -390,7 +390,7 @@ export const AllUsers = () => {
         </p>
       </div>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="mb-4 flex snap-x gap-3 overflow-x-auto md:grid md:grid-cols-3 md:gap-4 md:overflow-visible [&>*]:min-w-[15rem] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:min-w-0">
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-4 border border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between">
             <div>

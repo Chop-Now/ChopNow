@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DocumentViewer from '../components/DocumentViewer';
 import {
   Search,
   ListFilter,
@@ -51,14 +52,21 @@ const VendorDetailsModal = ({
     onClose();
   };
 
-  const handleDocumentClick = (doc) => {
-    // In a real app, this would open the document in a viewer or download it
-    window.open(doc, '_blank');
+  const [viewing, setViewing] = useState(null);
+  const handleDocumentClick = (doc, index) => {
+    setViewing({ url: doc, label: `${vendor.name} - document ${index + 1}` });
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200/50 dark:border-slate-700/50 my-auto">
+        {viewing && (
+          <DocumentViewer
+            url={viewing.url}
+            label={viewing.label}
+            onClose={() => setViewing(null)}
+          />
+        )}
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
           <div>
@@ -164,11 +172,11 @@ const VendorDetailsModal = ({
                 {vendor.documents.map((doc, index) => (
                   <button
                     key={index}
-                    onClick={() => handleDocumentClick(doc)}
+                    onClick={() => handleDocumentClick(doc, index)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-solid/10 text-solid rounded-lg text-xs hover:bg-solid/20 transition-colors cursor-pointer"
                   >
                     <FileText className="w-3 h-3" />
-                    {doc}
+                    Document {index + 1}
                   </button>
                 ))}
               </div>
@@ -720,7 +728,7 @@ export const AllVendors = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="flex snap-x gap-3 overflow-x-auto md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible [&>*]:min-w-[11rem] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:min-w-0">
         {statsCards.map((stat, index) => (
           <div
             key={index}

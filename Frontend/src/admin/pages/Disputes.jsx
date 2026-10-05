@@ -143,6 +143,7 @@ const ResolveDisputeDialog = ({ issue, submitting, onCancel, onSubmit }) => {
                   key={value}
                   type="button"
                   onClick={() => setFundedBy(value)}
+                  aria-pressed={fundedBy === value}
                   className={`text-left p-3 rounded-lg border ${
                     fundedBy === value
                       ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
@@ -156,6 +157,16 @@ const ResolveDisputeDialog = ({ issue, submitting, onCancel, onSubmit }) => {
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300" role="status">
+              The customer gets{' '}
+              <strong>
+                RWF {(action === 'full_refund' ? orderTotal : partialAmount || 0).toLocaleString()}
+              </strong>{' '}
+              back.{' '}
+              {fundedBy === 'vendor'
+                ? "It is taken from the vendor's earnings."
+                : 'ChopNow pays it; the vendor is not charged.'}
+            </p>
           </div>
         )}
 
@@ -687,7 +698,9 @@ export const CustomerComplaints = () => {
         return (
           <button
             onClick={() => setSelectedIssue(issue)}
-            className="flex items-center gap-1 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            aria-label="Review alert"
+            title="Review alert"
+            className="flex items-center gap-1 px-3 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <ShieldAlert className="w-4 h-4" />
           </button>
@@ -733,7 +746,7 @@ export const CustomerComplaints = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="flex snap-x gap-3 overflow-x-auto md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-4 md:overflow-visible [&>*]:min-w-[11rem] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:min-w-0">
         {statsCards.map((stat, index) => (
           <div
             key={index}

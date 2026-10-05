@@ -32,7 +32,7 @@ const Content = ({ onNavigate }) => {
             <DisputesTable onNavigate={onNavigate} />
           </div>
           <div className="h-full">
-            <ActivityFeed />
+            <ActivityFeed onNavigate={onNavigate} />
           </div>
         </div>
       )}
