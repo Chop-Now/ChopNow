@@ -19,18 +19,8 @@ const listingSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Please select a category'],
-      enum: [
-        'fruit-veg',
-        'baked-goods',
-        'meals',
-        'dairy',
-        'meat',
-        'seafood',
-        'beverages',
-        'pantry',
-        'other',
-      ],
-      // categories from assets.js: 'Fruits & Veg', 'Baked Goods', 'Prepared Meals', 'Dairy & Eggs', 'Meat & Poultry', 'Fish & Seafood', 'Beverages', 'Pantry', 'Other'
+      enum: ['fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'],
+      // categories from assets.js: 'Fruits & Veg', 'Baked Goods', 'Prepared Meals', 'Dairy & Eggs', 'Meat & Seafood', 'Beverages', 'Pantry', 'Other'
       // Simplified enums or allow string? Ideally strict but let's allow string for now matching frontend values if possible or map them.
       // Frontend values: category.path which seem to be slug-like?
     },

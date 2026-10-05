@@ -128,18 +128,6 @@ describe('impact is recorded when an order completes', () => {
     expect(stored.impact.kg).toBe(4);
   });
 
-  it('uses the seafood factors for a seafood listing, not the meat ones', async () => {
-    const SEAFOOD = CATEGORY_FACTORS.seafood;
-    const { order } = await completedOrder({
-      quantity: 2,
-      listingOverrides: { title: 'Fresh Tilapia', category: 'seafood' },
-    });
-    const stored = await Order.findById(order._id);
-    expect(stored.items[0].impact.category).toBe('seafood');
-    expect(stored.impact.co2e).toBeCloseTo(2 * SEAFOOD.defaultWeightKg * SEAFOOD.co2ePerKg, 3);
-    expect(stored.impact.water).toBeCloseTo(2 * SEAFOOD.defaultWeightKg * SEAFOOD.waterPerKg, 1);
-  });
-
   it('counts an order only once, however often completion is attempted', async () => {
     const { vendorToken, business, consumer, order } = await completedOrder({ quantity: 1 });
     expect((await complete(vendorToken, order)).status).toBe(400);

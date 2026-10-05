@@ -144,19 +144,9 @@ const validateCreateListing = [
     .withMessage('Description must be at least 10 characters'),
   body('business').isMongoId().withMessage('Valid business ID is required'),
   body('category')
-    .isIn([
-      'fruit-veg',
-      'baked-goods',
-      'meals',
-      'dairy',
-      'meat',
-      'seafood',
-      'beverages',
-      'pantry',
-      'other',
-    ])
+    .isIn(['fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'])
     .withMessage(
-      'Invalid category. Must be one of: fruit-veg, baked-goods, meals, dairy, meat, seafood, beverages, pantry, other'
+      'Invalid category. Must be one of: fruit-veg, baked-goods, meals, dairy, meat, beverages, pantry, other'
     ),
   body('pricing.originalPrice')
     .optional()

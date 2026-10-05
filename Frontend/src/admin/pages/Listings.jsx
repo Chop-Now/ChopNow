@@ -24,14 +24,7 @@ import toast from 'react-hot-toast';
 import { compressImages } from '../../utils/compressImage';
 
 // Map frontend category paths to backend enum values
-// Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'seafood', 'beverages', 'pantry', 'other'
-// Categories vendors can list under that have no shopper-facing tile in
-// assets.js (the tiles need artwork).
-const EXTRA_CATEGORY_OPTIONS = [
-  { text: 'Meat & Poultry', path: 'Meat' },
-  { text: 'Fish & Seafood', path: 'Seafood' },
-];
-
+// Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
 const categoryMap = {
   // Frontend category paths from assets.js
   Vegetables: 'fruit-veg',
@@ -42,7 +35,6 @@ const categoryMap = {
   Bakery: 'baked-goods',
   Grains: 'pantry',
   Meat: 'meat',
-  Seafood: 'seafood',
   Meals: 'meals',
   Pantry: 'pantry',
   Other: 'other',
@@ -52,7 +44,6 @@ const categoryMap = {
   meals: 'meals',
   dairy: 'dairy',
   meat: 'meat',
-  seafood: 'seafood',
   beverages: 'beverages',
   pantry: 'pantry',
   other: 'other',
@@ -1007,11 +998,6 @@ export const NewListing = () => {
                           {cat.text}
                         </option>
                       ))}
-                      {EXTRA_CATEGORY_OPTIONS.map((cat) => (
-                        <option key={cat.path} value={cat.path}>
-                          {cat.text}
-                        </option>
-                      ))}
                     </select>
                   </div>
 
@@ -1736,11 +1722,6 @@ const EditListing = ({ product, onBack }) => {
                       <option value="">Select Category</option>
                       {categories.map((cat, index) => (
                         <option key={index} value={cat.path}>
-                          {cat.text}
-                        </option>
-                      ))}
-                      {EXTRA_CATEGORY_OPTIONS.map((cat) => (
-                        <option key={cat.path} value={cat.path}>
                           {cat.text}
                         </option>
                       ))}
