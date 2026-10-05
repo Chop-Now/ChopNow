@@ -145,6 +145,8 @@ const Footer = () => {
           {/* MTN Momo */}
           <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
+              loading="lazy"
+              decoding="async"
               src={assets.momo}
               alt="MTN Mobile Money"
               className="w-full h-full object-contain"
@@ -154,6 +156,8 @@ const Footer = () => {
           {/* Airtel Money */}
           <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
+              loading="lazy"
+              decoding="async"
               src={assets.airtel_money}
               alt="Airtel Money"
               className="w-full h-full object-contain"
@@ -162,12 +166,20 @@ const Footer = () => {
 
           {/* Bank */}
           <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
-            <img src={assets.bank} alt="Bank Transfer" className="w-full h-full object-contain" />
+            <img
+              loading="lazy"
+              decoding="async"
+              src={assets.bank}
+              alt="Bank Transfer"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           {/* Mastercard */}
           <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
             <img
+              loading="lazy"
+              decoding="async"
               src={assets.mastercard}
               alt="Mastercard"
               className="w-full h-full object-contain"
@@ -176,7 +188,13 @@ const Footer = () => {
 
           {/* Visa */}
           <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
-            <img src={assets.visa} alt="Visa" className="w-full h-full object-contain" />
+            <img
+              loading="lazy"
+              decoding="async"
+              src={assets.visa}
+              alt="Visa"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
       </motion.div>

@@ -61,6 +61,8 @@ const Apps = () => {
               type="button"
             >
               <img
+                loading="lazy"
+                decoding="async"
                 className="md:w-44 w-28 rounded-2xl cursor-pointer"
                 src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/appDownload/googlePlayBtn.svg"
                 alt="googlePlayBtn"
@@ -72,6 +74,8 @@ const Apps = () => {
               type="button"
             >
               <img
+                loading="lazy"
+                decoding="async"
                 className="md:w-44 w-28 rounded-2xl cursor-pointer"
                 src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/appDownload/appleStoreBtn.svg"
                 alt="appleStoreBtn"

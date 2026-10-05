@@ -207,6 +207,8 @@ const MobileMoneyPaymentModal = ({
               <input
                 id="momo-phone"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel-national"
                 placeholder="078xxxxxxx"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -223,8 +225,12 @@ const MobileMoneyPaymentModal = ({
 
             <button
               onClick={pay}
-              className="w-full py-3 rounded-xl text-white font-semibold shadow-md transition-all hover:opacity-90 cursor-pointer"
-              style={{ backgroundColor: provider === 'momo' ? '#EAB308' : '#DC2626' }}
+              className="w-full py-3 rounded-xl font-semibold shadow-md transition-all hover:opacity-90 cursor-pointer"
+              // White on MTN yellow is 1.9:1; dark text on yellow, white on red.
+              style={{
+                backgroundColor: provider === 'momo' ? '#FFCB05' : '#B91C1C',
+                color: provider === 'momo' ? '#17150f' : '#ffffff',
+              }}
             >
               Confirm & Pay RWF {amount}
             </button>

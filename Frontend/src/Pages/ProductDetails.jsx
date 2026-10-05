@@ -1,4 +1,5 @@
 import PageNavbar from '../Components/PageNavbar';
+import PhotoCarousel from '../Components/PhotoCarousel';
 import Footer from '../Components/Footer';
 import ProductCard from '../Components/ProductCard';
 import React, { useEffect, useState } from 'react';
@@ -222,8 +223,11 @@ const ProductDetails = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Left Side - Images */}
-          <div className="flex flex-col-reverse gap-3 lg:flex-row lg:gap-4 lg:w-1/2">
-            <div className="flex gap-3 overflow-x-auto lg:flex-col lg:overflow-visible">
+          <div className="lg:flex lg:flex-row lg:gap-4 lg:w-1/2">
+            <div className="lg:hidden">
+              <PhotoCarousel images={product.image} alt={product.name || 'Product'} />
+            </div>
+            <div className="hidden gap-3 lg:flex lg:flex-col">
               {(product.image || []).map((image, index) => (
                 <button
                   type="button"
@@ -234,6 +238,8 @@ const ProductDetails = () => {
                   style={{ borderColor: thumbnail === image ? 'var(--color-solid)' : '#E5E5E5' }}
                 >
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
@@ -243,13 +249,15 @@ const ProductDetails = () => {
             </div>
 
             <div
-              className="flex-1 border rounded-lg overflow-hidden relative cursor-crosshair"
+              className="hidden lg:block flex-1 border rounded-lg overflow-hidden relative cursor-crosshair"
               style={{ borderColor: '#E5E5E5' }}
               onMouseEnter={() => setShowMagnifier(true)}
               onMouseLeave={() => setShowMagnifier(false)}
               onMouseMove={handleMouseMove}
             >
               <img
+                loading="lazy"
+                decoding="async"
                 src={thumbnail || PLACEHOLDER_IMAGE}
                 alt={product.name || 'Selected product'}
                 className="w-full h-full object-contain aspect-[4/3] max-h-96"

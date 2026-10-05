@@ -362,6 +362,8 @@ const Notification = () => {
                   {meta.listingImage && (
                     <div className="mb-3">
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={meta.listingImage}
                         alt={meta.listingTitle}
                         className="w-full h-32 object-cover rounded-lg"

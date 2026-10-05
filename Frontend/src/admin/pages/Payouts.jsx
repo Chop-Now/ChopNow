@@ -1110,7 +1110,7 @@ const WebsiteAdminPayouts = () => {
           <button
             onClick={handleReleaseMTNPayouts}
             disabled={mtnPayouts.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Smartphone className="w-4 h-4" />
             Approve All Mobile Money ({mtnPayouts.length})

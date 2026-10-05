@@ -59,22 +59,22 @@ const Hero = () => {
           <div className="flex items-center gap-2 md:gap-2 border border-moringa/15 p-1.5 md:p-2 pr-3 md:pr-4 rounded-full bg-surface/85 backdrop-blur-sm whitespace-nowrap">
             <div className="flex -space-x-2">
               <img
-                src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
+                src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=400&auto=format&fm=webp&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 1"
                 className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-surface object-cover shrink-0"
               />
               <img
-                src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
+                src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400&auto=format&fm=webp&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 2"
                 className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-surface object-cover shrink-0"
               />
               <img
-                src="https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
+                src="https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=400&auto=format&fm=webp&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 3"
                 className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-surface object-cover shrink-0"
               />
               <img
-                src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
+                src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fm=webp&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHBlb3BsZXxlbnwwfHwwfHx8MA%3D%3D"
                 alt="User 4"
                 className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-surface object-cover shrink-0"
               />

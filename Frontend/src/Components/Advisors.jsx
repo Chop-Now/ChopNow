@@ -11,14 +11,14 @@ const Advisors = () => {
       description:
         'With 20+ years orchestrating cross-border supply chains. Chinedu guides our operational playbooks for scale.',
       image:
-        'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=400&h=360&fit=crop',
+        'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=75&w=400&h=360&fit=crop&fm=webp',
     },
     {
       name: 'Fatima Gaye',
       role: 'Ex-program director at EcoSavor Senegal',
       description: 'Fatima shapes our measurement framework for environmental and social impact.',
       image:
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&h=360&fit=crop',
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=75&w=400&h=360&fit=crop&fm=webp',
     },
     {
       name: 'Michael Adeyemi',
@@ -26,7 +26,7 @@ const Advisors = () => {
       description:
         'Michael keeps our product roadmap inclusive, data-informed, and grounded in African consumer behavior.',
       image:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&h=360&fit=crop',
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=75&w=400&h=360&fit=crop&fm=webp',
     },
     {
       name: 'Oluwatobi Mensah',
@@ -34,7 +34,7 @@ const Advisors = () => {
       description:
         'With deep redistribution expertise. Oluwatobi helps us forge partnerships with NGOs, schools, and food heroes.',
       image:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&h=360&fit=crop',
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=75&w=400&h=360&fit=crop&fm=webp',
     },
   ];
 

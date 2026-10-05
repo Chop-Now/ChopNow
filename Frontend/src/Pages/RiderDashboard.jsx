@@ -214,8 +214,8 @@ const RiderDashboard = () => {
                 disabled={isToggling}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
                   isOnline
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-green-500 hover:bg-green-700 text-white'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-green-700 hover:bg-green-800 text-white'
                 }`}
               >
                 {isToggling ? 'Syncing...' : isOnline ? 'Go Offline' : 'Go Online'}

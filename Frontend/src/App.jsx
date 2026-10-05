@@ -8,6 +8,7 @@ import LoadingSpinner from './Components/ui/LoadingSpinner';
 import { ProtectedRoute, RoleRoute } from './Components/ProtectedRoute';
 import useMediaQuery from './utils/useMediaQuery';
 import DialogEnhancer from './Components/DialogEnhancer';
+import GoogleAuthProvider from './Components/GoogleAuthProvider';
 import AccessibilityEnhancer from './Components/AccessibilityEnhancer';
 
 // Lazy-loaded page components for code splitting
@@ -91,8 +92,22 @@ const App = () => {
           <Routes>
             {/* ===== Public Routes ===== */}
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/login"
+              element={
+                <GoogleAuthProvider>
+                  <Login />
+                </GoogleAuthProvider>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <GoogleAuthProvider>
+                  <SignUp />
+                </GoogleAuthProvider>
+              }
+            />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/shop" element={<Shop />} />
@@ -194,7 +209,14 @@ const App = () => {
             />
 
             {/* ===== Admin Routes ===== */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin/login"
+              element={
+                <GoogleAuthProvider>
+                  <AdminLogin />
+                </GoogleAuthProvider>
+              }
+            />
             <Route path="/login/admin" element={<Navigate to="/admin/login" replace />} />
             <Route
               path="/admin"

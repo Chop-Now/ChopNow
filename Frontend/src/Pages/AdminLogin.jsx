@@ -124,6 +124,8 @@ const AdminLogin = () => {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <img
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
             src={assets.login_bg}
             alt="Fresh produce background"
@@ -227,6 +229,7 @@ const AdminLogin = () => {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-14 pl-12 pr-4 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
@@ -251,6 +254,7 @@ const AdminLogin = () => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-14 pl-12 pr-12 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"

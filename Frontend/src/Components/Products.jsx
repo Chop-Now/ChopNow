@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import ProductCard from './ProductCard';
+import { MapPin } from 'lucide-react';
 
 const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPriceRange }, ref) => {
-  const { products, searchQuery, productsLoading } = useAppContext();
+  const { products, searchQuery, productsLoading, locationStatus, requestNearby } = useAppContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileSort, setShowMobileSort] = useState(false);
@@ -202,16 +203,41 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
           </>
         )}
 
-        {/* Loading State */}
+        {/* Distances are opt-in: nothing asks for location until the shopper taps this. */}
+        {!productsLoading && locationStatus !== 'granted' && products.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={requestNearby}
+              disabled={locationStatus === 'locating'}
+              className="inline-flex items-center gap-2 rounded-full border px-4 text-sm font-medium disabled:opacity-60"
+              style={{ borderColor: 'var(--color-solid)', color: 'var(--color-solid)' }}
+            >
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+              {locationStatus === 'locating' ? 'Finding you...' : 'Show distances from me'}
+            </button>
+            {locationStatus === 'denied' && (
+              <p className="text-xs text-gray-500" role="status">
+                Location is blocked. Allow it in your browser settings to see distances.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Loading State: placeholder cards hold the grid's space so the page doesn't jump */}
         {productsLoading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="text-center">
+          <div
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6"
+            role="status"
+            aria-label="Loading products"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
-                className="w-10 h-10 border-4 border-solid border-t-transparent rounded-full animate-spin mx-auto mb-3"
-                style={{ borderColor: 'var(--color-solid)', borderTopColor: 'transparent' }}
-              ></div>
-              <p className="text-sm text-gray-500">Loading products...</p>
-            </div>
+                key={i}
+                className="h-72 animate-pulse rounded-xl border bg-gray-100"
+                style={{ borderColor: '#E5E5E5' }}
+              />
+            ))}
           </div>
         )}
 

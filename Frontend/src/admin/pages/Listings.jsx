@@ -381,7 +381,7 @@ export const AllListings = () => {
               <button className="px-3 py-1.5 bg-solidOne hover:bg-solidTwo text-white rounded-lg text-xs font-medium transition-colors">
                 Deactivate Selected
               </button>
-              <button className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition-colors">
+              <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors">
                 Delete Selected
               </button>
             </div>
@@ -876,7 +876,7 @@ export const NewListing = () => {
                         <button
                           type="button"
                           onClick={() => removeImage(img.id)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1609,7 +1609,7 @@ const EditListing = ({ product, onBack }) => {
                         <button
                           type="button"
                           onClick={() => removeImage(img.id)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3" />
                         </button>

@@ -430,14 +430,14 @@ const OrdersTable = ({ title, statusFilter }) => {
           <div className="flex gap-2">
             <button
               onClick={handleArchive}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
               <Archive className="w-3.5 h-3.5" />
               Archive
             </button>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete
@@ -943,7 +943,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                             )
                           }
                           disabled={verifyingCode}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-bold transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-700 text-white rounded-lg font-bold transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                         >
                           {verifyingCode ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1184,7 +1184,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                 <button
                   type="submit"
                   disabled={verifyingCode}
-                  className="px-4 py-2 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white rounded-lg font-bold shadow-md shadow-green-500/10 hover:shadow-green-500/20 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
+                  className="px-4 py-2 bg-green-700 hover:bg-green-800 disabled:bg-green-700 text-white rounded-lg font-bold shadow-md shadow-green-500/10 hover:shadow-green-500/20 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
                   {verifyingCode ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

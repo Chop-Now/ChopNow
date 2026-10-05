@@ -643,6 +643,8 @@ const MyOrders = () => {
               {currentOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={assets.oops}
                     alt="No orders"
                     className="w-48 h-48 mb-6 object-contain"
@@ -724,6 +726,8 @@ const MyOrders = () => {
                         >
                           <div className="flex items-center gap-3 mb-3">
                             <img
+                              loading="lazy"
+                              decoding="async"
                               src={productImage}
                               alt={productName}
                               className="w-12 h-12 rounded-full object-cover shrink-0"
@@ -948,6 +952,8 @@ const MyOrders = () => {
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-3 border rounded-lg">
                         <img
+                          loading="lazy"
+                          decoding="async"
                           src={item.product.image[0]}
                           alt={item.product.name}
                           className="w-16 h-16 object-cover rounded"
@@ -1019,6 +1025,8 @@ const MyOrders = () => {
                           {/* QR Code */}
                           <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
                             <img
+                              loading="lazy"
+                              decoding="async"
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${orderDetails.pickupDetails?.pickupCode || 'N/A'}`}
                               alt="Pickup QR Code"
                               className="w-28 h-28 sm:w-32 sm:h-32 object-contain"

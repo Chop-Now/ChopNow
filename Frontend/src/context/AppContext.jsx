@@ -23,6 +23,8 @@ const AppContextProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  // 'idle' | 'locating' | 'granted' | 'denied' | 'unavailable'
+  const [locationStatus, setLocationStatus] = useState('idle');
   const { getCurrentLocation } = useGeolocation();
 
   // Initialize cart from localStorage
@@ -496,12 +498,14 @@ const AppContextProvider = ({ children }) => {
     fetchProducts();
   }, []);
 
-  // If the browser grants geolocation, enrich the already-loaded products with
-  // real per-listing distance (km) from the nearby endpoint. Runs after the
-  // initial generic fetch so the shop page never blocks on a permission
-  // prompt; if permission is denied or unavailable, products simply keep
-  // distance: null and no badge/sort-by-distance data is shown.
-  useEffect(() => {
+  // Enrich the already-loaded products with real per-listing distance (km)
+  // from the nearby endpoint. This never asks for location on its own: it runs
+  // silently only if the browser has already granted permission, and otherwise
+  // waits for the shopper to tap "Show distances" (requestNearby). A permission
+  // prompt on first page load, before anyone has done anything, is the quickest
+  // way to get it denied. Denied/unavailable leaves products with distance: null.
+  const requestNearby = () => {
+    setLocationStatus('locating');
     getCurrentLocation(
       async ({ lat, lng }) => {
         try {
@@ -520,14 +524,27 @@ const AppContextProvider = ({ children }) => {
               )
             );
           }
+          setLocationStatus('granted');
         } catch (e) {
           console.error('Error fetching nearby distance data:', e);
+          setLocationStatus('unavailable');
         }
       },
       () => {
-        // Permission denied or geolocation unavailable - no-op, products keep distance: null.
+        // Permission denied or geolocation unavailable - products keep distance: null.
+        setLocationStatus('denied');
       }
     );
+  };
+
+  useEffect(() => {
+    if (!navigator.permissions?.query) return;
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((result) => {
+        if (result.state === 'granted') requestNearby();
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -612,6 +629,8 @@ const AppContextProvider = ({ children }) => {
     // Products
     products,
     productsLoading,
+    locationStatus,
+    requestNearby,
     refreshProducts: fetchProducts,
     searchQuery,
     setSearchQuery,

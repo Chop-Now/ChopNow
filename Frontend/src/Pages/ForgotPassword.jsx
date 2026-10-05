@@ -168,6 +168,18 @@ const ForgotPassword = () => {
   const handleOtpChange = (index, value) => {
     if (/[^0-9]/.test(value)) return; // Only numbers allowed
 
+    if (value.length > 1) {
+      // A full code (SMS/email autofill or paste) - spread it across the boxes.
+      const digits = value.slice(0, 6 - index).split('');
+      const next = [...otp];
+      digits.forEach((digit, offset) => {
+        next[index + offset] = digit;
+      });
+      setOtp(next);
+      otpRefs[Math.min(index + digits.length, 5)].current.focus();
+      return;
+    }
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -203,6 +215,8 @@ const ForgotPassword = () => {
         {/* Left Side - Branding Panel (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
           <img
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
             src={assets.login_bg}
             alt="Branding background"
@@ -245,6 +259,7 @@ const ForgotPassword = () => {
                   <Mail className="w-5 h-5 text-slate-500" />
                   <input
                     type="email"
+                    autoComplete="email"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -295,7 +310,11 @@ const ForgotPassword = () => {
                       key={i}
                       ref={otpRefs[i]}
                       type="text"
-                      maxLength="1"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                      aria-label={`Digit ${i + 1} of 6`}
+                      maxLength={i === 0 ? 6 : 1}
                       value={digit}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
@@ -364,6 +383,7 @@ const ForgotPassword = () => {
                   <Lock className="w-5 h-5 text-slate-500" />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="New Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -384,6 +404,7 @@ const ForgotPassword = () => {
                   <Lock className="w-5 h-5 text-slate-500" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="Confirm New Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

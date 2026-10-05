@@ -148,6 +148,8 @@ const RiderRegistration = () => {
         <div className="flex items-center gap-3 min-w-0">
           {isImage ? (
             <img
+              loading="lazy"
+              decoding="async"
               src={URL.createObjectURL(file)}
               alt={label}
               className="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0"

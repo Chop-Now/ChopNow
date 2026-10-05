@@ -70,8 +70,12 @@ const Categories = () => {
                   }}
                 >
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={category.image}
                     alt={category.text}
+                    width={64}
+                    height={64}
                     className="group-hover:scale-110 transition max-w-16"
                   />
                   <p className="text-xs font-medium">{category.text}</p>

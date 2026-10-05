@@ -197,6 +197,8 @@ const HowItWorks = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <img
+                loading="lazy"
+                decoding="async"
                 src={assets.fresh_produce}
                 alt="Man holding basket"
                 className="w-full h-56 md:h-72 object-cover cursor-pointer transition-transform duration-300 hover:scale-110"

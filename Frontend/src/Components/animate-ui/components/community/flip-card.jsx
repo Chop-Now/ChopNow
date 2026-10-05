@@ -45,6 +45,8 @@ export function FlipCard({ data }) {
         }}
       >
         <img
+          loading="lazy"
+          decoding="async"
           src={data.image}
           alt={data.name}
           className="w-full h-full object-cover absolute inset-0"

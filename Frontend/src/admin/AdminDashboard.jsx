@@ -1,32 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useMediaQuery, { DASHBOARD_DRAWER_QUERY } from '../utils/useMediaQuery';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import StackedTables from './components/layout/StackedTables';
+import {
+  AllListings,
+  AllOrders,
+  AllUsers,
+  AllVendors,
+  CompletedOrders,
+  CustomerComplaints,
+  DashboardNotifications,
+  Deliveries,
+  Impact,
+  Insights,
+  NewListing,
+  Overview,
+  Payouts,
+  PendingOrders,
+  RefundRequests,
+  Reports,
+  Riders,
+  RolesPermissions,
+  Settings,
+  UserActivity,
+  VendorApproval,
+} from './lazyPages';
 import Content from './components/Content/Content';
 import { AdminModeProvider } from './context/AdminModeContext';
 import { useAppContext } from '../context/AppContext';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
 import { userService } from '../services';
-// Analytics pages
-import { Overview, Reports, Insights, Impact } from './pages/Analytics';
-// Users pages
-import { AllUsers, RolesPermissions, UserActivity } from './pages/Users';
-// Orders pages
-import { AllOrders, PendingOrders, CompletedOrders, Deliveries } from './pages/Orders';
-// Listings pages
-import { AllListings, NewListing } from './pages/Listings';
-// Vendors pages
-import { AllVendors, VendorApproval } from './pages/Vendors';
 // Riders pages
-import Riders from './pages/Riders';
-// Disputes pages
-import { RefundRequests, CustomerComplaints } from './pages/Disputes';
-// Other pages
-import Payouts from './pages/Payouts';
-import Settings from './pages/Settings';
-import DashboardNotifications from './pages/DashboardNotifications';
+
+const PageFallback = () => (
+  <div
+    className="flex min-h-[40dvh] items-center justify-center"
+    role="status"
+    aria-label="Loading"
+  >
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-slate-600" />
+  </div>
+);
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -274,7 +290,7 @@ const AdminDashboard = () => {
             <div className="flex-1 overflow-y-auto bg-transparent">
               <StackedTables className="p-3 space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
                 <h1 className="sr-only">Admin panel</h1>
-                {renderPage()}
+                <Suspense fallback={<PageFallback />}>{renderPage()}</Suspense>
               </StackedTables>
             </div>
           </div>

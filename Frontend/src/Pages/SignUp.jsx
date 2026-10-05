@@ -316,6 +316,8 @@ const SignUp = () => {
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
           <img
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
             src={assets.login_bg}
             alt="Signup background"
@@ -451,6 +453,7 @@ const SignUp = () => {
                         <input
                           type="text"
                           placeholder="First name"
+                          autoComplete="given-name"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           className="bg-transparent outline-none text-sm w-full h-full"
@@ -463,6 +466,7 @@ const SignUp = () => {
                         <input
                           type="text"
                           placeholder="Last name"
+                          autoComplete="family-name"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           className="bg-transparent outline-none text-sm w-full h-full"
@@ -477,6 +481,7 @@ const SignUp = () => {
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
+                        autoComplete="email"
                         placeholder="Email address"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -510,6 +515,7 @@ const SignUp = () => {
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -542,6 +548,7 @@ const SignUp = () => {
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder="Confirm password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -874,6 +881,7 @@ const SignUp = () => {
                       <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type="email"
+                        autoComplete="email"
                         placeholder="Email address"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -907,6 +915,7 @@ const SignUp = () => {
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -939,6 +948,7 @@ const SignUp = () => {
                       <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder="Confirm password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}

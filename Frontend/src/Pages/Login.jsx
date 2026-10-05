@@ -55,6 +55,8 @@ const Login = () => {
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="w-1/2 hidden md:block md:fixed md:left-0 md:top-0 md:h-screen">
           <img
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
             src={assets.login_bg}
             alt="Login background"
@@ -187,6 +189,7 @@ const Login = () => {
                   <Mail className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type="email"
+                    autoComplete="email"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -201,6 +204,7 @@ const Login = () => {
                   <Lock className="w-5 h-5" style={{ color: 'var(--color-moringa-muted)' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

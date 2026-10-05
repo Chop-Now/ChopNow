@@ -298,6 +298,8 @@ const Cart = () => {
                       style={{ borderColor: '#E5E5E5' }}
                     >
                       <img
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                         src={product.image?.[0] || '/placeholder-food.svg'}
                         alt={product.name || 'Product'}

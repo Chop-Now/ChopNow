@@ -115,6 +115,8 @@ const AboutUs = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <img
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover object-center"
             src={sections[activeIndex].image}
             alt={sections[activeIndex].title}

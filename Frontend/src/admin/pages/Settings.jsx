@@ -1863,6 +1863,8 @@ const Settings = ({ initialTab = 'profile' }) => {
                         <input
                           type="text"
                           placeholder="Enter the code sent to your email"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
                           value={passwordOtp}
                           onChange={(e) => setPasswordOtp(e.target.value)}
                           className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"

@@ -21,6 +21,8 @@ const NotFound = () => {
         {/* Astronaut Image */}
         <div className="mb-8">
           <img
+            loading="lazy"
+            decoding="async"
             src={assets.lost}
             alt="Lost in space"
             className="w-50 h-50 object-contain drop-shadow-2xl animate-float"

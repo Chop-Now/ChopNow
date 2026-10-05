@@ -221,6 +221,8 @@ const MyProfile = () => {
           <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-200">
             {profile.avatar ? (
               <img
+                loading="lazy"
+                decoding="async"
                 src={profile.avatar}
                 alt="Avatar"
                 className="h-12 w-12 rounded-full object-cover shrink-0"
@@ -356,6 +358,8 @@ const MyProfile = () => {
                 <div className="flex items-center gap-4">
                   {profile.avatar ? (
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={profile.avatar}
                       alt="Avatar"
                       className="h-16 w-16 rounded-full object-cover"
@@ -427,6 +431,7 @@ const MyProfile = () => {
                   <label className="block text-sm font-medium text-textColor mb-2">Email</label>
                   <input
                     type="email"
+                    autoComplete="email"
                     value={profile.email}
                     disabled
                     className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm focus:outline-none cursor-not-allowed"
@@ -483,6 +488,7 @@ const MyProfile = () => {
                 <div className="relative">
                   <input
                     type={showCurrentPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
                     placeholder="Enter current password"
                     value={passwords.currentPassword}
                     onChange={(e) =>
@@ -511,6 +517,7 @@ const MyProfile = () => {
                 <div className="relative">
                   <input
                     type={showNewPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="Enter new password"
                     value={passwords.newPassword}
                     onChange={(e) =>
@@ -540,6 +547,7 @@ const MyProfile = () => {
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="Re-type new password"
                     value={passwords.confirmPassword}
                     onChange={(e) =>
@@ -569,6 +577,8 @@ const MyProfile = () => {
                   <input
                     type="text"
                     placeholder="Enter the code sent to your email"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
                     value={passwordOtp}
                     onChange={(e) => setPasswordOtp(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-solid"

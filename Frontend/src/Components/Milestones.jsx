@@ -22,7 +22,13 @@ const MilestoneCard = ({ image, badge, title, description }) => {
       style={{ transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
     >
       <div className="relative">
-        <img src={image} alt={title} className="w-full h-48 md:h-52 object-cover" />
+        <img
+          loading="lazy"
+          decoding="async"
+          src={image}
+          alt={title}
+          className="w-full h-48 md:h-52 object-cover"
+        />
         <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-semibold bg-pepper text-char">
           {badge}
         </div>
@@ -46,7 +52,7 @@ const Milestones = () => {
     },
     {
       image:
-        'https://images.unsplash.com/photo-1517821362941-f7f753200fef?q=80&w=2000&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1517821362941-f7f753200fef?q=75&w=900&auto=format&fm=webp&fit=crop',
       badge: 'Mid 2027',
       title: 'Scale to Nairobi & Accra waitlists',
       description:
@@ -54,7 +60,7 @@ const Milestones = () => {
     },
     {
       image:
-        'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2000&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=75&w=900&auto=format&fm=webp&fit=crop',
       badge: 'Late 2027',
       title: 'Rescue 150k meals across 4 cities',
       description:

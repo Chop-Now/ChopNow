@@ -82,6 +82,8 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                   className="absolute inset-0 origin-bottom"
                 >
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={testimonial.src}
                     alt={testimonial.name}
                     width={500}
