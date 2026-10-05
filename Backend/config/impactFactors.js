@@ -49,51 +49,62 @@
 const FACTORS_VERSION = '2026-10-v1';
 
 // Keys match the Listing.category enum.
+// basis: 'published' = the factors are taken from the published data listed
+// above; 'estimate' = our own estimate, because that kind of food is not in
+// those datasets. The methodology page shows this to the public.
 const CATEGORY_FACTORS = {
   meat: {
     label: 'Meat & Seafood',
+    basis: 'published',
     defaultWeightKg: 0.4,
     co2ePerKg: 10, // = the lowest main meat (poultry 9.9); pork 12.3, fish 13.6, lamb 40, beef 33-99
     waterPerKg: 4500, // = chicken (4,325); pork 5,988, sheep/goat 8,763, beef 15,415
   },
   dairy: {
     label: 'Dairy & Eggs',
+    basis: 'published',
     defaultWeightKg: 0.4,
     co2ePerKg: 4, // milk 3.2, eggs 4.7, cheese 23.9 - weighted to milk, yoghurt, eggs
     waterPerKg: 1200, // milk 1,020; eggs 3,265 and cheese are higher
   },
   meals: {
     label: 'Prepared Meals',
+    basis: 'estimate',
     defaultWeightKg: 0.45,
     co2ePerKg: 3, // our estimate: a 450 g plate of rice, chicken, veg and oil works out near 3.1; WRAP wasted food 2.7
     waterPerKg: 1500, // same plate works out near 1,400
   },
   'baked-goods': {
     label: 'Baked Goods',
+    basis: 'estimate',
     defaultWeightKg: 0.3,
     co2ePerKg: 1.4, // our estimate; wheat & rye is 1.6 per kg of grain
     waterPerKg: 1500, // cereals average 1,644
   },
   'fruit-veg': {
     label: 'Fruits & Veg',
+    basis: 'published',
     defaultWeightKg: 0.8,
     co2ePerKg: 0.6, // apples 0.4, bananas 0.9, veg 0.4-0.5, tomatoes 2.1; simple mean is about 0.7
     waterPerKg: 500, // fruits 962, vegetables 322, starchy roots 387
   },
   pantry: {
     label: 'Pantry',
+    basis: 'published',
     defaultWeightKg: 0.5,
     co2ePerKg: 2, // rice 4.5, wheat 1.6, maize 1.7, oatmeal 2.5, pulses 1-1.8, cane sugar 3.2
     waterPerKg: 1800, // cereals 1,644, pulses 4,055, oil crops 2,364
   },
   beverages: {
     label: 'Beverages',
+    basis: 'estimate',
     defaultWeightKg: 0.5,
     co2ePerKg: 0.8, // our estimate, per litre (soy milk 1.0, wine 1.8); not in the datasets
     waterPerKg: 400, // our estimate (beer is about 300, wine about 870); not verified
   },
   other: {
     label: 'Other',
+    basis: 'estimate',
     defaultWeightKg: 0.4,
     co2ePerKg: 2.5, // our estimate, below the mean of the categories above, on purpose
     waterPerKg: 1200,
@@ -261,6 +272,7 @@ function methodology() {
     categories: Object.entries(CATEGORY_FACTORS).map(([key, f]) => ({
       key,
       label: f.label,
+      basis: f.basis,
       defaultWeightKg: f.defaultWeightKg,
       co2ePerKg: f.co2ePerKg,
       waterPerKg: f.waterPerKg,

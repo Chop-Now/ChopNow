@@ -80,7 +80,8 @@ const ImpactMethodology = () => {
                         <th className="py-2 pr-4 font-semibold">Category</th>
                         <th className="py-2 pr-4 font-semibold">Typical item (kg)</th>
                         <th className="py-2 pr-4 font-semibold">CO₂e per kg</th>
-                        <th className="py-2 font-semibold">Water per kg (L)</th>
+                        <th className="py-2 pr-4 font-semibold">Water per kg (L)</th>
+                        <th className="py-2 font-semibold">Basis</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -89,12 +90,22 @@ const ImpactMethodology = () => {
                           <td className="py-2 pr-4">{c.label}</td>
                           <td className="py-2 pr-4">{c.defaultWeightKg}</td>
                           <td className="py-2 pr-4">{c.co2ePerKg}</td>
-                          <td className="py-2">{c.waterPerKg.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{c.waterPerKg.toLocaleString()}</td>
+                          <td className="py-2">
+                            {c.basis === 'published' ? 'Published data' : 'Our estimate'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                <p className="mt-3">
+                  <strong>Published data</strong> means the figures follow the sources listed below.{' '}
+                  <strong>Our estimate</strong> means that kind of food is not covered by those
+                  sources, so we estimated it from similar foods (for example, baked goods use wheat
+                  as a stand-in, and prepared meals are based on a typical plate of rice, chicken
+                  and vegetables). Treat those rows as less certain.
+                </p>
                 <p className="text-xs mt-3">Method version {method.version}</p>
               </>
             )}

@@ -188,4 +188,18 @@ describe('the factor table and methodology()', () => {
     expect(m.sources.length).toBeGreaterThan(0);
     m.sources.forEach((s) => expect(s.name && s.use).toBeTruthy());
   });
+
+  it('says publicly which categories are our own estimates', () => {
+    const basisOf = Object.fromEntries(methodology().categories.map((c) => [c.key, c.basis]));
+    expect(basisOf).toEqual({
+      meat: 'published',
+      dairy: 'published',
+      'fruit-veg': 'published',
+      pantry: 'published',
+      meals: 'estimate',
+      'baked-goods': 'estimate',
+      beverages: 'estimate',
+      other: 'estimate',
+    });
+  });
 });
