@@ -1,5 +1,5 @@
 import { assets } from '../assets/assets';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PageNavbar from '../Components/PageNavbar';
 import PickupQr from '../Components/PickupQr';
 import Footer from '../Components/Footer';
@@ -287,9 +287,13 @@ const MyOrders = () => {
       rawPaymentMethod: order.payment?.paymentMethod,
       vendor: order.business?.name || 'Unknown Vendor',
       vendorId: order.business?._id,
+      // A cash order sits in "pending payment" until the vendor takes it; to the
+      // buyer that is "awaiting the vendor", not an unpaid bill.
       status:
-        order.status?.charAt(0).toUpperCase() + order.status?.slice(1).replace(/_/g, ' ') ||
-        'Pending',
+        order.status === 'pending_payment' && order.payment?.paymentMethod === 'cash'
+          ? 'Awaiting vendor'
+          : order.status?.charAt(0).toUpperCase() + order.status?.slice(1).replace(/_/g, ' ') ||
+            'Pending',
       amount: order.pricing?.total || 0,
       type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
       order_type: order.fulfillmentType === 'delivery' ? 'Delivery' : 'Pickup',
@@ -371,6 +375,18 @@ const MyOrders = () => {
       setFilteredOrders(filtered);
     }
   }, [myOrders, mobileStatusFilter, selectedDeliveryType]);
+
+  // Open on the tab that holds the newest order (instead of an empty "Delivery /
+  // Processing" for someone whose last order was a pickup that is complete).
+  const pickedInitialTab = useRef(false);
+  useEffect(() => {
+    if (pickedInitialTab.current || myOrders.length === 0) return;
+    pickedInitialTab.current = true;
+    const latest = myOrders[0];
+    if (latest?.type) setSelectedDeliveryType(latest.type);
+    const cat = getStatusCategory(latest?.status);
+    setMobileStatusFilter(cat === 'cancelled' ? 'failed' : cat);
+  }, [myOrders]);
 
   // Handle mobile status filter change
   const handleMobileStatusChange = (status) => {

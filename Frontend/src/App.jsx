@@ -10,6 +10,7 @@ import useMediaQuery from './utils/useMediaQuery';
 import DialogEnhancer from './Components/DialogEnhancer';
 import GoogleAuthProvider from './Components/GoogleAuthProvider';
 import AccessibilityEnhancer from './Components/AccessibilityEnhancer';
+import HomeRoute from './Components/HomeRoute';
 
 // Lazy-loaded page components for code splitting
 const Home = lazy(() => import('./Pages/Home'));
@@ -92,7 +93,14 @@ const App = () => {
         <main id="main-content">
           <Routes>
             {/* ===== Public Routes ===== */}
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/"
+              element={
+                <HomeRoute>
+                  <Home />
+                </HomeRoute>
+              }
+            />
             <Route
               path="/login"
               element={

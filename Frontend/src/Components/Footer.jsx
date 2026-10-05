@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { Instagram, Linkedin, Twitter } from 'lucide-react';
+import { useIsAppMode } from '../utils/appMode';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 
@@ -20,6 +21,8 @@ const socialLinks = [
 ];
 
 const Footer = () => {
+  // Signed-in users are in the app: no marketing footer.
+  const isApp = useIsAppMode();
   const linkSections = [
     {
       title: 'Quick Links',
@@ -35,6 +38,8 @@ const Footer = () => {
       links: ['How we calculate impact', 'Terms & Conditions'],
     },
   ];
+  if (isApp) return null;
+
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-32">
       <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 text-moringa-muted">

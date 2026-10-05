@@ -316,7 +316,10 @@ export const getCategoryBackend = (category) => {
     other: 'other',
   };
 
-  return categoryMap[category] || 'other';
+  // Case-insensitive: shop URLs are lower-cased ("/shop/vegetables").
+  const wanted = typeof category === 'string' ? category.toLowerCase() : '';
+  const match = Object.keys(categoryMap).find((key) => key.toLowerCase() === wanted);
+  return match ? categoryMap[match] : 'other';
 };
 
 /**

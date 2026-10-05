@@ -2,6 +2,7 @@ import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'rea
 import { useAppContext } from '../context/AppContext';
 import ProductCard from './ProductCard';
 import { MapPin } from 'lucide-react';
+import { getCategoryBackend } from '../utils/transforms';
 
 const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPriceRange }, ref) => {
   const { products, searchQuery, productsLoading, locationStatus, requestNearby } = useAppContext();
@@ -36,10 +37,11 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
     let filtered = products.filter((product) => product?.inStock);
 
     // Filter by category if provided
-    if (category) {
-      filtered = filtered.filter(
-        (product) => product?.category?.toLowerCase() === category.toLowerCase()
-      );
+    // The category tiles link to paths like /shop/vegetables while listings carry
+    // backend values like "fruit-veg", so compare both as backend categories.
+    if (category && category.toLowerCase() !== 'all') {
+      const wanted = getCategoryBackend(category);
+      filtered = filtered.filter((product) => getCategoryBackend(product?.category) === wanted);
     }
 
     // Filter by search query

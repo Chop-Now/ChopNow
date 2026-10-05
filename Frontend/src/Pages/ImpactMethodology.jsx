@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import BackLink from '../Components/ui/BackLink';
 import Footer from '../Components/Footer';
 import { analyticsService } from '../services';
 
@@ -23,13 +22,7 @@ const ImpactMethodology = () => {
     <div className="min-h-screen bg-fufu">
       <div className="bg-fufu/95 backdrop-blur-md border-b border-fufu-border sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <Link
-            to="/"
-            className="inline-flex min-h-11 items-center gap-2 text-moringa-muted hover:text-moringa transition"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </Link>
+          <BackLink />
         </div>
       </div>
 

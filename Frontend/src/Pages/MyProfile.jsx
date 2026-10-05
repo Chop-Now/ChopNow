@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { clearAccessToken } from '../services/api';
 import { compressImage } from '../utils/compressImage';
+import PageNavbar from '../Components/PageNavbar';
 
 const MyProfile = () => {
   const { addBusinessRole, availableRoles } = useAppContext();
@@ -202,6 +203,8 @@ const MyProfile = () => {
 
   return (
     <div className="bg-gray-80 min-h-screen">
+      {/* Phones keep the app's tab bar here (Account highlighted); desktop has the sidebar. */}
+      <PageNavbar tabBarOnly />
       <div className="flex w-full">
         {/* Settings Menu - Sidebar */}
         <aside className="hidden lg:block w-72 bg-white border-r border-gray-200 p-6 h-screen fixed left-0 top-0 shrink-0 overflow-y-auto">

@@ -14,6 +14,10 @@ import {
   ClipboardList,
   Leaf,
   LogIn,
+  CircleHelp,
+  Mail,
+  FileText,
+  Shield,
 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
@@ -26,18 +30,38 @@ const TABS = [
   { to: '/my-impact', label: 'Impact', Icon: Leaf },
 ];
 
+// Help and legal pages live here (and in the account menu) instead of a website footer.
+const HELP_LINKS = [
+  { to: '/faq', label: 'Help & FAQ', Icon: CircleHelp },
+  { to: '/contact-us', label: 'Contact us', Icon: Mail },
+  { to: '/how-we-calculate-impact', label: 'How impact is calculated', Icon: Leaf },
+  { to: '/terms-of-service', label: 'Terms & conditions', Icon: FileText },
+  { to: '/privacy-policy', label: 'Privacy policy', Icon: Shield },
+];
+
+// The current tab sits in a Now Yellow pill with a heavier icon and label, so
+// "where am I" is obvious at a glance (dark green vs. muted green was not).
+const tabIconClass = (active) =>
+  `relative flex h-8 w-14 items-center justify-center rounded-full transition-colors ${
+    active ? 'bg-yellow text-moringa' : 'text-moringa-muted'
+  }`;
+const tabLabelClass = (active) =>
+  active ? 'font-semibold text-moringa' : 'font-medium text-moringa-muted';
+
 /** Thumb-reach navigation for phones: the four main destinations plus Account. */
 const MobileTabBar = ({ cartCount, accountOpen, onAccount }) => {
+  const { pathname } = useLocation();
+
   useEffect(() => {
     // Pages reserve room for the bar so their last row isn't hidden behind it.
     document.body.classList.add('has-tab-bar');
     return () => document.body.classList.remove('has-tab-bar');
   }, []);
 
-  const tabClass = (active) =>
-    `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-      active ? 'text-moringa' : 'text-moringa-muted'
-    }`;
+  const tabClass =
+    'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs cursor-pointer';
+  const onProfile = pathname === '/my-profile';
+  const accountActive = accountOpen || onProfile;
 
   return (
     <nav
@@ -48,18 +72,22 @@ const MobileTabBar = ({ cartCount, accountOpen, onAccount }) => {
         <NavLink
           key={to}
           to={to}
-          className={({ isActive }) => tabClass(isActive)}
+          className={tabClass}
           aria-label={label === 'Cart' && cartCount > 0 ? `Cart, ${cartCount} items` : label}
         >
-          <span className="relative">
-            <Icon className="h-6 w-6" aria-hidden="true" />
-            {label === 'Cart' && cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-pepper px-1 text-xs font-semibold leading-none text-white">
-                {cartCount > 99 ? '99+' : cartCount}
+          {({ isActive }) => (
+            <>
+              <span className={tabIconClass(isActive)}>
+                <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
+                {label === 'Cart' && cartCount > 0 && (
+                  <span className="absolute top-0 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pepper px-1 text-xs font-semibold leading-none text-white">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </span>
-            )}
-          </span>
-          {label}
+              <span className={tabLabelClass(isActive)}>{label}</span>
+            </>
+          )}
         </NavLink>
       ))}
       <button
@@ -67,10 +95,13 @@ const MobileTabBar = ({ cartCount, accountOpen, onAccount }) => {
         onClick={onAccount}
         aria-haspopup="dialog"
         aria-expanded={accountOpen}
-        className={`${tabClass(accountOpen)} cursor-pointer`}
+        aria-current={onProfile ? 'page' : undefined}
+        className={tabClass}
       >
-        <User className="h-6 w-6" aria-hidden="true" />
-        Account
+        <span className={tabIconClass(accountActive)}>
+          <User className="h-6 w-6" strokeWidth={accountActive ? 2.5 : 2} aria-hidden="true" />
+        </span>
+        <span className={tabLabelClass(accountActive)}>Account</span>
       </button>
     </nav>
   );
@@ -113,7 +144,7 @@ const AccountSheet = ({ open, onClose, children }) => {
   );
 };
 
-const PageNavbar = ({ onMobileFilterClick, hideTabBar = false }) => {
+const PageNavbar = ({ onMobileFilterClick, hideTabBar = false, tabBarOnly = false }) => {
   const [open, setOpen] = React.useState(false);
   const [showProfileMenu, setShowProfileMenu] = React.useState(false);
   const navigate = useNavigate();
@@ -144,270 +175,295 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false }) => {
     }
   }, [searchQuery]);
 
+  const onCart = location.pathname === '/cart';
+  const onNotifications = location.pathname === '/notifications';
+  const desktopLink = ({ isActive }) =>
+    `text-sm border-b-2 pb-0.5 transition-opacity ${
+      isActive ? 'font-semibold border-yellow' : 'font-medium border-transparent hover:opacity-70'
+    }`;
+
   return (
     <>
-      <nav
-        className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32 py-2.5 md:py-4 border-b transition-all bg-white shadow-sm"
-        style={{ borderColor: '#E5E5E5' }}
-      >
-        <NavLink to="/" aria-label="ChopNow home" className="flex min-h-11 items-center">
-          <img src={assets.wordmarklogo} alt="ChopNow" className="h-8 md:h-9 w-auto" />
-        </NavLink>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6 lg:gap-8">
-          <NavLink
-            to="/shop"
-            className="text-sm font-medium hover:opacity-70 transition-opacity"
-            style={{ color: 'var(--color-textColor)' }}
-          >
-            Shop
-          </NavLink>
-          <NavLink
-            to="/my-orders"
-            className="text-sm font-medium hover:opacity-70 transition-opacity"
-            style={{ color: 'var(--color-textColor)' }}
-          >
-            My orders
-          </NavLink>
-          <NavLink
-            to="/my-impact"
-            className="text-sm font-medium hover:opacity-70 transition-opacity"
-            style={{ color: 'var(--color-textColor)' }}
-          >
-            Impact
+      {!tabBarOnly && (
+        <nav
+          className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32 py-2.5 md:py-4 border-b transition-all bg-white shadow-sm"
+          style={{ borderColor: '#E5E5E5' }}
+        >
+          <NavLink to="/" aria-label="ChopNow home" className="flex min-h-11 items-center">
+            <img src={assets.wordmarklogo} alt="ChopNow" className="h-8 md:h-9 w-auto" />
           </NavLink>
 
-          {!hideSearch && (
-            <div
-              className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full"
-              style={{ border: '1px solid var(--color-moringa-muted)', backgroundColor: 'white' }}
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+            <NavLink to="/shop" className={desktopLink} style={{ color: 'var(--color-textColor)' }}>
+              Shop
+            </NavLink>
+            <NavLink
+              to="/my-orders"
+              className={desktopLink}
+              style={{ color: 'var(--color-textColor)' }}
             >
-              <input
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent outline-none text-sm"
-                style={{ color: 'var(--color-textColor)' }}
-                type="text"
-                placeholder="Search products"
-              />
-              <Search className="w-4 h-4" style={{ color: 'var(--color-moringa-muted)' }} />
-            </div>
-          )}
+              My orders
+            </NavLink>
+            <NavLink
+              to="/my-impact"
+              className={desktopLink}
+              style={{ color: 'var(--color-textColor)' }}
+            >
+              Impact
+            </NavLink>
 
-          <button
-            type="button"
-            onClick={() => navigate('/cart')}
-            aria-label="Cart"
-            className="relative cursor-pointer hover:opacity-70 transition-opacity"
-          >
-            <ShoppingCart className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
-            {getTotalCartItems() > 0 && (
+            {!hideSearch && (
+              <div
+                className="hidden lg:flex items-center text-sm gap-2 px-3 py-1.5 rounded-full"
+                style={{ border: '1px solid var(--color-moringa-muted)', backgroundColor: 'white' }}
+              >
+                <input
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent outline-none text-sm"
+                  style={{ color: 'var(--color-textColor)' }}
+                  type="text"
+                  placeholder="Search products"
+                />
+                <Search className="w-4 h-4" style={{ color: 'var(--color-moringa-muted)' }} />
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => navigate('/cart')}
+              aria-label="Cart"
+              aria-current={onCart ? 'page' : undefined}
+              className={`relative cursor-pointer transition-opacity hover:opacity-70 ${
+                onCart ? '-m-1.5 rounded-full bg-yellow p-1.5' : ''
+              }`}
+            >
+              <ShoppingCart className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
+              {getTotalCartItems() > 0 && (
+                <span
+                  className="absolute -top-1.5 -right-1.5 text-xs text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                  style={{ backgroundColor: 'var(--color-solid)' }}
+                >
+                  {getTotalCartItems()}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/notifications')}
+              aria-label="Notifications"
+              aria-current={onNotifications ? 'page' : undefined}
+              className={`relative cursor-pointer transition-opacity hover:opacity-70 ${
+                onNotifications ? '-m-1.5 rounded-full bg-yellow p-1.5' : ''
+              }`}
+            >
+              <Bell className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
               <span
-                className="absolute -top-1.5 -right-1.5 text-xs text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: 'var(--color-solidOne)' }}
+              />
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                aria-label="Account menu"
+                aria-expanded={showProfileMenu}
+                className="flex items-center justify-center w-9 h-9 rounded-full hover:opacity-80 transition-opacity cursor-pointer"
                 style={{ backgroundColor: 'var(--color-solid)' }}
               >
-                {getTotalCartItems()}
-              </span>
-            )}
-          </button>
+                <User className="w-5 h-5 text-white" />
+              </button>
 
+              {showProfileMenu && (
+                <div
+                  className="absolute right-0 top-12 w-48 rounded-lg shadow-lg py-2 z-50"
+                  style={{ backgroundColor: 'white', border: '1px solid #E5E5E5' }}
+                >
+                  {isAuthenticated && user ? (
+                    <>
+                      <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
+                        <p
+                          className="text-sm font-semibold"
+                          style={{ color: 'var(--color-textColor)' }}
+                        >
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
+                          {user.email}
+                        </p>
+                      </div>
+
+                      {/* Role Switcher - Only show if user has multiple roles */}
+                      {availableRoles && availableRoles.length > 1 && (
+                        <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
+                          <p
+                            className="text-xs font-medium mb-2"
+                            style={{ color: 'var(--color-moringa-muted)' }}
+                          >
+                            Switch Mode
+                          </p>
+                          <div className="flex flex-col gap-1.5">
+                            {availableRoles.includes('consumer') && (
+                              <button
+                                onClick={async () => {
+                                  if (activeRole !== 'consumer') {
+                                    await switchRole('consumer');
+                                    setShowProfileMenu(false);
+                                    navigate('/shop');
+                                  }
+                                }}
+                                className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                                  activeRole === 'consumer'
+                                    ? 'text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                                }`}
+                                style={{
+                                  backgroundColor:
+                                    activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
+                                  color:
+                                    activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
+                                }}
+                              >
+                                <PersonStanding className="w-3.5 h-3.5" />
+                                Buyer Mode
+                              </button>
+                            )}
+                            {availableRoles.includes('business_owner') && (
+                              <button
+                                onClick={async () => {
+                                  if (activeRole !== 'business_owner') {
+                                    await switchRole('business_owner');
+                                    setShowProfileMenu(false);
+                                    navigate('/dashboard');
+                                  }
+                                }}
+                                className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                                  activeRole === 'business_owner'
+                                    ? 'text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                                }`}
+                                style={{
+                                  backgroundColor:
+                                    activeRole === 'business_owner'
+                                      ? 'var(--color-solid)'
+                                      : undefined,
+                                  color:
+                                    activeRole === 'business_owner'
+                                      ? 'white'
+                                      : 'var(--color-textColor)',
+                                }}
+                              >
+                                <Store className="w-3.5 h-3.5" />
+                                Business Mode
+                              </button>
+                            )}
+                            {availableRoles.includes('rider') && (
+                              <button
+                                onClick={async () => {
+                                  if (activeRole !== 'rider') {
+                                    await switchRole('rider');
+                                    setShowProfileMenu(false);
+                                    navigate('/rider-dashboard');
+                                  }
+                                }}
+                                className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                                  activeRole === 'rider'
+                                    ? 'text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                                }`}
+                                style={{
+                                  backgroundColor:
+                                    activeRole === 'rider' ? 'var(--color-solid)' : undefined,
+                                  color:
+                                    activeRole === 'rider' ? 'white' : 'var(--color-textColor)',
+                                }}
+                              >
+                                <Bike className="w-3.5 h-3.5" />
+                                Rider Mode
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <NavLink
+                        to="/my-profile"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        My Profile
+                      </NavLink>
+                      <div className="border-t py-1" style={{ borderColor: '#E5E5E5' }}>
+                        {HELP_LINKS.map(({ to, label }) => (
+                          <NavLink
+                            key={to}
+                            to={to}
+                            onClick={() => setShowProfileMenu(false)}
+                            className="block px-4 py-1.5 text-xs hover:bg-gray-50 transition"
+                            style={{ color: 'var(--color-moringa-muted)' }}
+                          >
+                            {label}
+                          </NavLink>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setShowProfileMenu(false);
+                          navigate('/login');
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer"
+                        style={{ color: 'var(--color-solidOne)' }}
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <NavLink
+                        to="/login"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        Login
+                      </NavLink>
+                      <NavLink
+                        to="/signup"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
+                        style={{ color: 'var(--color-solid)' }}
+                      >
+                        Sign Up
+                      </NavLink>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile: the main destinations live in the bottom tab bar; only the bell stays up here. */}
           <button
             type="button"
             onClick={() => navigate('/notifications')}
             aria-label="Notifications"
-            className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            className="md:hidden relative flex items-center justify-center rounded-full"
           >
-            <Bell className="w-5 h-5" style={{ color: 'var(--color-textColor)' }} />
+            <Bell className="w-6 h-6" style={{ color: 'var(--color-textColor)' }} />
             <span
-              className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+              className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full"
               style={{ backgroundColor: 'var(--color-solidOne)' }}
             />
           </button>
-
-          <div className="relative">
-            <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              aria-label="Account menu"
-              aria-expanded={showProfileMenu}
-              className="flex items-center justify-center w-9 h-9 rounded-full hover:opacity-80 transition-opacity cursor-pointer"
-              style={{ backgroundColor: 'var(--color-solid)' }}
-            >
-              <User className="w-5 h-5 text-white" />
-            </button>
-
-            {showProfileMenu && (
-              <div
-                className="absolute right-0 top-12 w-48 rounded-lg shadow-lg py-2 z-50"
-                style={{ backgroundColor: 'white', border: '1px solid #E5E5E5' }}
-              >
-                {isAuthenticated && user ? (
-                  <>
-                    <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
-                      <p
-                        className="text-sm font-semibold"
-                        style={{ color: 'var(--color-textColor)' }}
-                      >
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>
-                        {user.email}
-                      </p>
-                    </div>
-
-                    {/* Role Switcher - Only show if user has multiple roles */}
-                    {availableRoles && availableRoles.length > 1 && (
-                      <div className="px-4 py-2 border-b" style={{ borderColor: '#E5E5E5' }}>
-                        <p
-                          className="text-xs font-medium mb-2"
-                          style={{ color: 'var(--color-moringa-muted)' }}
-                        >
-                          Switch Mode
-                        </p>
-                        <div className="flex flex-col gap-1.5">
-                          {availableRoles.includes('consumer') && (
-                            <button
-                              onClick={async () => {
-                                if (activeRole !== 'consumer') {
-                                  await switchRole('consumer');
-                                  setShowProfileMenu(false);
-                                  navigate('/shop');
-                                }
-                              }}
-                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
-                                activeRole === 'consumer'
-                                  ? 'text-white'
-                                  : 'bg-gray-100 hover:bg-gray-200'
-                              }`}
-                              style={{
-                                backgroundColor:
-                                  activeRole === 'consumer' ? 'var(--color-solid)' : undefined,
-                                color:
-                                  activeRole === 'consumer' ? 'white' : 'var(--color-textColor)',
-                              }}
-                            >
-                              <PersonStanding className="w-3.5 h-3.5" />
-                              Buyer Mode
-                            </button>
-                          )}
-                          {availableRoles.includes('business_owner') && (
-                            <button
-                              onClick={async () => {
-                                if (activeRole !== 'business_owner') {
-                                  await switchRole('business_owner');
-                                  setShowProfileMenu(false);
-                                  navigate('/dashboard');
-                                }
-                              }}
-                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
-                                activeRole === 'business_owner'
-                                  ? 'text-white'
-                                  : 'bg-gray-100 hover:bg-gray-200'
-                              }`}
-                              style={{
-                                backgroundColor:
-                                  activeRole === 'business_owner'
-                                    ? 'var(--color-solid)'
-                                    : undefined,
-                                color:
-                                  activeRole === 'business_owner'
-                                    ? 'white'
-                                    : 'var(--color-textColor)',
-                              }}
-                            >
-                              <Store className="w-3.5 h-3.5" />
-                              Business Mode
-                            </button>
-                          )}
-                          {availableRoles.includes('rider') && (
-                            <button
-                              onClick={async () => {
-                                if (activeRole !== 'rider') {
-                                  await switchRole('rider');
-                                  setShowProfileMenu(false);
-                                  navigate('/rider-dashboard');
-                                }
-                              }}
-                              className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium transition-all ${
-                                activeRole === 'rider'
-                                  ? 'text-white'
-                                  : 'bg-gray-100 hover:bg-gray-200'
-                              }`}
-                              style={{
-                                backgroundColor:
-                                  activeRole === 'rider' ? 'var(--color-solid)' : undefined,
-                                color: activeRole === 'rider' ? 'white' : 'var(--color-textColor)',
-                              }}
-                            >
-                              <Bike className="w-3.5 h-3.5" />
-                              Rider Mode
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <NavLink
-                      to="/my-profile"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
-                      style={{ color: 'var(--color-textColor)' }}
-                    >
-                      My Profile
-                    </NavLink>
-                    <button
-                      onClick={() => {
-                        logout();
-                        setShowProfileMenu(false);
-                        navigate('/login');
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer"
-                      style={{ color: 'var(--color-solidOne)' }}
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <NavLink
-                      to="/login"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
-                      style={{ color: 'var(--color-textColor)' }}
-                    >
-                      Login
-                    </NavLink>
-                    <NavLink
-                      to="/signup"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
-                      style={{ color: 'var(--color-solid)' }}
-                    >
-                      Sign Up
-                    </NavLink>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile: the main destinations live in the bottom tab bar; only the bell stays up here. */}
-        <button
-          type="button"
-          onClick={() => navigate('/notifications')}
-          aria-label="Notifications"
-          className="md:hidden relative flex items-center justify-center rounded-full"
-        >
-          <Bell className="w-6 h-6" style={{ color: 'var(--color-textColor)' }} />
-          <span
-            className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full"
-            style={{ backgroundColor: 'var(--color-solidOne)' }}
-          />
-        </button>
-      </nav>
+        </nav>
+      )}
 
       {/* Mobile Search Bar - Below Navbar */}
-      {!hideSearch && (
+      {!tabBarOnly && !hideSearch && (
         <div
           className="md:hidden sticky top-16 z-20 px-4 py-2 bg-white border-b"
           style={{ borderColor: '#E5E5E5' }}
@@ -511,6 +567,18 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false }) => {
                 <User className="w-5 h-5" />
                 My profile
               </NavLink>
+              {HELP_LINKS.map(({ to, label, Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-11 items-center gap-3 text-sm"
+                  style={{ color: 'var(--color-moringa-muted)' }}
+                >
+                  <Icon className="w-5 h-5" />
+                  {label}
+                </NavLink>
+              ))}
               <button
                 type="button"
                 onClick={() => {
