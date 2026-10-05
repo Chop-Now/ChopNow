@@ -40,7 +40,9 @@
      text now uses `--color-moringa-muted` instead. */
   --color-primary: var(--color-scaffold); /* page ground (unchanged hex) */
   --color-solid: var(--color-moringa); /* was #00A86B green */
-  --color-solidOne: var(--color-pepper-dark); /* was #FF7A00 orange; the darker pepper keeps white-on-it and it-on-white at 4.5:1+ */
+  --color-solidOne: var(
+    --color-pepper-dark
+  ); /* was #FF7A00 orange; the darker pepper keeps white-on-it and it-on-white at 4.5:1+ */
   --color-solidTwo: var(--color-yellow); /* was #FFB366 soft orange */
   --color-tertiary: var(--color-moringa-dark); /* hover/pressed */
   --color-textColor: var(--color-char); /* was #2E2E2E neutral */
