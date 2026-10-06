@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Cart = require('../models/Cart');
 const Listing = require('../models/Listing');
 const logger = require('../utils/logger');
@@ -69,6 +70,16 @@ const addToCart = async (req, res) => {
       });
     }
 
+    if (!mongoose.isValidObjectId(listingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid listing' });
+    }
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be a whole number of at least 1',
+      });
+    }
+
     // Verify listing exists and is active
     const listing = await Listing.findById(listingId);
     if (!listing) {
@@ -136,6 +147,13 @@ const updateCartItem = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Listing ID and quantity are required',
+      });
+    }
+
+    if (!mongoose.isValidObjectId(listingId) || !Number.isInteger(quantity)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Listing and a whole-number quantity are required',
       });
     }
 

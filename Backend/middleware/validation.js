@@ -14,7 +14,13 @@ const handleValidationErrors = (req, res, next) => {
 
 // User registration validation
 const validateRegister = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
@@ -93,7 +99,13 @@ const validateUpdateProfile = [
 
 // User login validation
 const validateLogin = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('password').notEmpty().withMessage('Password is required'),
   handleValidationErrors,
 ];
@@ -247,13 +259,25 @@ const validateResetPassword = [
 
 // Forgot password validation
 const validateForgotPassword = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   handleValidationErrors,
 ];
 
 // Verify reset OTP validation
 const validateVerifyResetOTP = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('otp')
     .notEmpty()
     .withMessage('OTP code is required')
@@ -276,14 +300,26 @@ const validateGoogleLogin = [
 // validation at all, so a non-string 'email' (e.g. a Mongo operator object like
 // {"$ne": null}) reached User.findOne({ email }) unvalidated.
 const validateSendOTP = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   handleValidationErrors,
 ];
 
 // Verify OTP (email login) validation - same C3 fix, for the endpoint that
 // actually authenticates the user from the submitted code.
 const validateVerifyOTP = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email')
+    .isString()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('otp')
     .notEmpty()
     .withMessage('OTP code is required')

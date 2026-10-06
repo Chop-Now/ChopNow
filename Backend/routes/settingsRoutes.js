@@ -1,5 +1,7 @@
 const express = require('express');
-const router = express.Router();
+const { guardIdParams } = require('../middleware/validateParams');
+
+const router = guardIdParams(express.Router());
 const rateLimit = require('express-rate-limit');
 const {
   getPublicSettings,

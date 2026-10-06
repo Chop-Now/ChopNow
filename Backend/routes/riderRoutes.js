@@ -1,5 +1,7 @@
 const express = require('express');
-const router = express.Router();
+const { guardIdParams } = require('../middleware/validateParams');
+
+const router = guardIdParams(express.Router());
 const { getRiderAvailability, updateRiderAvailability } = require('../controllers/userController');
 const { getRiderDashboardStats, getRiderEarnings } = require('../controllers/deliveryController');
 const { protect, authorize } = require('../middleware/auth');
