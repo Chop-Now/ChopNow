@@ -273,6 +273,9 @@ const orderSchema = new Schema(
       countedAt: Date,
     },
 
+    // Set once the vendor has been reminded that a paid order is waiting for them
+    vendorReminderSentAt: { type: Date },
+
     statusTimestamps: {
       paidAt: {
         type: Date,

@@ -372,6 +372,27 @@ const sendVendorOrderNotification = async (email, businessName, order) => {
 };
 
 /**
+ * Nudge a vendor about a paid order nobody has accepted yet.
+ */
+const sendVendorOrderReminderEmail = async (email, businessName, order, hoursLeft) => {
+  const content = `
+    <p>Hello ${businessName},</p>
+    <p>A customer has paid for an order that is still waiting for you to accept it.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+    </div>
+    <p>Please accept it (or cancel it if you cannot fulfil it) in your vendor dashboard. If it is not accepted within about ${hoursLeft} hours it will be cancelled automatically and the customer refunded.</p>
+  `;
+
+  return sendEmail(
+    email,
+    `Action needed: order #${order.orderNumber} is waiting`,
+    emailTemplate('A paid order is waiting for you', content)
+  );
+};
+
+/**
  * Send admin notification (vendor approval, etc.)
  */
 const sendAdminNotification = async (email, name, subject, message) => {
@@ -746,6 +767,7 @@ const sendContactMessage = async (inbox, { name, email, message }) => {
 };
 
 module.exports = {
+  sendVendorOrderReminderEmail,
   sendContactMessage,
   sendVerificationEmail,
   sendPasswordResetEmail,

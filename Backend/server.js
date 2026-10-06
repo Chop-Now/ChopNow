@@ -411,6 +411,10 @@ app.use('/api/rider', riderRoutes);
 const { connectDB, closeDB, healthCheck, ensureGeoIndexes } = require('./config/database');
 const redis = require('./config/redis');
 const { startExpiryJob, stopExpiryJob } = require('./services/listingExpiryJob');
+const {
+  startUnansweredOrderJob,
+  stopUnansweredOrderJob,
+} = require('./services/unansweredOrderJob');
 const { ensureImpactBackfilled } = require('./services/impactService');
 const {
   startPendingPaymentExpiryJob,
@@ -558,6 +562,7 @@ const gracefulShutdown = async (signal) => {
   try {
     stopExpiryJob();
     stopPendingPaymentExpiryJob();
+    stopUnansweredOrderJob();
 
     // Disconnects Socket.IO clients and stops the HTTP server from accepting
     // new connections; resolves once in-flight HTTP requests have completed.
@@ -627,6 +632,7 @@ const startServer = async () => {
 
     // Start pending payment expiry job (cancels stale orders every 5 min)
     startPendingPaymentExpiryJob();
+    startUnansweredOrderJob();
 
     const port = process.env.PORT || 5000;
     const httpServer = createServer(app);
