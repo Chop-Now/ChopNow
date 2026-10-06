@@ -205,6 +205,7 @@ const AdminLogin = () => {
                 size="large"
                 text="continue_with"
                 shape="rectangular"
+                locale="en"
                 width="384"
               />
               {(isGoogleLoading || isLoading) && (

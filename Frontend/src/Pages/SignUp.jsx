@@ -430,6 +430,7 @@ const SignUp = () => {
                         size="large"
                         text="signup_with"
                         shape="rectangular"
+                        locale="en"
                         width={String(googleWidth)}
                       />
                     </div>

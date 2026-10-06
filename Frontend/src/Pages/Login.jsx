@@ -166,6 +166,7 @@ const Login = () => {
                         size="large"
                         text="continue_with"
                         shape="rectangular"
+                        locale="en"
                         width={String(googleWidth)}
                       />
                     </div>

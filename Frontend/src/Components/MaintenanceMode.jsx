@@ -2,8 +2,20 @@ import React from 'react';
 import { Wrench, Mail, Phone } from 'lucide-react';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
+// Values the admin Settings page shipped with. They were never real contact details, so they
+// are never shown to visitors - the real mailbox is used instead and the phone is left out.
+const PLACEHOLDER_EMAILS = ['support@chopnow.com'];
+const PLACEHOLDER_PHONES = ['+250 788 000 000', '+250788000000'];
+
 const MaintenanceMode = () => {
   const { settings } = usePlatformSettings();
+  const email = PLACEHOLDER_EMAILS.includes(settings.supportEmail)
+    ? ''
+    : settings.supportEmail || '';
+  const supportEmail = email || 'chopnow.app@gmail.com';
+  const supportPhone = PLACEHOLDER_PHONES.includes(settings.supportPhone)
+    ? ''
+    : settings.supportPhone || '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -33,22 +45,26 @@ const MaintenanceMode = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href={`mailto:${settings.supportEmail || 'chopnow.app@gmail.com'}`}
+              href={`mailto:${supportEmail}`}
               className="flex items-center gap-2 text-white hover:text-yellow-500 transition-colors"
             >
               <Mail className="w-5 h-5" />
-              <span>{settings.supportEmail || 'chopnow.app@gmail.com'}</span>
+              <span>{supportEmail}</span>
             </a>
 
-            <span className="hidden sm:block text-slate-600">|</span>
+            {supportPhone && (
+              <>
+                <span className="hidden sm:block text-slate-600">|</span>
 
-            <a
-              href={`tel:${settings.supportPhone || '+250788000000'}`}
-              className="flex items-center gap-2 text-white hover:text-yellow-500 transition-colors"
-            >
-              <Phone className="w-5 h-5" />
-              <span>{settings.supportPhone || '+250 788 000 000'}</span>
-            </a>
+                <a
+                  href={`tel:${supportPhone.replace(/\s+/g, '')}`}
+                  className="flex items-center gap-2 text-white hover:text-yellow-500 transition-colors"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>{supportPhone}</span>
+                </a>
+              </>
+            )}
           </div>
         </div>
 
