@@ -336,7 +336,11 @@ const VendorDetailsModal = ({
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleAction(showActionDialog)}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer ${
+                    disabled={
+                      (showActionDialog === 'reject' || showActionDialog === 'requestInfo') &&
+                      !actionNote.trim()
+                    }
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                       showActionDialog === 'approve'
                         ? 'bg-green-700 hover:bg-green-800'
                         : showActionDialog === 'reject'

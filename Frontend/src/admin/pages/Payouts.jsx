@@ -512,7 +512,6 @@ const ShopAdminPayouts = () => {
                 className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed focus:ring-2 focus:ring-solid/20 focus:border-solid outline-none transition-all"
               >
                 <option value="MTN">MTN</option>
-                <option value="Vodafone">Vodafone</option>
                 <option value="Airtel">Airtel</option>
               </select>
             </div>

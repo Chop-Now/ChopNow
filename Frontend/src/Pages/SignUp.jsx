@@ -235,9 +235,9 @@ const SignUp = () => {
         const businessData = {
           name: businessName,
           type: businessCategory,
-          description: requiresVerification
-            ? `${businessName} - Pending verification`
-            : `${businessName} - ${selectedCategory?.label}`,
+          // Shown to customers once approved, so no internal status text in it; the
+          // owner can write a proper description in Settings.
+          description: `${businessName} - ${selectedCategory?.label || 'Local food business'}`,
           contact: {
             email: email,
             phone: formattedPhone,

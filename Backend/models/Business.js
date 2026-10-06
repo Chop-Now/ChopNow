@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { normalizeRwandaMobile } = require('../utils/phone');
 const Schema = mongoose.Schema;
 
 const businessSchema = new Schema(
@@ -80,6 +81,12 @@ const businessSchema = new Schema(
       submittedAt: Date,
       verifiedAt: Date,
       notes: String,
+      // Why an application was rejected / what the reviewer still needs, so the vendor can act on it
+      rejectionReason: String,
+      infoRequestMessage: String,
+      approvalMessage: String,
+      reviewedAt: Date,
+      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     },
 
     // Operation
@@ -184,6 +191,23 @@ const businessSchema = new Schema(
 );
 
 // Indexes for query optimization
+// Payout details decide where real money is sent, so reject junk instead of saving it.
+businessSchema.pre('validate', function () {
+  if (this.isModified('payoutInfo.mobilePhone') && this.payoutInfo?.mobilePhone?.trim()) {
+    if (!normalizeRwandaMobile(this.payoutInfo.mobilePhone)) {
+      this.invalidate(
+        'payoutInfo.mobilePhone',
+        'Enter a valid Rwandan mobile number, like 0788 123 456'
+      );
+    }
+  }
+  if (this.isModified('payoutInfo.accountNumber') && this.payoutInfo?.accountNumber?.trim()) {
+    if (!/^[A-Za-z0-9 -]{5,34}$/.test(this.payoutInfo.accountNumber.trim())) {
+      this.invalidate('payoutInfo.accountNumber', 'Enter a valid bank account number');
+    }
+  }
+});
+
 businessSchema.index({ location: '2dsphere' }); // Geospatial queries (nearby businesses)
 businessSchema.index({ name: 'text', description: 'text' }); // Full-text search
 businessSchema.index({ owner: 1 }); // Owner's businesses lookup

@@ -518,7 +518,7 @@ class _PayoutsScreenState extends ConsumerState<PayoutsScreen> {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 10),
                         ),
-                        items: ['MTN', 'Airtel', 'Vodafone'].map((p) {
+                        items: ['MTN', 'Airtel'].map((p) {
                           return DropdownMenuItem(
                               value: p,
                               child: Text(p,

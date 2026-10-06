@@ -8,6 +8,7 @@ const {
 } = require('../utils/emailService');
 const logger = require('../utils/logger');
 const { isAdminUser } = require('../utils/roles');
+const { friendlyDbError } = require('../utils/dbErrors');
 
 /**
  * @desc    Create a new business
@@ -215,6 +216,8 @@ const updateBusiness = async (req, res) => {
 
     res.json(business);
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
@@ -457,6 +460,9 @@ const uploadKYC = async (req, res) => {
     business.verification.documents.push(...uploadedDocuments);
     business.verification.status = 'pending';
     business.verification.submittedAt = new Date();
+    // A fresh submission answers the previous review
+    business.verification.rejectionReason = undefined;
+    business.verification.infoRequestMessage = undefined;
 
     await business.save();
 
@@ -629,6 +635,8 @@ const approveBusiness = async (req, res) => {
       business.verification = {};
     }
     business.verification.status = 'approved';
+    business.verification.rejectionReason = undefined;
+    business.verification.infoRequestMessage = undefined;
     business.verification.reviewedAt = new Date();
     business.verification.reviewedBy = req.user._id;
     if (message) {

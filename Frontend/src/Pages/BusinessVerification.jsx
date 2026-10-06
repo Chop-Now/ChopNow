@@ -72,6 +72,7 @@ const BusinessVerification = () => {
 
   const [businessId, setBusinessId] = useState(null);
   const [businessType, setBusinessType] = useState(null);
+  const [review, setReview] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -84,13 +85,7 @@ const BusinessVerification = () => {
       }
 
       try {
-        if (user?.business?._id) {
-          if (!isMounted) return;
-          setBusinessId(user.business._id);
-          setBusinessType(user.business.type);
-          return;
-        }
-
+        // Always read the live record: the review outcome may have changed since login
         const response = await businessService.getMyBusinesses();
         if (!isMounted) return;
         const businesses = response?.businesses || response;
@@ -98,6 +93,7 @@ const BusinessVerification = () => {
         if (businesses && businesses.length > 0) {
           setBusinessId(businesses[0]._id);
           setBusinessType(businesses[0].type);
+          setReview(businesses[0].verification || null);
         } else {
           // User has no business - show helpful message
           toast.error('Please create a business profile first before verification.');
@@ -224,6 +220,29 @@ const BusinessVerification = () => {
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12">
+          {/* Outcome of the last admin review, so the vendor knows what to fix */}
+          {(review?.status === 'info_requested' || review?.status === 'rejected') && (
+            <div
+              role="alert"
+              className="mb-8 p-4 bg-amber-50 border border-amber-300 rounded-lg"
+              data-testid="review-feedback"
+            >
+              <h3 className="font-semibold text-sm text-amber-900 mb-1">
+                {review.status === 'rejected'
+                  ? 'Your application was not approved'
+                  : 'We need a little more information'}
+              </h3>
+              <p className="text-sm text-amber-900">
+                {(review.status === 'rejected'
+                  ? review.rejectionReason
+                  : review.infoRequestMessage) || 'Please review your details and documents.'}
+              </p>
+              <p className="text-xs text-amber-800 mt-2">
+                Fix the details below and submit again; our team will review it right away.
+              </p>
+            </div>
+          )}
+
           {/* Information Notice */}
           <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
