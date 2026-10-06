@@ -29,7 +29,6 @@ export const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [adminNote, setAdminNote] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showActionMenu, setShowActionMenu] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -271,6 +270,7 @@ export const AllUsers = () => {
       try {
         await userService.suspendUser(userId);
         toast.success('User suspended successfully');
+        setSelectedUser((prev) => (prev?.id === userId ? { ...prev, status: 'suspended' } : prev));
         fetchUsers();
       } catch (error) {
         console.error('Error suspending user:', error);
@@ -279,9 +279,16 @@ export const AllUsers = () => {
     }
   };
 
-  const handleSaveNote = () => {
-    console.log('Saving admin note:', adminNote);
-    toast.success('Admin note saved!');
+  const handleReactivateUser = async (userId) => {
+    try {
+      await userService.activateUser(userId);
+      toast.success('Account reactivated');
+      setSelectedUser((prev) => (prev?.id === userId ? { ...prev, status: 'active' } : prev));
+      fetchUsers();
+    } catch (error) {
+      console.error('Error reactivating user:', error);
+      toast.error('Failed to reactivate account');
+    }
   };
 
   // Role editing handlers
@@ -580,6 +587,8 @@ export const AllUsers = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedUser(user)}
+                        aria-label={`Manage ${user.name}`}
+                        title="Manage user"
                         className="text-green-600 hover:text-green-800 transition-colors cursor-pointer"
                       >
                         <Pen className="w-4 h-4" />
@@ -589,6 +598,8 @@ export const AllUsers = () => {
                           onClick={() =>
                             setShowActionMenu(showActionMenu === user.id ? null : user.id)
                           }
+                          aria-label={`More actions for ${user.name}`}
+                          aria-haspopup="menu"
                           className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                         >
                           <MoreVertical className="w-4 h-4" />
@@ -903,27 +914,6 @@ export const AllUsers = () => {
                 </div>
               </div>
 
-              {/* Admin Notes */}
-              <div className="mb-3">
-                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
-                  <FileText className="w-3 h-3 text-slate-600 dark:text-slate-400" />
-                  Admin Notes
-                </h4>
-                <textarea
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  placeholder="Add notes about this user..."
-                  className="w-full p-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                  rows="2"
-                />
-                <button
-                  onClick={handleSaveNote}
-                  className="mt-1.5 w-full bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors cursor-pointer"
-                >
-                  Save Note
-                </button>
-              </div>
-
               {/* Divider */}
               <div className="border-t border-slate-200 dark:border-slate-700 my-3"></div>
 
@@ -937,18 +927,23 @@ export const AllUsers = () => {
                     ? 'This account is currently suspended.'
                     : 'Suspending this account will restrict their access to the platform.'}
                 </p>
-                <button
-                  onClick={() => handleSuspendUser(selectedUser.id)}
-                  disabled={selectedUser.status === 'suspended'}
-                  className={`w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-                    selectedUser.status === 'suspended'
-                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                      : 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white cursor-pointer'
-                  }`}
-                >
-                  <Ban className="w-4 h-4" />
-                  {selectedUser.status === 'suspended' ? 'Account Suspended' : 'Suspend Account'}
-                </button>
+                {selectedUser.status === 'suspended' ? (
+                  <button
+                    onClick={() => handleReactivateUser(selectedUser.id)}
+                    className="w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Reactivate Account
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSuspendUser(selectedUser.id)}
+                    className="w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white cursor-pointer"
+                  >
+                    <Ban className="w-4 h-4" />
+                    Suspend Account
+                  </button>
+                )}
               </div>
             </div>
           </div>

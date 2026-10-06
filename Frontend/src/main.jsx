@@ -8,6 +8,7 @@ import { PlatformSettingsProvider } from './context/PlatformSettingsContext';
 import ErrorBoundary from './Components/ErrorBoundary';
 import { HelmetProvider } from 'react-helmet-async';
 import 'leaflet/dist/leaflet.css';
+import './utils/singleErrorToast';
 
 createRoot(document.getElementById('root')).render(
   <HelmetProvider>

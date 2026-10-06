@@ -88,7 +88,6 @@ const RiderDashboard = () => {
   const handleSwitchToBuyer = async () => {
     try {
       await switchRole('consumer');
-      toast.success('Switched to Buyer Mode 🛒');
       navigate('/');
     } catch (err) {
       console.error(err);

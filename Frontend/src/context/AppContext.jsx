@@ -208,6 +208,11 @@ const AppContextProvider = ({ children }) => {
       const userRoles = userData.roles || [userData.role || 'consumer'];
       const userActiveRole = userData.activeRole || userData.role || userRoles[0];
 
+      // The role switch below is an authenticated call, so the new token has to be in
+      // place first (it used to go out without one, fail with 401 and only work
+      // because the 401 handler refreshed the session and retried).
+      setAccessToken(token);
+
       // If user has preferred role and has it available, switch to it
       if (preferredRole && userRoles.includes(preferredRole) && preferredRole !== userActiveRole) {
         // Switch role after login
@@ -325,9 +330,12 @@ const AppContextProvider = ({ children }) => {
       setActiveRole(result.activeRole);
       setAvailableRoles(result.roles || user.roles || []);
 
-      // Only show toast for consumer/business switch, not admin
+      // Admin switches are silent; the other modes announce themselves
       if (newRole !== 'admin') {
-        toast.success(`Switched to ${newRole === 'consumer' ? 'Buyer' : 'Business'} mode`);
+        const modeLabel = { consumer: 'Buyer', business_owner: 'Business', rider: 'Rider' }[
+          newRole
+        ];
+        if (modeLabel) toast.success(`Switched to ${modeLabel} mode`);
       }
       return result;
     } catch (error) {
