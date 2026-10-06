@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const { friendlyDbError } = require('../utils/dbErrors');
+const { findDeletionBlocker, retireAccountData } = require('../services/accountService');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 const {
   sendVerificationEmail,
@@ -266,7 +267,7 @@ const updateUserProfile = async (req, res) => {
     if (user) {
       if (req.body.firstName !== undefined) user.firstName = req.body.firstName;
       if (req.body.lastName !== undefined) user.lastName = req.body.lastName;
-      if (req.body.phone !== undefined) user.phone = req.body.phone;
+      if (req.body.phone) user.phone = req.body.phone;
 
       if (req.body.preferences) {
         user.preferences = { ...user.preferences, ...req.body.preferences };
@@ -1102,6 +1103,12 @@ const deleteUserByAdmin = async (req, res) => {
       return res.status(403).json({ message: 'Cannot delete admin users' });
     }
 
+    const blocker = await findDeletionBlocker(user);
+    if (blocker) {
+      return res.status(409).json({ message: blocker });
+    }
+
+    await retireAccountData(user);
     await user.deleteOne();
 
     res.json({ message: 'User deleted successfully' });
@@ -1143,6 +1150,12 @@ const deleteOwnAccount = async (req, res) => {
       }
     }
 
+    const blocker = await findDeletionBlocker(user);
+    if (blocker) {
+      return res.status(409).json({ message: blocker });
+    }
+
+    await retireAccountData(user);
     await user.deleteOne();
     clearAuthCookies(res);
 

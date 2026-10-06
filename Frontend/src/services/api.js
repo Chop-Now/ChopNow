@@ -120,6 +120,13 @@ api.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
 
+      // The backend answers bad input with { message: 'Validation failed', errors: [{ msg }] }.
+      // "Validation failed" tells a person nothing; say what is actually wrong. Done here so
+      // every service that rethrows response.data hands its page the readable message.
+      if (data?.message === 'Validation failed' && data.errors?.[0]?.msg) {
+        data.message = data.errors[0].msg;
+      }
+
       // Handle 401: attempt token refresh before giving up
       if (
         status === 401 &&

@@ -136,7 +136,13 @@ const MyProfile = () => {
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setPasswordOtp('');
       setPasswordOtpSent(false);
-      toast.success('Password changed successfully');
+      // Changing the password signs this account out everywhere (including here),
+      // so say so and take the person to sign in with the new one.
+      toast.success('Password changed. Please sign in again with your new password.');
+      setTimeout(() => {
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }, 1800);
     } catch (error) {
       console.error('Error changing password:', error);
       toast.error(error.message || 'Failed to change password');

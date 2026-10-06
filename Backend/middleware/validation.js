@@ -89,8 +89,9 @@ const validateUpdateProfile = [
     .withMessage('Last name cannot be empty')
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
+  // A blank phone means "leave it as it is" (accounts made without one send it empty)
   body('phone')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .matches(/^\+?[1-9]\d{1,14}$/)
     .withMessage('Please provide a valid phone number'),
@@ -358,8 +359,8 @@ const validateCreateDispute = [
     .trim()
     .notEmpty()
     .withMessage('Reason is required')
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Reason must be between 10 and 1000 characters'),
+    .isLength({ min: 3, max: 1000 })
+    .withMessage('Reason must be between 3 and 1000 characters'),
   body('description')
     .trim()
     .notEmpty()

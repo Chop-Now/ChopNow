@@ -7,7 +7,7 @@ import {
   PartyPopper,
   Store,
   CheckCheck,
-  ArchiveRestore,
+  Trash2,
   EllipsisVertical,
   Loader2,
   Bell,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { notificationService } from '../services';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../utils/confirm';
 
 const Notification = () => {
   const navigate = useNavigate();
@@ -104,6 +105,11 @@ const Notification = () => {
       order_ready: 'order',
       order_completed: 'order',
       order_cancelled: 'order',
+      payment_success: 'order',
+      new_order: 'order',
+      order_status_changed: 'order',
+      dispute_opened: 'order',
+      dispute_resolved: 'order',
       order_out_for_delivery: 'rider',
       delivery_assigned: 'rider',
       delivery_completed: 'rider',
@@ -261,15 +267,21 @@ const Notification = () => {
   };
 
   const archiveAll = async () => {
+    const confirmed = await confirmAction({
+      title: 'Delete all notifications?',
+      message: 'This permanently removes every notification. It cannot be undone.',
+      confirmLabel: 'Delete all',
+    });
+    if (!confirmed) return;
     try {
       for (const notif of notifications) {
         await notificationService.deleteNotification(notif.id);
       }
       setNotifications([]);
-      toast.success('All notifications archived');
+      toast.success('All notifications deleted');
     } catch (error) {
       console.error('Error archiving all:', error);
-      toast.error('Failed to archive notifications');
+      toast.error('Failed to delete notifications');
     }
   };
 
@@ -629,8 +641,8 @@ const Notification = () => {
                 onClick={archiveAll}
                 className="flex items-center gap-2 text-sm text-textColor hover:text-moringa-muted transition-colors cursor-pointer"
               >
-                <ArchiveRestore size={18} />
-                <span>Archive All</span>
+                <Trash2 size={18} />
+                <span>Delete all</span>
               </button>
             </div>
 
@@ -710,6 +722,8 @@ const Notification = () => {
                                     dropdownOpen === notification.id ? null : notification.id
                                   );
                                 }}
+                                aria-label="Notification options"
+                                aria-haspopup="menu"
                                 className="p-1 text-gray-500 hover:text-textColor transition-colors rounded-full hover:bg-gray-100"
                               >
                                 <EllipsisVertical size={18} />
