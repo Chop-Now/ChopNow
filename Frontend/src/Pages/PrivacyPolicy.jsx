@@ -385,8 +385,7 @@ const PrivacyPolicy = () => {
               14. Data Protection Officer
             </h2>
             <p className="text-moringa-muted leading-relaxed">
-              For data protection inquiries, you may contact our Data Protection Officer at
-              dpo@chopnow.app.
+              For data protection inquiries, you may contact us at chopnow.app@gmail.com.
             </p>
           </section>
         </div>

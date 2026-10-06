@@ -14,7 +14,7 @@ const APP_URL = process.env.FRONTEND_URL || 'https://www.chopnow.app';
 /**
  * Send email using Brevo or SendGrid
  */
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, html, { replyTo } = {}) => {
   try {
     // ── Use Brevo API if Key is Configured ──
     if (process.env.BREVO_API_KEY) {
@@ -25,6 +25,7 @@ const sendEmail = async (to, subject, html) => {
           to: [{ email: to }],
           subject,
           htmlContent: html,
+          ...(replyTo ? { replyTo: { email: replyTo } } : {}),
         },
         {
           headers: {
@@ -50,6 +51,7 @@ const sendEmail = async (to, subject, html) => {
       },
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     };
 
     await sgMail.send(msg);
@@ -719,7 +721,32 @@ const sendBusinessRescindedEmail = async (email, businessName, ownerName, reason
   );
 };
 
+const escapeHtml = (value) =>
+  String(value ?? '').replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  );
+
+/**
+ * A message typed into the public Contact page, delivered to the support inbox.
+ * Replying to the email answers the sender directly.
+ */
+const sendContactMessage = async (inbox, { name, email, message }) => {
+  const content = `
+    <p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; white-space: pre-wrap;">${escapeHtml(message)}</div>
+    <p style="color: #6b7280; font-size: 14px;">Sent from the ChopNow Contact page. Reply to this email to answer them.</p>
+  `;
+  return sendEmail(
+    inbox,
+    `ChopNow contact: ${String(name).slice(0, 60)}`,
+    emailTemplate('New message from the Contact page', content),
+    { replyTo: email }
+  );
+};
+
 module.exports = {
+  sendContactMessage,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordResetOTPEmail,

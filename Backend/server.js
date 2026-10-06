@@ -23,6 +23,7 @@ const listingRoutes = require('./routes/listingRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const disputeRoutes = require('./routes/disputeRoutes');
@@ -203,7 +204,11 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(new Error('Not allowed by CORS'));
+      // A refusal is the client's problem (403), not a server fault: as a 500 it showed up in
+      // error monitoring every time a scanner or a stray site sent a request.
+      const refused = new Error('Not allowed by CORS');
+      refused.statusCode = 403;
+      return callback(refused);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -273,6 +278,15 @@ const passwordResetLimiter = rateLimit({
   max: 10,
   keyGenerator: perAccountKey,
   message: { message: 'Too many password reset attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// The public Contact form sends real email: keep it from being used as a mail cannon
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many messages from this connection. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -364,6 +378,7 @@ app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/contact', contactLimiter, contactRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/disputes', disputeRoutes);
@@ -381,6 +396,7 @@ app.use('/api/listings', listingRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/contact', contactLimiter, contactRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/disputes', disputeRoutes);

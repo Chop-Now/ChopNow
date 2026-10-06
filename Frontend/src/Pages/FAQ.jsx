@@ -22,7 +22,7 @@ const FAQ = () => {
     {
       question: 'How do I pick up my order?',
       answer:
-        "After purchasing, you'll receive a pickup time and location. Simply head to the business during that window, show your order confirmation, and collect your surprise bag or meal.",
+        "After you pay, your order shows a pickup code and QR code in My Orders, with the business's address. Head there during the pickup window, show the code to the vendor, and collect your food. You can also choose delivery where a vendor offers it.",
     },
     {
       question: "Can I choose what's in my order?",
@@ -32,7 +32,7 @@ const FAQ = () => {
     {
       question: "What if I can't make it to pick up my order?",
       answer:
-        'Cancellation policies vary by vendor. Check the specific policy before purchasing. Some may offer refunds if cancelled within a certain timeframe, while others may not allow cancellations.',
+        'You can cancel an order yourself from My Orders until the vendor starts preparing it, and anything you already paid is refunded. If a vendor cannot fulfil your order they can cancel it and you are refunded in full. If something is wrong with an order you collected, use "Report a problem" on the order and our team will look into it.',
     },
     {
       question: 'How does ChopNow contribute to reducing food waste?',

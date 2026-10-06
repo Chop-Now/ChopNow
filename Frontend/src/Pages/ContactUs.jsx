@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import api from '../services/api';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
-import { ArrowLeft, MapPin, Phone, Mail, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Mail, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ContactUs = () => {
   const navigate = useNavigate();
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.message.trim().length < 10) {
+      toast.error('Please write a little more (at least 10 characters)');
+      return;
+    }
+    setSending(true);
+    try {
+      await api.post('/api/contact', form, { silent: true });
+      setSent(true);
+      setForm({ name: '', email: '', message: '' });
+    } catch (error) {
+      toast.error(
+        error.response?.data?.errors?.[0]?.msg ||
+          error.response?.data?.message ||
+          'We could not send your message. Please try again.'
+      );
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <>
@@ -74,17 +103,24 @@ const ContactUs = () => {
               <span>Kigali, Rwanda</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-600">
-              <Phone size={18} style={{ color: 'var(--color-solid)' }} />
-              <span>+250 788 123 456</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600">
               <Mail size={18} style={{ color: 'var(--color-solid)' }} />
               <span>chopnow.app@gmail.com</span>
             </div>
           </motion.div>
         </motion.div>
 
+        {sent && (
+          <div
+            role="status"
+            className="max-w-3xl mx-auto mb-8 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-800"
+          >
+            Thanks, your message has been sent. We will reply to your email address as soon as we
+            can.
+          </div>
+        )}
+
         <motion.form
+          onSubmit={handleSubmit}
           className="flex flex-col items-center text-sm max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -102,6 +138,11 @@ const ContactUs = () => {
                 />
                 <input
                   className="h-12 pl-10 pr-4 w-full border-2 border-gray-200 rounded-lg outline-none transition-all duration-200 focus:border-(--color-solid)"
+                  id="name"
+                  name="name"
+                  value={form.name}
+                  onChange={update('name')}
+                  maxLength={100}
                   type="text"
                   placeholder="John Doe"
                   autoComplete="name"
@@ -120,6 +161,10 @@ const ContactUs = () => {
                 />
                 <input
                   className="h-12 pl-10 pr-4 w-full border-2 border-gray-200 rounded-lg outline-none transition-all duration-200 focus:border-(--color-solid)"
+                  id="email"
+                  name="email"
+                  value={form.email}
+                  onChange={update('email')}
                   type="email"
                   placeholder="john@example.com"
                   autoComplete="email"
@@ -135,6 +180,11 @@ const ContactUs = () => {
             </label>
             <textarea
               className="w-full mt-2 p-4 h-40 border-2 border-gray-200 rounded-lg resize-none outline-none transition-all duration-200 focus:border-(--color-solid)"
+              id="message"
+              name="message"
+              value={form.message}
+              onChange={update('message')}
+              maxLength={2000}
               placeholder="Tell us how we can help you..."
               required
             ></textarea>
@@ -142,12 +192,13 @@ const ContactUs = () => {
 
           <motion.button
             type="submit"
-            className="mt-8 text-white h-12 px-8 rounded-lg font-medium transition-all duration-200 hover:opacity-90"
+            disabled={sending}
+            className="mt-8 disabled:opacity-60 text-white h-12 px-8 rounded-lg font-medium transition-all duration-200 hover:opacity-90"
             style={{ backgroundColor: 'var(--color-solid)' }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Send Message
+            {sending ? 'Sending…' : 'Send Message'}
           </motion.button>
         </motion.form>
       </div>
