@@ -38,7 +38,7 @@ const Notification = () => {
     const loadNotifications = async () => {
       setLoading(true);
       try {
-        const response = await notificationService.getNotifications();
+        const response = await notificationService.getNotifications({ limit: 100 });
         if (!isMounted) return;
         const notifs = (response.notifications || []).map((n) => ({
           id: n._id,
@@ -73,7 +73,7 @@ const Notification = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const response = await notificationService.getNotifications();
+      const response = await notificationService.getNotifications({ limit: 100 });
       const notifs = (response.notifications || []).map((n) => ({
         id: n._id,
         type: mapNotificationType(n.type),

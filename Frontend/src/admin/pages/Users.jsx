@@ -45,10 +45,18 @@ export const AllUsers = () => {
   const [savingRoles, setSavingRoles] = useState(false);
   const itemsPerPage = 10;
 
+  // The search runs on the server (the list is paged, so the browser only has ten users at a
+  // time); wait for a pause in typing so each keystroke is not a request.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
   // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterRole]);
+  }, [filterRole, debouncedSearch]);
 
   // Fetch users from API
   useEffect(() => {
@@ -60,6 +68,7 @@ export const AllUsers = () => {
           page: currentPage,
           limit: itemsPerPage,
         };
+        if (debouncedSearch) filters.search = debouncedSearch;
         if (filterRole !== 'all') {
           const roleMap = {
             customer: 'consumer',
@@ -100,15 +109,11 @@ export const AllUsers = () => {
         setTotalPages(response.totalPages || 1);
 
         setStats({
-          total: response.total || transformedUsers.length,
-          activeVendors: transformedUsers.filter(
-            (u) => u.role === 'vendor' && u.status === 'active'
-          ).length,
-          pendingVendors: transformedUsers.filter(
-            (u) => u.role === 'vendor' && u.status === 'pending'
-          ).length,
-          activeRiders: transformedUsers.filter((u) => u.role === 'rider' && u.status === 'active')
-            .length,
+          total: response.total ?? transformedUsers.length,
+          // Platform-wide counts from the server, not the ten rows on this page
+          activeVendors: response.counts?.activeVendors ?? 0,
+          pendingVendors: 0,
+          activeRiders: response.counts?.activeRiders ?? 0,
         });
       } catch (error) {
         if (!isMounted) return;
@@ -123,7 +128,7 @@ export const AllUsers = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, filterRole]);
+  }, [currentPage, filterRole, debouncedSearch]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -132,6 +137,7 @@ export const AllUsers = () => {
         page: currentPage,
         limit: itemsPerPage,
       };
+      if (debouncedSearch) filters.search = debouncedSearch;
       if (filterRole !== 'all') {
         const roleMap = {
           customer: 'consumer',
@@ -171,14 +177,10 @@ export const AllUsers = () => {
       setTotalPages(response.totalPages || 1);
 
       setStats({
-        total: response.total || transformedUsers.length,
-        activeVendors: transformedUsers.filter((u) => u.role === 'vendor' && u.status === 'active')
-          .length,
-        pendingVendors: transformedUsers.filter(
-          (u) => u.role === 'vendor' && u.status === 'pending'
-        ).length,
-        activeRiders: transformedUsers.filter((u) => u.role === 'rider' && u.status === 'active')
-          .length,
+        total: response.total ?? transformedUsers.length,
+        activeVendors: response.counts?.activeVendors ?? 0,
+        pendingVendors: 0,
+        activeRiders: response.counts?.activeRiders ?? 0,
       });
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -206,14 +208,8 @@ export const AllUsers = () => {
   const activeRiders = stats.activeRiders;
   const weeklyChange = 0; // Would need analytics API for this
 
-  // Filter users - only do local search filtering since backend handles role filtering
-  const filteredUsers = usersData.filter((user) => {
-    if (!searchQuery) return true;
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Role filter and search are both applied by the server
+  const filteredUsers = usersData;
 
   // Since backend handles pagination and role filtering, use fetched data directly
   // Only do local filtering for search

@@ -2,9 +2,9 @@ import api from './api';
 
 const reviewService = {
   // Get all reviews for a business
-  getBusinessReviews: async (businessId) => {
+  getBusinessReviews: async (businessId, limit = 50) => {
     try {
-      const response = await api.get(`/api/reviews/business/${businessId}`);
+      const response = await api.get(`/api/reviews/business/${businessId}?limit=${limit}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

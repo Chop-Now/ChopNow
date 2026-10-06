@@ -106,7 +106,7 @@ export const AllListings = () => {
 
       // Admin website mode - fetch all listings (including inactive/expired)
       if (adminMode === 'website' && isAdmin) {
-        const response = await listingService.getListings({ status: 'all' });
+        const response = await listingService.getListings({ status: 'all', limit: 500 });
         const listings = response.listings || response || [];
         setProducts(Array.isArray(listings) ? listings : []);
         return;
@@ -114,7 +114,7 @@ export const AllListings = () => {
 
       // Vendor shop mode - fetch only their listings
       if (businessId && businessId !== 'admin') {
-        const data = await listingService.getListingsByBusiness(businessId);
+        const data = await listingService.getListingsByBusiness(businessId, undefined, 500);
         const listings = data.listings || data || [];
         setProducts(Array.isArray(listings) ? listings : []);
       }
@@ -135,7 +135,7 @@ export const AllListings = () => {
           setIsLoading(true);
 
           if (adminMode === 'website' && isAdmin) {
-            const response = await listingService.getListings({ status: 'all' });
+            const response = await listingService.getListings({ status: 'all', limit: 500 });
             if (!isMounted) return;
             const listings = response.listings || response || [];
             setProducts(Array.isArray(listings) ? listings : []);
@@ -143,7 +143,7 @@ export const AllListings = () => {
           }
 
           if (businessId && businessId !== 'admin') {
-            const data = await listingService.getListingsByBusiness(businessId);
+            const data = await listingService.getListingsByBusiness(businessId, undefined, 500);
             if (!isMounted) return;
             const listings = data.listings || data || [];
             setProducts(Array.isArray(listings) ? listings : []);

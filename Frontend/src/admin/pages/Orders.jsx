@@ -37,7 +37,6 @@ const OrdersTable = ({ title, statusFilter }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   // Detail Modal & Verification States
@@ -94,13 +93,21 @@ const OrdersTable = ({ title, statusFilter }) => {
     );
   };
 
+  // A new search, filter or sort starts again from the first page
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, dateFrom, dateTo, sortBy, statusFilter]);
+
   // Fetch orders from API
   const loadOrders = async (isMounted = true) => {
     setLoading(true);
     try {
+      // Fetched whole and paged here: search and date filters run in the browser, so a single
+      // server page of 10 meant an older order could never be found, and the "Showing 1 to 10
+      // of 10" caption was wrong whenever there were more.
       const filters = {
-        page: currentPage,
-        limit: itemsPerPage,
+        page: 1,
+        limit: 200,
       };
 
       if (statusFilter === 'pending') {
@@ -135,7 +142,6 @@ const OrdersTable = ({ title, statusFilter }) => {
       }));
 
       setOrders(transformedOrders);
-      setTotalPages(response.totalPages || 1);
     } catch (error) {
       if (!isMounted) return;
       console.error('Error fetching orders:', error);
@@ -152,7 +158,7 @@ const OrdersTable = ({ title, statusFilter }) => {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, statusFilter, adminMode]);
+  }, [statusFilter, adminMode]);
 
   const fetchOrders = () => {
     loadOrders(true);
@@ -292,9 +298,10 @@ const OrdersTable = ({ title, statusFilter }) => {
   });
 
   // Display values
-  const currentOrders = filteredOrders;
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / itemsPerPage));
+  const startIndex = (Math.min(currentPage, totalPages) - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
+  const currentOrders = filteredOrders.slice(startIndex, endIndex);
   const showingFrom = filteredOrders.length > 0 ? startIndex + 1 : 0;
   const showingTo = Math.min(endIndex, filteredOrders.length);
 

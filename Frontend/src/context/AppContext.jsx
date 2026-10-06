@@ -455,7 +455,10 @@ const AppContextProvider = ({ children }) => {
     try {
       // silent: true — this is a background prefetch; errors are handled below,
       // no toast needed (avoids false "no connection" popup on mobile cold-starts)
-      const response = await listingService.getListings({ status: 'active' }, { silent: true });
+      const response = await listingService.getListings(
+        { status: 'active', limit: 200 },
+        { silent: true }
+      );
       // Transform backend listing format to frontend product format using utility
       const listings = response.listings || response || [];
       const transformedProducts = listings

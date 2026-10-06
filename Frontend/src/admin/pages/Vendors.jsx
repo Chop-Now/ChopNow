@@ -460,7 +460,9 @@ export const AllVendors = () => {
     const loadBusinesses = async () => {
       setLoading(true);
       try {
-        const filters = { page: currentPage, limit: itemsPerPage, status: 'all' };
+        // The list is filtered and paged here in the browser, so fetch it whole: asking the server for
+        // one page and then paging that page again showed only the first 10 vendors.
+        const filters = { page: 1, limit: 500, status: 'all' };
         if (statusFilter !== 'all') {
           filters.status = statusFilter === 'approved' ? 'active' : statusFilter;
         }
@@ -502,12 +504,12 @@ export const AllVendors = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, statusFilter]);
+  }, [statusFilter]);
 
   const fetchBusinesses = async () => {
     setLoading(true);
     try {
-      const filters = { page: currentPage, limit: itemsPerPage, status: 'all' };
+      const filters = { page: 1, limit: 500, status: 'all' };
       if (statusFilter !== 'all') {
         filters.status = statusFilter === 'approved' ? 'active' : statusFilter;
       }
@@ -1056,10 +1058,9 @@ export const VendorApproval = () => {
     const loadPendingBusinesses = async () => {
       setLoading(true);
       try {
-        const response = await businessService.getPendingBusinesses({
-          page: currentPage,
-          limit: itemsPerPage,
-        });
+        // Fetched whole: the queue is searched and paged in the browser, and the server's
+        // first page of 10 used to be all the admin could ever see (25 were waiting).
+        const response = await businessService.getPendingBusinesses({ page: 1, limit: 500 });
         if (!isMounted) return;
         const transformedVendors = (response.businesses || []).map((business) => ({
           id: business._id,
@@ -1103,15 +1104,12 @@ export const VendorApproval = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentPage]);
+  }, []);
 
   const fetchPendingBusinesses = async () => {
     setLoading(true);
     try {
-      const response = await businessService.getPendingBusinesses({
-        page: currentPage,
-        limit: itemsPerPage,
-      });
+      const response = await businessService.getPendingBusinesses({ page: 1, limit: 500 });
       const transformedVendors = (response.businesses || []).map((business) => ({
         id: business._id,
         name: business.name,

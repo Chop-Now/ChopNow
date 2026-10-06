@@ -453,19 +453,33 @@ const getUsersForAdmin = async (req, res) => {
     }
     if (status) query.status = status;
 
+    // Search by name or email across ALL users (the admin page used to filter only the ten it had loaded)
+    const search =
+      typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 100) : '';
+    if (search) {
+      const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      query.$or = [{ email: pattern }, { firstName: pattern }, { lastName: pattern }];
+    }
+
     const users = await User.find(query)
       .select('-passwordHash')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await User.countDocuments(query);
+    const [total, activeVendors, activeRiders] = await Promise.all([
+      User.countDocuments(query),
+      User.countDocuments({ roles: 'business_owner', status: 'active' }),
+      User.countDocuments({ roles: 'rider', status: 'active' }),
+    ]);
 
     res.json({
       users,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
+      // Platform-wide figures for the summary cards (not just the page on screen)
+      counts: { activeVendors, activeRiders },
     });
   } catch (error) {
     res.status(500).json({

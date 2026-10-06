@@ -33,9 +33,12 @@ const listingService = {
   },
 
   // Get listings by business (public)
-  getListingsByBusiness: async (businessId, status) => {
+  getListingsByBusiness: async (businessId, status, limit) => {
     try {
-      const query = status ? `?status=${status}` : '';
+      const params = new URLSearchParams();
+      if (status) params.append('status', status);
+      if (limit) params.append('limit', limit);
+      const query = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get(`/api/listings/business/${businessId}${query}`);
       return response.data;
     } catch (error) {

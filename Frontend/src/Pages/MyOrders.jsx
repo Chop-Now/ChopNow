@@ -378,7 +378,7 @@ const MyOrders = () => {
     const { isMounted = () => true } = options;
     setLoading(true);
     try {
-      const response = await orderService.getOrders({ role: 'consumer' });
+      const response = await orderService.getOrders({ role: 'consumer', limit: 200 });
       if (!isMounted()) return;
       const orders = (response.orders || []).map(transformOrder);
       setMyOrders(orders);

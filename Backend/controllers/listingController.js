@@ -93,7 +93,7 @@ const getListings = async (req, res) => {
   try {
     const { category, status, business, search } = req.query;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const skip = (page - 1) * limit;
 
     const query = {};
@@ -415,7 +415,7 @@ const getListingsByBusiness = async (req, res) => {
   try {
     const { status } = req.query;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const skip = (page - 1) * limit;
 
     const query = { business: req.params.businessId };
