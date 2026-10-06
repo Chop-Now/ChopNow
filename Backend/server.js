@@ -24,6 +24,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const clientErrorRoutes = require('./routes/clientErrorRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const disputeRoutes = require('./routes/disputeRoutes');
@@ -291,6 +292,15 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Crash reports from the web app: enough for a real bug to be seen, not enough to flood the logs
+const clientErrorLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: { message: 'Too many reports from this connection.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Apply general API limiter
 app.use('/api', apiLimiter);
 
@@ -379,6 +389,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/favorites', favoriteRoutes);
 app.use('/api/v1/contact', contactLimiter, contactRoutes);
+app.use('/api/v1/client-errors', clientErrorLimiter, clientErrorRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/disputes', disputeRoutes);
@@ -397,6 +408,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/contact', contactLimiter, contactRoutes);
+app.use('/api/client-errors', clientErrorLimiter, clientErrorRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/disputes', disputeRoutes);

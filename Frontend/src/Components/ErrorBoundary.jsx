@@ -1,4 +1,5 @@
 import React from 'react';
+import { reportError } from '../utils/reportError';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,11 +12,8 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log to external service in production
-    if (import.meta.env.PROD) {
-      // Could send to Sentry or other error tracking service
-      console.error('ErrorBoundary caught:', error, errorInfo);
-    }
+    console.error('ErrorBoundary caught:', error, errorInfo);
+    reportError(error, 'boundary', errorInfo?.componentStack);
   }
 
   handleReset = () => {

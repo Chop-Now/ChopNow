@@ -9,6 +9,9 @@ import ErrorBoundary from './Components/ErrorBoundary';
 import { HelmetProvider } from 'react-helmet-async';
 import 'leaflet/dist/leaflet.css';
 import './utils/singleErrorToast';
+import { installErrorReporting } from './utils/reportError';
+
+installErrorReporting();
 
 createRoot(document.getElementById('root')).render(
   <HelmetProvider>
