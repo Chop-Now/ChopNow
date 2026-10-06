@@ -350,7 +350,7 @@ const StatsGrid = () => {
                 </p>
                 <div className="flex items-center space-x-1.5">
                   {stat.change === null ? (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                       No historical data yet
                     </span>
                   ) : (

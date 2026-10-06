@@ -13,6 +13,7 @@ import GoogleAuthProvider from './Components/GoogleAuthProvider';
 import AccessibilityEnhancer from './Components/AccessibilityEnhancer';
 import HomeRoute from './Components/HomeRoute';
 import ConfirmHost from './Components/ConfirmHost';
+import RouteMeta from './Components/RouteMeta';
 
 // Lazy-loaded page components for code splitting
 const Home = lazyWithRetry(() => import('./Pages/Home'));
@@ -76,6 +77,7 @@ const App = () => {
       </a>
 
       {/* On phones, toasts sit above the bottom tab bar (and the home indicator) rather than over the header. */}
+      <RouteMeta />
       <DialogEnhancer />
       <ConfirmHost />
       <AccessibilityEnhancer />

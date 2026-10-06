@@ -107,15 +107,54 @@ api.interceptors.request.use(
 const PUBLIC_AUTH_URL =
   /\/api\/users\/(login|register|google-login|verify-email|resend-verification|forgot-password|verify-reset-otp|reset-password|send-otp|verify-otp)/;
 
+// The backend sleeps when idle on small hosting plans, and the first request after that can
+// take a minute. Reads are safe to repeat, so a read that times out or gets a gateway error
+// is retried a few times (with one calm toast) instead of showing "Unable to connect".
+// Writes are never repeated here - they could double-submit.
+const WAKE_RETRIES = 3;
+const WAKE_DELAY_MS = 2500;
+const WAKE_TOAST_ID = 'server-waking-up';
+let wakeToastShown = false;
+
+const isWakeFailure = (error) => {
+  const method = (error.config?.method || '').toLowerCase();
+  if (method !== 'get') return false;
+  const status = error.response?.status;
+  if (status) return [502, 503, 504].includes(status);
+  return error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK';
+};
+
 // Response interceptor to handle errors and refresh tokens
 api.interceptors.response.use(
   (response) => {
+    if (wakeToastShown) {
+      wakeToastShown = false;
+      toast.dismiss(WAKE_TOAST_ID);
+    }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
     // Check if this request should suppress toast notifications
     const silentMode = originalRequest?.silent === true;
+
+    if (
+      originalRequest &&
+      isWakeFailure(error) &&
+      (originalRequest._wakeTries || 0) < WAKE_RETRIES
+    ) {
+      originalRequest._wakeTries = (originalRequest._wakeTries || 0) + 1;
+      if (!wakeToastShown) {
+        wakeToastShown = true;
+        toast.loading('Starting up - this can take a few seconds...', { id: WAKE_TOAST_ID });
+      }
+      await new Promise((resolve) => setTimeout(resolve, WAKE_DELAY_MS));
+      return api(originalRequest);
+    }
+    if (wakeToastShown) {
+      wakeToastShown = false;
+      toast.dismiss(WAKE_TOAST_ID);
+    }
 
     if (error.response) {
       const { status, data } = error.response;

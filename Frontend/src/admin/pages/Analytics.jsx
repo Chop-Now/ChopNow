@@ -547,7 +547,7 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {mealsChange === null ? (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                     No historical data yet
                   </span>
                 ) : (
@@ -588,7 +588,7 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {co2Change === null ? (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                     No historical data yet
                   </span>
                 ) : (
@@ -629,7 +629,7 @@ const WebsiteAdminOverview = () => {
               </p>
               <div className="flex items-center space-x-1.5">
                 {waterChange === null ? (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                     No historical data yet
                   </span>
                 ) : (
@@ -728,7 +728,7 @@ const WebsiteAdminOverview = () => {
           </div>
         ) : (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
               No order activity in the last 4 weeks yet
             </p>
           </div>
@@ -936,7 +936,7 @@ const ShopAdminReports = () => {
         </h3>
         {!hasRevenueData ? (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">No revenue data yet</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">No revenue data yet</p>
           </div>
         ) : (
           <div className="h-72">
@@ -990,7 +990,7 @@ const ShopAdminReports = () => {
           </h3>
           {categoryData.length === 0 ? (
             <div className="h-64 flex items-center justify-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
                 No completed orders yet
               </p>
             </div>
@@ -1056,7 +1056,7 @@ const ShopAdminReports = () => {
           </h3>
           {!hasPeakHoursData ? (
             <div className="h-64 flex items-center justify-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
                 No orders in the last 30 days
               </p>
             </div>
@@ -1105,7 +1105,7 @@ const ShopAdminReports = () => {
           Order Fulfillment Status
         </h3>
         {fulfillmentMetrics.length === 0 || !fb.total ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No orders yet</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">No orders yet</p>
         ) : (
           <div className="space-y-4">
             {fulfillmentMetrics.map((metric) => (
@@ -1354,7 +1354,7 @@ const WebsiteAdminReports = () => {
           </div>
         ) : (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
               No completed orders yet
             </p>
           </div>
@@ -1371,7 +1371,7 @@ const WebsiteAdminReports = () => {
           </div>
           {categoryData.length === 0 ? (
             <div className="h-64 flex items-center justify-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
                 No completed orders yet
               </p>
             </div>
@@ -1471,7 +1471,7 @@ const WebsiteAdminReports = () => {
             </div>
           ) : (
             <div className="h-64 flex items-center justify-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
                 No orders in the last 30 days yet
               </p>
             </div>
@@ -1688,7 +1688,7 @@ const ShopAdminInsights = () => {
                 {insight.value}
               </p>
             ) : (
-              <p className="text-sm font-medium text-slate-400 dark:text-slate-500 italic mb-2">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic mb-2">
                 Not available yet
               </p>
             )}
@@ -1704,7 +1704,7 @@ const ShopAdminInsights = () => {
           Customer Behavior (Last 7 Days)
         </h3>
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
             Day-by-day new vs. returning customer tracking is not available yet
           </p>
         </div>
@@ -1716,7 +1716,7 @@ const ShopAdminInsights = () => {
           Product Conversion Funnel
         </h3>
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
             Conversion tracking (views, cart adds, checkouts) is not available yet
           </p>
         </div>
@@ -1728,7 +1728,7 @@ const ShopAdminInsights = () => {
           Growth Opportunities
         </h3>
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
             Personalized growth recommendations are not available yet
           </p>
         </div>
@@ -1829,7 +1829,7 @@ const WebsiteAdminInsights = () => {
         </div>
         {!hasUserGrowthData ? (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
               No signups recorded yet
             </p>
           </div>
@@ -1884,7 +1884,7 @@ const WebsiteAdminInsights = () => {
           Vendor Performance Metrics
         </h3>
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
             Vendor response time, acceptance rate and delivery time tracking is not available yet
           </p>
         </div>
@@ -2273,7 +2273,7 @@ const ShopAdminImpact = () => {
                 <tr>
                   <td
                     colSpan={5}
-                    className="py-6 text-center text-sm text-slate-400 dark:text-slate-500 italic"
+                    className="py-6 text-center text-sm text-slate-500 dark:text-slate-400 italic"
                   >
                     No completed orders yet
                   </td>
@@ -2675,7 +2675,7 @@ const WebsiteAdminImpact = () => {
                 <tr>
                   <td
                     colSpan={5}
-                    className="py-6 text-center text-sm text-slate-400 dark:text-slate-500 italic"
+                    className="py-6 text-center text-sm text-slate-500 dark:text-slate-400 italic"
                   >
                     No completed orders yet
                   </td>

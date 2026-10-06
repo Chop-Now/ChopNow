@@ -227,7 +227,7 @@ const OrderTrendsChart = () => {
 
       {currentData.length === 0 ? (
         <div className="h-64 sm:h-72 md:h-80 flex items-center justify-center">
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No order data yet</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">No order data yet</p>
         </div>
       ) : (
         <div className="h-64 sm:h-72 md:h-80">

@@ -38,13 +38,8 @@
       property="og:description"
       content="Save money and reduce food waste. ChopNow connects you with local businesses offering surplus food at amazing discounts."
     />
-    <!-- Most social platforms (Facebook, WhatsApp, LinkedIn, iMessage, Slack)
-         don't render SVG for a link-preview image at all - this used to point
-         at ChopNowLogo.svg, which meant every shared link showed a broken or
-         blank preview image. Using the one real PNG asset in the repo as an
-         honest stopgap; a proper 1200x630 branded social-share image would
-         look much better here and is worth a follow-up. -->
-    <meta property="og:image" content="https://www.chopnow.app/apple-touch-icon.png" />
+    <!-- 1200x630 branded link-preview image (see public/og-image.png). -->
+    <meta property="og:image" content="https://www.chopnow.app/og-image.png" />
     <meta property="og:site_name" content="ChopNow" />
 
     <!-- Twitter Card -->
@@ -55,11 +50,10 @@
       name="twitter:description"
       content="Save money and reduce food waste. ChopNow connects you with local businesses offering surplus food at amazing discounts."
     />
-    <meta name="twitter:image" content="https://www.chopnow.app/apple-touch-icon.png" />
+    <meta name="twitter:image" content="https://www.chopnow.app/og-image.png" />
 
     <!-- Additional SEO -->
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://www.chopnow.app/" />
+    <!-- robots + canonical are set per page by Components/RouteMeta.jsx -->
 
     <!-- Structured data: tells Google unambiguously what this site is and
          how its main sections relate, which is an input into (not a

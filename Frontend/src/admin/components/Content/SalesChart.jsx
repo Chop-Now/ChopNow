@@ -60,7 +60,7 @@ const SalesChart = () => {
           </div>
         ) : data.length === 0 ? (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">No sales data yet</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">No sales data yet</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

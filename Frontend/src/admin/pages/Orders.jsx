@@ -721,8 +721,10 @@ const OrdersTable = ({ title, statusFilter }) => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Payment Method:</span>
-                      <span className="font-medium uppercase">
-                        {selectedOrder.payment?.paymentMethod || 'COD'}
+                      <span className="font-medium">
+                        {{ mobile_money: 'Mobile money', cash: 'Cash' }[
+                          selectedOrder.payment?.paymentMethod
+                        ] || 'Not recorded'}
                       </span>
                     </div>
                     <div className="flex justify-between">

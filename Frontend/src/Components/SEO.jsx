@@ -8,7 +8,7 @@ const SEO = ({
   // passing its own `image` prop was pointing social/search crawlers at a
   // 404. Using the one real PNG asset available as an honest stopgap (see
   // index.html's matching fix) rather than a broken link.
-  image = '/apple-touch-icon.png',
+  image = 'https://www.chopnow.app/og-image.png',
   url,
   type = 'website',
 }) => {

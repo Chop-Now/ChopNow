@@ -17,7 +17,7 @@ const Home = () => {
     // index.css and drop the wrapper.
     <div className="bg-scaffold">
       <SEO
-        title="ChopNow - Save Food, Save Money, Save the Planet"
+        title="Save Food, Save Money, Save the Planet"
         description="ChopNow connects you with surplus food from local businesses at discounted prices. Reduce food waste and save money in Kigali, Rwanda."
       />
       <Header />

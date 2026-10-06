@@ -1,4 +1,17 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /cart
+Disallow: /my-orders
+Disallow: /my-impact
+Disallow: /my-profile
+Disallow: /favorites
+Disallow: /notifications
+Disallow: /rider-dashboard
+Disallow: /business-verification
+Disallow: /pending-review
+Disallow: /rider-verification
 
 Sitemap: https://www.chopnow.app/sitemap.xml
