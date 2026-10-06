@@ -249,9 +249,19 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Code requests and code guesses are limited per account, not per IP: a whole neighbourhood
+// can sit behind one mobile-carrier address (so a per-IP limit locks real customers out of
+// resetting their password), and keying on the account also means an attacker cannot get a
+// fresh allowance against one victim just by changing IP. Without an email we fall back to IP.
+const perAccountKey = (req) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  return email ? `acct|${email}` : `ip|${ipKeyGenerator(req.ip)}`;
+};
+
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 8,
+  keyGenerator: perAccountKey,
   message: { message: 'Too many OTP requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -259,7 +269,9 @@ const otpLimiter = rateLimit({
 
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5,
+  // a normal reset is three calls (request, verify, set), leaving room for a few mistyped codes
+  max: 10,
+  keyGenerator: perAccountKey,
   message: { message: 'Too many password reset attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

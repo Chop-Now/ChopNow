@@ -947,6 +947,30 @@ const updateUserByAdmin = async (req, res) => {
     // update that just re-saves an account that already had it).
     const rolesBefore = [...user.roles];
 
+    // Same rule as the dedicated suspend endpoint: an admin account cannot be suspended
+    if (req.body.status !== undefined) {
+      if (!['active', 'suspended'].includes(req.body.status)) {
+        return res.status(400).json({ message: 'Status must be active or suspended' });
+      }
+      if (req.body.status === 'suspended' && rolesBefore.includes('admin')) {
+        return res.status(403).json({ message: 'Cannot suspend admin users' });
+      }
+    }
+
+    // Taking the admin role off the last admin would leave nobody able to run the platform
+    if (
+      Array.isArray(req.body.roles) &&
+      rolesBefore.includes('admin') &&
+      !req.body.roles.includes('admin')
+    ) {
+      const otherAdmins = await User.countDocuments({ roles: 'admin', _id: { $ne: user._id } });
+      if (otherAdmins === 0) {
+        return res
+          .status(400)
+          .json({ message: 'Cannot remove the admin role from the last admin' });
+      }
+    }
+
     // Update allowed fields
     const allowedFields = ['firstName', 'lastName', 'phone', 'status'];
     allowedFields.forEach((field) => {
