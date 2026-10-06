@@ -3,7 +3,9 @@ const Order = require('../models/Order');
 const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const User = require('../models/User');
-const _Delivery = require('../models/Delivery');
+const Delivery = require('../models/Delivery');
+const { isAdminUser } = require('../utils/roles');
+const { REAL_ORDERS } = require('../utils/orderFilters');
 const Notification = require('../models/Notification');
 const Payment = require('../models/Payment');
 const RefundRequest = require('../models/RefundRequest');
@@ -399,6 +401,8 @@ const getOrders = async (req, res) => {
     if (filterRole === 'business_owner') {
       const businesses = await Business.find({ owner: req.user._id }).select('_id').lean();
       query.business = { $in: businesses.map((b) => b._id) };
+      // The vendor only sees orders that are really theirs to serve
+      query.$nor = REAL_ORDERS.$nor;
     } else if (filterRole === 'admin') {
       if (req.query.role === 'consumer') {
         query.customer = req.user._id;
@@ -410,7 +414,14 @@ const getOrders = async (req, res) => {
     if (status) {
       if (status === 'pending') {
         query.status = {
-          $in: ['pending_payment', 'paid', 'confirmed', 'ready_for_pickup', 'out_for_delivery'],
+          $in: [
+            'pending_payment',
+            'paid',
+            'confirmed',
+            'preparing',
+            'ready_for_pickup',
+            'out_for_delivery',
+          ],
         };
       } else if (status.includes(',')) {
         query.status = { $in: status.split(',') };
@@ -792,8 +803,17 @@ const cancelOrderAndRestoreInventory = async (
   return true;
 };
 
+// A vendor can still call an order off once they have started on it (a customer cannot)
+const VENDOR_CANCELLABLE_STATUSES = [
+  'pending_payment',
+  'paid',
+  'confirmed',
+  'preparing',
+  'ready_for_pickup',
+];
+
 /**
- * @desc    Cancel order
+ * @desc    Cancel order (the customer, the vendor who owns it, or an admin)
  * @route   PUT /api/orders/:id/cancel
  * @access  Private
  */
@@ -805,23 +825,46 @@ const cancelOrder = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
+    const business = await Business.findById(order.business).populate('owner');
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isVendor = !!business?.owner && business.owner._id.toString() === req.user._id.toString();
+
     // Check authorization
-    if (order.customer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (!isCustomer && !isVendor && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // Someone cancelling on the customer's behalf (the vendor, or an admin) says why
+    const byStaff = !isCustomer;
+    const staffReason =
+      typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 300) : '';
+    const refundNote =
+      order.payment?.paymentMethod === 'mobile_money' &&
+      MONEY_RECEIVED_STATUSES.includes(order.payment?.paymentStatus)
+        ? ' Your payment will be refunded.'
+        : '';
     const cancelled = await cancelOrderAndRestoreInventory(order, {
       requestedBy: req.user._id,
-      reason: 'Cancelled by customer',
+      reason: byStaff
+        ? `Cancelled by ${isVendor ? 'the vendor' : 'ChopNow'}${staffReason ? `: ${staffReason}` : ''}`
+        : 'Cancelled by customer',
+      ...(byStaff ? { fromStatuses: VENDOR_CANCELLABLE_STATUSES } : {}),
     });
     if (!cancelled) {
       return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
     }
 
+    if (byStaff) {
+      // No rider should still be sent for an order that no longer exists
+      await Delivery.updateMany(
+        { order: order._id, status: { $in: ['pending', 'assigned'] } },
+        { status: 'cancelled' }
+      );
+    }
+
     // --- Post-transaction: notifications (non-critical) ---
 
-    // Get business and customer info for notifications
-    const business = await Business.findById(order.business).populate('owner');
+    // Get customer info for notifications
     const customer = await User.findById(order.customer);
     const customerName = customer
       ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer'
@@ -831,7 +874,9 @@ const cancelOrder = async (req, res) => {
     await Notification.createNotification({
       user: order.customer,
       title: 'Order Cancelled',
-      message: `Your order #${order.orderNumber} has been cancelled`,
+      message: byStaff
+        ? `Your order #${order.orderNumber} was cancelled by ${isVendor ? business?.name || 'the vendor' : 'ChopNow'}${staffReason ? `: ${staffReason.replace(/[.\s]+$/, '')}` : ''}.${refundNote}`
+        : `Your order #${order.orderNumber} has been cancelled`,
       type: 'order_cancelled',
       relatedOrder: order._id,
       relatedBusiness: order.business,
@@ -854,7 +899,9 @@ const cancelOrder = async (req, res) => {
       await Notification.createNotification({
         user: business.owner._id,
         title: 'Order Cancelled',
-        message: `Order #${order.orderNumber} was cancelled by ${customerName}`,
+        message: byStaff
+          ? `Order #${order.orderNumber} was cancelled${isVendor ? ' by you' : ' by ChopNow'}.`
+          : `Order #${order.orderNumber} was cancelled by ${customerName}`,
         type: 'order_cancelled',
         relatedOrder: order._id,
         relatedBusiness: business._id,

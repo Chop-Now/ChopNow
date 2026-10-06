@@ -33,9 +33,9 @@ const orderService = {
   },
 
   // Cancel order
-  cancelOrder: async (id) => {
+  cancelOrder: async (id, reason) => {
     try {
-      const response = await api.put(`/api/orders/${id}/cancel`);
+      const response = await api.put(`/api/orders/${id}/cancel`, reason ? { reason } : {});
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

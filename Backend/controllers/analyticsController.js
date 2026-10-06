@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const { REAL_ORDERS } = require('../utils/orderFilters');
 const Business = require('../models/Business');
 const Listing = require('../models/Listing');
 const User = require('../models/User');
@@ -39,7 +40,7 @@ const getPlatformOverview = async (req, res) => {
       monthlyImpact,
       categoryImpact,
     ] = await Promise.all([
-      Order.countDocuments(),
+      Order.countDocuments(REAL_ORDERS),
       Business.countDocuments(),
       User.countDocuments({ roles: { $in: ['consumer'] } }),
       // Real terminal status is 'completed' - 'delivered' isn't in the Order
@@ -222,7 +223,7 @@ const getBusinessOverview = async (req, res) => {
       // Order fulfillment breakdown - real counts for the "Order Fulfillment
       // Status" chart, replacing the old fixed 85/10/5% placeholder.
       Order.aggregate([
-        { $match: { business: business._id } },
+        { $match: { business: business._id, ...REAL_ORDERS } },
         {
           $facet: {
             completed: [{ $match: { status: 'completed' } }, { $count: 'count' }],
@@ -266,7 +267,7 @@ const getBusinessOverview = async (req, res) => {
     };
 
     res.json({
-      stats: business.stats,
+      stats: { ...business.stats, totalOrders: fulfillmentTotal },
       // business.stats doesn't track a running revenue total (only
       // balance/totalOrders/etc.) - compute it on-demand from completed
       // orders instead of leaving the frontend with nothing to show for
@@ -1116,6 +1117,7 @@ const getAdminStats = async (req, res) => {
 
       // 3. Order stats - single aggregation with $facet
       Order.aggregate([
+        { $match: REAL_ORDERS },
         {
           $facet: {
             total: [{ $count: 'count' }],
@@ -1128,6 +1130,7 @@ const getAdminStats = async (req, res) => {
                       'pending_payment',
                       'paid',
                       'confirmed',
+                      'preparing',
                       'ready_for_pickup',
                       'out_for_delivery',
                     ],

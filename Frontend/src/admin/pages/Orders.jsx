@@ -1,5 +1,6 @@
 import CollapsibleFilters from '../components/CollapsibleFilters';
 import PickupScanner from '../components/PickupScanner';
+import CancelOrderDialog from '../components/CancelOrderDialog';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
@@ -54,6 +55,26 @@ const OrdersTable = ({ title, statusFilter }) => {
     setScanning(false);
   }, []);
   const [quickVerifyResult, setQuickVerifyResult] = useState(null);
+
+  const CANCELLABLE = ['pending_payment', 'paid', 'confirmed', 'preparing', 'ready_for_pickup'];
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelOrder = async (reason) => {
+    setCancelling(true);
+    try {
+      await orderService.cancelOrder(cancelTarget.id, reason);
+      toast.success('Order cancelled. The customer has been told.');
+      setCancelTarget(null);
+      setSelectedOrder(null);
+      setShowDetailsModal(false);
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message || 'Could not cancel the order');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const formatStatus = (status) => {
     const statusMap = {
@@ -496,6 +517,24 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <Eye className="w-4 h-4" />
                       </button>
 
+                      {['Pending', 'Paid', 'Accepted', 'Preparing', 'Ready'].includes(
+                        order.status
+                      ) && (
+                        <button
+                          onClick={() =>
+                            setCancelTarget({
+                              id: order.orderId,
+                              number: order._id,
+                              status: order.status,
+                            })
+                          }
+                          disabled={updatingStatus}
+                          className="px-2 py-1 border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30 rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {['Pending', 'Paid'].includes(order.status) ? 'Decline' : 'Cancel'}
+                        </button>
+                      )}
+
                       {/* State-specific Acceptance Action */}
                       {['Pending', 'Paid'].includes(order.status) && (
                         <button
@@ -607,6 +646,15 @@ const OrdersTable = ({ title, statusFilter }) => {
           </div>
         )}
       </div>
+
+      {cancelTarget && (
+        <CancelOrderDialog
+          order={cancelTarget}
+          submitting={cancelling}
+          onCancel={() => setCancelTarget(null)}
+          onSubmit={handleCancelOrder}
+        />
+      )}
 
       {/* Order Details Drawer Modal */}
       {showDetailsModal && selectedOrder && (
@@ -908,6 +956,22 @@ const OrdersTable = ({ title, statusFilter }) => {
                         Mark Ready for Pickup
                       </button>
                     )}
+
+                  {/* Cancel the order (the customer is refunded and told why) */}
+                  {CANCELLABLE.includes(selectedOrder.status) && (
+                    <button
+                      onClick={() =>
+                        setCancelTarget({
+                          id: selectedOrder._id || selectedOrder.orderId,
+                          number: selectedOrder.orderNumber || selectedOrder._id,
+                          status: formatStatus(selectedOrder.status),
+                        })
+                      }
+                      className="px-3.5 py-2 border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30 rounded-lg font-semibold transition-all cursor-pointer"
+                    >
+                      Cancel order
+                    </button>
+                  )}
 
                   {/* Accept Order (if pending_payment or paid but not confirmed yet) */}
                   {['pending_payment', 'paid'].includes(selectedOrder.status) && (
