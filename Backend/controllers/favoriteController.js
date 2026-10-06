@@ -16,7 +16,9 @@ const toggleFavorite = async (req, res) => {
 
     const result = await Favorite.toggleFavorite(req.user._id, favoriteType, referenceId);
 
-    res.json(result);
+    // `action` is the original contract; `isFavorite` says where the item ended up,
+    // which is what a heart button needs.
+    res.json({ ...result, isFavorite: result.action === 'added' });
   } catch (error) {
     logger.error({ err: error }, 'Favorite error');
     res.status(500).json({
@@ -86,7 +88,7 @@ const checkFavorite = async (req, res) => {
 
     const isFavorited = await Favorite.isFavorited(req.user._id, favoriteType, referenceId);
 
-    res.json({ isFavorited });
+    res.json({ isFavorited, isFavorite: isFavorited });
   } catch (error) {
     logger.error({ err: error }, 'Favorite error');
     res.status(500).json({

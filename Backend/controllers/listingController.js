@@ -2,6 +2,8 @@ const Listing = require('../models/Listing');
 const Business = require('../models/Business');
 const { uploadMultipleToCloudinary } = require('../utils/cloudinaryUpload');
 const logger = require('../utils/logger');
+const { isAdminUser } = require('../utils/roles');
+const { friendlyDbError } = require('../utils/dbErrors');
 
 /**
  * @desc    Create a new listing
@@ -34,7 +36,7 @@ const createListing = async (req, res) => {
       return res.status(404).json({ message: 'Business not found' });
     }
 
-    if (businessDoc.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (businessDoc.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res
         .status(403)
         .json({ message: 'Not authorized to create listing for this business' });
@@ -47,7 +49,7 @@ const createListing = async (req, res) => {
     // the signup UI implies. Types exempt from verification (bakery, farmer,
     // supermarket - see createBusiness) are created 'active' immediately, so
     // this doesn't block them.
-    if (businessDoc.status !== 'active' && req.user.role !== 'admin') {
+    if (businessDoc.status !== 'active' && !isAdminUser(req.user)) {
       return res.status(403).json({
         message:
           'This business is not yet approved to sell. Please wait for verification to complete.',
@@ -73,6 +75,8 @@ const createListing = async (req, res) => {
 
     res.status(201).json(listing);
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -137,6 +141,8 @@ const getListings = async (req, res) => {
       total,
     });
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -226,6 +232,8 @@ const getNearbyListings = async (req, res) => {
       total,
     });
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -258,6 +266,8 @@ const getListingById = async (req, res) => {
 
     res.json(listing);
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -279,10 +289,7 @@ const updateListing = async (req, res) => {
     }
 
     // Check ownership
-    if (
-      listing.business.owner.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
+    if (listing.business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to update this listing' });
     }
 
@@ -310,6 +317,8 @@ const updateListing = async (req, res) => {
 
     res.json(listing);
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -331,10 +340,7 @@ const deleteListing = async (req, res) => {
     }
 
     // Check ownership
-    if (
-      listing.business.owner.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
+    if (listing.business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to delete this listing' });
     }
 
@@ -349,6 +355,8 @@ const deleteListing = async (req, res) => {
 
     res.json({ message: 'Listing deleted successfully' });
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -374,10 +382,7 @@ const uploadPhotos = async (req, res) => {
     }
 
     // Check ownership
-    if (
-      listing.business.owner.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
+    if (listing.business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -392,6 +397,8 @@ const uploadPhotos = async (req, res) => {
       images: listing.images,
     });
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -429,6 +436,8 @@ const getListingsByBusiness = async (req, res) => {
       total,
     });
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     logger.error({ err: error }, 'Listing error');
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,

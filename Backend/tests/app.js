@@ -35,6 +35,10 @@ const paymentRoutes = require('../routes/paymentRoutes');
 const reviewRoutes = require('../routes/reviewRoutes');
 const settingsRoutes = require('../routes/settingsRoutes');
 const analyticsRoutes = require('../routes/analyticsRoutes');
+const favoriteRoutes = require('../routes/favoriteRoutes');
+const notificationRoutes = require('../routes/notificationRoutes');
+const cartRoutes = require('../routes/cartRoutes');
+const riderRoutes = require('../routes/riderRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('../middleware/errorHandler');
@@ -107,6 +111,10 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/rider', riderRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 // ── Error handling ──

@@ -33,9 +33,11 @@ const listingSchema = new mongoose.Schema(
       price: {
         type: Number,
         required: true,
+        min: [0, 'Price cannot be negative'],
       },
       originalPrice: {
         type: Number,
+        min: [0, 'Original price cannot be negative'],
       },
       currency: {
         type: String,
@@ -129,6 +131,24 @@ listingSchema.methods.reserveQuantity = async function (qty) {
 };
 
 // Indexes for query optimization
+// A deal is a discount: the price people pay cannot be above the original price,
+// and the pickup window has to end after it starts. Only checked when those fields
+// are being set, so old listings that predate this rule can still be saved.
+listingSchema.pre('validate', function () {
+  if (this.isNew || this.isModified('pricing')) {
+    const { price, originalPrice } = this.pricing || {};
+    if (originalPrice > 0 && price > originalPrice) {
+      this.invalidate('pricing.price', 'The deal price cannot be higher than the original price');
+    }
+  }
+  if (this.isNew || this.isModified('timeWindow')) {
+    const { availableFrom, availableUntil } = this.timeWindow || {};
+    if (availableFrom && availableUntil && availableUntil <= availableFrom) {
+      this.invalidate('timeWindow.availableUntil', 'Available until must be after available from');
+    }
+  }
+});
+
 listingSchema.index({ business: 1, status: 1 }); // Business listings lookup
 listingSchema.index({ business: 1, status: 1, createdAt: -1 }); // Business listings sorted
 listingSchema.index({ 'timeWindow.availableFrom': 1, 'timeWindow.availableUntil': 1 }); // Time-based queries

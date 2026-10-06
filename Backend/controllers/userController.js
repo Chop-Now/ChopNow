@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { friendlyDbError } = require('../utils/dbErrors');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 const {
   sendVerificationEmail,
@@ -143,6 +144,8 @@ const registerUser = async (req, res) => {
       });
     }
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
@@ -285,6 +288,8 @@ const updateUserProfile = async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
+    const friendly = friendlyDbError(error);
+    if (friendly) return res.status(friendly.status).json({ message: friendly.message });
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });

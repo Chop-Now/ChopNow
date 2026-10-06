@@ -7,6 +7,7 @@ const {
   sendBusinessRescindedEmail,
 } = require('../utils/emailService');
 const logger = require('../utils/logger');
+const { isAdminUser } = require('../utils/roles');
 
 /**
  * @desc    Create a new business
@@ -179,7 +180,7 @@ const updateBusiness = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to update this business' });
     }
 
@@ -206,7 +207,7 @@ const updateBusiness = async (req, res) => {
     });
 
     // Admin-only: allow operational status change (active/suspended)
-    if (req.user.role === 'admin' && req.body.status !== undefined) {
+    if (isAdminUser(req.user) && req.body.status !== undefined) {
       business.status = req.body.status;
     }
 
@@ -234,7 +235,7 @@ const deleteBusiness = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to delete this business' });
     }
 
@@ -266,7 +267,7 @@ const uploadLogo = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -307,7 +308,7 @@ const uploadCoverImage = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -348,7 +349,7 @@ const uploadPhotos = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -390,7 +391,7 @@ const uploadKYC = async (req, res) => {
     }
 
     // Check ownership
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -518,7 +519,7 @@ const getBusinessStats = async (req, res) => {
     }
 
     // Check authorization
-    if (business.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
