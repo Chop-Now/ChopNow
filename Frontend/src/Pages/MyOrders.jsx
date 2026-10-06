@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { orderService, reviewService, disputeService } from '../services';
 import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentModal';
 import ReportProblem from '../Components/ReportProblem';
+import { formatAddress } from '../utils/address';
 
 // Mirrors Order.canBeCancelled() on the backend, which is what actually
 // enforces this - the button is just hidden for other states.
@@ -1174,19 +1175,13 @@ const MyOrders = () => {
                                 </span>
                                 <div className="flex items-start gap-1">
                                   <p className="font-medium text-gray-800 text-sm">
-                                    {typeof orderDetails.business?.address === 'string'
-                                      ? orderDetails.business.address
-                                      : orderDetails.business?.address
-                                        ? `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`
-                                        : 'N/A'}
+                                    {formatAddress(orderDetails.business?.address)}
                                   </p>
                                   {orderDetails.business?.address && (
                                     <button
                                       onClick={() =>
                                         handleCopy(
-                                          typeof orderDetails.business.address === 'string'
-                                            ? orderDetails.business.address
-                                            : `${orderDetails.business.address.street || ''}, ${orderDetails.business.address.city || ''}`,
+                                          formatAddress(orderDetails.business.address),
                                           'address'
                                         )
                                       }

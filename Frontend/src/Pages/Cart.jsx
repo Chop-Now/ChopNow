@@ -20,17 +20,9 @@ import api from '../services/api';
 import { reverseGeocode } from '../services/geocoding';
 import { toast } from 'react-hot-toast';
 import { formatImpactKg } from '../utils/impact';
+import { formatAddress } from '../utils/address';
 
 const formatRwf = (amount) => `RWF ${Math.round(amount || 0).toLocaleString()}`;
-
-const formatAddress = (address) => {
-  if (!address) return 'Address not available';
-  if (typeof address === 'string') return address;
-  return (
-    [address.street, address.city, address.country].filter(Boolean).join(', ') ||
-    'Address not available'
-  );
-};
 
 const Cart = () => {
   const navigate = useNavigate();

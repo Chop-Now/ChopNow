@@ -15,7 +15,8 @@ import {
   UtensilsCrossed,
   Croissant,
 } from 'lucide-react';
-import React, { useState, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
+import lazyWithRetry from '../utils/lazyWithRetry';
 import { Link, useNavigate } from 'react-router-dom';
 import PhoneField from '../Components/ui/PhoneField';
 import { useGeolocation } from '../Components/maps/useGeolocation';
@@ -32,7 +33,7 @@ import useContainerWidth from '../utils/useContainerWidth';
 // Deferred: LocationPicker pulls in Leaflet (~190KB) and only ever renders
 // for buyers who reach the location step, so it shouldn't block the
 // initial SignUp page load/switch from Login.
-const LocationPicker = lazy(() => import('../Components/maps/LocationPicker'));
+const LocationPicker = lazyWithRetry(() => import('../Components/maps/LocationPicker'));
 
 // Business categories with their verification requirements
 // ALL categories require document verification for platform safety

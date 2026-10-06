@@ -944,6 +944,25 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+// The in-app "your order is complete" notice. The status route sent one, but completing an order by
+// scanning/entering the pickup code (how nearly every pickup finishes) only sent an email.
+const notifyOrderCompleted = async (order) => {
+  try {
+    await Notification.createNotification({
+      user: order.customer,
+      title: 'Order Completed',
+      message: `Thank you! Your order #${order.orderNumber} has been completed. How was it? You can leave a review in My Orders.`,
+      type: 'order_completed',
+      relatedOrder: order._id,
+      relatedBusiness: order.business?._id || order.business,
+      link: '/my-orders',
+      metadata: { orderNumber: order.orderNumber, orderTotal: order.pricing?.total },
+    });
+  } catch (err) {
+    logger.error({ err, orderId: order._id }, 'Failed to create order completed notification');
+  }
+};
+
 /**
  * @desc    Verify pickup code
  * @route   POST /api/orders/:id/verify-pickup
@@ -987,6 +1006,8 @@ const verifyPickupCode = async (req, res) => {
         message: `Order is already '${order.status}' and cannot be completed again`,
       });
     }
+
+    await notifyOrderCompleted(completed);
 
     // Email customer their completion summary + review prompt
     const customer = await User.findById(order.customer)
@@ -1058,6 +1079,8 @@ const verifyPickupCodeDirect = async (req, res) => {
         message: `Order is already '${order.status}' and cannot be completed again`,
       });
     }
+
+    await notifyOrderCompleted(completed);
 
     // Email customer
     const customer = await User.findById(order.customer)
