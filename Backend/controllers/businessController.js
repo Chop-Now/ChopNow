@@ -191,9 +191,16 @@ const updateBusiness = async (req, res) => {
       'type',
       'description',
       'contact',
-      'address',
       'deliverySettings',
       'payoutInfo',
+      'tagline',
+      'contactPerson',
+      'contactEmail',
+      'email',
+      'phone',
+      'website',
+      'businessHours',
+      'specialHours',
     ];
     allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -206,6 +213,58 @@ const updateBusiness = async (req, res) => {
         }
       }
     });
+
+    for (const field of ['email', 'contactEmail']) {
+      const value = req.body[field];
+      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return res.status(400).json({ message: 'Please enter a valid email address' });
+      }
+    }
+    if (req.body.phone && !/^\+?[\d\s-]{7,20}$/.test(req.body.phone)) {
+      return res.status(400).json({ message: 'Please enter a valid phone number' });
+    }
+    if (Array.isArray(req.body.businessHours)) {
+      const badDay = req.body.businessHours.find(
+        (h) => !h.closed && h.from && h.to && h.from >= h.to
+      );
+      if (badDay) {
+        return res
+          .status(400)
+          .json({ message: `${badDay.day}: closing time must be after opening` });
+      }
+    }
+
+    // The address is merged into what is stored (the street text is edited on its own),
+    // and the map pin keeps the geo index in step with it.
+    if (req.body.address !== undefined) {
+      const incoming = req.body.address;
+      if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+        const { location, ...rest } = incoming;
+        const current =
+          business.address && typeof business.address === 'object'
+            ? business.address
+            : business.address
+              ? { text: business.address }
+              : {};
+        const next = { ...current, ...rest };
+        const [lng, lat] = location?.coordinates || [];
+        if (
+          Number.isFinite(lng) &&
+          Number.isFinite(lat) &&
+          Math.abs(lat) <= 90 &&
+          Math.abs(lng) <= 180 &&
+          !(lat === 0 && lng === 0)
+        ) {
+          next.lat = lat;
+          next.lng = lng;
+          business.location = { type: 'Point', coordinates: [lng, lat] };
+        }
+        business.address = next;
+        business.markModified('address');
+      } else if (incoming) {
+        business.address = incoming;
+      }
+    }
 
     // Admin-only: allow operational status change (active/suspended)
     if (isAdminUser(req.user) && req.body.status !== undefined) {
@@ -458,16 +517,23 @@ const uploadKYC = async (req, res) => {
 
     // Add new documents to existing documents array
     business.verification.documents.push(...uploadedDocuments);
-    business.verification.status = 'pending';
-    business.verification.submittedAt = new Date();
-    // A fresh submission answers the previous review
-    business.verification.rejectionReason = undefined;
-    business.verification.infoRequestMessage = undefined;
+    // An approved business that adds a document stays approved (it must not lose
+    // access to its dashboard); everyone else goes (back) to the review queue.
+    const alreadyApproved = ['approved', 'verified'].includes(business.verification.status);
+    if (!alreadyApproved) {
+      business.verification.status = 'pending';
+      business.verification.submittedAt = new Date();
+      // A fresh submission answers the previous review
+      business.verification.rejectionReason = undefined;
+      business.verification.infoRequestMessage = undefined;
+    }
 
     await business.save();
 
     res.json({
-      message: 'KYC documents uploaded successfully. Verification is pending.',
+      message: alreadyApproved
+        ? 'Document uploaded successfully.'
+        : 'KYC documents uploaded successfully. Verification is pending.',
       verification: business.verification,
       documentsUploaded: uploadedDocuments.length,
     });

@@ -93,19 +93,19 @@ const Settings = ({ initialTab = 'profile' }) => {
   const [specialHours, setSpecialHours] = useState([]);
 
   // Business Information State
+  // Filled from the saved business as soon as it loads (the map starts on Kigali)
   const [businessInfo, setBusinessInfo] = useState({
-    contactPhone: '+250 788 123 456',
-    physicalAddress: { lat: -1.9441, lng: 30.0619, address: 'Kigali, Rwanda' },
+    contactPhone: '',
+    physicalAddress: { lat: -1.9441, lng: 30.0619, address: '' },
   });
 
   const [addressSearch, setAddressSearch] = useState('');
 
   // Certificates State
-  const [certificates, setCertificates] = useState([
-    { id: 1, name: 'Business License', file: 'business_license.pdf', uploadDate: '2025-12-15' },
-    { id: 2, name: 'Health Certificate', file: 'health_cert.pdf', uploadDate: '2026-01-10' },
-    { id: 3, name: 'Tax Registration', file: 'tax_registration.pdf', uploadDate: '2025-11-20' },
-  ]);
+  // The documents this business has actually submitted for verification
+  const [documents, setDocuments] = useState([]);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [businessId, setBusinessId] = useState(null);
 
   // Form state for Shop Admin
   const [shopFormData, setShopFormData] = useState({
@@ -258,16 +258,38 @@ const Settings = ({ initialTab = 'profile' }) => {
           const businesses = response.businesses || response || [];
           if (businesses.length > 0) {
             const business = businesses[0];
+            setBusinessId(business._id);
             setShopFormData((prev) => ({
               ...prev,
-              businessName: business.businessName || '',
-              businessLogo: business.logo || null,
+              businessName: business.name || '',
+              businessLogo: business.media?.logo || null,
               businessTagline: business.tagline || '',
               businessEmail: business.email || '',
               contactPerson: business.contactPerson || prev.contactPerson,
               contactEmail: business.contactEmail || prev.contactEmail,
               phoneNumber: business.phone || prev.phoneNumber,
             }));
+            const addr = business.address;
+            const [lng, lat] = business.location?.coordinates || [];
+            const hasPin =
+              Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+            setBusinessInfo((prev) => ({
+              contactPhone: business.phone || '',
+              physicalAddress: {
+                lat: hasPin ? lat : prev.physicalAddress.lat,
+                lng: hasPin ? lng : prev.physicalAddress.lng,
+                address:
+                  (typeof addr === 'string' ? addr : addr?.text || addr?.street || addr?.address) ||
+                  '',
+              },
+            }));
+            if (business.businessHours?.length) {
+              setBusinessHours((prev) =>
+                prev.map((day) => business.businessHours.find((h) => h.day === day.day) || day)
+              );
+            }
+            setSpecialHours(business.specialHours || []);
+            setDocuments(business.verification?.documents || []);
           }
         } catch (error) {
           if (!isMounted) return;
@@ -316,6 +338,28 @@ const Settings = ({ initialTab = 'profile' }) => {
         }
       };
       reader.readAsDataURL(file);
+
+      // The preview above is only local: send the picture so it is still there tomorrow.
+      try {
+        const formData = new FormData();
+        if (adminMode === 'shop') {
+          if (!businessId) return;
+          formData.append('logo', file);
+          const saved = await businessService.uploadLogo(businessId, formData);
+          setShopFormData((prev) => ({ ...prev, businessLogo: saved.logo || prev.businessLogo }));
+          toast.success('Logo updated');
+        } else {
+          formData.append('avatar', file);
+          const saved = await authService.uploadAvatar(formData);
+          setAdminFormData((prev) => ({
+            ...prev,
+            profilePicture: saved.avatar || prev.profilePicture,
+          }));
+          toast.success('Profile picture updated');
+        }
+      } catch (error) {
+        toast.error(error.message || 'Could not upload the picture');
+      }
     }
   };
 
@@ -335,8 +379,10 @@ const Settings = ({ initialTab = 'profile' }) => {
             contactEmail: shopFormData.contactEmail,
             phone: shopFormData.phoneNumber,
           });
+          toast.success('Business profile updated successfully!');
+        } else {
+          toast.error('No business found to update');
         }
-        toast.success('Business profile updated successfully!');
       } else {
         // Update user profile - parse name into first and last
         const nameParts = adminFormData.name.trim().split(' ');
@@ -560,27 +606,19 @@ const Settings = ({ initialTab = 'profile' }) => {
     }
   };
 
-  const handleCertificateUpload = async (certificateId, file) => {
-    if (!file) return;
+  const handleDocumentUpload = async (file) => {
+    if (!file || !businessId) return;
+    setUploadingDocument(true);
     try {
-      const response = await businessService.getMyBusinesses();
-      const businesses = response.businesses || response || [];
-      if (businesses.length > 0) {
-        const formData = new FormData();
-        formData.append('documents', file);
-        await businessService.uploadKYC(businesses[0]._id, formData);
-        // Update local state
-        setCertificates((prev) =>
-          prev.map((cert) =>
-            cert.id === certificateId
-              ? { ...cert, file: file.name, uploadDate: new Date().toISOString().split('T')[0] }
-              : cert
-          )
-        );
-        toast.success('Certificate uploaded successfully!');
-      }
+      const formData = new FormData();
+      formData.append('documents', file);
+      const saved = await businessService.submitVerification(businessId, formData);
+      setDocuments(saved.verification?.documents || []);
+      toast.success('Document uploaded');
     } catch (error) {
-      toast.error(error.message || 'Failed to upload certificate');
+      toast.error(error.message || 'Failed to upload the document');
+    } finally {
+      setUploadingDocument(false);
     }
   };
 
@@ -596,6 +634,7 @@ const Settings = ({ initialTab = 'profile' }) => {
           phone: businessInfo.contactPhone,
           address: {
             street: businessInfo.physicalAddress.address,
+            text: businessInfo.physicalAddress.address,
             location: {
               type: 'Point',
               coordinates: [businessInfo.physicalAddress.lng, businessInfo.physicalAddress.lat],
@@ -1202,7 +1241,7 @@ const Settings = ({ initialTab = 'profile' }) => {
                         disabled={special.closed}
                         className="px-3 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all disabled:opacity-50"
                       />
-                      <span className="text-xs text-slate-500">to</span>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">to</span>
                       <input
                         type="time"
                         value={special.to}
@@ -1300,15 +1339,20 @@ const Settings = ({ initialTab = 'profile' }) => {
                 </div>
               </div>
 
-              {/* Certificates Section */}
+              {/* Documents Section: what this business has actually submitted */}
               <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg border border-slate-200/50 dark:border-slate-700/50 p-5">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
                   Certificates & Documents
                 </h2>
                 <div className="space-y-3">
-                  {certificates.map((cert) => (
+                  {documents.length === 0 && (
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      No documents uploaded yet.
+                    </p>
+                  )}
+                  {documents.map((doc, index) => (
                     <div
-                      key={cert.id}
+                      key={doc._id || doc.url || index}
                       className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"
                     >
                       <div className="flex items-center space-x-3">
@@ -1317,25 +1361,44 @@ const Settings = ({ initialTab = 'profile' }) => {
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                            {cert.name}
+                            Document {index + 1}
                           </h3>
                           <p className="text-xs text-slate-600 dark:text-slate-400">
-                            {cert.file} • Uploaded: {cert.uploadDate}
+                            Uploaded:{' '}
+                            {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : '-'}
                           </p>
                         </div>
                       </div>
-                      <label className="inline-flex items-center space-x-2 px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Update</span>
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleCertificateUpload(cert.id, e.target.files[0])}
-                          className="hidden"
-                        />
-                      </label>
+                      {doc.url && (
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                        >
+                          View
+                        </a>
+                      )}
                     </div>
                   ))}
+                  <label className="inline-flex items-center space-x-2 px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    {uploadingDocument ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>{uploadingDocument ? 'Uploading...' : 'Add a document'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      disabled={uploadingDocument}
+                      onChange={(e) => {
+                        handleDocumentUpload(e.target.files[0]);
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -1675,11 +1738,6 @@ const Settings = ({ initialTab = 'profile' }) => {
                       desc: 'Allow customers to leave reviews',
                     },
                     {
-                      key: 'enableNotifications',
-                      label: 'Enable Notifications',
-                      desc: 'Send push and email notifications',
-                    },
-                    {
                       key: 'maintenanceMode',
                       label: 'Maintenance Mode',
                       desc: 'Temporarily disable the platform',
@@ -1715,75 +1773,6 @@ const Settings = ({ initialTab = 'profile' }) => {
                               : 'bg-slate-200 dark:bg-slate-700 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:bg-green-700'
                           }`}
                         ></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </SettingsAccordion>
-
-              {/* Notification Preferences */}
-              <SettingsAccordion
-                header={
-                  <>
-                    <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                      <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                        Admin Notifications
-                      </h2>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        Configure which notifications you receive
-                      </p>
-                    </div>
-                  </>
-                }
-              >
-                <div className="space-y-3">
-                  {[
-                    {
-                      key: 'sendOrderConfirmation',
-                      label: 'Order Confirmations',
-                      desc: 'Receive notification for each new order',
-                    },
-                    {
-                      key: 'sendPayoutNotification',
-                      label: 'Payout Requests',
-                      desc: 'Receive notification when vendors request payouts',
-                    },
-                    {
-                      key: 'sendNewVendorAlert',
-                      label: 'New Vendor Registrations',
-                      desc: 'Receive notification when new vendors register',
-                    },
-                    {
-                      key: 'sendWeeklyReport',
-                      label: 'Weekly Reports',
-                      desc: 'Receive weekly platform performance summary',
-                    },
-                  ].map((notification) => (
-                    <div
-                      key={notification.key}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"
-                    >
-                      <div>
-                        <h3 className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                          {notification.label}
-                        </h3>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
-                          {notification.desc}
-                        </p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']">
-                        <input
-                          type="checkbox"
-                          checked={platformSettings[notification.key]}
-                          onChange={(e) =>
-                            handlePlatformSettingChange(notification.key, e.target.checked)
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-700"></div>
                       </label>
                     </div>
                   ))}

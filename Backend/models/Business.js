@@ -38,6 +38,46 @@ const businessSchema = new Schema(
       type: String,
       trim: true,
     },
+    tagline: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+    contactPerson: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    contactEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+
+    // Opening hours shown to customers: one entry per weekday, plus dated exceptions
+    businessHours: [
+      {
+        _id: false,
+        day: {
+          type: String,
+          enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          required: true,
+        },
+        from: { type: String, match: /^(\d{2}:\d{2})?$/ },
+        to: { type: String, match: /^(\d{2}:\d{2})?$/ },
+        closed: { type: Boolean, default: false },
+      },
+    ],
+    specialHours: [
+      {
+        _id: false,
+        date: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },
+        description: { type: String, trim: true, maxlength: 100 },
+        from: { type: String, match: /^(\d{2}:\d{2})?$/ },
+        to: { type: String, match: /^(\d{2}:\d{2})?$/ },
+        closed: { type: Boolean, default: false },
+      },
+    ],
 
     // Location
     address: {
