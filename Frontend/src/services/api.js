@@ -176,7 +176,9 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch (refreshError) {
           processQueue(refreshError, null);
-          forceLogout();
+          // Sign out only when the server says the session is really gone. If it is just
+          // unreachable (restarting, offline), keep the person signed in and fail this one request.
+          if ([400, 401, 403].includes(refreshError?.response?.status)) forceLogout();
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

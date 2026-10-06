@@ -95,7 +95,30 @@ const AppContextProvider = ({ children }) => {
         // backend message as an error toast to every first-time visitor on
         // page load - confirmed live, 2026-09-26, in a real browser hitting
         // the production homepage logged out.
-        const { data } = await api.post('/api/users/refresh-token', {}, { silent: true });
+        // Only a definite "no valid session" answer (400/401/403) means signed out. A network
+        // error or a 5xx - the backend restarting after a deploy, or waking from sleep - says
+        // nothing about the session, and used to sign everybody out. Retry a few times first.
+        const DEAD_SESSION = [400, 401, 403];
+        let data = null;
+        for (let attempt = 0; attempt < 4 && !data; attempt++) {
+          try {
+            ({ data } = await api.post('/api/users/refresh-token', {}, { silent: true }));
+          } catch (refreshError) {
+            if (DEAD_SESSION.includes(refreshError?.response?.status)) throw refreshError;
+            if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+          }
+        }
+        if (!data) {
+          // Still unreachable. Keep the remembered user (if any) instead of signing them out;
+          // the next request refreshes the session as soon as the server is back.
+          if (userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+            setActiveRole(userData.activeRole || userData.role || 'consumer');
+            setAvailableRoles(userData.roles || [userData.role || 'consumer']);
+          }
+          return;
+        }
         setAccessToken(data.token);
 
         // Validate by fetching a fresh profile.
