@@ -55,6 +55,16 @@ const categoryMap = {
   other: 'other',
 };
 
+const BACKEND_TO_OPTION = {
+  'fruit-veg': 'Vegetables',
+  beverages: 'Drinks',
+  meals: 'Instant',
+  dairy: 'Dairy',
+  'baked-goods': 'Bakery',
+  pantry: 'Grains',
+  meat: 'Meat',
+};
+
 export const AllListings = () => {
   const navigate = useNavigate();
   const { adminMode, isAdmin } = useAdminMode();
@@ -1032,9 +1042,11 @@ export const NewListing = () => {
                     id="vendor"
                     name="vendor"
                     value={formData.vendor}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
-                    placeholder="Enter vendor name"
+                    readOnly
+                    aria-readonly="true"
+                    title="Your shop name (change it in Settings)"
+                    className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-600 dark:text-slate-300 cursor-not-allowed focus:outline-none transition-all"
+                    placeholder="Your shop name"
                   />
                 </div>
 
@@ -1423,10 +1435,6 @@ export const NewListing = () => {
                   style={{ color: 'var(--color-moringa-muted)' }}
                 >
                   <span>{formData.vendor || 'Vendor Name'}</span>
-                  <span>•</span>
-                  <span className="font-medium" style={{ color: 'var(--color-solid)' }}>
-                    1km
-                  </span>
                 </div>
                 <p className="text-xs mb-1.5" style={{ color: 'var(--color-moringa-muted)' }}>
                   Pickup at{' '}
@@ -1524,7 +1532,8 @@ const EditListing = ({ product, onBack, onRefresh }) => {
   const [formData, setFormData] = useState({
     name: product.title || product.name || '',
     description: product.description || '',
-    category: product.category || '',
+    // The saved value is the backend's ('baked-goods'); the dropdown uses the shop's category paths
+    category: BACKEND_TO_OPTION[product.category] || product.category || '',
     vendor: product.business?.name || '',
     price: product.pricing?.originalPrice || product.price || '',
     offerPrice: product.pricing?.price || product.offerPrice || '',
@@ -1551,6 +1560,23 @@ const EditListing = ({ product, onBack, onRefresh }) => {
     }))
   );
   const [mainImage, setMainImage] = useState(images[0] || null);
+
+  // The list API only gives the business id, so look up the shop name for the (read-only) field
+  useEffect(() => {
+    if (formData.vendor) return undefined;
+    let alive = true;
+    businessService
+      .getMyBusinesses()
+      .then((response) => {
+        const list = response.businesses || response || [];
+        if (alive && list[0]?.name) setFormData((prev) => ({ ...prev, vendor: list[0].name }));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -1608,7 +1634,7 @@ const EditListing = ({ product, onBack, onRefresh }) => {
       const payload = {
         title: formData.name,
         description: formData.description,
-        category: formData.category,
+        category: categoryMap[formData.category] || formData.category || 'other',
         pricing: {
           price: Number(formData.offerPrice || formData.price),
           originalPrice: Number(formData.price),
@@ -1768,9 +1794,11 @@ const EditListing = ({ product, onBack, onRefresh }) => {
                     id="vendor"
                     name="vendor"
                     value={formData.vendor}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-solid focus:border-transparent transition-all"
-                    placeholder="Enter vendor name"
+                    readOnly
+                    aria-readonly="true"
+                    title="Your shop name (change it in Settings)"
+                    className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-600 dark:text-slate-300 cursor-not-allowed focus:outline-none transition-all"
+                    placeholder="Your shop name"
                   />
                 </div>
 
@@ -2166,10 +2194,6 @@ const EditListing = ({ product, onBack, onRefresh }) => {
                   style={{ color: 'var(--color-moringa-muted)' }}
                 >
                   <span>{formData.vendor || 'Vendor Name'}</span>
-                  <span>•</span>
-                  <span className="font-medium" style={{ color: 'var(--color-solid)' }}>
-                    1km
-                  </span>
                 </div>
                 <p className="text-xs mb-1.5" style={{ color: 'var(--color-moringa-muted)' }}>
                   Pickup at{' '}

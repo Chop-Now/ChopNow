@@ -809,7 +809,7 @@ const OrdersTable = ({ title, statusFilter }) => {
                       {selectedOrder.items?.map((item, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/30">
                           <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
-                            {item.name || 'Product'}
+                            {item.title || item.listing?.title || item.name || 'Product'}
                           </td>
                           <td className="px-4 py-3 text-center">{item.quantity}</td>
                           <td className="px-4 py-3 text-right">
