@@ -12,10 +12,17 @@
  */
 const request = require('supertest');
 const app = require('./app');
-const { createConsumer, createBusinessOwnerWithBusiness, createListing } = require('./fixtures');
+const {
+  createConsumer,
+  createBusinessOwnerWithBusiness,
+  createListing,
+  eventually,
+} = require('./fixtures');
+const Order = require('../models/Order');
+const Notification = require('../models/Notification');
 
-async function createOrderForDispute() {
-  const { business } = await createBusinessOwnerWithBusiness();
+async function createOrderForDispute({ paid = true } = {}) {
+  const { business, user: owner } = await createBusinessOwnerWithBusiness();
   const listing = await createListing(business, { pricing: { price: 3000, currency: 'RWF' } });
   const { token: consumerToken, user: consumer } = await createConsumer();
 
@@ -29,7 +36,10 @@ async function createOrderForDispute() {
       payment: { paymentMethod: 'mobile_money' },
     });
 
-  return { order: orderRes.body, consumerToken, consumer, business };
+  // Only an order that was paid for can be reported (a new order starts unpaid).
+  if (paid) await Order.findByIdAndUpdate(orderRes.body._id, { status: 'paid' });
+
+  return { order: orderRes.body, consumerToken, consumer, business, owner };
 }
 
 describe('POST /api/v1/disputes - creation matches the real mobile payload', () => {
@@ -98,5 +108,45 @@ describe('POST /api/v1/disputes - creation matches the real mobile payload', () 
       });
 
     expect(res.status).toBe(403);
+  });
+
+  const report = (token, order, extra = {}) =>
+    request(app)
+      .post('/api/v1/disputes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        order: order._id,
+        reason: 'Missing items',
+        description: 'Two of the items were missing from the bag.',
+        ...extra,
+      });
+
+  it('accepts the short "Other" reason the apps offer', async () => {
+    const { order, consumerToken } = await createOrderForDispute();
+    const res = await report(consumerToken, order, { reason: 'Other' });
+    expect(res.status).toBe(201);
+  });
+
+  it('refuses a second report while the first is still open', async () => {
+    const { order, consumerToken } = await createOrderForDispute();
+    expect((await report(consumerToken, order)).status).toBe(201);
+    const again = await report(consumerToken, order);
+    expect(again.status).toBe(409);
+    expect(again.body.message).toMatch(/already reported/i);
+  });
+
+  it('refuses a report on an order that was never paid', async () => {
+    const { order, consumerToken } = await createOrderForDispute({ paid: false });
+    expect((await report(consumerToken, order)).status).toBe(400);
+  });
+
+  it('tells the vendor a problem was reported', async () => {
+    const { order, consumerToken, owner } = await createOrderForDispute();
+    await report(consumerToken, order);
+    const note = await eventually(() =>
+      Notification.findOne({ user: owner._id, type: 'dispute_opened' })
+    );
+    expect(note).toBeTruthy();
+    expect(note.message).toContain(order.orderNumber);
   });
 });

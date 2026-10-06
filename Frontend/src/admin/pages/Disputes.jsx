@@ -709,6 +709,8 @@ export const CustomerComplaints = () => {
         return (
           <button
             onClick={() => handleResolve(issue.id)}
+            aria-label="Resolve issue"
+            title="Resolve issue"
             className="flex items-center gap-1 px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Check className="w-4 h-4" />

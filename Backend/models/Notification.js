@@ -37,9 +37,11 @@ const notificationSchema = new Schema(
         'favorite_business_new_listing',
         'payment_success',
         'delivery_assigned',
+        'dispute_resolved',
         // Vendor notifications
         'new_order',
         'order_status_changed',
+        'dispute_opened',
         // Payee (vendor/rider) money notifications
         'payout_update',
         // Review notifications

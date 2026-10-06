@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const Payout = require('../models/Payout');
 const { recordEntry, notifyPayee } = require('../services/ledgerService');
 const { syncOrderImpactWithRefunds } = require('../services/impactService');
+const Notification = require('../models/Notification');
 
 // Maps the mobile app's "what went wrong?" reason labels (dispute_screen.dart)
 // to the Dispute model's `type` enum, since the client never sends `type`.
@@ -18,6 +19,43 @@ const REASON_TYPE_MAP = {
   'Order never arrived': 'delivery_issue',
   Overcharged: 'refund',
   Other: 'other',
+};
+
+// Tell the vendor a customer reported a problem, so they hear it from us first.
+const notifyDisputeOpened = async (order, dispute) => {
+  const business = await Business.findById(order.business).select('owner name');
+  if (!business?.owner) return;
+  await Notification.createNotification({
+    user: business.owner,
+    title: 'A customer reported a problem',
+    message: `A customer reported a problem with order #${order.orderNumber}: ${dispute.title}. Our team will review it.`,
+    type: 'dispute_opened',
+    relatedOrder: order._id,
+    relatedBusiness: business._id,
+    link: '/dashboard',
+  });
+};
+
+// Tell the customer how their report was settled.
+const RESOLUTION_MESSAGES = {
+  full_refund: 'You will be refunded in full.',
+  partial_refund: 'You will receive a partial refund.',
+};
+const notifyDisputeResolved = async (dispute) => {
+  const order = await Order.findById(dispute.order).select('orderNumber');
+  const outcome =
+    RESOLUTION_MESSAGES[dispute.resolution?.action] ||
+    'Our team has reviewed your report and closed it.';
+  const comment = dispute.resolution?.comment ? ` ${dispute.resolution.comment}` : '';
+  await Notification.createNotification({
+    user: dispute.customer,
+    title: 'Your report was resolved',
+    message: `Your report about order #${order?.orderNumber}: ${outcome}${comment}`,
+    type: 'dispute_resolved',
+    relatedOrder: dispute.order,
+    relatedBusiness: dispute.business,
+    link: '/my-orders',
+  });
 };
 
 /**
@@ -39,6 +77,24 @@ const createDispute = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to dispute this order' });
     }
 
+    if (order.status === 'pending_payment') {
+      return res.status(400).json({
+        message: 'You can only report a problem on an order you have paid for',
+      });
+    }
+
+    const alreadyOpen = await Dispute.exists({
+      order: orderId,
+      customer: req.user._id,
+      status: { $in: ['open', 'under_review', 'escalated'] },
+    });
+    if (alreadyOpen) {
+      return res.status(409).json({
+        message:
+          'You have already reported a problem with this order. Our team is looking into it.',
+      });
+    }
+
     const dispute = await Dispute.create({
       order: orderId,
       customer: req.user._id,
@@ -49,6 +105,10 @@ const createDispute = async (req, res) => {
       evidence,
       timeline: [{ event: 'Dispute created' }],
     });
+
+    notifyDisputeOpened(order, dispute).catch((err) =>
+      logger.error({ err, disputeId: dispute._id }, 'Dispute opened notification failed')
+    );
 
     res.status(201).json(dispute);
   } catch (error) {
@@ -468,6 +528,9 @@ const resolveDispute = async (req, res) => {
         { title: 'Refund deducted', message: vendorNotice }
       );
     }
+    notifyDisputeResolved(resolved).catch((err) =>
+      logger.error({ err, disputeId: resolved._id }, 'Dispute resolved notification failed')
+    );
     res.json(resolved);
   } catch (error) {
     // A rejection thrown inside withTransaction aborted it, undoing the claim.

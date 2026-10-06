@@ -11,6 +11,16 @@ const disputeService = {
     }
   },
 
+  // The signed-in customer's own reports
+  getMyDisputes: async () => {
+    try {
+      const response = await api.get('/api/disputes/me');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get disputes (Admin or Business)
   getDisputes: async (role, status) => {
     try {

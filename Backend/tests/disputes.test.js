@@ -22,7 +22,13 @@ const Dispute = require('../models/Dispute');
 const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 const RefundRequest = require('../models/RefundRequest');
-const { createConsumer, createBusinessOwnerWithBusiness, createListing } = require('./fixtures');
+const Notification = require('../models/Notification');
+const {
+  createConsumer,
+  createBusinessOwnerWithBusiness,
+  createListing,
+  eventually,
+} = require('./fixtures');
 
 async function createDisputedOrder() {
   const { business } = await createBusinessOwnerWithBusiness();
@@ -103,6 +109,23 @@ describe('PATCH /api/v1/disputes/:id/resolve - refunds must move money (C8)', ()
 
     const updatedOrder = await Order.findById(order._id);
     expect(updatedOrder.payment.paymentStatus).toBe('refund_pending');
+  });
+
+  it('tells the customer how their report was settled', async () => {
+    const { dispute, consumer } = await createDisputedOrder();
+    const adminToken = await createAdmin();
+
+    await request(app)
+      .patch('/api/v1/disputes/' + dispute._id + '/resolve')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ action: 'full_refund', comment: 'Sorry about that.' });
+
+    const note = await eventually(() =>
+      Notification.findOne({ user: consumer._id, type: 'dispute_resolved' })
+    );
+    expect(note).toBeTruthy();
+    expect(note.message).toMatch(/refunded in full/);
+    expect(note.message).toContain('Sorry about that.');
   });
 
   it('should honor a partial_refund amount and reject one exceeding the order total', async () => {

@@ -46,7 +46,9 @@ function LocationMarker({ onSelect, selectedPosition }) {
     }
   }, [selectedPosition]);
 
-  return position ? <Marker position={position} icon={customIcon} /> : null;
+  return position ? (
+    <Marker position={position} icon={customIcon} title="Selected location" />
+  ) : null;
 }
 
 function MapUpdater({ center }) {

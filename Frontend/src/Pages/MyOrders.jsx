@@ -10,7 +10,6 @@ import {
   ChevronRight,
   X,
   Utensils,
-  Trash2,
   Loader2,
   Phone,
   Navigation,
@@ -19,12 +18,23 @@ import {
   Star,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { orderService, reviewService } from '../services';
+import { orderService, reviewService, disputeService } from '../services';
 import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentModal';
+import ReportProblem from '../Components/ReportProblem';
 
 // Mirrors Order.canBeCancelled() on the backend, which is what actually
 // enforces this - the button is just hidden for other states.
 const CANCELLABLE_STATUSES = ['pending_payment', 'paid', 'confirmed'];
+
+// Orders the buyer can report a problem with: anything paid for that was not cancelled.
+const REPORTABLE_STATUSES = [
+  'paid',
+  'confirmed',
+  'preparing',
+  'ready_for_pickup',
+  'out_for_delivery',
+  'completed',
+];
 
 // In-progress orders (paid, confirmed, awaiting the vendor...) are blue, not red:
 // red is for orders that failed.
@@ -126,6 +136,8 @@ const MyOrders = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  // Latest report per order id, so the order modal can show where it stands
+  const [disputesByOrder, setDisputesByOrder] = useState({});
   const [paymentTarget, setPaymentTarget] = useState(null);
 
   useEffect(() => {
@@ -137,6 +149,23 @@ const MyOrders = () => {
       .catch(() => {
         // Non-critical: worst case the review button shows and the backend
         // rejects a duplicate with a clear message.
+      });
+  }, []);
+
+  useEffect(() => {
+    disputeService
+      .getMyDisputes()
+      .then((list) => {
+        const byOrder = {};
+        // Newest first from the API: keep the first one seen per order
+        (Array.isArray(list) ? list : []).forEach((d) => {
+          const id = String(d.order?._id || d.order);
+          if (!byOrder[id]) byOrder[id] = d;
+        });
+        setDisputesByOrder(byOrder);
+      })
+      .catch(() => {
+        // Non-critical: the report button still works and the backend refuses duplicates.
       });
   }, []);
 
@@ -833,15 +862,10 @@ const MyOrders = () => {
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <h3 className="text-xl font-semibold">Order Details</h3>
-                  <button
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Order"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
                 </div>
                 <button
                   onClick={() => setSelectedOrder(null)}
+                  aria-label="Close order details"
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-6 h-6" />
@@ -924,6 +948,21 @@ const MyOrders = () => {
                       </button>
                     </div>
                   ))}
+
+                {/* Report a problem */}
+                {REPORTABLE_STATUSES.includes(selectedOrder.rawStatus) && (
+                  <ReportProblem
+                    key={selectedOrder.orderId}
+                    orderId={selectedOrder.orderId}
+                    dispute={disputesByOrder[String(selectedOrder.orderId)]}
+                    onReported={(created) =>
+                      setDisputesByOrder((prev) => ({
+                        ...prev,
+                        [String(selectedOrder.orderId)]: created,
+                      }))
+                    }
+                  />
+                )}
 
                 {/* Order Info */}
                 <div className="mb-6">
@@ -1206,7 +1245,11 @@ const MyOrders = () => {
                                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
-                                <Marker position={getPickupCoords()} icon={vendorIcon}>
+                                <Marker
+                                  position={getPickupCoords()}
+                                  icon={vendorIcon}
+                                  title="Pickup location"
+                                >
                                   <Popup>
                                     <div className="text-xs font-semibold text-center">
                                       🏪 {orderDetails.business?.name || 'Store'}
@@ -1321,7 +1364,11 @@ const MyOrders = () => {
                                 />
 
                                 {/* Pickup/Restaurant Marker */}
-                                <Marker position={getPickupCoords()} icon={vendorIcon}>
+                                <Marker
+                                  position={getPickupCoords()}
+                                  icon={vendorIcon}
+                                  title="Pickup location"
+                                >
                                   <Popup>
                                     <div className="text-xs font-semibold">
                                       🏪{' '}
@@ -1333,7 +1380,11 @@ const MyOrders = () => {
                                 </Marker>
 
                                 {/* Dropoff/Customer Marker */}
-                                <Marker position={getDropoffCoords()} icon={homeIcon}>
+                                <Marker
+                                  position={getDropoffCoords()}
+                                  icon={homeIcon}
+                                  title="Delivery address"
+                                >
                                   <Popup>
                                     <div className="text-xs font-semibold">
                                       🏠 Delivery Destination
@@ -1346,6 +1397,7 @@ const MyOrders = () => {
                                   <Marker
                                     position={[riderLocation.lat, riderLocation.lng]}
                                     icon={deliveryIcon}
+                                    title="Rider location"
                                   >
                                     <Popup>
                                       <div className="text-xs font-semibold">🚴 Rider (Live)</div>
