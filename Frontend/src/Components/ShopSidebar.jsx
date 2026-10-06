@@ -25,7 +25,14 @@ const ShopSidebar = ({ sortBy, setSortBy, priceRange, setPriceRange }) => {
     };
   }, [isAuthenticated]);
 
-  const sortOptions = ['Distance (Nearest First)', 'Date Posted', 'A to Z', 'Vendor Rating'];
+  const sortOptions = [
+    'Distance (Nearest First)',
+    'Price: Low to High',
+    'Price: High to Low',
+    'Date Posted',
+    'A to Z',
+    'Vendor Rating',
+  ];
 
   return (
     <div

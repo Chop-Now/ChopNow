@@ -64,6 +64,10 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
         if (b?.distance == null) return -1;
         return a.distance - b.distance;
       });
+    } else if (sortBy === 'Price: Low to High') {
+      filtered = [...filtered].sort((a, b) => (a?.offerPrice || 0) - (b?.offerPrice || 0));
+    } else if (sortBy === 'Price: High to Low') {
+      filtered = [...filtered].sort((a, b) => (b?.offerPrice || 0) - (a?.offerPrice || 0));
     } else if (sortBy === 'Date Posted') {
       filtered = filtered.sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
     } else if (sortBy === 'A to Z') {
@@ -80,6 +84,10 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
     switch (sortBy) {
       case 'Distance (Nearest First)':
         return 'Fresh Deals Near You';
+      case 'Price: Low to High':
+        return 'Lowest Prices First';
+      case 'Price: High to Low':
+        return 'Highest Prices First';
       case 'Date Posted':
         return 'Recently Posted Deals';
       case 'A to Z':
@@ -201,28 +209,32 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
                   Sort by
                 </p>
                 <div className="flex flex-col gap-3">
-                  {['Distance (Nearest First)', 'Date Posted', 'A to Z', 'Vendor Rating'].map(
-                    (option) => (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          setSortBy(option);
-                          setShowMobileSort(false);
-                        }}
-                        className={`text-left px-4 py-3 rounded-lg transition ${
-                          sortBy === option ? 'font-semibold' : ''
-                        }`}
-                        style={{
-                          color:
-                            sortBy === option ? 'var(--color-solid)' : 'var(--color-textColor)',
-                          backgroundColor:
-                            sortBy === option ? 'rgba(0, 168, 107, 0.1)' : 'transparent',
-                        }}
-                      >
-                        {option}
-                      </button>
-                    )
-                  )}
+                  {[
+                    'Distance (Nearest First)',
+                    'Price: Low to High',
+                    'Price: High to Low',
+                    'Date Posted',
+                    'A to Z',
+                    'Vendor Rating',
+                  ].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setSortBy(option);
+                        setShowMobileSort(false);
+                      }}
+                      className={`text-left px-4 py-3 rounded-lg transition ${
+                        sortBy === option ? 'font-semibold' : ''
+                      }`}
+                      style={{
+                        color: sortBy === option ? 'var(--color-solid)' : 'var(--color-textColor)',
+                        backgroundColor:
+                          sortBy === option ? 'rgba(0, 168, 107, 0.1)' : 'transparent',
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

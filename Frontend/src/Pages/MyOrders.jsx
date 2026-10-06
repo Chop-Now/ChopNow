@@ -26,6 +26,21 @@ import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentMo
 // enforces this - the button is just hidden for other states.
 const CANCELLABLE_STATUSES = ['pending_payment', 'paid', 'confirmed'];
 
+// In-progress orders (paid, confirmed, awaiting the vendor...) are blue, not red:
+// red is for orders that failed.
+const STATUS_PILL = {
+  completed: 'bg-green-100 text-green-700',
+  processing: 'bg-blue-100 text-blue-700',
+  cancelled: 'bg-gray-100 text-gray-700',
+  failed: 'bg-red-100 text-red-700',
+};
+const STATUS_TEXT = {
+  completed: 'text-green-700',
+  processing: 'text-blue-700',
+  cancelled: 'text-gray-700',
+  failed: 'text-red-700',
+};
+
 // Mirrors Order.js's payment.paymentMethod enum - friendly labels for display.
 const PAYMENT_METHOD_LABELS = {
   mobile_money: 'Mobile Money',
@@ -35,6 +50,7 @@ import toast from 'react-hot-toast';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import socketService from '../services/socket';
+import { confirmAction } from '../utils/confirm';
 
 // Helper to create beautiful, inline SVG icons for Leaflet
 const createMarkerIcon = (color, svgPath) => {
@@ -143,7 +159,13 @@ const MyOrders = () => {
   };
 
   const handleCancelOrder = async (order) => {
-    if (!window.confirm('Cancel this order? This cannot be undone.')) return;
+    const confirmed = await confirmAction({
+      title: 'Cancel this order?',
+      message: 'This cannot be undone. If you already paid, the money is refunded.',
+      confirmLabel: 'Cancel order',
+      cancelLabel: 'Keep order',
+    });
+    if (!confirmed) return;
     setCancelling(true);
     try {
       await orderService.cancelOrder(order.orderId);
@@ -701,15 +723,7 @@ const MyOrders = () => {
                           </div>
                           <div>
                             <span
-                              className={`text-xs px-3 py-1 rounded-full ${
-                                order.status === 'Completed'
-                                  ? 'bg-green-100 text-green-700'
-                                  : order.status === 'Processing'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : order.status === 'Cancelled'
-                                      ? 'bg-gray-100 text-gray-700'
-                                      : 'bg-red-100 text-red-700'
-                              }`}
+                              className={`text-xs px-3 py-1 rounded-full ${STATUS_PILL[getStatusCategory(order.status)]}`}
                             >
                               {order.status}
                             </span>
@@ -926,15 +940,7 @@ const MyOrders = () => {
                     <div>
                       <p className="text-gray-600">Status</p>
                       <p
-                        className={`font-medium ${
-                          selectedOrder.status === 'Completed'
-                            ? 'text-green-700'
-                            : selectedOrder.status === 'Processing'
-                              ? 'text-blue-700'
-                              : selectedOrder.status === 'Cancelled'
-                                ? 'text-gray-700'
-                                : 'text-red-700'
-                        }`}
+                        className={`font-medium ${STATUS_TEXT[getStatusCategory(selectedOrder.status)]}`}
                       >
                         {selectedOrder.status}
                       </p>

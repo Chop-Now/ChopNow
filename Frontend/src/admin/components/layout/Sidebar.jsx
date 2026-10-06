@@ -202,7 +202,7 @@ const Sidebar = ({
     <>
       {isMobile && mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-55 bg-black/50 lg:hidden"
           onClick={onMobileClose}
           aria-hidden="true"
         />
@@ -211,7 +211,7 @@ const Sidebar = ({
         id="dashboard-nav"
         aria-label="Main navigation"
         inert={isMobile && !mobileOpen ? true : undefined}
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] transform flex-col border-r border-slate-200/50 bg-white transition-all duration-300 ease-in-out dark:border-slate-700/50 dark:bg-slate-900 lg:static lg:z-10 lg:max-w-none lg:translate-x-0 lg:bg-white/80 lg:backdrop-blur-xl lg:dark:bg-slate-900/80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${isExpanded ? 'lg:w-72' : 'lg:w-20'}`}
+        className={`fixed inset-y-0 left-0 z-60 flex w-72 max-w-[85vw] transform flex-col border-r border-slate-200/50 bg-white transition-all duration-300 ease-in-out dark:border-slate-700/50 dark:bg-slate-900 lg:static lg:z-10 lg:max-w-none lg:translate-x-0 lg:bg-white/80 lg:backdrop-blur-xl lg:dark:bg-slate-900/80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${isExpanded ? 'lg:w-72' : 'lg:w-20'}`}
         onMouseEnter={() => collapsed && !isMobile && setIsHovered(true)}
         onMouseLeave={() => collapsed && !isMobile && setIsHovered(false)}
       >

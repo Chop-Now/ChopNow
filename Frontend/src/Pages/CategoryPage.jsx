@@ -5,6 +5,7 @@ import Products from '../Components/Products';
 import ShopSidebar from '../Components/ShopSidebar';
 import React, { useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { getCategoryBackend, getCategoryDisplay } from '../utils/transforms';
 
 const CategoryPage = () => {
   const { category } = useParams();
@@ -13,9 +14,14 @@ const CategoryPage = () => {
   const productsRef = useRef();
 
   // Capitalize first letter of category for display (with fallback)
-  const displayCategory = category
-    ? category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')
-    : 'All Products';
+  // "/shop/vegetables" and "/shop/fruit-veg" both read as "Fruits & Vegetables";
+  // anything we don't recognise falls back to the path, tidied up.
+  const knownBackend = category ? getCategoryBackend(category) : null;
+  const displayCategory = !category
+    ? 'All Products'
+    : knownBackend && (knownBackend !== 'other' || category.toLowerCase() === 'other')
+      ? getCategoryDisplay(knownBackend)
+      : category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ');
 
   return (
     <div className="bg-white min-h-screen pt-20">

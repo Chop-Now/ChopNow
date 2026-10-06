@@ -14,8 +14,7 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import PhoneField from '../Components/ui/PhoneField';
 import LocationPicker from '../Components/maps/LocationPicker';
 import { useGeolocation } from '../Components/maps/useGeolocation';
 import { reverseGeocode, searchAddress } from '../services/geocoding';
@@ -257,7 +256,7 @@ const BusinessVerification = () => {
                   Business Phone Number{' '}
                   {errors.phone && <span className="text-red-500 text-xs">*Required</span>}
                 </label>
-                <PhoneInput
+                <PhoneField
                   country={'rw'}
                   disableCountryGuess={true}
                   value={phone}

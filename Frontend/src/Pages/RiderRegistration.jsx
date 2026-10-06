@@ -16,8 +16,7 @@ import {
   File,
   AlertCircle,
 } from 'lucide-react';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import PhoneField from '../Components/ui/PhoneField';
 import { useAppContext } from '../context/AppContext';
 import userService from '../services/userService';
 import toast from 'react-hot-toast';
@@ -376,7 +375,7 @@ const RiderRegistration = () => {
                   <label className="block text-xs font-bold text-slate-700 mb-2">
                     Mobile Phone Number
                   </label>
-                  <PhoneInput
+                  <PhoneField
                     country={'rw'}
                     disableCountryGuess={true}
                     value={phone}

@@ -14,7 +14,7 @@ const favoriteService = {
   // Get all favorites for the current user
   getFavorites: async (type = null) => {
     try {
-      const url = type ? `/api/favorites?type=${type}` : '/api/favorites';
+      const url = type ? `/api/favorites?favoriteType=${type}` : '/api/favorites';
       const response = await api.get(url);
       return response.data;
     } catch (error) {

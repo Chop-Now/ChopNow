@@ -97,9 +97,14 @@ const ShopAdminOverview = () => {
     })) || [];
 
   // Calculate totals from API data
-  const totalRevenue = businessData?.stats?.totalRevenue || 0;
-  const totalOrders = businessData?.stats?.totalOrders || 0;
-  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  // Revenue and average value come from completed orders on the server; the order
+  // count is every order this shop has received (the stored counter drifts when
+  // orders are cancelled or fail, and was also being read from a field that does
+  // not exist, so revenue always showed as 0).
+  const totalRevenue = businessData?.revenue ?? businessData?.stats?.totalRevenue ?? 0;
+  const totalOrders =
+    businessData?.fulfillmentBreakdown?.total ?? businessData?.stats?.totalOrders ?? 0;
+  const avgOrderValue = businessData?.avgOrderValue ?? 0;
 
   // Placeholder percentage changes (would need historical data to calculate)
   const revenueChange = 0;
@@ -107,11 +112,13 @@ const ShopAdminOverview = () => {
   const avgOrderChange = 0;
 
   const currentWeekSales = salesTrendData[salesTrendData.length - 1]?.sales || 0;
-  const previousWeekSales = salesTrendData[salesTrendData.length - 2]?.sales || 1;
+  const previousWeekSales = salesTrendData[salesTrendData.length - 2]?.sales || 0;
+  // With no sales the week before there is nothing sensible to compare against
+  // (it used to divide by 1 and show absurd figures like +179900%).
   const weeklyChange =
     previousWeekSales > 0
       ? (((currentWeekSales - previousWeekSales) / previousWeekSales) * 100).toFixed(1)
-      : 0;
+      : null;
 
   if (loading) {
     return (
@@ -260,9 +267,12 @@ const ShopAdminOverview = () => {
           </div>
           <div className="flex items-center gap-2">
             <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                {weeklyChange > 0 ? '+' : ''}
-                {weeklyChange}% this week
+              <span className="text-xs font-semibold text-green-700 dark:text-green-400">
+                {weeklyChange === null
+                  ? currentWeekSales > 0
+                    ? 'First sales this week'
+                    : 'No sales to compare yet'
+                  : `${weeklyChange > 0 ? '+' : ''}${weeklyChange}% this week`}
               </span>
             </div>
           </div>
@@ -661,7 +671,7 @@ const WebsiteAdminOverview = () => {
           {hasCo2TrendData && (
             <div className="flex items-center gap-2">
               <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                <span className="text-xs font-semibold text-green-700 dark:text-green-400">
                   {weeklyChange > 0 ? '+' : ''}
                   {weeklyChange}% this week
                 </span>

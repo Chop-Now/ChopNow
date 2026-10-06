@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { userService } from '../../services';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/confirm';
 
 export const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +32,6 @@ export const AllUsers = () => {
   const [adminNote, setAdminNote] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showActionMenu, setShowActionMenu] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usersData, setUsersData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -261,7 +261,13 @@ export const AllUsers = () => {
   };
 
   const handleSuspendUser = async (userId) => {
-    if (window.confirm('Are you sure you want to suspend this account?')) {
+    if (
+      await confirmAction({
+        title: 'Suspend this account?',
+        message: 'They will not be able to use ChopNow until you reactivate the account.',
+        confirmLabel: 'Suspend',
+      })
+    ) {
       try {
         await userService.suspendUser(userId);
         toast.success('User suspended successfully');
@@ -328,7 +334,13 @@ export const AllUsers = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (
+      await confirmAction({
+        title: 'Delete this user?',
+        message: 'This cannot be undone.',
+        confirmLabel: 'Delete',
+      })
+    ) {
       try {
         await userService.deleteUser(userId);
         toast.success('User deleted successfully');
@@ -352,34 +364,6 @@ export const AllUsers = () => {
       toast.error('Failed to archive user');
     }
     setShowActionMenu(null);
-  };
-
-  const handleSelectUser = (userId) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedUsers.length === currentUsers.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(currentUsers.map((user) => user.id));
-    }
-  };
-
-  const handleBulkArchive = () => {
-    console.log('Archiving users:', selectedUsers);
-    alert(`Archived ${selectedUsers.length} users!`);
-    setSelectedUsers([]);
-  };
-
-  const handleBulkDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
-      console.log('Deleting users:', selectedUsers);
-      alert(`Deleted ${selectedUsers.length} users!`);
-      setSelectedUsers([]);
-    }
   };
 
   return (
@@ -463,33 +447,6 @@ export const AllUsers = () => {
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {selectedUsers.length > 0 && (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-3 mb-4 border border-slate-200/50 dark:border-slate-700/50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleBulkArchive}
-                className="px-3 py-1.5 text-xs bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-              >
-                <Archive className="w-3 h-3" />
-                Archive
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-              >
-                <Trash2 className="w-3 h-3" />
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Search and Filter */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-lg shadow-sm p-3 mb-4 border border-slate-200/50 dark:border-slate-700/50">
         <div className="flex flex-col md:flex-row gap-3 items-center">
@@ -567,16 +524,6 @@ export const AllUsers = () => {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-4 py-2 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedUsers.length === currentUsers.length && currentUsers.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                  />
-                </th>
                 <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   User
                 </th>
@@ -597,14 +544,6 @@ export const AllUsers = () => {
                   key={user.id}
                   className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                 >
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => handleSelectUser(user.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                    />
-                  </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center">
                       <img

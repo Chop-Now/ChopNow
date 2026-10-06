@@ -90,7 +90,7 @@ const NotFound = () => {
       </div>
 
       {/* Floating Animation Keyframes */}
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%,
           100% {

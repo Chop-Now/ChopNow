@@ -18,6 +18,7 @@ import {
   Mail,
   FileText,
   Shield,
+  Heart,
 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
@@ -166,6 +167,7 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false, tabBarOnly = fals
     location.pathname === '/cart' ||
     location.pathname === '/my-orders' ||
     location.pathname === '/my-impact' ||
+    location.pathname === '/favorites' ||
     location.pathname === '/notifications';
 
   useEffect(() => {
@@ -396,6 +398,14 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false, tabBarOnly = fals
                       >
                         My Profile
                       </NavLink>
+                      <NavLink
+                        to="/favorites"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="block px-4 py-2 text-sm hover:bg-gray-50 transition"
+                        style={{ color: 'var(--color-textColor)' }}
+                      >
+                        Saved deals
+                      </NavLink>
                       <div className="border-t py-1" style={{ borderColor: '#E5E5E5' }}>
                         {HELP_LINKS.map(({ to, label }) => (
                           <NavLink
@@ -566,6 +576,15 @@ const PageNavbar = ({ onMobileFilterClick, hideTabBar = false, tabBarOnly = fals
               >
                 <User className="w-5 h-5" />
                 My profile
+              </NavLink>
+              <NavLink
+                to="/favorites"
+                onClick={() => setOpen(false)}
+                className="flex min-h-11 items-center gap-3 text-sm font-medium"
+                style={{ color: 'var(--color-textColor)' }}
+              >
+                <Heart className="w-5 h-5" />
+                Saved deals
               </NavLink>
               {HELP_LINKS.map(({ to, label, Icon }) => (
                 <NavLink

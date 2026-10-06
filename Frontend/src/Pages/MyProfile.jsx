@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Upload, Trash2, MoveLeft, Eye, EyeOff, Loader2, Bike, Store } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import PhoneField from '../Components/ui/PhoneField';
 import { authService } from '../services';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
@@ -445,7 +444,7 @@ const MyProfile = () => {
                   <label className="block text-sm font-medium text-textColor mb-2">
                     Phone number
                   </label>
-                  <PhoneInput
+                  <PhoneField
                     country={'rw'}
                     disableCountryGuess={true}
                     value={profile.phone}

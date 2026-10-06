@@ -9,6 +9,8 @@ const ConfirmationModal = ({
   type = 'logout', // 'logout' or 'delete'
   title,
   message,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
 }) => {
   if (!isOpen) return null;
 
@@ -16,7 +18,12 @@ const ConfirmationModal = ({
   const Icon = isLogout ? LogOut : Trash2;
 
   const modalContent = (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-99999 flex items-center justify-center"
+      role="alertdialog"
+      aria-modal="true"
+      aria-label={title || 'Please confirm'}
+    >
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
@@ -56,7 +63,7 @@ const ConfirmationModal = ({
             onClick={onClose}
             className="w-full md:w-36 h-10 rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-medium text-sm hover:bg-gray-100 dark:hover:bg-slate-600 active:scale-95 transition cursor-pointer"
           >
-            Cancel
+            {cancelLabel}
           </button>
           <button
             type="button"
@@ -67,7 +74,7 @@ const ConfirmationModal = ({
                 : 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'
             }`}
           >
-            Confirm
+            {confirmLabel}
           </button>
         </div>
       </div>

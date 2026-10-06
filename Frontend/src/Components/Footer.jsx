@@ -123,23 +123,16 @@ const Footer = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <h3 className="font-semibold text-base text-moringa md:mb-5 mb-2">
-              Stay updated with ChopNow
-            </h3>
+            <h3 className="font-semibold text-base text-moringa md:mb-5 mb-2">Get in touch</h3>
             <p className="text-sm mb-4">
-              Join our newsletter and be the first to discover new updates, exclusive offers, and
-              inspiration.
+              Questions, feedback or want to partner with us? We read every message.
             </p>
-            <div className="flex items-center border border-moringa/25 focus-within:border-moringa focus-within:ring-2 focus-within:ring-moringa/20 text-sm rounded-full h-12 w-full transition-all mx-auto md:mx-0">
-              <input
-                type="email"
-                className="bg-transparent outline-none rounded-full px-4 h-full flex-1 text-moringa placeholder:text-moringa/45"
-                placeholder="Enter your email"
-              />
-              <button className="bg-moringa hover:bg-moringa-dark text-fufu rounded-full h-9 mr-1.5 px-6 flex items-center justify-center text-xs font-semibold transition-all active:scale-95 cursor-pointer">
-                Subscribe
-              </button>
-            </div>
+            <a
+              href="mailto:chopnow.app@gmail.com"
+              className="inline-flex min-h-11 items-center rounded-full bg-moringa px-6 text-xs font-semibold text-fufu transition-all hover:bg-moringa-dark active:scale-95"
+            >
+              chopnow.app@gmail.com
+            </a>
           </motion.div>
         </div>
       </div>
@@ -175,39 +168,6 @@ const Footer = () => {
               className="w-full h-full object-contain"
             />
           </div>
-
-          {/* Bank */}
-          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
-            <img
-              loading="lazy"
-              decoding="async"
-              src={assets.bank}
-              alt="Bank Transfer"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          {/* Mastercard */}
-          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
-            <img
-              loading="lazy"
-              decoding="async"
-              src={assets.mastercard}
-              alt="Mastercard"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          {/* Visa */}
-          <div className="w-16 h-16 rounded-full bg-surface border-2 border-surface-border flex items-center justify-center p-2 hover:border-moringa transition-colors">
-            <img
-              loading="lazy"
-              decoding="async"
-              src={assets.visa}
-              alt="Visa"
-              className="w-full h-full object-contain"
-            />
-          </div>
         </div>
       </motion.div>
 
@@ -220,10 +180,10 @@ const Footer = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           Copyright 2026 ©{' '}
-          <a href="#" className="hover:underline">
+          <Link to="/" className="hover:underline">
             ChopNow
-          </a>{' '}
-          All Right Reserved.
+          </Link>{' '}
+          All rights reserved.
         </motion.p>
         <motion.div
           className="flex items-center gap-4"

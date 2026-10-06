@@ -9,6 +9,7 @@ import { Home, Star, ShoppingCart, Trash2, Share2, Heart, Loader2, MapPin } from
 import { reviewService, favoriteService } from '../services';
 import toast from 'react-hot-toast';
 import ExpiryCountdown from '../Components/ui/ExpiryCountdown';
+import { getCategoryDisplay } from '../utils/transforms';
 import { Flame, Users } from 'lucide-react';
 
 const PLACEHOLDER_IMAGE = '/placeholder-food.svg';
@@ -215,7 +216,7 @@ const ProductDetails = () => {
             to={`/shop/${(product.category || 'all').toLowerCase()}`}
             className="inline-flex min-h-11 items-center hover:opacity-70"
           >
-            {product.category || 'All'}
+            {product.category ? getCategoryDisplay(product.category) : 'All'}
           </Link>
           <span>/</span>
           <span style={{ color: 'var(--color-solid)' }}>{product.name}</span>
@@ -304,6 +305,8 @@ const ProductDetails = () => {
                 <button
                   onClick={handleToggleFavorite}
                   disabled={favoriteLoading}
+                  aria-label={isFavorite ? 'Remove from saved deals' : 'Save this deal'}
+                  aria-pressed={isFavorite}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50"
                   style={{
                     border: '1px solid var(--color-moringa-muted)',

@@ -22,6 +22,7 @@ import { useAppContext } from '../../context/AppContext';
 import { listingService, businessService } from '../../services';
 import toast from 'react-hot-toast';
 import { compressImages } from '../../utils/compressImage';
+import { confirmAction } from '../../utils/confirm';
 
 // Map frontend category paths to backend enum values
 // Backend accepts: 'fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'
@@ -197,7 +198,13 @@ export const AllListings = () => {
 
   // Delete product
   const handleDeleteProduct = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (
+      await confirmAction({
+        title: 'Delete this listing?',
+        message: 'It will be removed from the shop for good. This cannot be undone.',
+        confirmLabel: 'Delete',
+      })
+    ) {
       try {
         await listingService.deleteListing(productId);
         setProducts((prev) => prev.filter((product) => product._id !== productId));
@@ -206,6 +213,38 @@ export const AllListings = () => {
         toast.error('Failed to delete listing');
       }
     }
+  };
+
+  // Apply one action to every selected listing, then report how it went.
+  const runBulk = async (label, action) => {
+    const ids = [...selectedProducts];
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await action(id);
+      } catch {
+        failed += 1;
+      }
+    }
+    setSelectedProducts([]);
+    await fetchProducts();
+    if (failed === 0) toast.success(`${label}: ${ids.length} listing${ids.length > 1 ? 's' : ''}`);
+    else toast.error(`${label}: ${ids.length - failed} done, ${failed} failed`);
+  };
+
+  const handleBulkStatus = (status) =>
+    runBulk(status === 'active' ? 'Activated' : 'Deactivated', (id) =>
+      listingService.updateListing(id, { status })
+    );
+
+  const handleBulkDelete = async () => {
+    const n = selectedProducts.length;
+    const ok = await confirmAction({
+      title: `Delete ${n} listing${n > 1 ? 's' : ''}?`,
+      message: 'They will be removed from the shop for good. This cannot be undone.',
+      confirmLabel: 'Delete',
+    });
+    if (ok) await runBulk('Deleted', (id) => listingService.deleteListing(id));
   };
 
   // Handle edit product
@@ -397,13 +436,22 @@ export const AllListings = () => {
               {selectedProducts.length} item{selectedProducts.length > 1 ? 's' : ''} selected
             </p>
             <div className="flex gap-3">
-              <button className="px-3 py-1.5 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-medium transition-colors">
+              <button
+                onClick={() => handleBulkStatus('active')}
+                className="px-3 py-1.5 bg-solid hover:bg-tertiary text-white rounded-lg text-xs font-medium transition-colors"
+              >
                 Activate Selected
               </button>
-              <button className="px-3 py-1.5 bg-solidOne hover:bg-solidTwo text-white rounded-lg text-xs font-medium transition-colors">
+              <button
+                onClick={() => handleBulkStatus('inactive')}
+                className="px-3 py-1.5 bg-solidOne hover:bg-solidTwo text-white rounded-lg text-xs font-medium transition-colors"
+              >
                 Deactivate Selected
               </button>
-              <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors">
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+              >
                 Delete Selected
               </button>
             </div>
@@ -525,6 +573,7 @@ export const AllListings = () => {
                           type="checkbox"
                           className="sr-only peer"
                           checked={product.status === 'active'}
+                          aria-label={`${product.status === 'active' ? 'Pause' : 'Activate'} ${product.name || product.title || 'listing'}`}
                           onChange={() => handleToggleStatus(product._id, product.status)}
                         />
                         <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-solid transition-colors duration-200"></div>
@@ -543,6 +592,7 @@ export const AllListings = () => {
                       {adminMode === 'shop' && (
                         <button
                           onClick={() => handleEditProduct(product)}
+                          aria-label={`Edit ${product.name || product.title || 'listing'}`}
                           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         >
                           <Pencil className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -550,6 +600,7 @@ export const AllListings = () => {
                       )}
                       <button
                         onClick={() => handleDeleteProduct(product._id)}
+                        aria-label={`Delete ${product.name || product.title || 'listing'}`}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -734,6 +785,11 @@ export const NewListing = () => {
     }
     if (!formData.stock || Number(formData.stock) < 0) {
       toast.error('Please enter stock quantity');
+      return;
+    }
+    // "Price" is the original price and "Offer Price" is what the buyer pays.
+    if (formData.offerPrice && Number(formData.offerPrice) > Number(formData.price)) {
+      toast.error('The offer price cannot be higher than the original price');
       return;
     }
     if (!businessId) {
@@ -1454,7 +1510,7 @@ export const NewListing = () => {
   );
 };
 
-const EditListing = ({ product, onBack }) => {
+const EditListing = ({ product, onBack, onRefresh }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -1539,6 +1595,10 @@ const EditListing = ({ product, onBack }) => {
   };
 
   const handleUpdate = async () => {
+    if (formData.offerPrice && Number(formData.offerPrice) > Number(formData.price)) {
+      toast.error('The offer price cannot be higher than the original price');
+      return;
+    }
     try {
       setIsSubmitting(true);
 
@@ -1585,14 +1645,14 @@ const EditListing = ({ product, onBack }) => {
       }
 
       toast.success('Listing updated successfully!');
-      onBack(); // Refresh list happens in parent? No, need to trigger refresh.
-      // Ideally pass onUpdate callback or use context.
-      // For now, onBack triggers re-render of list? List state might be stale.
-      // We should probably reload page or refetch in parent.
-      window.location.reload(); // Simple fix for now to ensure state sync
+      if (onRefresh) await onRefresh();
+      onBack();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update listing');
+      const detail = error?.errors
+        ? error.errors.map((e) => e.msg || e.message).join(', ')
+        : error?.message;
+      toast.error(detail || 'Failed to update listing');
     } finally {
       setIsSubmitting(false);
     }

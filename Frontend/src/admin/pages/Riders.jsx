@@ -117,20 +117,20 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
           {/* Details sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                 Personal Info
               </h3>
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Mail className="w-4 h-4 text-slate-500 shrink-0" />
                   <span className="truncate">{rider.email}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Phone className="w-4 h-4 text-slate-500 shrink-0" />
                   <span>{rider.riderDetails?.phone || rider.phone || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
                   <span>
                     Applied on:{' '}
                     {rider.riderDetails?.appliedAt
@@ -142,27 +142,27 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                 Vehicle & ID Info
               </h3>
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                   {rider.riderDetails?.vehicleType === 'car' ? (
-                    <Car className="w-4 h-4 text-slate-400 shrink-0" />
+                    <Car className="w-4 h-4 text-slate-500 shrink-0" />
                   ) : (
-                    <Bike className="w-4 h-4 text-slate-400 shrink-0" />
+                    <Bike className="w-4 h-4 text-slate-500 shrink-0" />
                   )}
                   <span className="capitalize">
                     Vehicle Type: {rider.riderDetails?.vehicleType || 'N/A'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                  <FileText className="w-4 h-4 text-slate-500 shrink-0" />
                   <span>National ID: {rider.riderDetails?.nationalId || 'N/A'}</span>
                 </div>
                 {rider.riderDetails?.licensePlate && (
                   <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-500 shrink-0" />
                     <span>License Plate: {rider.riderDetails.licensePlate}</span>
                   </div>
                 )}
@@ -184,7 +184,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
 
           {/* Verification documents */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">
               Verification Documents
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,7 +225,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     }
                     className="w-full h-40 bg-slate-100 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <FileText className="w-8 h-8 text-slate-400" />
+                    <FileText className="w-8 h-8 text-slate-500" />
                     <span className="text-xs text-slate-500 font-semibold">
                       View Document Binary
                     </span>
@@ -270,7 +270,7 @@ const RiderDetailsModal = ({ rider, onClose, onApprove, onReject, showActions = 
                     }
                     className="w-full h-40 bg-slate-100 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <FileText className="w-8 h-8 text-slate-400" />
+                    <FileText className="w-8 h-8 text-slate-500" />
                     <span className="text-xs text-slate-500 font-semibold">
                       View Document Binary
                     </span>
@@ -432,13 +432,13 @@ const Riders = ({ defaultStatus = 'all' }) => {
       {/* Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm">
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider">
             Total Applicant Entries
           </p>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalRiders}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-amber-500 border-l-4">
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider">
             Pending Review
           </p>
           <p className="text-2xl font-black text-amber-600 dark:text-amber-500 mt-1">
@@ -450,7 +450,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-green-500 border-l-4">
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider">
             Active Approved Riders
           </p>
           <p className="text-2xl font-black text-green-600 dark:text-green-500 mt-1">
@@ -462,7 +462,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 sm:p-5 shadow-sm border-l-rose-500 border-l-4">
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          <p className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider">
             Rejected Entries
           </p>
           <p className="text-2xl font-black text-rose-600 dark:text-rose-500 mt-1">
@@ -480,7 +480,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
         {/* Controls Bar */}
         <div className="p-4 border-b border-slate-200/60 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:max-w-xs">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search rider name, phone or email..."
@@ -492,8 +492,8 @@ const Riders = ({ defaultStatus = 'all' }) => {
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-1">
-              <ListFilter className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+              <ListFilter className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">
                 Status:
               </span>
             </div>
@@ -520,7 +520,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
             <p className="text-xs text-slate-500">Loading riders database...</p>
           </div>
         ) : filteredRiders.length === 0 ? (
-          <div className="py-20 text-center text-slate-400">
+          <div className="py-20 text-center text-slate-500">
             <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-40" />
             <p className="text-xs">No rider records found matching your filters</p>
           </div>
@@ -528,7 +528,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/40 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase border-b border-slate-200/60 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-slate-800/40 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase border-b border-slate-200/60 dark:border-slate-800">
                   <th className="p-4">Name</th>
                   <th className="p-4">Contact Info</th>
                   <th className="p-4">Vehicle Type</th>
@@ -548,16 +548,16 @@ const Riders = ({ defaultStatus = 'all' }) => {
                     </td>
                     <td className="p-4 space-y-0.5 text-slate-600 dark:text-slate-400">
                       <div className="font-semibold">{rider.email}</div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-500">
                         {rider.riderDetails?.phone || rider.phone || 'N/A'}
                       </div>
                     </td>
                     <td className="p-4 capitalize text-slate-700 dark:text-slate-300">
                       <div className="flex items-center gap-1.5">
                         {rider.riderDetails?.vehicleType === 'car' ? (
-                          <Car className="w-4 h-4 text-slate-400" />
+                          <Car className="w-4 h-4 text-slate-500" />
                         ) : (
-                          <Bike className="w-4 h-4 text-slate-400" />
+                          <Bike className="w-4 h-4 text-slate-500" />
                         )}
                         <span>{rider.riderDetails?.vehicleType || 'N/A'}</span>
                       </div>
@@ -599,7 +599,7 @@ const Riders = ({ defaultStatus = 'all' }) => {
         {/* Pagination Row */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">
+            <span className="text-xs text-slate-500 dark:text-slate-500 font-bold uppercase">
               Page {currentPage} of {totalPages}
             </span>
             <div className="flex gap-2">

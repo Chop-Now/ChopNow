@@ -11,24 +11,37 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 // through the backend so a custom header can actually be set.
 const LOCATIONIQ_KEY = import.meta.env.VITE_LOCATIONIQ_API_KEY;
 
+// A map-lookup service that is slow or unreachable must never leave someone stuck
+// on "looking up your address": give up after a few seconds so callers can fall
+// back (coordinates still travel with the order).
+async function fetchJson(url, options = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    if (!res.ok) throw new Error(`Lookup failed (${res.status})`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function searchAddress(query) {
   if (
     LOCATIONIQ_KEY &&
     LOCATIONIQ_KEY !== 'YOUR_LOCATIONIQ_ACCESS_TOKEN' &&
     LOCATIONIQ_KEY !== 'your_locationiq_access_token'
   ) {
-    const res = await fetch(
+    return fetchJson(
       `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_KEY}&q=${encodeURIComponent(query)}&format=json`
     );
-    return res.json();
   }
 
-  const res = await fetch(`${NOMINATIM_URL}/search?format=json&q=${encodeURIComponent(query)}`, {
+  return fetchJson(`${NOMINATIM_URL}/search?format=json&q=${encodeURIComponent(query)}`, {
     headers: {
       'User-Agent': 'ChopNow/1.0 (chopnow.app@gmail.com)',
     },
   });
-  return res.json();
 }
 
 export async function reverseGeocode(lat, lon) {
@@ -37,16 +50,14 @@ export async function reverseGeocode(lat, lon) {
     LOCATIONIQ_KEY !== 'YOUR_LOCATIONIQ_ACCESS_TOKEN' &&
     LOCATIONIQ_KEY !== 'your_locationiq_access_token'
   ) {
-    const res = await fetch(
+    return fetchJson(
       `https://us1.locationiq.com/v1/reverse?key=${LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`
     );
-    return res.json();
   }
 
-  const res = await fetch(`${NOMINATIM_URL}/reverse?format=json&lat=${lat}&lon=${lon}`, {
+  return fetchJson(`${NOMINATIM_URL}/reverse?format=json&lat=${lat}&lon=${lon}`, {
     headers: {
       'User-Agent': 'ChopNow/1.0 (chopnow.app@gmail.com)',
     },
   });
-  return res.json();
 }

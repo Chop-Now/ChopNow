@@ -5,8 +5,6 @@ import {
   Search,
   SlidersHorizontal,
   Calendar,
-  Archive,
-  Trash2,
   Package,
   Clock,
   CheckCircle,
@@ -26,11 +24,11 @@ import {
 } from 'lucide-react';
 import { orderService } from '../../services';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/confirm';
 import { useAdminMode } from '../context/AdminModeContext';
 
 const OrdersTable = ({ title, statusFilter }) => {
   const { adminMode } = useAdminMode();
-  const [selectedOrders, setSelectedOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -279,41 +277,6 @@ const OrdersTable = ({ title, statusFilter }) => {
   const showingFrom = filteredOrders.length > 0 ? startIndex + 1 : 0;
   const showingTo = Math.min(endIndex, filteredOrders.length);
 
-  // Handle select all
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedOrders(currentOrders.map((o) => o.orderId));
-    } else {
-      setSelectedOrders([]);
-    }
-  };
-
-  // Handle individual select
-  const handleSelect = (id) => {
-    if (selectedOrders.includes(id)) {
-      setSelectedOrders(selectedOrders.filter((oId) => oId !== id));
-    } else {
-      setSelectedOrders([...selectedOrders, id]);
-    }
-  };
-
-  // Handle archive
-  const handleArchive = () => {
-    if (window.confirm(`Archive ${selectedOrders.length} order(s)?`)) {
-      setOrders(orders.filter((order) => !selectedOrders.includes(order.orderId)));
-      setSelectedOrders([]);
-    }
-  };
-
-  // Handle delete
-  const handleDelete = () => {
-    if (window.confirm(`Delete ${selectedOrders.length} order(s)? This action cannot be undone.`)) {
-      setOrders(orders.filter((order) => !selectedOrders.includes(order.orderId)));
-      setSelectedOrders([]);
-    }
-  };
-
-  // Get status badge color
   const getStatusColor = (status) => {
     switch (status) {
       case 'Pending':
@@ -432,32 +395,6 @@ const OrdersTable = ({ title, statusFilter }) => {
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {selectedOrders.length > 0 && (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between shadow-xs">
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleArchive}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-            >
-              <Archive className="w-3.5 h-3.5" />
-              Archive
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Table Card */}
       <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-xs">
         <div className="p-5 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
           <div>
@@ -473,16 +410,6 @@ const OrdersTable = ({ title, statusFilter }) => {
           <table className="w-full">
             <thead className="bg-slate-50/70 dark:bg-slate-800/30">
               <tr>
-                <th className="px-5 py-3 text-left w-10">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedOrders.length === currentOrders.length && currentOrders.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 text-solid focus:ring-solid cursor-pointer"
-                  />
-                </th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Order ID
                 </th>
@@ -512,14 +439,6 @@ const OrdersTable = ({ title, statusFilter }) => {
                   key={order.orderId}
                   className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                 >
-                  <td className="px-5 py-3.5">
-                    <input
-                      type="checkbox"
-                      checked={selectedOrders.includes(order.orderId)}
-                      onChange={() => handleSelect(order.orderId)}
-                      className="w-4 h-4 rounded border-slate-300 text-solid focus:ring-solid cursor-pointer"
-                    />
-                  </td>
                   <td className="px-5 py-3.5 whitespace-nowrap">
                     <button
                       onClick={() => handleRowClick(order.orderId)}
@@ -1056,7 +975,15 @@ const OrdersTable = ({ title, statusFilter }) => {
                   {['pending_payment', 'paid', 'confirmed'].includes(selectedOrder.status) && (
                     <button
                       onClick={async () => {
-                        if (window.confirm('Are you sure you want to cancel this order?')) {
+                        if (
+                          await confirmAction({
+                            title: 'Cancel this order?',
+                            message:
+                              'The customer is notified and any payment is queued for refund. This cannot be undone.',
+                            confirmLabel: 'Cancel order',
+                            cancelLabel: 'Keep order',
+                          })
+                        ) {
                           setUpdatingStatus(true);
                           try {
                             await orderService.cancelOrder(

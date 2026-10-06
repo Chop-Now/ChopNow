@@ -44,6 +44,7 @@ import LocationPicker from '../../Components/maps/LocationPicker';
 import ConfirmationModal from '../components/ConfirmationModal';
 import SettingsAccordion from '../components/SettingsAccordion';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/confirm';
 import { compressImage } from '../../utils/compressImage';
 
 const Settings = ({ initialTab = 'profile' }) => {
@@ -796,12 +797,18 @@ const Settings = ({ initialTab = 'profile' }) => {
                     key={item.id}
                     role="tab"
                     aria-selected={activeTab === item.id}
-                    onClick={() => {
+                    onClick={async () => {
                       if (
                         platformDirty &&
                         activeTab === 'platform' &&
                         item.id !== 'platform' &&
-                        !window.confirm('You have unsaved platform changes. Leave without saving?')
+                        !(await confirmAction({
+                          title: 'Leave without saving?',
+                          message: 'You have unsaved platform changes.',
+                          confirmLabel: 'Leave',
+                          cancelLabel: 'Stay',
+                          danger: false,
+                        }))
                       ) {
                         return;
                       }

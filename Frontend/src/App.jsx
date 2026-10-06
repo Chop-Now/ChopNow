@@ -11,6 +11,7 @@ import DialogEnhancer from './Components/DialogEnhancer';
 import GoogleAuthProvider from './Components/GoogleAuthProvider';
 import AccessibilityEnhancer from './Components/AccessibilityEnhancer';
 import HomeRoute from './Components/HomeRoute';
+import ConfirmHost from './Components/ConfirmHost';
 
 // Lazy-loaded page components for code splitting
 const Home = lazy(() => import('./Pages/Home'));
@@ -22,6 +23,7 @@ const ProductDetails = lazy(() => import('./Pages/ProductDetails'));
 const Cart = lazy(() => import('./Pages/Cart'));
 const MyOrders = lazy(() => import('./Pages/MyOrders'));
 const MyImpact = lazy(() => import('./Pages/MyImpact'));
+const Favorites = lazy(() => import('./Pages/Favorites'));
 const Notification = lazy(() => import('./Pages/Notification'));
 const MyProfile = lazy(() => import('./Pages/MyProfile'));
 const BusinessVerification = lazy(() => import('./Pages/BusinessVerification'));
@@ -74,6 +76,7 @@ const App = () => {
 
       {/* On phones, toasts sit above the bottom tab bar (and the home indicator) rather than over the header. */}
       <DialogEnhancer />
+      <ConfirmHost />
       <AccessibilityEnhancer />
       <Toaster
         position={isPhone ? 'bottom-center' : 'top-center'}
@@ -150,6 +153,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <MyImpact />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Favorites />
                 </ProtectedRoute>
               }
             />

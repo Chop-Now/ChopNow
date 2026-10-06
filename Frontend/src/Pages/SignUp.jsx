@@ -17,8 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import PhoneField from '../Components/ui/PhoneField';
 import { useGeolocation } from '../Components/maps/useGeolocation';
 import { reverseGeocode, searchAddress } from '../services/geocoding';
 import { businessService } from '../services';
@@ -493,7 +492,7 @@ const SignUp = () => {
 
                     {/* Phone Number */}
                     <div className="mt-4">
-                      <PhoneInput
+                      <PhoneField
                         country={'rw'}
                         disableCountryGuess={true}
                         value={phone}
@@ -893,7 +892,7 @@ const SignUp = () => {
 
                     {/* Business Phone Number */}
                     <div className="mt-4">
-                      <PhoneInput
+                      <PhoneField
                         country={'rw'}
                         disableCountryGuess={true}
                         value={phone}

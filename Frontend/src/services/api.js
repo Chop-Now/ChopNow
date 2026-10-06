@@ -101,6 +101,12 @@ api.interceptors.request.use(
   }
 );
 
+// Credential endpoints answer 401 for "wrong email/password" or "bad code" - that is
+// the answer, not an expired session. Trying to refresh a session there turned a
+// simple wrong password into a confusing "Refresh token is required" message.
+const PUBLIC_AUTH_URL =
+  /\/api\/users\/(login|register|google-login|verify-email|resend-verification|forgot-password|verify-reset-otp|reset-password|send-otp|verify-otp)/;
+
 // Response interceptor to handle errors and refresh tokens
 api.interceptors.response.use(
   (response) => {
@@ -115,7 +121,11 @@ api.interceptors.response.use(
       const { status, data } = error.response;
 
       // Handle 401: attempt token refresh before giving up
-      if (status === 401 && !originalRequest._retry) {
+      if (
+        status === 401 &&
+        !originalRequest._retry &&
+        !PUBLIC_AUTH_URL.test(originalRequest.url || '')
+      ) {
         // Don't retry refresh-token requests themselves
         if (originalRequest.url?.includes('/refresh-token')) {
           forceLogout();
