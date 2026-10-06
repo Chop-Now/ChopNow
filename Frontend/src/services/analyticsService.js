@@ -1,5 +1,20 @@
 import api from './api';
 
+// The dashboard mounts four widgets (stats cards and three charts) that each ask for the same
+// heavy report. Share one in-flight request, and keep the answer for a few seconds, so the page
+// makes one call instead of four (each took 1.5-3s on production, and they queued behind each other).
+const SHARE_MS = 10000;
+const shared = new Map();
+const sharedGet = (url) => {
+  const hit = shared.get(url);
+  if (hit && Date.now() - hit.at < SHARE_MS) return hit.promise;
+  const promise = api.get(url).then((response) => response.data);
+  shared.set(url, { at: Date.now(), promise });
+  // A failure must not be remembered: the next caller should try again
+  promise.catch(() => shared.delete(url));
+  return promise;
+};
+
 const analyticsService = {
   // Get platform overview stats (Admin)
   getPlatformOverview: async () => {
@@ -14,8 +29,7 @@ const analyticsService = {
   // Get business overview stats (Business Owner)
   getBusinessOverview: async () => {
     try {
-      const response = await api.get('/api/analytics/business/overview');
-      return response.data;
+      return await sharedGet('/api/analytics/business/overview');
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -89,8 +103,7 @@ const analyticsService = {
   // Get admin dashboard stats (Admin only)
   getAdminStats: async () => {
     try {
-      const response = await api.get('/api/analytics/admin/stats');
-      return response.data;
+      return await sharedGet('/api/analytics/admin/stats');
     } catch (error) {
       throw error.response?.data || error;
     }

@@ -299,11 +299,15 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-700 mb-1">No products found</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-1">
+              {products.some((p) => p?.inStock) ? 'No products found' : 'No deals right now'}
+            </h3>
             <p className="text-sm text-gray-500 max-w-xs">
-              {category
-                ? `No ${category} products available at the moment.`
-                : 'No products match your search criteria.'}
+              {!products.some((p) => p?.inStock)
+                ? 'Vendors post fresh surplus food every day. Check back soon.'
+                : category
+                  ? `No ${category} products available at the moment.`
+                  : 'No products match your search criteria.'}
             </p>
           </div>
         )}
