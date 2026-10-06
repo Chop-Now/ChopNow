@@ -2,6 +2,7 @@
  * The test-data purge must remove test data completely and never touch real data:
  * real customers/vendors, admins, and anything paid with real money.
  */
+const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('./app');
 const Payment = require('../models/Payment');
@@ -158,5 +159,27 @@ describe('test-data purge', () => {
     expect(again.status).toBe(200);
     expect(again.body.deleted.orders).toBe(0);
     expect(again.body.deleted.users).toBe(0);
+  });
+
+  it('also removes orders whose customer no longer exists, unless they were really paid', async () => {
+    const vendor = await createBusinessOwnerWithBusiness();
+    await rename(vendor.user, 'realvendor2@gmail.com');
+    const listing = await createListing(vendor.business, { pricing: { price: 3000 } });
+    const ghost = await createConsumer();
+    await rename(ghost.user, 'ghostcustomer@gmail.com');
+    const unpaid = await placePendingMobileMoneyOrder(ghost.token, listing);
+    const paid = await placePaidOrder(ghost.token, listing);
+    // The customer's account disappears, as it did when the old test scripts cleaned up.
+    await User.collection.deleteOne({ _id: new mongoose.Types.ObjectId(ghost.user._id) });
+    const admin = await createAdmin();
+
+    const res = await request(app)
+      .post(PURGE)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ confirmation: CONFIRMATION });
+    expect(res.status).toBe(200);
+    expect(await Order.findById(unpaid.order._id)).toBeNull();
+    expect(await Order.findById(paid.order._id)).not.toBeNull(); // really paid: kept
+    expect(await Business.findById(vendor.business._id)).not.toBeNull();
   });
 });

@@ -27,6 +27,8 @@ const TEST_EMAIL = [
   /^test(?![a-z])/i, // test@..., test.user@..., test1@...
   /@example\.(com|org|net)$/i,
   /\+test/i,
+  /@test\.com$/i, // consumer_1788047439132@test.com, vendor_...@test.com
+  /@yopmail\.com$/i, // disposable inboxes used by the old test scripts
 ];
 
 const looksLikeTestEmail = (email) =>
@@ -79,9 +81,22 @@ async function findTestRecords() {
       { 'items.title': /^E2E\b/i },
     ],
   };
-  const testOrders = await Order.find(orderMatch)
-    .select('orderNumber status pricing.total createdAt statusTimestamps')
+  const orderFields = 'orderNumber status pricing.total createdAt statusTimestamps';
+  const testOrders = await Order.find(orderMatch).select(orderFields).lean();
+
+  // Orders whose customer or shop no longer exists at all (old test scripts removed their
+  // accounts but left the orders, some marked "completed" with the payment never made).
+  // They count towards revenue and orders but belong to nobody.
+  const existingBusinessIds = await Business.distinct('_id');
+  const orphanOrders = await Order.find({
+    $or: [{ customer: { $nin: ids(allUsers) } }, { business: { $nin: existingBusinessIds } }],
+  })
+    .select(orderFields)
     .lean();
+  const known = new Set(ids(testOrders).map(String));
+  orphanOrders.forEach((o) => {
+    if (!known.has(String(o._id))) testOrders.push(o);
+  });
   const testOrderIds = new Set(ids(testOrders).map(String));
 
   // Orders with a completed payment that is not simulated: never call these fake.
