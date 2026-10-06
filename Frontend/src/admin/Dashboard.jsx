@@ -54,6 +54,8 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [settingsTab, setSettingsTab] = useState('profile'); // Track settings tab
   const [business, setBusiness] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Check authentication and business verification status
   useEffect(() => {
@@ -79,8 +81,10 @@ const Dashboard = () => {
         return;
       }
 
-      if (currentRole !== 'business_owner' && !userRoles.includes('business_owner')) {
-        // Consumers and other roles should go to shop
+      if (currentRole !== 'business_owner') {
+        // Consumers, riders, and vendors who have switched to buyer mode belong in the shop.
+        // (Checking the business first used to fail with a 403 for a vendor who had just
+        // pressed "Shop as Buyer" and sent them to the Business Verification page.)
         navigate('/shop');
         return;
       }
@@ -127,7 +131,9 @@ const Dashboard = () => {
       } catch (error) {
         if (!isMounted) return;
         console.error('Error checking business status:', error);
-        navigate('/business-verification');
+        // Could not reach the server: say so and offer a retry, instead of telling a verified
+        // vendor to go through verification again.
+        setLoadError(true);
       }
     };
 
@@ -135,7 +141,32 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, isLoading, user, navigate]);
+  }, [isAuthenticated, isLoading, user, navigate, attempt]);
+
+  if (loadError && !authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
+        <div className="text-center max-w-sm">
+          <p className="text-slate-800 dark:text-slate-100 font-semibold mb-2">
+            We could not load your shop
+          </p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
+            Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoadError(false);
+              setAttempt((n) => n + 1);
+            }}
+            className="px-4 py-2 rounded-lg bg-green-700 text-white text-sm font-medium hover:bg-green-800"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading while checking auth
   if (isLoading || !authChecked) {
