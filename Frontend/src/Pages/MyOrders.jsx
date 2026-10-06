@@ -1314,7 +1314,21 @@ const MyOrders = () => {
                               </a>
                             )}
                           </div>
-                        ) : (
+                        ) : selectedOrder.rawStatus === 'completed' ? (
+                          <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between text-sm">
+                            <span className="text-green-800">Order delivered successfully</span>
+                            <span className="text-xs bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded-full">
+                              Delivered
+                            </span>
+                          </div>
+                        ) : selectedOrder.rawStatus === 'out_for_delivery' ? (
+                          <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Your order is on its way</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full">
+                              On the way
+                            </span>
+                          </div>
+                        ) : selectedOrder.rawStatus === 'cancelled' ? null : (
                           <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
                             <span className="text-gray-600">Assigning a delivery agent...</span>
                             <span className="text-xs bg-yellow-100 text-yellow-800 font-semibold px-2.5 py-0.5 rounded-full animate-pulse">

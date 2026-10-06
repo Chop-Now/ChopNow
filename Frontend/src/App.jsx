@@ -79,10 +79,11 @@ const App = () => {
       <ConfirmHost />
       <AccessibilityEnhancer />
       <Toaster
-        position={isPhone ? 'bottom-center' : 'top-center'}
-        containerStyle={
-          isPhone ? { bottom: 'calc(5rem + env(safe-area-inset-bottom))' } : undefined
-        }
+        position="top-center"
+        // On a phone the bottom edge is where the tab bar, the sticky checkout bar and bottom
+        // sheets keep their buttons, so a toast there covers what the person is about to tap.
+        // Park it just under the top bar instead.
+        containerStyle={isPhone ? { top: 'calc(4.25rem + env(safe-area-inset-top))' } : undefined}
         toastOptions={{ style: { maxWidth: 'calc(100vw - 2rem)' } }}
       />
 
