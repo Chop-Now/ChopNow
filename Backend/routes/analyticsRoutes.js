@@ -12,6 +12,8 @@ const {
   getUserActivity,
   getAdminStats,
   getTestDataAudit,
+  previewTestDataPurge,
+  runTestDataPurge,
 } = require('../controllers/analyticsController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -20,6 +22,8 @@ router.get('/platform/activity', protect, authorize('admin'), getRecentActivity)
 router.get('/user-activity', protect, authorize('admin'), getUserActivity);
 router.get('/admin/stats', protect, authorize('admin'), getAdminStats);
 router.get('/admin/data-audit', protect, authorize('admin'), getTestDataAudit);
+router.get('/admin/data-purge', protect, authorize('admin'), previewTestDataPurge);
+router.post('/admin/data-purge', protect, authorize('admin'), runTestDataPurge);
 router.get(
   '/business/overview',
   protect,

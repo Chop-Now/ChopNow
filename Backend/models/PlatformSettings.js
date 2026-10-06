@@ -17,7 +17,7 @@ const platformSettingsSchema = new mongoose.Schema(
     },
     supportPhone: {
       type: String,
-      default: '+250 788 000 000',
+      default: '+250 794 758 542',
     },
 
     // Commission & Payout Settings

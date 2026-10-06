@@ -45,6 +45,30 @@ const analyticsService = {
     }
   },
 
+  // Admin: what the test-data purge would remove (changes nothing)
+  previewTestDataPurge: async () => {
+    try {
+      const response = await api.get('/api/analytics/admin/data-purge', { timeout: 60000 });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Admin: delete test data. `confirmation` must be the exact phrase the preview returns.
+  runTestDataPurge: async (confirmation) => {
+    try {
+      const response = await api.post(
+        '/api/analytics/admin/data-purge',
+        { confirmation },
+        { timeout: 180000 }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // How impact is estimated: factor table and sources (public)
   getImpactMethodology: async () => {
     try {

@@ -34,7 +34,11 @@ const looksLikeTestEmail = (email) =>
 
 const ids = (docs) => docs.map((d) => d._id);
 
-async function auditTestData() {
+/**
+ * Finds everything that looks like test data, without changing anything. Shared by the
+ * read-only audit and the purge so both always agree on what "test data" means.
+ */
+async function findTestRecords() {
   // ── proven fake payments and the orders they paid ──────────────────────
   const fakePayments = await Payment.find({
     $or: [{ providerTransactionId: /^TEST-/ }, { 'rawCallbackData.simulated': true }],
@@ -89,6 +93,31 @@ async function auditTestData() {
   })
     .select('order orders amount providerTransactionId createdAt')
     .lean();
+
+  return {
+    fakePayments,
+    fakeOrderIds,
+    allUsers,
+    testUsers,
+    testBusinesses,
+    testListings,
+    testOrders,
+    testOrderIds,
+    realLooking,
+  };
+}
+
+async function auditTestData() {
+  const {
+    fakePayments,
+    fakeOrderIds,
+    allUsers,
+    testUsers,
+    testBusinesses,
+    testListings,
+    testOrders,
+    realLooking,
+  } = await findTestRecords();
 
   // ── totals, and what would remain ──────────────────────────────────────
   const [totals] = await Order.aggregate([
@@ -173,4 +202,4 @@ async function auditTestData() {
   };
 }
 
-module.exports = { auditTestData, looksLikeTestEmail };
+module.exports = { auditTestData, findTestRecords, looksLikeTestEmail };

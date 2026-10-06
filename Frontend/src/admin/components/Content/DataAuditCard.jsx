@@ -26,6 +26,44 @@ const Row = ({ label, value, strong }) => (
 const DataAuditCard = () => {
   const [audit, setAudit] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [plan, setPlan] = useState(null);
+  const [typed, setTyped] = useState('');
+  const [purging, setPurging] = useState(false);
+
+  const loadPlan = async () => {
+    setBusy(true);
+    try {
+      setPlan(await analyticsService.previewTestDataPurge());
+      setTyped('');
+    } catch (error) {
+      toast.error(error?.message || 'Could not prepare the clean-up');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const purge = async () => {
+    setPurging(true);
+    try {
+      const result = await analyticsService.runTestDataPurge(typed);
+      // Keep a record of exactly what was removed.
+      const file = new Blob([JSON.stringify(result.snapshot, null, 2)], {
+        type: 'application/json',
+      });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(file);
+      link.download = `chopnow-removed-test-data-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast.success('Test data removed. A record of what was removed has been downloaded.');
+      setPlan(null);
+      setAudit(await analyticsService.getTestDataAudit());
+    } catch (error) {
+      toast.error(error?.message || 'The clean-up failed. Nothing more was changed.');
+    } finally {
+      setPurging(false);
+    }
+  };
 
   const run = async () => {
     setBusy(true);
@@ -51,8 +89,8 @@ const DataAuditCard = () => {
             Is the data real? (test-data check)
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Looks for test accounts, test listings and fake test-mode payments. This only reads
-            data. It does not change or delete anything.
+            Looks for test accounts, test listings and fake test-mode payments. Running the check
+            only reads data; removing test data is a separate, confirmed step below.
           </p>
         </div>
         <button
@@ -131,6 +169,72 @@ const DataAuditCard = () => {
               </p>
             </div>
           )}
+
+          <div className="md:col-span-3 rounded-lg border border-red-300 p-3 dark:border-red-800">
+            <p className="font-semibold text-red-700 dark:text-red-400">Remove the test data</p>
+            <p className="mb-2 text-slate-700 dark:text-slate-300">
+              Deletes the test accounts, shops, listings, orders and fake payments above, and fixes
+              the totals. Admins, real customers and vendors, and anything paid with real money are
+              never removed. This cannot be undone, so make sure a database backup exists first.
+            </p>
+            {!plan ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={loadPlan}
+                className="min-h-11 rounded-lg border border-red-500 px-4 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                {busy ? 'Preparing…' : 'Review what would be removed'}
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-slate-800 dark:text-slate-200">
+                  Will delete: {plan.counts.users} accounts, {plan.counts.businesses} shops,{' '}
+                  {plan.counts.listings} listings, {plan.counts.orders} orders,{' '}
+                  {plan.counts.payments} payments. Kept: {plan.kept.ordersWithRealPayments} order(s)
+                  paid with real money, plus the people and shops behind them.
+                </p>
+                <details>
+                  <summary className="cursor-pointer text-slate-700 dark:text-slate-300">
+                    Accounts that will be deleted ({plan.sampleUsers.length})
+                  </summary>
+                  <ul className="mt-1 list-disc pl-5 text-slate-700 dark:text-slate-300">
+                    {plan.sampleUsers.map((email) => (
+                      <li key={email}>{email}</li>
+                    ))}
+                  </ul>
+                </details>
+                <label className="block text-slate-700 dark:text-slate-300">
+                  Type <strong>{plan.confirmation}</strong> to confirm
+                  <input
+                    type="text"
+                    value={typed}
+                    onChange={(e) => setTyped(e.target.value)}
+                    autoComplete="off"
+                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                  />
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={purging || typed !== plan.confirmation}
+                    onClick={purge}
+                    className="min-h-11 rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {purging ? 'Removing…' : 'Delete test data'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={purging}
+                    onClick={() => setPlan(null)}
+                    className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <details className="md:col-span-3">
             <summary className="cursor-pointer font-semibold text-slate-800 dark:text-white">

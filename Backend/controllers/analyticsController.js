@@ -7,6 +7,7 @@ const Review = require('../models/Review');
 const logger = require('../utils/logger');
 const { FACTORS_VERSION, methodology } = require('../config/impactFactors');
 const { auditTestData } = require('../services/testDataAudit');
+const testDataPurge = require('../services/testDataPurge');
 
 // Impact is recorded on each order when it completes (services/impactService.js)
 // and reduced by the share of the order that was later refunded. Everything
@@ -1418,8 +1419,48 @@ const getTestDataAudit = async (req, res) => {
   }
 };
 
+/**
+ * @desc    What the test-data purge would remove (nothing is changed) (Admin)
+ * @route   GET /api/analytics/admin/data-purge
+ * @access  Private (Admin)
+ */
+const previewTestDataPurge = async (req, res) => {
+  try {
+    res.json(await testDataPurge.preview({ actorId: req.user._id }));
+  } catch (error) {
+    logger.error({ err: error }, 'Test data purge preview error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Delete test data. Needs { confirmation: "DELETE TEST DATA" } in the body (Admin)
+ * @route   POST /api/analytics/admin/data-purge
+ * @access  Private (Admin)
+ */
+const runTestDataPurge = async (req, res) => {
+  try {
+    res.json(
+      await testDataPurge.purge({
+        actorId: req.user._id,
+        confirmation: req.body?.confirmation,
+      })
+    );
+  } catch (error) {
+    if (error.status === 400) return res.status(400).json({ message: error.message });
+    logger.error({ err: error }, 'Test data purge error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 module.exports = {
   getTestDataAudit,
+  previewTestDataPurge,
+  runTestDataPurge,
   getPlatformOverview,
   getBusinessOverview,
   getImpactLeaderboard,

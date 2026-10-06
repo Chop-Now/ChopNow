@@ -229,6 +229,16 @@ async function backfillOrderImpact({ batchSize = 200 } = {}) {
 
   if (orders === 0) return { orders: 0, businesses: 0, customers: 0 };
 
+  const { businesses, customers } = await rebuildImpactTotals();
+  return { orders, businesses, customers };
+}
+
+/**
+ * Rebuilds every vendor's and customer's impact totals from the completed orders that exist
+ * now. Used after backfilling, and after orders are removed (the test-data purge). Anyone
+ * with no completed orders left reads zero.
+ */
+async function rebuildImpactTotals() {
   const netStage = {
     $project: {
       business: 1,
@@ -284,6 +294,17 @@ async function backfillOrderImpact({ batchSize = 200 } = {}) {
       }
     );
   }
+  await User.updateMany(
+    { _id: { $nin: perCustomer.map((c) => c._id) }, 'stats.impact.meals': { $gt: 0 } },
+    {
+      $set: {
+        'stats.impact.meals': 0,
+        'stats.impact.kgSaved': 0,
+        'stats.impact.co2Saved': 0,
+        'stats.impact.waterSaved': 0,
+      },
+    }
+  );
   for (const c of perCustomer) {
     await User.updateOne(
       { _id: c._id },
@@ -298,7 +319,7 @@ async function backfillOrderImpact({ batchSize = 200 } = {}) {
     );
   }
 
-  return { orders, businesses: perBusiness.length, customers: perCustomer.length };
+  return { businesses: perBusiness.length, customers: perCustomer.length };
 }
 
 /** Called once at startup: fills in history in the background if any is missing. */
@@ -320,6 +341,7 @@ module.exports = {
   recordOrderImpact,
   syncOrderImpactWithRefunds,
   backfillOrderImpact,
+  rebuildImpactTotals,
   ensureImpactBackfilled,
   refundedFraction,
 };

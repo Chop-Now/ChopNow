@@ -17,7 +17,7 @@ export const PlatformSettingsProvider = ({ children }) => {
     platformName: 'ChopNow',
     platformTagline: 'Save Food, Save Money, Save the Planet',
     supportEmail: 'chopnow.app@gmail.com',
-    supportPhone: '+250 788 000 000',
+    supportPhone: '+250 794 758 542',
     allowNewRegistrations: true,
     requireEmailVerification: true,
     allowGuestCheckout: false,
