@@ -190,7 +190,18 @@ api.interceptors.response.use(
         case 403:
           // EMAIL_NOT_VERIFIED is handled by the login page with its own
           // message and resend action.
-          if (!silentMode && data?.code !== 'EMAIL_NOT_VERIFIED') {
+          if (!silentMode && data?.code === 'WRONG_ACTIVE_ROLE') {
+            // The account may well be allowed - it is just in the other mode right now.
+            const needed = data.requiredRole;
+            const mode =
+              needed === 'consumer' ? 'Buyer' : needed === 'business_owner' ? 'Business' : null;
+            toast.error(
+              mode
+                ? `Switch to ${mode} Mode to do this.`
+                : 'Switch to the right mode from the account menu to do this.',
+              { id: 'wrong-active-role' }
+            );
+          } else if (!silentMode && data?.code !== 'EMAIL_NOT_VERIFIED') {
             toast.error('You do not have permission to perform this action.');
           }
           break;
