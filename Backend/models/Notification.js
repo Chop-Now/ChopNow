@@ -38,6 +38,8 @@ const notificationSchema = new Schema(
         'payment_success',
         'delivery_assigned',
         'dispute_resolved',
+        'refund_completed',
+        'refund_failed',
         // Vendor notifications
         'new_order',
         'order_status_changed',

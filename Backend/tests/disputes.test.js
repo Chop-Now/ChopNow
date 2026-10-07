@@ -23,6 +23,7 @@ const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 const RefundRequest = require('../models/RefundRequest');
 const Notification = require('../models/Notification');
+const emailService = require('../utils/emailService');
 const {
   createConsumer,
   createBusinessOwnerWithBusiness,
@@ -282,5 +283,46 @@ describe('GET /api/v1/disputes/refund-requests - ops queue', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ status: 'pending_manual' });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('refund outcome notices', () => {
+  const settleWith = async (status) => {
+    const { dispute, order } = await createDisputedOrder();
+    const adminToken = await createAdmin();
+    await request(app)
+      .patch(`/api/v1/disputes/${dispute._id}/resolve`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ action: 'full_refund' });
+    const refund = await RefundRequest.findOne({ dispute: dispute._id });
+    emailService.sendRefundCompletedEmail.mockClear();
+    const res = await request(app)
+      .patch(`/api/v1/disputes/refund-requests/${refund._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status });
+    expect(res.status).toBe(200);
+    return { order, refund };
+  };
+
+  it('tells the customer, in the app and by email, once the refund has been sent', async () => {
+    const { order, refund } = await settleWith('completed');
+    const note = await Notification.findOne({ user: order.customer, type: 'refund_completed' });
+    expect(note).not.toBeNull();
+    expect(note.message).toContain(order.orderNumber);
+    expect(emailService.sendRefundCompletedEmail).toHaveBeenCalledTimes(1);
+    const [, , sentOrder, amount] = emailService.sendRefundCompletedEmail.mock.calls[0];
+    expect(sentOrder.orderNumber).toBe(order.orderNumber);
+    expect(amount).toBe(refund.amount);
+  });
+
+  it('tells the customer in the app (no refund email) when the refund could not be sent', async () => {
+    const { order } = await settleWith('failed');
+    expect(
+      await Notification.findOne({ user: order.customer, type: 'refund_failed' })
+    ).not.toBeNull();
+    expect(
+      await Notification.findOne({ user: order.customer, type: 'refund_completed' })
+    ).toBeNull();
+    expect(emailService.sendRefundCompletedEmail).not.toHaveBeenCalled();
   });
 });

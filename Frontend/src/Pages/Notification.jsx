@@ -110,6 +110,8 @@ const Notification = () => {
       order_status_changed: 'order',
       dispute_opened: 'order',
       dispute_resolved: 'order',
+      refund_completed: 'order',
+      refund_failed: 'order',
       order_out_for_delivery: 'rider',
       delivery_assigned: 'rider',
       delivery_completed: 'rider',

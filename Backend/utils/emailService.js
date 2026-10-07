@@ -591,6 +591,28 @@ const sendOrderCompletedEmail = async (email, name, order) => {
 };
 
 /**
+ * Tell a customer their refund has been sent back to their mobile money number
+ */
+const sendRefundCompletedEmail = async (email, name, order, amount) => {
+  const currency = order.pricing?.currency || 'RWF';
+  const content = `
+    <p>Hello ${name},</p>
+    <p>Your refund has been sent back to the mobile money number you paid from.</p>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+      <p style="margin: 5px 0;"><strong>Refunded:</strong> ${currency} ${(amount || 0).toLocaleString()}</p>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">It can take a few minutes to show in your mobile money balance. If it has not arrived after a day, please reply to this email or contact us from the Contact page.</p>
+  `;
+
+  return sendEmail(
+    email,
+    `Refund Sent - #${order.orderNumber}`,
+    emailTemplate('Your Refund Has Been Sent', content)
+  );
+};
+
+/**
  * Send business verification approved email
  */
 const sendBusinessApprovedEmail = async (email, businessName, ownerName, adminMessage = '') => {
@@ -767,6 +789,7 @@ const sendContactMessage = async (inbox, { name, email, message }) => {
 };
 
 module.exports = {
+  sendRefundCompletedEmail,
   sendVendorOrderReminderEmail,
   sendContactMessage,
   sendVerificationEmail,

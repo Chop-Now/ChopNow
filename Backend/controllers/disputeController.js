@@ -9,6 +9,8 @@ const Payout = require('../models/Payout');
 const { recordEntry, notifyPayee } = require('../services/ledgerService');
 const { syncOrderImpactWithRefunds } = require('../services/impactService');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
+const { sendRefundCompletedEmail } = require('../utils/emailService');
 
 // Maps the mobile app's "what went wrong?" reason labels (dispute_screen.dart)
 // to the Dispute model's `type` enum, since the client never sends `type`.
@@ -574,6 +576,34 @@ const getRefundRequests = async (req, res) => {
   }
 };
 
+/** In-app notice (and, when it was sent, an email) for the customer owed a refund. */
+async function notifyRefundOutcome(refund, status) {
+  const [order, customer] = await Promise.all([
+    Order.findById(refund.order).select('orderNumber pricing.currency business'),
+    User.findById(refund.customer).select('email firstName lastName'),
+  ]);
+  if (!order || !customer) return;
+  const currency = order.pricing?.currency || 'RWF';
+  const amount = `${currency} ${(refund.amount || 0).toLocaleString()}`;
+  const sent = status === 'completed';
+  await Notification.createNotification({
+    user: customer._id,
+    title: sent ? 'Refund Sent' : 'Refund Problem',
+    message: sent
+      ? `Your refund of ${amount} for order #${order.orderNumber} has been sent to your mobile money number.`
+      : `We could not send your refund of ${amount} for order #${order.orderNumber}. Please contact us from the Contact page so we can sort it out.`,
+    type: sent ? 'refund_completed' : 'refund_failed',
+    relatedOrder: order._id,
+    relatedBusiness: order.business,
+    link: '/my-orders',
+    metadata: { orderNumber: order.orderNumber, amount: refund.amount, currency },
+  });
+  if (sent && customer.email) {
+    const name = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer';
+    await sendRefundCompletedEmail(customer.email, name, order, refund.amount);
+  }
+}
+
 /**
  * @desc    Record the outcome of a queued refund once ops has sent the money
  *          back (or could not)
@@ -647,6 +677,12 @@ const updateRefundRequest = async (req, res) => {
         );
       }
     }
+
+    // The customer was told "your payment will be refunded"; now tell them how it ended.
+    // Best effort: a failed notice must never undo the refund that was just recorded.
+    await notifyRefundOutcome(refund, status).catch((err) =>
+      logger.error({ err }, 'Refund outcome notice failed')
+    );
 
     res.json(refund);
   } catch (error) {
