@@ -140,7 +140,10 @@ const websiteAdminMenuItems = [
     id: 'disputes',
     icon: <ServerCrash className="w-5 h-5 text-slate-400" />,
     label: 'Disputes',
-    submenu: [{ id: 'complaints', label: 'Complaints' }],
+    submenu: [
+      { id: 'complaints', label: 'Complaints' },
+      { id: 'refunds', label: 'Refund Requests' },
+    ],
   },
   {
     id: 'payouts',
