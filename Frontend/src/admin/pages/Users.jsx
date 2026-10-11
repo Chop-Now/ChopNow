@@ -466,12 +466,12 @@ export const AllUsers = () => {
           </div>
 
           {/* Filter Options */}
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <button
               onClick={() => setFilterRole('all')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'all'
-                  ? 'bg-green-700 text-white'
+                  ? 'bg-moringa text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -481,7 +481,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('customer')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'customer'
-                  ? 'bg-green-700 text-white'
+                  ? 'bg-moringa text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -491,7 +491,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('vendor')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'vendor'
-                  ? 'bg-green-700 text-white'
+                  ? 'bg-moringa text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -501,7 +501,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('rider')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'rider'
-                  ? 'bg-green-700 text-white'
+                  ? 'bg-moringa text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -511,7 +511,7 @@ export const AllUsers = () => {
               onClick={() => setFilterRole('admin')}
               className={`px-3 py-2 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
                 filterRole === 'admin'
-                  ? 'bg-green-700 text-white'
+                  ? 'bg-moringa text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -809,7 +809,7 @@ export const AllUsers = () => {
               {selectedUser.status === 'pending' && (
                 <button
                   onClick={() => handleApproveUser(selectedUser.id)}
-                  className="w-full bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-700 text-white font-semibold py-2 px-3 text-xs rounded-lg transition-colors mb-3 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full bg-moringa hover:bg-moringa-dark dark:bg-moringa dark:hover:bg-moringa-dark text-white font-semibold py-2 px-3 text-xs rounded-lg transition-colors mb-3 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CheckCircle className="w-3 h-3" />
                   Approve User
@@ -926,7 +926,7 @@ export const AllUsers = () => {
                 {selectedUser.status === 'suspended' ? (
                   <button
                     onClick={() => handleReactivateUser(selectedUser.id)}
-                    className="w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white cursor-pointer"
+                    className="w-full font-semibold py-1.5 px-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 bg-moringa hover:bg-moringa-dark text-white cursor-pointer"
                   >
                     <CheckCircle className="w-4 h-4" />
                     Reactivate Account
@@ -1012,7 +1012,7 @@ export const RolesPermissions = () => {
             Manage admin roles and their access levels
           </p>
         </div>
-        <button className="bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-700 text-white font-semibold py-2 px-4 text-sm rounded-lg transition-colors cursor-pointer">
+        <button className="bg-moringa hover:bg-moringa-dark dark:bg-moringa dark:hover:bg-moringa-dark text-white font-semibold py-2 px-4 text-sm rounded-lg transition-colors cursor-pointer">
           + Create New Role
         </button>
       </div>
@@ -1055,7 +1055,7 @@ export const RolesPermissions = () => {
             </div>
 
             <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex gap-2 mt-auto">
-              <button className="flex-1 bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-700 text-white font-medium py-2 px-3 text-xs rounded-lg transition-colors cursor-pointer">
+              <button className="flex-1 bg-moringa hover:bg-moringa-dark dark:bg-moringa dark:hover:bg-moringa-dark text-white font-medium py-2 px-3 text-xs rounded-lg transition-colors cursor-pointer">
                 Edit Role
               </button>
               <button className="px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
@@ -1172,7 +1172,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('24hours')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '24hours'
-                ? 'bg-green-700 text-white'
+                ? 'bg-moringa text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
@@ -1182,7 +1182,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('7days')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '7days'
-                ? 'bg-green-700 text-white'
+                ? 'bg-moringa text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
@@ -1192,7 +1192,7 @@ export const UserActivity = () => {
             onClick={() => setSelectedTimeRange('30days')}
             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors cursor-pointer ${
               selectedTimeRange === '30days'
-                ? 'bg-green-700 text-white'
+                ? 'bg-moringa text-white'
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >

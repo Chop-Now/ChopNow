@@ -15,6 +15,7 @@ const {
   getAdminOrders,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
+const { requireVerifiedEmail } = require('../middleware/requireVerifiedEmail');
 const { validateCreateOrder, validateUpdateOrderStatus } = require('../middleware/validation');
 
 // Protected routes
@@ -45,14 +46,14 @@ const { validateCreateOrder, validateUpdateOrderStatus } = require('../middlewar
  *       201:
  *         description: Order created
  */
-router.post('/', protect, validateCreateOrder, createOrder);
+router.post('/', protect, requireVerifiedEmail, validateCreateOrder, createOrder);
 
 // Multi-vendor checkout: price a cart, then place it (one order per vendor,
 // one payment). Input is validated in services/checkoutService.js.
 // The quote is public (it only prices public listings) so the cart can show
 // real totals before sign-in.
 router.post('/quote', quoteCheckout);
-router.post('/checkout', protect, createCheckout);
+router.post('/checkout', protect, requireVerifiedEmail, createCheckout);
 /**
  * @swagger
  * /orders:

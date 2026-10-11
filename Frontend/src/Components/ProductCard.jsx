@@ -150,13 +150,19 @@ const ProductCard = memo(({ product, priority = false }) => {
         ) : null}
 
         {/* Price + cart control */}
-        <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-1 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="md:text-base text-sm font-bold" style={{ color: 'var(--color-solid)' }}>
+            <p
+              className="md:text-base text-sm font-bold whitespace-nowrap"
+              style={{ color: 'var(--color-solid)' }}
+            >
               RWF {(offerPrice || 0).toLocaleString()}
             </p>
             {price > offerPrice && (
-              <p className="text-xs line-through" style={{ color: 'var(--color-moringa-muted)' }}>
+              <p
+                className="text-xs line-through whitespace-nowrap"
+                style={{ color: 'var(--color-moringa-muted)' }}
+              >
                 RWF {price.toLocaleString()}
               </p>
             )}

@@ -6,6 +6,7 @@
 const request = require('supertest');
 const app = require('./app');
 const Business = require('../models/Business');
+const User = require('../models/User');
 const { normalizeRwandaMobile } = require('../utils/phone');
 const { createBusinessOwnerWithBusiness } = require('./fixtures');
 
@@ -36,11 +37,18 @@ describe('normalizeRwandaMobile', () => {
 });
 
 describe('saving payout details', () => {
-  const put = (token, id, payoutInfo) =>
-    request(app)
+  // Payout changes need a recently confirmed emailed code (see launchFixes.test.js)
+  const put = async (token, id, payoutInfo) => {
+    const business = await Business.findById(id);
+    await User.updateOne(
+      { _id: business.owner },
+      { sensitiveChangeVerifiedUntil: new Date(Date.now() + 60 * 1000) }
+    );
+    return request(app)
       .put(`/api/v1/businesses/${id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ payoutInfo });
+  };
 
   it('rejects a junk mobile number and keeps the previous one', async () => {
     const { token, business } = await createBusinessOwnerWithBusiness();

@@ -35,6 +35,8 @@ async function createConsumer(overrides = {}) {
       lastName: 'Consumer',
       ...overrides,
     });
+  // A real customer clicks the emailed link; money/trust routes require it (default-on setting)
+  if (res.body._id) await User.updateOne({ _id: res.body._id }, { emailVerified: true });
   return { token: res.body.token, user: res.body };
 }
 
@@ -54,6 +56,7 @@ async function createBusinessOwnerWithBusiness(businessOverrides = {}) {
   });
   const token = res.body.token;
   const ownerId = res.body._id;
+  await User.updateOne({ _id: ownerId }, { emailVerified: true });
 
   const business = await Business.create({
     owner: ownerId,
@@ -233,7 +236,35 @@ async function eventually(check, timeoutMs = 5000) {
   return result;
 }
 
+/**
+ * Completes a paid order the way a vendor really can: a pickup order by checking the
+ * customer's pickup code, a delivery order by sending it out and then completing it.
+ * Resolves to the final response.
+ */
+async function completeOrder(orderId, vendorToken) {
+  const Order = require('../models/Order');
+  const order = await Order.findById(orderId).lean();
+  const auth = { Authorization: `Bearer ${vendorToken}` };
+  if (order?.fulfillmentType === 'delivery') {
+    if (order.status !== 'out_for_delivery') {
+      await request(app)
+        .put(`/api/v1/orders/${orderId}/status`)
+        .set(auth)
+        .send({ status: 'out_for_delivery' });
+    }
+    return request(app)
+      .put(`/api/v1/orders/${orderId}/status`)
+      .set(auth)
+      .send({ status: 'completed' });
+  }
+  return request(app)
+    .post(`/api/v1/orders/${orderId}/verify-pickup`)
+    .set(auth)
+    .send({ pickupCode: order?.pickupDetails?.pickupCode });
+}
+
 module.exports = {
+  completeOrder,
   eventually,
   setPayoutRules,
   setMaintenanceMode,

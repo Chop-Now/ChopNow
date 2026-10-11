@@ -5,6 +5,7 @@
 
 const cache = require('../config/redis');
 const logger = require('../utils/logger');
+const { isAdminUser } = require('../utils/roles');
 
 /**
  * Cache middleware factory
@@ -101,10 +102,16 @@ const cacheBusinesses = cacheMiddleware({
       limit: req.query.limit || 10,
       type: req.query.type,
       status: req.query.status,
+      search: req.query.search,
+      lat: req.query.lat,
+      lng: req.query.lng,
+      radius: req.query.radius,
     };
     return cache.keys.businessList(params);
   },
   ttl: cache.TTL.MEDIUM,
+  // Admins get the unredacted view - never store it where the public could be served it
+  bypass: (req) => isAdminUser(req.user),
 });
 
 /**
@@ -113,6 +120,7 @@ const cacheBusinesses = cacheMiddleware({
 const cacheBusiness = cacheMiddleware({
   keyGenerator: (req) => cache.keys.business(req.params.id),
   ttl: cache.TTL.MEDIUM,
+  bypass: (req) => isAdminUser(req.user),
 });
 
 /**

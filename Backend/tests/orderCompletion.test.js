@@ -28,6 +28,7 @@ const {
   placePaidOrder,
   enableCashPayments,
   setPayoutRules,
+  completeOrder,
 } = require('./fixtures');
 
 // These tests place cash orders; cash is off by default.
@@ -128,7 +129,7 @@ describe('Order status guards - no crediting unpaid or already-completed orders'
         .set('Authorization', `Bearer ${vendorToken}`)
         .send({ status });
 
-    expect((await send('completed')).status).toBe(200);
+    expect((await completeOrder(order._id, vendorToken)).status).toBe(200);
     expect((await send('confirmed')).status).toBe(400);
     expect((await send('completed')).status).toBe(400);
     expect((await Business.findById(business._id)).stats.balance).toBe(5400);
@@ -140,10 +141,7 @@ describe('Order status guards - no crediting unpaid or already-completed orders'
     const { token: consumerToken } = await createConsumer();
     const order = await placeCashOrder(consumerToken, listing);
 
-    const res = await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    const res = await completeOrder(order._id, vendorToken);
     expect(res.status).toBe(200);
 
     const updated = await Business.findById(business._id);
@@ -162,14 +160,11 @@ describe('PUT /api/v1/orders/:id/status - completion funds the payout balance (C
     const order = await placeOrder(consumerToken, listing);
     expect(order.pricing.vendorAmount).toBe(5400); // 6000 - 10% platform fee
 
-    const res = await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    const res = await completeOrder(order._id, vendorToken);
     expect(res.status).toBe(200);
     // The response (and socket broadcast) must reflect the completion, not the
     // pre-completion copy loaded before the atomic update.
-    expect(res.body.status).toBe('completed');
+    expect((res.body.order || res.body).status).toBe('completed');
 
     const updatedBusiness = await Business.findById(business._id);
     expect(updatedBusiness.stats.balance).toBe(5400);
@@ -181,16 +176,10 @@ describe('PUT /api/v1/orders/:id/status - completion funds the payout balance (C
     const { token: consumerToken } = await createConsumer();
     const order = await placeOrder(consumerToken, listing);
 
-    const first = await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    const first = await completeOrder(order._id, vendorToken);
     expect(first.status).toBe(200);
 
-    const second = await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    const second = await completeOrder(order._id, vendorToken);
     expect(second.status).toBe(400);
 
     const updatedBusiness = await Business.findById(business._id);
@@ -203,10 +192,7 @@ describe('PUT /api/v1/orders/:id/status - completion funds the payout balance (C
     const { token: consumerToken } = await createConsumer();
     const order = await placeOrder(consumerToken, listing);
 
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, vendorToken);
 
     const payoutRes = await request(app)
       .post('/api/v1/payouts/request')
@@ -227,10 +213,7 @@ describe('POST /api/v1/payouts/request - balance deduction is atomic with the pa
     const listing = await createListing(business, { pricing: { price: 6000, currency: 'RWF' } });
     const { token: consumerToken } = await createConsumer();
     const order = await placeOrder(consumerToken, listing);
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, vendorToken);
 
     const spy = jest.spyOn(Payout, 'create').mockRejectedValueOnce(new Error('simulated failure'));
     try {
@@ -308,10 +291,7 @@ describe('PATCH /api/v1/payouts/:id/status - terminal-state guard (H8)', () => {
     const { token: consumerToken } = await createConsumer();
     const order = await placeOrder(consumerToken, listing);
 
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, vendorToken);
 
     const payoutRes = await request(app)
       .post('/api/v1/payouts/request')
@@ -352,10 +332,7 @@ describe('GET /api/v1/payouts/me - balance for the payouts screen', () => {
     const listing = await createListing(business, { pricing: { price: 10000, currency: 'RWF' } });
     const { token: consumerToken } = await createConsumer();
     const order = await placeOrder(consumerToken, listing);
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${vendorToken}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, vendorToken);
 
     const before = await request(app)
       .get('/api/v1/payouts/me')

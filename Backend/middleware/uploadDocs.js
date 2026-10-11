@@ -15,7 +15,9 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images, PDFs, Word documents, and text files are allowed'));
+    const err = new Error('Only images, PDFs, Word documents, and text files are allowed');
+    err.statusCode = 400;
+    cb(err);
   }
 };
 

@@ -1,6 +1,7 @@
 import Breadcrumb from '../Components/Breadcrumb';
 import Footer from '../Components/Footer';
 import PageNavbar from '../Components/PageNavbar';
+import SEO from '../Components/SEO';
 import Products from '../Components/Products';
 import ShopSidebar from '../Components/ShopSidebar';
 import React, { useState, useRef } from 'react';
@@ -25,6 +26,10 @@ const CategoryPage = () => {
 
   return (
     <div className="bg-white min-h-screen pt-20">
+      <SEO
+        title={`${displayCategory} deals`}
+        description={`Discounted surplus ${displayCategory.toLowerCase()} from local shops on ChopNow.`}
+      />
       <PageNavbar onMobileFilterClick={() => productsRef.current?.openMobileSort()} />
 
       <div className="px-6 md:px-8 lg:px-12 xl:px-16 py-6">

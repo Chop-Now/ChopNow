@@ -240,8 +240,8 @@ const ForgotPassword = () => {
         {/* Right Side - Form Container */}
         <div className="w-full md:w-1/2 md:ml-[50%] flex flex-col items-center justify-center px-4 py-8">
           {/* Mobile Logo */}
-          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <img src={assets.logomarkgreen} alt="ChopNow" className="w-10 h-10" />
+          <div className="flex items-center justify-center gap-3 mb-8 md:hidden">
+            <img src={assets.logomarkyellow} alt="ChopNow" className="w-10 h-10" />
             <span className="text-2xl font-bold text-white">ChopNow</span>
           </div>
 

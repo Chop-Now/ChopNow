@@ -267,7 +267,7 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
         {/* Loading State: placeholder cards hold the grid's space so the page doesn't jump */}
         {productsLoading && (
           <div
-            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 mt-6"
             role="status"
             aria-label="Loading products"
           >
@@ -314,7 +314,7 @@ const Products = forwardRef(({ sortBy, priceRange, category, setSortBy, setPrice
 
         {/* Product Grid */}
         {!productsLoading && currentProducts.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 mt-6">
             {currentProducts.map((product, index) => (
               <ProductCard key={product._id || index} product={product} priority={index < 4} />
             ))}

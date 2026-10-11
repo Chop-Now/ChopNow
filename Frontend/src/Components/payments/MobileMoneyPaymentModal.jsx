@@ -56,8 +56,10 @@ const MobileMoneyPaymentModal = ({
   };
 
   const pay = async () => {
-    let formatted = phone.replace(/[\s+]/g, '');
+    let formatted = phone.replace(/\D/g, '');
     if (formatted.startsWith('0')) formatted = '250' + formatted.substring(1);
+    // Typed after the +250 prefix without the leading 0, e.g. 788123456
+    else if (/^7\d{8}$/.test(formatted)) formatted = '250' + formatted;
     if (!/^250\d{9}$/.test(formatted)) {
       setError('Please enter a valid Rwandan number (e.g. 078xxxxxxx)');
       return;

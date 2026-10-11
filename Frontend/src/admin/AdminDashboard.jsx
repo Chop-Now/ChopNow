@@ -165,7 +165,7 @@ const AdminDashboard = () => {
           </p>
           <button
             onClick={() => logout()}
-            className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-moringa hover:bg-moringa-dark text-white rounded-lg transition-colors"
           >
             Login with Admin Account
           </button>

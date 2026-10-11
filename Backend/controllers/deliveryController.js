@@ -226,8 +226,8 @@ const getDeliveryByOrder = async (req, res) => {
 const getAvailableDeliveries = async (req, res) => {
   try {
     const { lat, lng, radius = 10 } = req.query; // radius in km
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = { status: 'pending', rider: { $exists: false } };
@@ -268,8 +268,8 @@ const getAvailableDeliveries = async (req, res) => {
 const getMyDeliveries = async (req, res) => {
   try {
     const { status } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = { rider: req.user._id };
@@ -703,8 +703,8 @@ const uploadProofOfDelivery = async (req, res) => {
 const getAllDeliveries = async (req, res) => {
   try {
     const { status, riderId } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = {};

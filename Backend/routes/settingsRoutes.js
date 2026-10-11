@@ -1,4 +1,5 @@
 const express = require('express');
+const { clientIpKey } = require('../utils/clientIp');
 const { guardIdParams } = require('../middleware/validateParams');
 
 const router = guardIdParams(express.Router());
@@ -16,6 +17,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Strict rate limiter for recovery endpoint
 const recoveryLimiter = rateLimit({
+  keyGenerator: clientIpKey,
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // Only 3 attempts per hour
   message: { message: 'Too many recovery attempts, please try again later.' },

@@ -53,6 +53,27 @@ async function findDeletionBlocker(user) {
 }
 
 /**
+ * Same rules as findDeletionBlocker, for closing a single shop.
+ *
+ * @returns {Promise<string|null>} why the shop cannot be deleted yet, or null if it can
+ */
+async function findBusinessDeletionBlocker(business) {
+  if (await Order.exists({ business: business._id, status: { $in: IN_PROGRESS_ORDER } })) {
+    return 'This business still has orders in progress. They need to be completed or cancelled first.';
+  }
+  if (
+    await Payout.exists({ business: business._id, status: { $in: ['requested', 'processing'] } })
+  ) {
+    return 'A payout for this business is still being processed.';
+  }
+  const owed = business.stats?.balance || 0;
+  if (owed > 0) {
+    return `This business still has RWF ${owed.toLocaleString('en-US')} in its balance. Request a payout before deleting it.`;
+  }
+  return null;
+}
+
+/**
  * Tidy up what the user leaves behind: their shop stops appearing to customers (the
  * records stay, because past orders and payouts refer to them) and personal leftovers go.
  */
@@ -70,4 +91,4 @@ async function retireAccountData(user) {
   ]);
 }
 
-module.exports = { findDeletionBlocker, retireAccountData };
+module.exports = { findDeletionBlocker, findBusinessDeletionBlocker, retireAccountData };

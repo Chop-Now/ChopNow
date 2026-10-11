@@ -10,12 +10,14 @@ const {
   updatePayoutStatus,
 } = require('../controllers/payoutController');
 const { protect, authorize } = require('../middleware/auth');
+const { requireVerifiedEmail } = require('../middleware/requireVerifiedEmail');
 const { validatePayoutRequest, validatePayoutStatus } = require('../middleware/validation');
 
 router.post(
   '/request',
   protect,
   authorize('business_owner', 'rider'),
+  requireVerifiedEmail,
   validatePayoutRequest,
   requestPayout
 );

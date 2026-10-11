@@ -167,7 +167,7 @@ const Reviews = ({ businessId }) => {
               <button
                 type="submit"
                 disabled={!text.trim() || sending}
-                className="flex-1 rounded-lg bg-green-700 font-semibold text-white disabled:opacity-50"
+                className="flex-1 rounded-lg bg-moringa font-semibold text-white disabled:opacity-50"
               >
                 {sending ? 'Sending...' : 'Send reply'}
               </button>

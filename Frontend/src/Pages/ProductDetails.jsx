@@ -1,6 +1,7 @@
 import PageNavbar from '../Components/PageNavbar';
 import PhotoCarousel from '../Components/PhotoCarousel';
 import Footer from '../Components/Footer';
+import SEO from '../Components/SEO';
 import ProductCard from '../Components/ProductCard';
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
@@ -191,8 +192,26 @@ const ProductDetails = () => {
   const isSellingFast = soldPct >= 0.5 && qty > 0;
   const cartCount = product?.cartCount || 0;
 
+  // Shared links show the deal itself, not the generic site title
+  const shareDescription = Array.isArray(product.description)
+    ? product.description.join(' ')
+    : product.description;
+
   return (
     <div className="bg-white min-h-screen pt-20">
+      <SEO
+        title={product.name || 'Deal'}
+        description={(shareDescription || 'A discounted surplus food deal on ChopNow.').slice(
+          0,
+          160
+        )}
+        image={
+          Array.isArray(product.image) && /^https:/.test(product.image[0])
+            ? product.image[0]
+            : undefined
+        }
+        type="product"
+      />
       <PageNavbar hideTabBar />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-28 md:pb-6">
         {/* Breadcrumb */}

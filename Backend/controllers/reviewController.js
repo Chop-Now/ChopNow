@@ -95,7 +95,7 @@ const createReview = async (req, res) => {
 const getBusinessReviews = async (req, res) => {
   try {
     const { status = 'active' } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 10, 200);
     const skip = (page - 1) * limit;
 

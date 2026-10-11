@@ -98,8 +98,12 @@ const MyImpact = () => {
           { month: 'Dec', meals: 0, co2: 0 },
         ];
 
-  const maxMeals = Math.max(...chartData.map((d) => d.meals), 1);
-  const maxCo2 = Math.max(...chartData.map((d) => d.co2), 1);
+  // One scale for both lines, so the single Y axis reads true for each. Rounded up to a
+  // multiple of 4 so the quarter ticks are distinct whole numbers (not "1, 0, 0, 0").
+  const peak = Math.max(...chartData.map((d) => Math.max(d.meals, d.co2)), 0);
+  const chartMax = Math.max(4, Math.ceil(peak / 4) * 4);
+  const maxMeals = chartMax;
+  const maxCo2 = chartMax;
 
   const width = dimensions.width || 500;
   const height = dimensions.height || 224;
@@ -338,10 +342,10 @@ const MyImpact = () => {
               <div className="relative h-64">
                 {/* Y-axis labels */}
                 <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-500 w-8">
-                  <span>{Math.max(maxMeals, maxCo2)}</span>
-                  <span>{Math.floor(Math.max(maxMeals, maxCo2) * 0.75)}</span>
-                  <span>{Math.floor(Math.max(maxMeals, maxCo2) * 0.5)}</span>
-                  <span>{Math.floor(Math.max(maxMeals, maxCo2) * 0.25)}</span>
+                  <span>{chartMax}</span>
+                  <span>{chartMax * 0.75}</span>
+                  <span>{chartMax * 0.5}</span>
+                  <span>{chartMax * 0.25}</span>
                   <span>0</span>
                 </div>
 
@@ -399,8 +403,11 @@ const MyImpact = () => {
 
                 {/* X-axis labels */}
                 <div className="absolute left-10 right-0 bottom-0 flex justify-between text-xs text-gray-500">
-                  {chartData.map((d) => (
-                    <span key={d.month}>{d.month}</span>
+                  {/* Twelve labels don't fit a phone: show every other month there */}
+                  {chartData.map((d, i) => (
+                    <span key={d.month} className={i % 2 ? 'invisible sm:visible' : ''}>
+                      {d.month}
+                    </span>
                   ))}
                 </div>
               </div>

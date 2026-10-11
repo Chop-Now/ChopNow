@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 const getNotifications = async (req, res) => {
   try {
     const { read, type } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const skip = (page - 1) * limit;
 

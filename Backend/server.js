@@ -7,8 +7,10 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const compression = require('compression');
+const crypto = require('crypto');
+const validator = require('validator');
 const rateLimit = require('express-rate-limit');
-const { ipKeyGenerator } = require('express-rate-limit');
+const { clientIpKey } = require('./utils/clientIp');
 const pinoHttp = require('pino-http');
 const { createServer } = require('http');
 const socketManager = require('./socket');
@@ -219,6 +221,11 @@ app.use(
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// Express 5 leaves req.body undefined when nothing was sent; handlers destructure it
+app.use((req, _res, next) => {
+  if (req.body === undefined) req.body = {};
+  next();
+});
 app.use(cookieParser());
 
 // Input sanitization — strips all HTML from string fields in req.body
@@ -230,6 +237,7 @@ app.use(sanitizeInput);
 // users - 100 requests / 15 min locked out whole groups of customers (one
 // checkout's payment-status polling alone is ~20 requests).
 const apiLimiter = rateLimit({
+  keyGenerator: clientIpKey,
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: Number(process.env.RATE_LIMIT_API_MAX) || 1500,
   message: { message: 'Too many requests, please slow down and try again shortly.' },
@@ -243,14 +251,46 @@ const apiLimiter = rateLimit({
 // Brute-force protection is per account (IP + email), so one attacker can't
 // guess a password, but customers sharing a carrier IP don't lock each other
 // out of logging in.
+// The routes' validators run normalizeEmail(), so "a.b+1@gmail.com" and "ab@gmail.com"
+// reach the same account - key the limiters the same way or every variant gets a fresh allowance.
+const limiterEmail = (req) => {
+  const raw = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!raw) return '';
+  return (validator.isEmail(raw) && validator.normalizeEmail(raw)) || raw;
+};
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: isProduction ? 10 : 50,
-  keyGenerator: (req) => {
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-    return `${ipKeyGenerator(req.ip)}|${email}`;
-  },
+  keyGenerator: (req) => `${clientIpKey(req)}|${limiterEmail(req)}`,
   message: { message: 'Too many login attempts, please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Failed logins per account, whatever IP they come from: the IP part of authLimiter can be
+// spoofed by calling Render directly (see utils/clientIp.js), this part can't. Only failures
+// count, so the owner logging in normally never uses it up.
+const accountLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 20 : 100,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const email = limiterEmail(req);
+    return email ? `login|${email}` : `login-ip|${clientIpKey(req)}`;
+  },
+  message: { message: 'Too many failed logins for this account. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// authLimiter is keyed per email, so it doesn't stop one connection trying many emails
+// at /register to learn which are taken. Generous enough for a crowd behind one carrier IP.
+const registrationIpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: isProduction ? 60 : 1000,
+  keyGenerator: (req) => clientIpKey(req),
+  message: { message: 'Too many sign-up attempts from this connection. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -260,8 +300,8 @@ const authLimiter = rateLimit({
 // resetting their password), and keying on the account also means an attacker cannot get a
 // fresh allowance against one victim just by changing IP. Without an email we fall back to IP.
 const perAccountKey = (req) => {
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-  return email ? `acct|${email}` : `ip|${ipKeyGenerator(req.ip)}`;
+  const email = limiterEmail(req);
+  return email ? `acct|${email}` : `ip|${clientIpKey(req)}`;
 };
 
 const otpLimiter = rateLimit({
@@ -285,6 +325,7 @@ const passwordResetLimiter = rateLimit({
 
 // The public Contact form sends real email: keep it from being used as a mail cannon
 const contactLimiter = rateLimit({
+  keyGenerator: clientIpKey,
   windowMs: 60 * 60 * 1000,
   max: 5,
   message: { message: 'Too many messages from this connection. Please try again later.' },
@@ -294,6 +335,7 @@ const contactLimiter = rateLimit({
 
 // Crash reports from the web app: enough for a real bug to be seen, not enough to flood the logs
 const clientErrorLimiter = rateLimit({
+  keyGenerator: clientIpKey,
   windowMs: 60 * 60 * 1000,
   max: 30,
   message: { message: 'Too many reports from this connection.' },
@@ -363,8 +405,8 @@ app.use(checkMaintenanceMode);
 // limited, leaving the paths real browser traffic uses effectively unlimited.
 const USER_ROUTE_PREFIXES = ['/api/v1/users', '/api/users'];
 const strictUserRouteLimits = {
-  '/login': authLimiter,
-  '/register': authLimiter,
+  '/login': [accountLoginLimiter, authLimiter],
+  '/register': [registrationIpLimiter, authLimiter],
   '/forgot-password': passwordResetLimiter,
   '/verify-reset-otp': passwordResetLimiter,
   '/reset-password': passwordResetLimiter,
@@ -379,7 +421,10 @@ for (const prefix of USER_ROUTE_PREFIXES) {
 }
 
 // Swagger Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+// The full API map is for developers, not the public internet
+if (!isProduction) {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+}
 
 // API v1 routes
 app.use('/api/v1/users', userRoutes);
@@ -420,7 +465,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/rider', riderRoutes);
 
 // Database connection and server start
-const { connectDB, closeDB, healthCheck, ensureGeoIndexes } = require('./config/database');
+const {
+  connectDB,
+  closeDB,
+  healthCheck,
+  ensureGeoIndexes,
+  ensureFavoriteIndexes,
+} = require('./config/database');
 const redis = require('./config/redis');
 const { startExpiryJob, stopExpiryJob } = require('./services/listingExpiryJob');
 const {
@@ -435,7 +486,23 @@ const {
 
 // Enhanced health check endpoint with database stats
 // NOTE: must be registered BEFORE notFound middleware or it will always 404
-app.get('/health/db', async (req, res) => {
+// Internal diagnostics (DB version, pool and heap stats, error rates). In production they
+// need the METRICS_KEY header; without one configured they are simply not served.
+const opsOnly = (req, res, next) => {
+  if (!isProduction) return next();
+  const key = process.env.METRICS_KEY;
+  const given = req.get('x-metrics-key') || '';
+  if (
+    key &&
+    given.length === key.length &&
+    crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))
+  ) {
+    return next();
+  }
+  return res.status(404).json({ message: 'Not found' });
+};
+
+app.get('/health/db', opsOnly, async (req, res) => {
   try {
     const dbHealth = await healthCheck();
     const statusCode = dbHealth.healthy ? 200 : 503;
@@ -447,7 +514,7 @@ app.get('/health/db', async (req, res) => {
 });
 
 // Redis cache health check endpoint
-app.get('/health/cache', async (req, res) => {
+app.get('/health/cache', opsOnly, async (req, res) => {
   try {
     const cacheStats = await redis.getStats();
     const statusCode = cacheStats.available ? 200 : 503;
@@ -459,7 +526,7 @@ app.get('/health/cache', async (req, res) => {
 });
 
 // Combined health check for all services
-app.get('/health/all', async (req, res) => {
+app.get('/health/all', opsOnly, async (req, res) => {
   try {
     const [dbHealth, cacheStats] = await Promise.all([healthCheck(), redis.getStats()]);
     const allHealthy = dbHealth.healthy;
@@ -479,7 +546,7 @@ app.get('/health/all', async (req, res) => {
 });
 
 // Metrics endpoint for monitoring
-app.get('/metrics', async (req, res) => {
+app.get('/metrics', opsOnly, async (req, res) => {
   try {
     const appMetrics = metrics.getMetrics();
     const mongoMetrics = await metrics.getMongoMetrics();
@@ -494,7 +561,7 @@ app.get('/metrics', async (req, res) => {
 });
 
 // Prometheus-compatible metrics endpoint (optional)
-app.get('/metrics/prometheus', async (req, res) => {
+app.get('/metrics/prometheus', opsOnly, async (req, res) => {
   try {
     const appMetrics = metrics.getMetrics();
     const lines = [
@@ -631,6 +698,8 @@ const startServer = async () => {
 
     // "Nearby" shops need this index; production has autoIndex off
     ensureGeoIndexes();
+    // Replace the old favourites indexes that allowed only one favourite per user
+    ensureFavoriteIndexes();
 
     // Initialize Redis (optional - won't fail if unavailable)
     await redis.initRedis();

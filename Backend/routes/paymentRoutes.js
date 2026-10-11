@@ -8,9 +8,10 @@ const {
   getPaymentStatus,
 } = require('../controllers/paymentController');
 const { protect } = require('../middleware/auth');
+const { requireVerifiedEmail } = require('../middleware/requireVerifiedEmail');
 
 // Initiate deposit payment - protected
-router.post('/deposit', protect, initiatePayment);
+router.post('/deposit', protect, requireVerifiedEmail, initiatePayment);
 
 // Get payment status by orderId (polling fallback) - protected
 router.get('/status/:orderId', protect, getPaymentStatus);

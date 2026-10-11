@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminMode } from '../context/AdminModeContext';
-import { payoutService, businessService } from '../../services';
+import { payoutService, businessService, userService } from '../../services';
 import LoadingSpinner from '../../Components/ui/LoadingSpinner';
 import {
   Pencil,
@@ -46,6 +46,8 @@ const ShopAdminPayouts = () => {
   const [showLedger, setShowLedger] = useState(false);
   const [ledger, setLedger] = useState([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  // Changing payout details needs a code emailed to the vendor (enforced by the server)
+  const [codeStep, setCodeStep] = useState({ sent: false, code: '', busy: false });
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -182,16 +184,32 @@ const ShopAdminPayouts = () => {
   };
 
   const handleSave = async () => {
+    setCodeStep((prev) => ({ ...prev, busy: true }));
     try {
+      if (!codeStep.sent) {
+        await userService.requestSensitiveChangeOTP('payout settings');
+        toast.success('We emailed you a 6-digit code. Enter it to save.');
+        setCodeStep({ sent: true, code: '', busy: false });
+        return;
+      }
+      if (!/^\d{6}$/.test(codeStep.code)) {
+        toast.error('Enter the 6-digit code from your email');
+        setCodeStep((prev) => ({ ...prev, busy: false }));
+        return;
+      }
+      await userService.verifySensitiveChangeOTP(codeStep.code);
       const payoutInfo = {
         ...formData,
         preferredMethod,
       };
-      await businessService.updateMyBusiness({ payoutInfo });
+      const updated = await businessService.updateMyBusiness({ payoutInfo });
+      if (updated?.payoutInfo) setBusiness(updated);
       toast.success('Payout settings updated successfully');
+      setCodeStep({ sent: false, code: '', busy: false });
       setIsEditing(false);
     } catch (error) {
       toast.error(error.message || 'Failed to update payout settings');
+      setCodeStep((prev) => ({ ...prev, busy: false }));
     }
   };
 
@@ -210,6 +228,7 @@ const ShopAdminPayouts = () => {
       });
       setPreferredMethod(info.preferredMethod || 'bank');
     }
+    setCodeStep({ sent: false, code: '', busy: false });
     setIsEditing(false);
   };
 
@@ -560,6 +579,29 @@ const ShopAdminPayouts = () => {
         </div>
 
         {/* Action Buttons */}
+        {isEditing && codeStep.sent && (
+          <div className="mt-6">
+            <label
+              htmlFor="payout-change-code"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Code from your email
+            </label>
+            <input
+              id="payout-change-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={codeStep.code}
+              onChange={(e) =>
+                setCodeStep((prev) => ({ ...prev, code: e.target.value.replace(/\D/g, '') }))
+              }
+              className="w-full max-w-xs px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg tracking-widest bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              placeholder="123456"
+            />
+          </div>
+        )}
+
         {isEditing && (
           <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
             <button
@@ -570,9 +612,10 @@ const ShopAdminPayouts = () => {
             </button>
             <button
               onClick={handleSave}
-              className="px-6 py-2.5 bg-solid hover:bg-tertiary text-white rounded-lg transition-colors font-medium"
+              disabled={codeStep.busy}
+              className="px-6 py-2.5 bg-solid hover:bg-tertiary text-white rounded-lg transition-colors font-medium disabled:opacity-60"
             >
-              Save Changes
+              {codeStep.sent ? 'Confirm & Save' : 'Save Changes'}
             </button>
           </div>
         )}
@@ -1291,7 +1334,7 @@ const WebsiteAdminPayouts = () => {
                                   onClick={() =>
                                     setActionModal({ open: true, payout, action: 'complete' })
                                   }
-                                  className="px-3 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg text-xs font-medium transition-colors"
+                                  className="px-3 py-1.5 bg-moringa hover:bg-moringa-dark text-white rounded-lg text-xs font-medium transition-colors"
                                 >
                                   Mark Complete
                                 </button>
@@ -1428,7 +1471,7 @@ const WebsiteAdminPayouts = () => {
                 disabled={processingId === actionModal.payout?._id}
                 className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors font-medium disabled:opacity-50 ${
                   actionModal.action === 'complete'
-                    ? 'bg-green-700 hover:bg-green-800'
+                    ? 'bg-moringa hover:bg-moringa-dark'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >

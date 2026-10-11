@@ -13,6 +13,7 @@ const {
   getListingsByBusiness,
 } = require('../controllers/listingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
+const { requireVerifiedEmail } = require('../middleware/requireVerifiedEmail');
 const upload = require('../middleware/upload');
 const { validateCreateListing } = require('../middleware/validation');
 const { cacheListings, cacheListing, invalidateAfter } = require('../middleware/cache');
@@ -74,6 +75,7 @@ router.post(
   '/',
   protect,
   authorize('business_owner', 'admin'),
+  requireVerifiedEmail,
   validateCreateListing,
   invalidateAfter('listing', (req, body) => body?.listing?._id),
   createListing

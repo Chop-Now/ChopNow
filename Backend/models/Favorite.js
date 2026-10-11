@@ -41,11 +41,18 @@ const favoriteSchema = new Schema(
 );
 
 // Indexes
-// Unique compound index for user + business (sparse to allow null business)
-favoriteSchema.index({ user: 1, business: 1 }, { unique: true, sparse: true });
-
-// Unique compound index for user + listing (sparse to allow null listing)
-favoriteSchema.index({ user: 1, listing: 1 }, { unique: true, sparse: true });
+// One favourite per user + shop and per user + listing. These must be *partial*: a
+// compound sparse index still indexes every favourite (user is always set), so each
+// user's listing favourites all collide on `business: null` - keep in step with
+// FAVORITE_UNIQUE_INDEXES in config/database.js, which repairs existing databases.
+favoriteSchema.index(
+  { user: 1, business: 1 },
+  { unique: true, partialFilterExpression: { business: { $type: 'objectId' } } }
+);
+favoriteSchema.index(
+  { user: 1, listing: 1 },
+  { unique: true, partialFilterExpression: { listing: { $type: 'objectId' } } }
+);
 
 // Index for querying favorites by user and type
 favoriteSchema.index({ user: 1, favoriteType: 1 });

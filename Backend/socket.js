@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Order = require('./models/Order');
 const Delivery = require('./models/Delivery');
+const Business = require('./models/Business');
 const redis = require('./config/redis');
 const logger = require('./utils/logger');
 
@@ -71,9 +72,19 @@ module.exports = {
       const token = authHeader.split(' ')[1] || authHeader;
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('activeRole roles status').lean();
+        // Same rules as the `protect` middleware: refresh tokens are not access tokens,
+        // and a token revoked by logout-everywhere / password change must not connect.
+        if (decoded.type === 'refresh') {
+          return next(new Error('Authentication error: Invalid token'));
+        }
+        const user = await User.findById(decoded.id)
+          .select('activeRole roles status +tokenVersion')
+          .lean();
         if (!user) {
           return next(new Error('Authentication error: User not found'));
+        }
+        if ((decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
+          return next(new Error('Authentication error: Session expired'));
         }
         if (user.status === 'suspended') {
           return next(new Error('Authentication error: Account suspended'));
@@ -107,10 +118,19 @@ module.exports = {
       }
 
       // Allow business owners to join a specific business room after providing businessId
-      socket.on('join_business', (businessId) => {
-        if (socket.user.role === 'business_owner' || socket.user.roles.includes('admin')) {
+      // A shop's room carries its full live order feed - only its owner (or an admin) may join
+      socket.on('join_business', async (businessId) => {
+        if (!mongoose.isValidObjectId(businessId)) return;
+        try {
+          const allowed =
+            socket.user.roles.includes('admin') ||
+            (socket.user.role === 'business_owner' &&
+              (await Business.exists({ _id: businessId, owner: socket.user.id })));
+          if (!allowed) return;
           socket.join(`business_${businessId}`);
           logger.info({ socketId: socket.id, businessId }, 'Socket joined business room');
+        } catch (err) {
+          logger.error({ err, socketId: socket.id }, 'join_business failed');
         }
       });
 
