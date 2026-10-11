@@ -20,7 +20,7 @@ const {
   requestMoreInfo,
   rescindBusiness,
 } = require('../controllers/businessController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const uploadDocs = require('../middleware/uploadDocs');
 const { validateCreateBusiness } = require('../middleware/validation');
@@ -39,7 +39,7 @@ const { checkOwnership } = require('../middleware/ownership');
  *       200:
  *         description: List of businesses
  */
-router.get('/', cacheBusinesses, getBusinesses);
+router.get('/', optionalAuth, cacheBusinesses, getBusinesses);
 
 // IMPORTANT: Specific routes must come BEFORE parameterized routes
 // Get my businesses - must be before /:id
@@ -77,7 +77,7 @@ router.patch(
 );
 
 // Get by ID - comes after specific routes
-router.get('/:id', cacheBusiness, getBusinessById);
+router.get('/:id', optionalAuth, cacheBusiness, getBusinessById);
 
 // Get business stats - must be before other /:id routes
 router.get('/:id/stats', protect, authorize('business_owner', 'admin'), getBusinessStats);

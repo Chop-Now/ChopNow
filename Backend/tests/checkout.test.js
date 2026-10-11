@@ -19,6 +19,7 @@ const {
   createListing,
   enableCashPayments,
   eventually,
+  completeOrder,
 } = require('./fixtures');
 
 async function setSettings(values) {
@@ -346,10 +347,7 @@ describe('One payment for the whole checkout', () => {
     await payCheckout(buyer, body.checkoutId);
     const oA = await Order.findOne({ checkoutGroup: body.checkoutId, business: a.business._id });
 
-    const res = await request(app)
-      .put(`/api/v1/orders/${oA._id}/status`)
-      .set('Authorization', `Bearer ${a.token}`)
-      .send({ status: 'completed' });
+    const res = await completeOrder(oA._id, a.token);
     expect(res.status).toBe(200);
     expect((await Business.findById(a.business._id)).stats.balance).toBe(7200);
     expect((await Business.findById(b.business._id)).stats.balance).toBe(0);
@@ -406,10 +404,7 @@ describe('Dispute refunds: vendor fault vs platform goodwill', () => {
 
   it("takes the vendor's share back from their balance when it's the vendor's fault", async () => {
     const { a, buyerUser, order } = await completedPaidOrder();
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${a.token}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, a.token);
     expect((await Business.findById(a.business._id)).stats.balance).toBe(7200);
 
     const d = await dispute(order, buyerUser);
@@ -426,10 +421,7 @@ describe('Dispute refunds: vendor fault vs platform goodwill', () => {
 
   it('leaves the vendor balance alone for platform goodwill', async () => {
     const { a, buyerUser, order } = await completedPaidOrder();
-    await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${a.token}`)
-      .send({ status: 'completed' });
+    await completeOrder(order._id, a.token);
 
     const d = await dispute(order, buyerUser);
     await request(app)
@@ -451,10 +443,7 @@ describe('Dispute refunds: vendor fault vs platform goodwill', () => {
       .send({ action: 'partial_refund', amount: half, refundFundedBy: 'vendor' });
 
     // The order is still completable after a partial refund...
-    const done = await request(app)
-      .put(`/api/v1/orders/${order._id}/status`)
-      .set('Authorization', `Bearer ${a.token}`)
-      .send({ status: 'completed' });
+    const done = await completeOrder(order._id, a.token);
     expect(done.status).toBe(200);
     // ...and the vendor is credited only the unrefunded share.
     const expected = 7200 - Math.round((half * 7200) / order.pricing.total);

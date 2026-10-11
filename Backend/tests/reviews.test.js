@@ -14,6 +14,7 @@ const {
   createBusinessOwnerWithBusiness,
   createListing,
   enableCashPayments,
+  completeOrder,
 } = require('./fixtures');
 
 // These tests place cash orders; cash is off by default.
@@ -31,10 +32,7 @@ async function completedOrderFor(consumerToken) {
       fulfillmentType: 'pickup',
       payment: { paymentMethod: 'cash' },
     });
-  await request(app)
-    .put(`/api/v1/orders/${orderRes.body._id}/status`)
-    .set('Authorization', `Bearer ${vendorToken}`)
-    .send({ status: 'completed' });
+  await completeOrder(orderRes.body._id, vendorToken);
   return { order: orderRes.body, business };
 }
 

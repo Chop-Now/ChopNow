@@ -102,6 +102,15 @@ const authorize = (...roles) => {
       });
     }
 
+    // Anyone can add the rider role to themselves, but only an admin-approved rider
+    // may take deliveries or be paid for them.
+    if (userActiveRole === 'rider' && req.user.riderStatus !== 'approved') {
+      return res.status(403).json({
+        message: 'Your rider application has not been approved yet',
+        code: 'RIDER_NOT_APPROVED',
+      });
+    }
+
     next();
   };
 };

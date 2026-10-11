@@ -5,7 +5,7 @@ import { Home, Mail } from 'lucide-react';
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 md:py-20 bg-linear-to-br from-slate-900 via-slate-800 to-solid/10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 md:py-20 bg-moringa">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-solid/20 rounded-full blur-3xl animate-pulse"></div>
@@ -14,8 +14,8 @@ const NotFound = () => {
 
       <div className="relative z-10 flex flex-col items-center max-w-4xl mx-auto">
         {/* 404 Badge */}
-        <div className="mb-6 px-4 py-2 bg-solid/20 border-2 border-solid/30 rounded-full">
-          <span className="text-solid font-bold text-xs md:text-sm tracking-wider">ERROR 404</span>
+        <div className="mb-6 px-4 py-2 bg-yellow/15 border-2 border-yellow/40 rounded-full">
+          <span className="text-yellow font-bold text-xs md:text-sm tracking-wider">ERROR 404</span>
         </div>
 
         {/* Astronaut Image */}
@@ -35,7 +35,7 @@ const NotFound = () => {
         </h1>
 
         {/* Subheading */}
-        <p className="text-base md:text-lg lg:text-xl text-solid font-semibold mb-6 text-center">
+        <p className="text-base md:text-lg lg:text-xl text-yellow font-semibold mb-6 text-center">
           It happens to the best of us
         </p>
 
@@ -52,7 +52,7 @@ const NotFound = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Link
             to="/"
-            className="group flex min-h-11 items-center justify-center gap-2 bg-solid hover:bg-tertiary px-5 md:px-6 py-2.5 md:py-3 text-white text-sm rounded-full font-medium active:scale-95 transition-all shadow-lg hover:shadow-xl w-full sm:w-auto"
+            className="group flex min-h-11 items-center justify-center gap-2 bg-yellow hover:bg-yellow-dark px-5 md:px-6 py-2.5 md:py-3 text-char text-sm rounded-full font-medium active:scale-95 transition-all shadow-lg hover:shadow-xl w-full sm:w-auto"
           >
             <Home className="w-4 h-4" />
             <span>Back to Home</span>

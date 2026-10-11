@@ -284,7 +284,8 @@ const initiatePayment = async (req, res) => {
       : 'https://api.sandbox.pawapay.io';
     const apiKey = process.env.PAWAPAY_API_KEY;
 
-    if (!apiKey) {
+    // Test mode simulates the deposit (sandbox only), so it doesn't need a key
+    if (!apiKey && !isPaymentTestMode()) {
       logger.error('PAWAPAY_API_KEY is not configured in environment variables.');
       return res.status(500).json({ message: 'Payment gateway configuration error' });
     }

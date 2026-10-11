@@ -159,7 +159,7 @@ const Dashboard = () => {
               setLoadError(false);
               setAttempt((n) => n + 1);
             }}
-            className="px-4 py-2 rounded-lg bg-green-700 text-white text-sm font-medium hover:bg-green-800"
+            className="px-4 py-2 rounded-lg bg-moringa text-white text-sm font-medium hover:bg-moringa-dark"
           >
             Try again
           </button>

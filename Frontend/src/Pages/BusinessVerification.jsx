@@ -105,10 +105,17 @@ const BusinessVerification = () => {
         if (!isMounted) return;
         console.error('Failed to fetch business', err);
 
-        // Check if it's an authentication error
+        // Logged in, but not as a business (the API says "not authorized to access this route")
         if (
+          err?.code === 'WRONG_ACTIVE_ROLE' ||
+          err?.message?.includes('is not authorized to access')
+        ) {
+          toast.error('Switch to Business Mode (or add a business) to verify a business.');
+          navigate('/');
+        } else if (
+          // Check if it's an authentication error
           err?.message?.includes('401') ||
-          err?.message?.includes('authorized') ||
+          err?.message?.includes('Not authenticated') ||
           err?.message?.includes('token')
         ) {
           toast.error('Session expired. Please log in again.');

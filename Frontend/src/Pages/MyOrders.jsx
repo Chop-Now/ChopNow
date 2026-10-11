@@ -558,7 +558,7 @@ const MyOrders = () => {
                 <div className="flex gap-2 relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-green-700 rounded-md transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-0 bottom-0 w-[calc(50%-4px)] bg-moringa rounded-md transition-transform duration-300 ease-in-out ${
                       selectedDeliveryType === 'Delivery'
                         ? 'transform translate-x-0'
                         : 'transform translate-x-[calc(100%+8px)]'
@@ -592,7 +592,7 @@ const MyOrders = () => {
                 <div className="bg-gray-100 rounded-full p-1 flex relative">
                   {/* Sliding background */}
                   <div
-                    className={`absolute top-1 bottom-1 w-1/3 bg-green-700 rounded-full transition-transform duration-300 ease-in-out ${
+                    className={`absolute top-1 bottom-1 w-1/3 bg-moringa rounded-full transition-transform duration-300 ease-in-out ${
                       mobileStatusFilter === 'processing'
                         ? 'transform translate-x-0'
                         : mobileStatusFilter === 'completed'
@@ -700,7 +700,7 @@ const MyOrders = () => {
                     <label className="text-xs font-medium mb-1.5 opacity-0">Action</label>
                     <button
                       onClick={handleFilterOrders}
-                      className="bg-green-700 hover:bg-green-800 text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
+                      className="bg-moringa hover:bg-moringa-dark text-white px-4 py-1.5 rounded-md text-xs font-medium transition-colors h-full cursor-pointer"
                     >
                       Filter Orders
                     </button>
@@ -721,7 +721,7 @@ const MyOrders = () => {
                   <p className="text-gray-600 max-w-md mb-6 px-4">{getEmptyStateMessage()}</p>
                   <button
                     onClick={() => navigate('/shop')}
-                    className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                    className="bg-moringa hover:bg-moringa-dark text-white px-6 py-3 rounded-md font-medium transition-colors"
                   >
                     Start Shopping
                   </button>
@@ -943,7 +943,7 @@ const MyOrders = () => {
                       <button
                         onClick={() => handleSubmitReview(selectedOrder)}
                         disabled={submittingReview}
-                        className="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        className="rounded-md bg-moringa px-4 py-2 text-sm font-medium text-white hover:bg-moringa-dark disabled:opacity-50"
                       >
                         {submittingReview ? 'Submitting…' : 'Submit review'}
                       </button>
@@ -1070,197 +1070,209 @@ const MyOrders = () => {
                   </div>
                 </div>
 
-                {selectedOrder.type === 'Pickup' && (
-                  // On phones the pickup pass comes first: it is what you hold up at the counter.
-                  <div className="order-first mb-6 md:order-none md:mb-0 md:mt-6 md:border-t md:pt-6">
-                    <h4 className="font-semibold text-lg mb-4 text-gray-800 font-medium">
-                      Pickup Information
-                    </h4>
+                {selectedOrder.type === 'Pickup' &&
+                  selectedOrder.rawStatus === 'pending_payment' && (
+                    <p className="order-first mb-6 rounded-lg bg-fufu p-4 text-sm text-moringa md:order-none md:mb-0 md:mt-6">
+                      Complete payment to unlock your pickup pass.
+                    </p>
+                  )}
 
-                    {fetchingDetails ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-green-700 mr-2" />
-                        <span className="text-sm text-gray-600">Loading pickup details...</span>
-                      </div>
-                    ) : orderDetails ? (
-                      <div className="space-y-6">
-                        {/* Pickup Code & QR Code Pass */}
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
-                          {/* QR Code */}
-                          <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
-                            <PickupQr
-                              code={orderDetails.pickupDetails?.pickupCode}
-                              className="w-44 h-44 sm:w-32 sm:h-32 object-contain"
-                            />
-                          </div>
+                {/* The shop refuses an unpaid order at the counter, so don't hand out a pass for one */}
+                {selectedOrder.type === 'Pickup' &&
+                  selectedOrder.rawStatus !== 'pending_payment' && (
+                    // On phones the pickup pass comes first: it is what you hold up at the counter.
+                    <div className="order-first mb-6 md:order-none md:mb-0 md:mt-6 md:border-t md:pt-6">
+                      <h4 className="font-semibold text-lg mb-4 text-gray-800 font-medium">
+                        Pickup Information
+                      </h4>
 
-                          {/* Code details & Copy */}
-                          <div className="flex-1 text-center sm:text-left space-y-2 w-full">
-                            <span className="text-xs tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
-                              Your Store Pickup Pass
-                            </span>
-                            <div>
-                              <p className="text-gray-500 font-semibold text-xs mt-1">
-                                PICKUP CODE
-                              </p>
-                              <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                                <span className="text-3xl font-extrabold text-green-800 tracking-widest font-mono">
-                                  {orderDetails.pickupDetails?.pickupCode || 'N/A'}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    handleCopy(orderDetails.pickupDetails?.pickupCode || '', 'code')
-                                  }
-                                  className="p-1.5 text-green-700 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
-                                  title="Copy Code"
-                                >
-                                  {copiedText === 'code' ? (
-                                    <Check className="w-4 h-4" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                            <p className="text-xs text-green-800/80 leading-relaxed font-medium">
-                              Show either this QR code or the code digits to the vendor at the
-                              pickup counter.
-                            </p>
-                          </div>
+                      {fetchingDetails ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-green-700 mr-2" />
+                          <span className="text-sm text-gray-600">Loading pickup details...</span>
                         </div>
+                      ) : orderDetails ? (
+                        <div className="space-y-6">
+                          {/* Pickup Code & QR Code Pass */}
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 shadow-sm text-left">
+                            {/* QR Code */}
+                            <div className="bg-white p-2.5 rounded-xl border border-green-100/50 shadow-sm flex-shrink-0">
+                              <PickupQr
+                                code={orderDetails.pickupDetails?.pickupCode}
+                                className="w-44 h-44 sm:w-32 sm:h-32 object-contain"
+                              />
+                            </div>
 
-                        {/* Store Info Card */}
-                        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden text-left">
-                          <div className="p-4 border-b border-gray-100 bg-fufu-dim/50 flex justify-between items-center">
-                            <h5 className="font-semibold text-gray-800 text-sm">
-                              Store Info & Directions
-                            </h5>
-                            {orderDetails.business?.contact?.phone && (
-                              <a
-                                href={`tel:${orderDetails.business.contact.phone}`}
-                                className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
-                              >
-                                <Phone className="w-3.5 h-3.5" />
-                                Call Store
-                              </a>
-                            )}
-                          </div>
-                          <div className="p-4 space-y-4">
-                            {/* Name and Address */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
-                                  Store Name
-                                </span>
-                                <p className="font-bold text-gray-900">
-                                  {orderDetails.business?.name || 'N/A'}
+                            {/* Code details & Copy */}
+                            <div className="flex-1 text-center sm:text-left space-y-2 w-full">
+                              <span className="text-xs tracking-wider font-bold text-green-700 uppercase bg-green-100/80 px-2.5 py-1 rounded-full">
+                                Your Store Pickup Pass
+                              </span>
+                              <div>
+                                <p className="text-gray-500 font-semibold text-xs mt-1">
+                                  PICKUP CODE
                                 </p>
+                                <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                                  <span className="text-3xl font-extrabold text-green-800 tracking-widest font-mono">
+                                    {orderDetails.pickupDetails?.pickupCode || 'N/A'}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleCopy(
+                                        orderDetails.pickupDetails?.pickupCode || '',
+                                        'code'
+                                      )
+                                    }
+                                    className="p-1.5 text-green-700 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+                                    title="Copy Code"
+                                  >
+                                    {copiedText === 'code' ? (
+                                      <Check className="w-4 h-4" />
+                                    ) : (
+                                      <Copy className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
-                              {orderDetails.pickupDetails?.pickupTime && (
+                              <p className="text-xs text-green-800/80 leading-relaxed font-medium">
+                                Show either this QR code or the code digits to the vendor at the
+                                pickup counter.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Store Info Card */}
+                          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden text-left">
+                            <div className="p-4 border-b border-gray-100 bg-fufu-dim/50 flex justify-between items-center">
+                              <h5 className="font-semibold text-gray-800 text-sm">
+                                Store Info & Directions
+                              </h5>
+                              {orderDetails.business?.contact?.phone && (
+                                <a
+                                  href={`tel:${orderDetails.business.contact.phone}`}
+                                  className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                  Call Store
+                                </a>
+                              )}
+                            </div>
+                            <div className="p-4 space-y-4">
+                              {/* Name and Address */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                   <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
-                                    Pickup Window
+                                    Store Name
                                   </span>
-                                  <p className="font-semibold text-gray-700">
-                                    {orderDetails.pickupDetails.pickupTime}
+                                  <p className="font-bold text-gray-900">
+                                    {orderDetails.business?.name || 'N/A'}
                                   </p>
                                 </div>
-                              )}
-                            </div>
-
-                            <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                              <div className="space-y-1 max-w-md">
-                                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
-                                  Store Address
-                                </span>
-                                <div className="flex items-start gap-1">
-                                  <p className="font-medium text-gray-800 text-sm">
-                                    {formatAddress(orderDetails.business?.address)}
-                                  </p>
-                                  {orderDetails.business?.address && (
-                                    <button
-                                      onClick={() =>
-                                        handleCopy(
-                                          formatAddress(orderDetails.business.address),
-                                          'address'
-                                        )
-                                      }
-                                      className="p-1 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                                      title="Copy Address"
-                                    >
-                                      {copiedText === 'address' ? (
-                                        <Check className="w-3.5 h-3.5 text-green-700" />
-                                      ) : (
-                                        <Copy className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                  )}
-                                </div>
+                                {orderDetails.pickupDetails?.pickupTime && (
+                                  <div className="space-y-1">
+                                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
+                                      Pickup Window
+                                    </span>
+                                    <p className="font-semibold text-gray-700">
+                                      {orderDetails.pickupDetails.pickupTime}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
 
-                              {getPickupCoords() && (
-                                <div className="flex flex-wrap gap-2">
-                                  <a
-                                    href={`https://www.google.com/maps/dir/?api=1&destination=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
-                                  >
-                                    <Navigation className="w-3.5 h-3.5" />
-                                    Google Maps
-                                  </a>
-                                  <a
-                                    href={`https://waze.com/ul?ll=${getPickupCoords()[0]},${getPickupCoords()[1]}&navigate=yes`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1.5 text-xs text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all duration-300 border border-blue-100 shadow-sm"
-                                  >
-                                    Waze
-                                  </a>
+                              <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="space-y-1 max-w-md">
+                                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">
+                                    Store Address
+                                  </span>
+                                  <div className="flex items-start gap-1">
+                                    <p className="font-medium text-gray-800 text-sm">
+                                      {formatAddress(orderDetails.business?.address)}
+                                    </p>
+                                    {orderDetails.business?.address && (
+                                      <button
+                                        onClick={() =>
+                                          handleCopy(
+                                            formatAddress(orderDetails.business.address),
+                                            'address'
+                                          )
+                                        }
+                                        className="p-1 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                        title="Copy Address"
+                                      >
+                                        {copiedText === 'address' ? (
+                                          <Check className="w-3.5 h-3.5 text-green-700" />
+                                        ) : (
+                                          <Copy className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
 
-                        {/* Store Location Map */}
-                        {getPickupCoords() && (
-                          <div className="space-y-2 text-left">
-                            <span className="text-xs font-semibold text-gray-500 block">
-                              Store Location Map
-                            </span>
-                            <div className="w-full h-60 rounded-2xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
-                              <MapContainer
-                                center={getPickupCoords()}
-                                zoom={15}
-                                style={{ height: '100%', width: '100%' }}
-                                scrollWheelZoom={false}
-                              >
-                                <TileLayer
-                                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                <Marker
-                                  position={getPickupCoords()}
-                                  icon={vendorIcon}
-                                  title="Pickup location"
-                                >
-                                  <Popup>
-                                    <div className="text-xs font-semibold text-center">
-                                      🏪 {orderDetails.business?.name || 'Store'}
-                                    </div>
-                                  </Popup>
-                                </Marker>
-                              </MapContainer>
+                                {getPickupCoords() && (
+                                  <div className="flex flex-wrap gap-2">
+                                    <a
+                                      href={`https://www.google.com/maps/dir/?api=1&destination=${getPickupCoords()[0]},${getPickupCoords()[1]}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1.5 text-xs text-white font-bold bg-moringa hover:bg-moringa-dark px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-green-100"
+                                    >
+                                      <Navigation className="w-3.5 h-3.5" />
+                                      Google Maps
+                                    </a>
+                                    <a
+                                      href={`https://waze.com/ul?ll=${getPickupCoords()[0]},${getPickupCoords()[1]}&navigate=yes`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1.5 text-xs text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all duration-300 border border-blue-100 shadow-sm"
+                                    >
+                                      Waze
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Failed to load pickup information.</p>
-                    )}
-                  </div>
-                )}
+
+                          {/* Store Location Map */}
+                          {getPickupCoords() && (
+                            <div className="space-y-2 text-left">
+                              <span className="text-xs font-semibold text-gray-500 block">
+                                Store Location Map
+                              </span>
+                              <div className="w-full h-60 rounded-2xl overflow-hidden relative shadow-sm border border-gray-200 z-10">
+                                <MapContainer
+                                  center={getPickupCoords()}
+                                  zoom={15}
+                                  style={{ height: '100%', width: '100%' }}
+                                  scrollWheelZoom={false}
+                                >
+                                  <TileLayer
+                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  />
+                                  <Marker
+                                    position={getPickupCoords()}
+                                    icon={vendorIcon}
+                                    title="Pickup location"
+                                  >
+                                    <Popup>
+                                      <div className="text-xs font-semibold text-center">
+                                        🏪 {orderDetails.business?.name || 'Store'}
+                                      </div>
+                                    </Popup>
+                                  </Marker>
+                                </MapContainer>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Failed to load pickup information.</p>
+                      )}
+                    </div>
+                  )}
 
                 {selectedOrder.type === 'Delivery' && (
                   <div className="mt-6 border-t pt-6">
@@ -1281,7 +1293,7 @@ const MyOrders = () => {
                         {orderDetails.delivery?.rider ? (
                           <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
                             <div className="flex items-center gap-3">
-                              <div className="bg-green-700 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
+                              <div className="bg-moringa text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner">
                                 {orderDetails.delivery.riderName?.charAt(0) || 'R'}
                               </div>
                               <div>

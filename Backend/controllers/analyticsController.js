@@ -761,7 +761,7 @@ const calculateCategoryImpact = async (businessId) => {
  */
 const getRecentActivity = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 500);
     const activities = [];
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -886,8 +886,8 @@ const getRecentActivity = async (req, res) => {
  */
 const getUserActivity = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 20;
-    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const skip = (page - 1) * limit;
     const timeRange = req.query.timeRange || '7days';
 

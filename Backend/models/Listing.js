@@ -11,10 +11,13 @@ const listingSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a title'],
       trim: true,
+      maxlength: [200, 'Title cannot exceed 200 characters'],
     },
+    // Capped: every listing is sent in full to every visitor browsing the home page
     description: {
       type: String,
       required: [true, 'Please add a description'],
+      maxlength: [2000, 'Description cannot exceed 2000 characters'],
     },
     category: {
       type: String,
@@ -24,11 +27,15 @@ const listingSchema = new mongoose.Schema(
       // Simplified enums or allow string? Ideally strict but let's allow string for now matching frontend values if possible or map them.
       // Frontend values: category.path which seem to be slug-like?
     },
-    images: [
-      {
-        type: String,
-      },
-    ],
+    images: {
+      type: [
+        {
+          type: String,
+          match: [/^https:\/\//, 'Images must be https links'],
+        },
+      ],
+      validate: [(v) => v.length <= 10, 'A listing can have at most 10 images'],
+    },
     pricing: {
       price: {
         type: Number,

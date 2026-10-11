@@ -229,6 +229,12 @@ label[for] {
     min-width: 44px;
   }
 
+  /* That min-width replaces the flex default (min-width: auto), which let tab buttons in a
+     scrolling row squash below their own labels and overlap - in a scroll row they never shrink. */
+  .overflow-x-auto > button {
+    flex-shrink: 0;
+  }
+
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden']),
   select,
   textarea {

@@ -197,7 +197,7 @@ const RiderRegistration = () => {
           </p>
           <button
             onClick={handleSwitchToRider}
-            className="w-full py-3 px-4 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 px-4 bg-moringa hover:bg-moringa-dark text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
           >
             Go to Rider Dashboard 🚴
           </button>
@@ -513,7 +513,7 @@ const RiderRegistration = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-4 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 px-4 bg-moringa hover:bg-moringa-dark text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

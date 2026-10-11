@@ -1,4 +1,19 @@
 const Business = require('../models/Business');
+const Listing = require('../models/Listing');
+const { findBusinessDeletionBlocker } = require('../services/accountService');
+const User = require('../models/User');
+const { notifyPayee } = require('../services/ledgerService');
+
+const PAYOUT_FIELDS = [
+  'preferredMethod',
+  'bankName',
+  'accountHolder',
+  'accountNumber',
+  'swiftCode',
+  'mobileProvider',
+  'mobilePhone',
+  'mobileAccountName',
+];
 const { uploadToCloudinary, uploadMultipleToCloudinary } = require('../utils/cloudinaryUpload');
 const {
   sendBusinessApprovedEmail,
@@ -9,6 +24,29 @@ const {
 const logger = require('../utils/logger');
 const { isAdminUser } = require('../utils/roles');
 const { friendlyDbError } = require('../utils/dbErrors');
+
+// Fields that must never reach the public business endpoints (payout details, KYC
+// documents, reviewer notes). `.lean()` skips the model's toJSON masking, so they are
+// left out explicitly. verification.status stays public for the "verified" badge.
+const PUBLIC_BUSINESS_FIELDS =
+  '-payoutInfo -verification.documents -verification.notes -verification.rejectionReason ' +
+  '-verification.infoRequestMessage -verification.approvalMessage -verification.reviewedBy';
+const stripPrivateBusinessFields = (business) => {
+  delete business.payoutInfo;
+  if (business.verification) business.verification = { status: business.verification.status };
+  return business;
+};
+
+// Same masking as the Business model's toJSON, for lean results shown to owners/admins.
+const maskPayoutInfo = (business) => {
+  if (business?.payoutInfo) {
+    const info = { ...business.payoutInfo };
+    if (info.accountNumber) info.accountNumber = '****' + String(info.accountNumber).slice(-4);
+    if (info.swiftCode) info.swiftCode = '****';
+    return { ...business, payoutInfo: info };
+  }
+  return business;
+};
 
 /**
  * @desc    Create a new business
@@ -87,8 +125,9 @@ const createBusiness = async (req, res) => {
 const getBusinesses = async (req, res) => {
   try {
     const { type, status, search, lat, lng, radius = 5000 } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const isAdmin = isAdminUser(req.user);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = {};
@@ -96,8 +135,11 @@ const getBusinesses = async (req, res) => {
     // Filter by type
     if (type) query.type = type;
 
-    // Filter by status (default to active only). Special-case 'all' to disable status filtering.
-    if (status && status !== 'all') {
+    // Only admins may see pending/rejected/suspended shops; everyone else gets active ones.
+    // Special-case 'all' to disable status filtering.
+    if (!isAdmin) {
+      query.status = 'active';
+    } else if (status && status !== 'all') {
       query.status = status;
     } else if (!status) {
       query.status = 'active';
@@ -110,20 +152,27 @@ const getBusinesses = async (req, res) => {
 
     // Geospatial search (nearby businesses). `location` is the 2dsphere-indexed
     // field createBusiness populates; `address.location` is deleted on create.
-    if (lat && lng) {
+    // $geoWithin rather than $near: countDocuments() below rejects $near (it used to 500).
+    if (lat !== undefined || lng !== undefined) {
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      if (
+        !Number.isFinite(latNum) ||
+        !Number.isFinite(lngNum) ||
+        Math.abs(latNum) > 90 ||
+        Math.abs(lngNum) > 180
+      ) {
+        return res.status(400).json({ message: 'Please provide a valid latitude and longitude' });
+      }
+      const radiusMeters = Math.min(Math.max(parseInt(radius) || 5000, 1), 50000);
       query.location = {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)],
-          },
-          $maxDistance: parseInt(radius), // in meters
-        },
+        $geoWithin: { $centerSphere: [[lngNum, latNum], radiusMeters / 6378100] },
       };
     }
 
     const businesses = await Business.find(query)
-      .populate('owner', 'firstName lastName email')
+      .select(isAdmin ? '' : PUBLIC_BUSINESS_FIELDS)
+      .populate('owner', isAdmin ? 'firstName lastName email' : 'firstName lastName')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
@@ -132,7 +181,7 @@ const getBusinesses = async (req, res) => {
     const total = await Business.countDocuments(query);
 
     res.json({
-      businesses,
+      businesses: isAdmin ? businesses.map(maskPayoutInfo) : businesses,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
@@ -159,6 +208,24 @@ const getBusinessById = async (req, res) => {
       return res.status(404).json({ message: 'Business not found' });
     }
 
+    const ownerId = business.owner?._id || business.owner;
+    const isOwner = req.user && ownerId && String(ownerId) === String(req.user._id);
+    if (isOwner || isAdminUser(req.user)) {
+      return res.json(maskPayoutInfo(business));
+    }
+
+    // The public only sees active shops, and never payout, KYC or owner contact details
+    if (business.status !== 'active') {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+    stripPrivateBusinessFields(business);
+    if (business.owner && typeof business.owner === 'object') {
+      business.owner = {
+        _id: business.owner._id,
+        firstName: business.owner.firstName,
+        lastName: business.owner.lastName,
+      };
+    }
     res.json(business);
   } catch (error) {
     res.status(500).json({
@@ -183,6 +250,35 @@ const updateBusiness = async (req, res) => {
     // Check ownership
     if (business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to update this business' });
+    }
+
+    // Payout details decide where the vendor's money goes. Masked values echoed back by
+    // the form ("****7890") keep what is stored, and an actual change needs a recently
+    // confirmed emailed code (POST /users/verify-sensitive-change-otp) unless an admin makes it.
+    let payoutChanged = false;
+    let verifiedOwner = null;
+    if (req.body.payoutInfo !== undefined) {
+      const current = business.payoutInfo?.toObject?.() || {};
+      const incoming =
+        req.body.payoutInfo && typeof req.body.payoutInfo === 'object' ? req.body.payoutInfo : {};
+      const next = { ...current };
+      for (const field of PAYOUT_FIELDS) {
+        const value = incoming[field];
+        if (value === undefined) continue;
+        if (typeof value === 'string' && value.startsWith('****')) continue;
+        next[field] = value;
+      }
+      payoutChanged = PAYOUT_FIELDS.some((f) => (next[f] ?? '') !== (current[f] ?? ''));
+      if (payoutChanged && !isAdminUser(req.user)) {
+        verifiedOwner = await User.findById(req.user._id).select('+sensitiveChangeVerifiedUntil');
+        if (!(verifiedOwner?.sensitiveChangeVerifiedUntil > new Date())) {
+          return res.status(403).json({
+            message: 'Confirm the code we email you before changing payout details.',
+            code: 'PAYOUT_CHANGE_NEEDS_CODE',
+          });
+        }
+      }
+      req.body.payoutInfo = next;
     }
 
     // Update fields
@@ -273,6 +369,29 @@ const updateBusiness = async (req, res) => {
 
     await business.save();
 
+    if (payoutChanged) {
+      // One confirmed code, one change
+      if (verifiedOwner) {
+        verifiedOwner.sensitiveChangeVerifiedUntil = null;
+        await verifiedOwner.save();
+      }
+      notifyPayee(
+        { business: business._id },
+        {
+          title: 'Payout details changed',
+          message:
+            'The account your ChopNow earnings are paid to was just changed. If this was not you, contact support immediately.',
+        }
+      );
+    }
+
+    if (business.status !== 'active') {
+      await Listing.updateMany(
+        { business: business._id, status: 'active' },
+        { status: 'inactive' }
+      );
+    }
+
     res.json(business);
   } catch (error) {
     const friendly = friendlyDbError(error);
@@ -301,6 +420,14 @@ const deleteBusiness = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this business' });
     }
 
+    // Don't strand paying customers or money owed to the vendor
+    const blocker = await findBusinessDeletionBlocker(business);
+    if (blocker) {
+      return res.status(409).json({ message: blocker });
+    }
+
+    // Its listings would otherwise stay buyable in browse, pointing at a shop that no longer exists
+    await Listing.updateMany({ business: business._id, status: 'active' }, { status: 'inactive' });
     await business.deleteOne();
 
     res.json({ message: 'Business deleted successfully' });
@@ -551,8 +678,8 @@ const uploadKYC = async (req, res) => {
  */
 const getMyBusinesses = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = { owner: req.user._id };
@@ -583,7 +710,6 @@ const getMyBusinesses = async (req, res) => {
 const getBusinessStats = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id).lean();
-    const Listing = require('../models/Listing');
     const Order = require('../models/Order');
 
     if (!business) {
@@ -649,8 +775,8 @@ const getBusinessStats = async (req, res) => {
  */
 const getPendingBusinesses = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 500);
     const skip = (page - 1) * limit;
 
     // Query by verification.status - include 'pending' (submitted KYC) and 'unverified' (awaiting KYC)
@@ -774,6 +900,8 @@ const rejectBusiness = async (req, res) => {
     business.verification.reviewedBy = req.user._id;
 
     await business.save();
+    // An inactive shop's listings must not stay up for sale in public browse
+    await Listing.updateMany({ business: business._id, status: 'active' }, { status: 'inactive' });
 
     // Send rejection email to business owner
     if (business.owner && business.owner.email) {
@@ -905,6 +1033,8 @@ const rescindBusiness = async (req, res) => {
     business.verification.rescindedBy = req.user._id;
 
     await business.save();
+    // An inactive shop's listings must not stay up for sale in public browse
+    await Listing.updateMany({ business: business._id, status: 'active' }, { status: 'inactive' });
 
     // Send rescind email to business owner
     if (business.owner && business.owner.email) {

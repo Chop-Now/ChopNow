@@ -41,7 +41,10 @@
         color: #4f625a;
         line-height: 1.5;
       }
-      button {
+      .retry {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
         min-height: 48px;
         padding: 0 28px;
         border: 0;
@@ -61,7 +64,8 @@
       <p>
         ChopNow needs a connection to show live deals and orders. Check your network and try again.
       </p>
-      <button type="button" onclick="location.reload()">Try again</button>
+      <!-- A link to this same page, not an inline onclick: the site's Content-Security-Policy blocks inline handlers -->
+      <a class="retry" href="">Try again</a>
     </main>
   </body>
 </html>

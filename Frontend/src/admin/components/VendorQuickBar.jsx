@@ -33,7 +33,7 @@ export default function VendorQuickBar({ business, onNavigate }) {
         <button
           type="button"
           onClick={() => onNavigate('new-listing')}
-          className="flex items-center justify-center gap-2 rounded-lg bg-green-700 px-3 text-sm font-semibold text-white"
+          className="flex items-center justify-center gap-2 rounded-lg bg-moringa px-3 text-sm font-semibold text-white"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           New listing

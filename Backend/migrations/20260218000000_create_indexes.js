@@ -186,17 +186,18 @@ module.exports = {
 
     // ── Favorites ──────────────────────────────────────────
     await db.collection('favorites').createIndexes([
+      // Partial, not sparse: see ensureFavoriteIndexes in config/database.js
       {
-        key: { user: 1, favoriteType: 1, listing: 1 },
+        key: { user: 1, listing: 1 },
         unique: true,
-        sparse: true,
-        name: 'user_type_listing_unique',
+        partialFilterExpression: { listing: { $type: 'objectId' } },
+        name: 'user_1_listing_1',
       },
       {
-        key: { user: 1, favoriteType: 1, business: 1 },
+        key: { user: 1, business: 1 },
         unique: true,
-        sparse: true,
-        name: 'user_type_business_unique',
+        partialFilterExpression: { business: { $type: 'objectId' } },
+        name: 'user_1_business_1',
       },
       { key: { user: 1, favoriteType: 1 }, name: 'user_favoriteType' },
     ]);

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Favorite = require('../models/Favorite');
 const logger = require('../utils/logger');
 
@@ -13,8 +14,18 @@ const toggleFavorite = async (req, res) => {
     if (!favoriteType || !referenceId) {
       return res.status(400).json({ message: 'Please provide favoriteType and referenceId' });
     }
+    if (!['listing', 'business'].includes(favoriteType) || !mongoose.isValidObjectId(referenceId)) {
+      return res.status(400).json({ message: 'Invalid favoriteType or referenceId' });
+    }
 
-    const result = await Favorite.toggleFavorite(req.user._id, favoriteType, referenceId);
+    let result;
+    try {
+      result = await Favorite.toggleFavorite(req.user._id, favoriteType, referenceId);
+    } catch (err) {
+      // A double-tap raced another add of the same favourite: it is saved, which is what was asked
+      if (err?.code !== 11000) throw err;
+      result = { action: 'added' };
+    }
 
     // `action` is the original contract; `isFavorite` says where the item ended up,
     // which is what a heart button needs.
@@ -35,8 +46,8 @@ const toggleFavorite = async (req, res) => {
 const getFavorites = async (req, res) => {
   try {
     const { favoriteType } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 500);
     const skip = (page - 1) * limit;
 
     const query = { user: req.user._id };

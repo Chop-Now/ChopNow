@@ -261,9 +261,51 @@ const ensureGeoIndexes = async () => {
   }
 };
 
+/**
+ * Favourites used to have unique *sparse* compound indexes (user + listing, user +
+ * business, and the migration's user + favoriteType + listing/business). Sparse does
+ * not help on a compound index whose `user` is always set, so a customer's second
+ * listing favourite collided on `business: null` and failed with a 500. Replace any
+ * such index with the partial ones the model now declares. Idempotent.
+ */
+const FAVORITE_UNIQUE_INDEXES = [
+  { key: { user: 1, business: 1 }, name: 'user_1_business_1', field: 'business' },
+  { key: { user: 1, listing: 1 }, name: 'user_1_listing_1', field: 'listing' },
+];
+
+const ensureFavoriteIndexes = async () => {
+  try {
+    const favorites = mongoose.connection.collection('favorites');
+    let existing = [];
+    try {
+      existing = await favorites.indexes();
+    } catch {
+      // collection does not exist yet - nothing to repair
+    }
+    for (const idx of existing) {
+      const keys = Object.keys(idx.key || {});
+      const coversRef = keys.includes('listing') || keys.includes('business');
+      if (idx.unique && coversRef && !idx.partialFilterExpression) {
+        await favorites.dropIndex(idx.name);
+        logger.warn({ index: idx.name }, 'Dropped broken unique favourites index');
+      }
+    }
+    for (const { key, name, field } of FAVORITE_UNIQUE_INDEXES) {
+      await favorites.createIndex(key, {
+        name,
+        unique: true,
+        partialFilterExpression: { [field]: { $type: 'objectId' } },
+      });
+    }
+  } catch (err) {
+    logger.error({ err }, 'Could not ensure the favourites indexes');
+  }
+};
+
 module.exports = {
   connectDB,
   ensureGeoIndexes,
+  ensureFavoriteIndexes,
   closeDB,
   getConnectionStatus,
   getPoolStats,

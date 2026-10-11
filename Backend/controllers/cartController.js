@@ -51,9 +51,33 @@ const getCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
+};
+
+/**
+ * Keep only real, active listings with a whole-number quantity, clamped to what is in
+ * stock. Bad ids are dropped up front (they used to reach Mongo and 500 as a CastError).
+ * @returns {Promise<Object<string, number>>} listingId -> quantity
+ */
+const cleanCartQuantities = async (items) => {
+  if (!items || typeof items !== 'object' || Array.isArray(items)) return {};
+  const entries = Object.entries(items).filter(
+    ([id, qty]) => mongoose.isValidObjectId(id) && Number.isInteger(qty) && qty > 0
+  );
+  if (!entries.length) return {};
+  const listings = await Listing.find({
+    _id: { $in: entries.map(([id]) => id) },
+    status: 'active',
+  }).select('_id inventory.quantity');
+  const stock = new Map(listings.map((l) => [l._id.toString(), l.inventory?.quantity || 0]));
+  const cleaned = {};
+  for (const [id, qty] of entries) {
+    const available = stock.get(id);
+    if (available > 0) cleaned[id] = Math.min(qty, available);
+  }
+  return cleaned;
 };
 
 // @desc    Add item to cart
@@ -96,15 +120,19 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Check inventory
-    if (listing.inventory?.quantity < quantity) {
+    const cart = await Cart.getOrCreateCart(req.user._id);
+
+    // Check inventory against what will be in the cart, not just this one add
+    const inCart =
+      cart.items.find((item) => item.listing.toString() === String(listingId))?.quantity || 0;
+    if ((listing.inventory?.quantity || 0) < inCart + quantity) {
       return res.status(400).json({
         success: false,
-        message: 'Not enough items in stock',
+        message: inCart
+          ? `Only ${listing.inventory?.quantity || 0} available - you already have ${inCart} in your cart`
+          : 'Not enough items in stock',
       });
     }
-
-    const cart = await Cart.getOrCreateCart(req.user._id);
     await cart.addItem(listingId, quantity);
 
     // Return updated cart
@@ -131,7 +159,7 @@ const addToCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to add item to cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };
@@ -189,7 +217,7 @@ const updateCartItem = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };
@@ -227,7 +255,7 @@ const removeFromCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to remove item from cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };
@@ -263,7 +291,7 @@ const clearCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to clear cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };
@@ -278,22 +306,7 @@ const syncCart = async (req, res) => {
     const cart = await Cart.getOrCreateCart(req.user._id);
 
     if (localCart && Object.keys(localCart).length > 0) {
-      // Verify all listings exist and are active
-      const listingIds = Object.keys(localCart);
-      const validListings = await Listing.find({
-        _id: { $in: listingIds },
-        status: 'active',
-      }).select('_id');
-
-      const validIds = new Set(validListings.map((l) => l._id.toString()));
-
-      // Filter to only valid listings
-      const validLocalCart = {};
-      for (const [id, qty] of Object.entries(localCart)) {
-        if (validIds.has(id) && qty > 0) {
-          validLocalCart[id] = qty;
-        }
-      }
+      const validLocalCart = await cleanCartQuantities(localCart);
 
       // Merge with server cart
       await cart.mergeWithLocal(validLocalCart);
@@ -337,7 +350,7 @@ const syncCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to sync cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };
@@ -360,21 +373,10 @@ const setCart = async (req, res) => {
 
     const newListingIds = new Set();
 
-    if (cartItems && Object.keys(cartItems).length > 0) {
-      const listingIds = Object.keys(cartItems);
-      const validListings = await Listing.find({
-        _id: { $in: listingIds },
-        status: 'active',
-      }).select('_id');
-
-      const validIds = new Set(validListings.map((l) => l._id.toString()));
-
-      for (const [listingId, quantity] of Object.entries(cartItems)) {
-        if (validIds.has(listingId) && quantity > 0) {
-          cart.items.push({ listing: listingId, quantity });
-          newListingIds.add(listingId);
-        }
-      }
+    const cleaned = await cleanCartQuantities(cartItems);
+    for (const [listingId, quantity] of Object.entries(cleaned)) {
+      cart.items.push({ listing: listingId, quantity });
+      newListingIds.add(listingId);
     }
 
     await cart.save();
@@ -409,7 +411,7 @@ const setCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to set cart',
-      error: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
     });
   }
 };

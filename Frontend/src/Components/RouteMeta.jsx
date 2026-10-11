@@ -26,6 +26,21 @@ const TITLES = {
   '/how-we-calculate-impact': 'How we calculate impact',
   '/login': 'Log in',
   '/signup': 'Sign up',
+  '/forgot-password': 'Reset your password',
+  '/verify-email': 'Verify your email',
+  '/admin/login': 'Admin log in',
+  '/login/admin': 'Admin log in',
+  '/cart': 'Your cart',
+  '/my-orders': 'My orders',
+  '/my-profile': 'My profile',
+  '/notifications': 'Notifications',
+  '/my-impact': 'My impact',
+  '/dashboard': 'Dashboard',
+  '/admin': 'Admin',
+  '/business-verification': 'Business verification',
+  '/pending-review': 'Application under review',
+  '/rider-dashboard': 'Rider dashboard',
+  '/rider-verification': 'Become a rider',
 };
 
 /**

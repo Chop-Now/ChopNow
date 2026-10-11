@@ -164,6 +164,20 @@ const userSchema = new Schema(
       default: null,
       select: false,
     },
+    // Wrong guesses at the current emailed code (reset or login OTP). The code is
+    // thrown away after MAX_CODE_ATTEMPTS so a 6-digit code can't be brute-forced.
+    codeFailedAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    // Set when the vendor confirms an emailed code; payout details can only be changed
+    // until then, so a stolen session alone can't redirect where their money goes.
+    sensitiveChangeVerifiedUntil: {
+      type: Date,
+      default: null,
+      select: false,
+    },
 
     // H3 fix: bumped on password change and "logout all devices" so previously
     // issued access/refresh tokens (embedding the tokenVersion they were signed

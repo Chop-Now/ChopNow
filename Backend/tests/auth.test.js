@@ -157,7 +157,7 @@ describe('POST /api/v1/users/login', () => {
 
     expect(res.status).toBe(401);
     expect(res.body).toHaveProperty('message');
-    expect(res.body.message).toMatch(/invalid credentials/i);
+    expect(res.body.message).toMatch(/invalid email or password/i);
   });
 
   it('should return 400 when email is missing', async () => {

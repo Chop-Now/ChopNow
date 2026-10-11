@@ -52,6 +52,33 @@ const generateRefreshToken = (id, tokenVersion = 0) => {
   });
 };
 
+const MAX_CODE_ATTEMPTS = 5;
+
+// Count a wrong guess at an emailed 6-digit code; after MAX_CODE_ATTEMPTS the code is
+// voided and the user has to request a new one (itself rate limited per account).
+const recordFailedCodeAttempt = async (email) => {
+  if (typeof email !== 'string' || !email) return;
+  const user = await User.findOneAndUpdate(
+    { email: email.toLowerCase().trim() },
+    { $inc: { codeFailedAttempts: 1 } },
+    { new: true, projection: { codeFailedAttempts: 1 } }
+  );
+  if (user && user.codeFailedAttempts >= MAX_CODE_ATTEMPTS) {
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          codeFailedAttempts: 0,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+          otpCode: null,
+          otpExpires: null,
+        },
+      }
+    );
+  }
+};
+
 /**
  * @desc    Register a new user
  * @route   POST /api/users/register
@@ -86,9 +113,13 @@ const registerUser = async (req, res) => {
     }
 
     // Check if user exists
+    // Sign-up has to say the email is taken (it logs the new account straight in), so
+    // enumeration through it is held back by the per-IP registration limit in server.js
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({
+        message: 'An account with this email already exists. Log in or reset your password.',
+      });
     }
 
     // Hash password
@@ -175,27 +206,34 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select(
       '+passwordHash +tokenVersion'
     );
+    // One answer for "no such account", "no password (Google-only)" and "wrong password",
+    // so login can't be used to find out which emails are registered
+    const invalid = () =>
+      res.status(401).json({
+        message:
+          'Invalid email or password. If you signed up with Google, use "Continue with Google".',
+      });
     if (!user) {
-      logger.warn({ email }, 'Login attempt - user not found');
-      return res.status(401).json({ message: 'Invalid credentials' });
+      logger.warn('Login attempt - user not found');
+      return invalid();
     }
 
     // Check if password hash exists
     if (!user.passwordHash) {
-      logger.warn({ email }, 'Login attempt - user has no password (possibly Google-only account)');
-      return res.status(401).json({ message: 'Please use Google Sign-In for this account' });
+      logger.warn({ userId: user._id }, 'Login attempt - user has no password (Google-only)');
+      return invalid();
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      logger.warn({ email }, 'Login attempt - invalid password');
-      return res.status(401).json({ message: 'Invalid credentials' });
+      logger.warn({ userId: user._id }, 'Login attempt - invalid password');
+      return invalid();
     }
 
     // Check if suspended
     if (user.status === 'suspended') {
-      logger.warn({ email }, 'Login attempt - account suspended');
+      logger.warn({ userId: user._id }, 'Login attempt - account suspended');
       return res.status(403).json({ message: 'Account suspended' });
     }
 
@@ -213,7 +251,7 @@ const loginUser = async (req, res) => {
       }
     }
 
-    logger.info({ email, userId: user._id }, 'User logged in successfully');
+    logger.info({ userId: user._id }, 'User logged in successfully');
 
     const refreshTokenValue = generateRefreshToken(user._id, user.tokenVersion);
     const csrfToken = setAuthCookies(res, refreshTokenValue);
@@ -440,7 +478,7 @@ const deleteAddress = async (req, res) => {
  */
 const getUsersForAdmin = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
     const role = req.query.role;
@@ -605,6 +643,7 @@ const forgotPassword = async (req, res) => {
     // Generate 6-digit numeric OTP code
     const resetOtp = crypto.randomInt(100000, 999999).toString();
     user.resetPasswordToken = resetOtp;
+    user.codeFailedAttempts = 0;
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save();
 
@@ -652,14 +691,12 @@ const verifyResetOTP = async (req, res) => {
     });
 
     if (!user) {
-      logger.warn(
-        { email: normalizedEmail, otpProvided: Boolean(otp) },
-        'Invalid or expired OTP verification attempt'
-      );
+      await recordFailedCodeAttempt(normalizedEmail);
+      logger.warn({ otpProvided: Boolean(otp) }, 'Invalid or expired OTP verification attempt');
       return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
-    logger.info({ email: normalizedEmail }, 'Password reset OTP verified successfully');
+    logger.info({ userId: user._id }, 'Password reset OTP verified successfully');
     res.json({ message: 'Verification code verified successfully' });
   } catch (error) {
     logger.error({ err: error }, 'Verify reset OTP error');
@@ -676,9 +713,15 @@ const verifyResetOTP = async (req, res) => {
  */
 const resetPassword = async (req, res) => {
   try {
-    const { token, password, email } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ message: 'Token/OTP and password are required' });
+    // The mobile app sends { otp, newPassword }, the web app { token, password }
+    const { email } = req.body;
+    const token = req.body.token || req.body.otp;
+    const password = req.body.password || req.body.newPassword;
+    if (!token || !password || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ message: 'Email, code and new password are required' });
+    }
+    if (typeof token !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid or expired reset token/code' });
     }
 
     if (password.length < 8) {
@@ -686,22 +729,21 @@ const resetPassword = async (req, res) => {
     }
 
     // Query construction
+    // Always scoped to one account, so a guessed code can't be sprayed across every pending reset
     const query = {
+      email: email.toLowerCase().trim(),
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     };
-
-    if (email) {
-      query.email = email.toLowerCase().trim();
-    }
 
     const user = await User.findOne(query).select(
       '+passwordHash +resetPasswordToken +resetPasswordExpires +tokenVersion'
     );
 
     if (!user) {
+      await recordFailedCodeAttempt(query.email);
       logger.warn(
-        { tokenProvided: Boolean(token), email },
+        { tokenProvided: Boolean(token) },
         'Password reset failed - invalid or expired token/code'
       );
       return res.status(400).json({ message: 'Invalid or expired reset token/code' });
@@ -712,13 +754,14 @@ const resetPassword = async (req, res) => {
     user.passwordHash = await bcrypt.hash(password, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    user.codeFailedAttempts = 0;
     // H3 fix: see changePassword - a "forgot password" reset must also
     // invalidate tokens issued before it (this is the account-recovery path,
     // where an attacker having a live session is precisely the threat model).
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
-    logger.info({ email: user.email, userId: user._id }, 'Password reset completed successfully');
+    logger.info({ userId: user._id }, 'Password reset completed successfully');
 
     // Send confirmation email in background
     sendPasswordChangedConfirmation(
@@ -747,15 +790,22 @@ const sendOTP = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
+    // Same answer whether or not the account exists, so this can't be used to
+    // find out which emails are registered
+    const genericResponse = {
+      message: 'If an account exists for that email, a code has been sent.',
+    };
+
     const user = await User.findOne({ email }).select('+otpCode +otpExpires');
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.json(genericResponse);
     }
 
     // Generate 6-digit OTP
     const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.codeFailedAttempts = 0;
     await user.save();
 
     const sent = await sendOTPEmail(
@@ -764,11 +814,8 @@ const sendOTP = async (req, res) => {
       otpCode
     );
 
-    if (sent) {
-      res.json({ message: 'OTP sent to your email' });
-    } else {
-      res.status(500).json({ message: 'Failed to send OTP email' });
-    }
+    if (!sent) logger.error({ userId: user._id }, 'Failed to send login code email');
+    res.json(genericResponse);
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -788,6 +835,10 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ message: 'Email and OTP are required' });
     }
 
+    if (typeof email !== 'string' || typeof otp !== 'string') {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
     const user = await User.findOne({
       email,
       otpCode: otp,
@@ -795,6 +846,7 @@ const verifyOTP = async (req, res) => {
     }).select('+otpCode +otpExpires +tokenVersion');
 
     if (!user) {
+      await recordFailedCodeAttempt(email);
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
@@ -872,6 +924,14 @@ const googleLogin = async (req, res) => {
       picture: avatar,
       email_verified,
     } = googlePayload;
+
+    // Signing in by email address is only safe if Google has confirmed the person owns it;
+    // otherwise anyone could claim an existing ChopNow account's address and be logged into it.
+    if (!email || email_verified !== true) {
+      return res.status(401).json({
+        message: 'Your Google account email is not verified. Please verify it with Google first.',
+      });
+    }
 
     // Check if user exists by googleId or email
     let user = await User.findOne({
@@ -1231,6 +1291,7 @@ const requestPasswordChangeOTP = async (req, res) => {
     const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.codeFailedAttempts = 0;
     await user.save();
 
     // Send OTP email
@@ -1273,6 +1334,7 @@ const changePassword = async (req, res) => {
 
     // Verify OTP
     if (!user.otpCode || user.otpCode !== otp) {
+      if (user.otpCode) await recordFailedCodeAttempt(user.email);
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
@@ -1336,6 +1398,7 @@ const requestSensitiveChangeOTP = async (req, res) => {
     const otpCode = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otpCode;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.codeFailedAttempts = 0;
     await user.save();
 
     // Send OTP email
@@ -1375,6 +1438,7 @@ const verifySensitiveChangeOTP = async (req, res) => {
 
     // Verify OTP
     if (!user.otpCode || user.otpCode !== otp) {
+      if (user.otpCode) await recordFailedCodeAttempt(user.email);
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
@@ -1382,9 +1446,11 @@ const verifySensitiveChangeOTP = async (req, res) => {
       return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
     }
 
-    // Clear OTP after successful verification
+    // Clear OTP after successful verification, and unlock payout changes for a short while
     user.otpCode = undefined;
     user.otpExpires = undefined;
+    user.codeFailedAttempts = 0;
+    user.sensitiveChangeVerifiedUntil = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
     res.json({
@@ -1836,7 +1902,7 @@ const getRidersForAdmin = async (req, res) => {
       query.riderStatus = status;
     }
 
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 

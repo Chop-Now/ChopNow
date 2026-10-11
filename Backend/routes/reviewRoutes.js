@@ -12,6 +12,7 @@ const {
   getMyReviews,
 } = require('../controllers/reviewController');
 const { protect, authorize } = require('../middleware/auth');
+const { requireVerifiedEmail } = require('../middleware/requireVerifiedEmail');
 const { validateCreateReview } = require('../middleware/validation');
 const { checkReviewsEnabled } = require('../middleware/platformSettings');
 
@@ -21,6 +22,7 @@ router.post(
   '/',
   protect,
   authorize('consumer'),
+  requireVerifiedEmail,
   checkReviewsEnabled,
   validateCreateReview,
   createReview

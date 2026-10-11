@@ -79,7 +79,7 @@ const createDispute = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to dispute this order' });
     }
 
-    if (order.status === 'pending_payment') {
+    if (order.status === 'pending_payment' || !(await isOrderPaid(order))) {
       return res.status(400).json({
         message: 'You can only report a problem on an order you have paid for',
       });
@@ -295,6 +295,16 @@ const getDisputeStats = async (req, res) => {
 
 const REFUND_ACTIONS = ['full_refund', 'partial_refund'];
 
+// Money actually reached us: cash, a settled MoMo payment on the order (or one already
+// being refunded), or a completed pawaPay deposit recorded for it.
+const isOrderPaid = async (order, session = null) => {
+  if (order.payment?.paymentMethod === 'cash') return true;
+  if (['completed', 'refund_pending', 'refunded'].includes(order.payment?.paymentStatus)) {
+    return true;
+  }
+  return Boolean(await Payment.exists({ order: order._id, status: 'completed' }).session(session));
+};
+
 // Thrown inside resolveDispute's transaction to abort it (undoing the claim)
 // and answer with a 4xx.
 class ResolveRejection extends Error {
@@ -350,6 +360,14 @@ const resolveDispute = async (req, res) => {
         const order = await Order.findById(dispute.order).session(session);
         if (!order) {
           throw new ResolveRejection(404, 'Associated order not found');
+        }
+
+        // Never queue a refund of money that was never received
+        if (!(await isOrderPaid(order, session))) {
+          throw new ResolveRejection(
+            400,
+            'This order was never paid, so there is nothing to refund'
+          );
         }
 
         resolutionAmount = action === 'full_refund' ? order.pricing.total : Number(amount);

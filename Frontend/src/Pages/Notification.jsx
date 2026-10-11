@@ -490,7 +490,7 @@ const Notification = () => {
               {/* Action Button */}
               <button
                 onClick={() => handleDetailAction(selectedNotification)}
-                className="w-full bg-solid text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                className="w-full bg-solid text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-moringa-dark transition-colors"
               >
                 {meta.actionLabel || 'View Details'}
                 <ChevronRight size={18} />

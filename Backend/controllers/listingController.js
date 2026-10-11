@@ -92,7 +92,7 @@ const createListing = async (req, res) => {
 const getListings = async (req, res) => {
   try {
     const { category, status, business, search } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const skip = (page - 1) * limit;
 
@@ -162,7 +162,7 @@ const getNearbyListings = async (req, res) => {
     const lng = parseFloat(req.query.lng);
     // Radius in meters, capped so one request can't scan the whole country.
     const radius = Math.min(parseInt(req.query.radius) || 5000, 50000);
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
@@ -185,6 +185,9 @@ const getNearbyListings = async (req, res) => {
       {
         $geoNear: {
           near: { type: 'Point', coordinates: [lng, lat] },
+          // Name the index field: older deployments also left a 2dsphere index on
+          // address.location, and with two of them $geoNear refuses to pick one.
+          key: 'location',
           distanceField: 'distanceMeters',
           maxDistance: radius,
           spherical: true,
@@ -289,7 +292,7 @@ const updateListing = async (req, res) => {
     }
 
     // Check ownership
-    if (listing.business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
+    if (listing.business?.owner?.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to update this listing' });
     }
 
@@ -307,11 +310,37 @@ const updateListing = async (req, res) => {
       'images',
     ];
 
+    // Sub-objects are merged, not replaced: the edit form sends e.g. { pricing: { price } }
+    // or { inventory: { quantity, unit } }, and replacing the whole object used to drop
+    // originalPrice/currency and the stock held for unpaid checkouts (inventory.reserved).
+    const mergedObjects = ['pricing', 'inventory', 'timeWindow', 'fulfillment', 'nutritionalInfo'];
     allowedUpdates.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        listing[field] = req.body[field];
+      const value = req.body[field];
+      if (value === undefined) return;
+      if (
+        mergedObjects.includes(field) &&
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
+        for (const [key, subValue] of Object.entries(value)) {
+          if (field === 'inventory' && key === 'reserved') continue; // server-managed
+          listing.set(`${field}.${key}`, subValue);
+        }
+      } else {
+        listing[field] = value;
       }
     });
+
+    // Restocking a sold-out listing puts it back on sale (unless the vendor set a status)
+    if (
+      listing.status === 'sold_out' &&
+      req.body.status === undefined &&
+      req.body.inventory?.quantity !== undefined &&
+      listing.inventory.quantity > 0
+    ) {
+      listing.status = 'active';
+    }
 
     await listing.save();
 
@@ -340,15 +369,15 @@ const deleteListing = async (req, res) => {
     }
 
     // Check ownership
-    if (listing.business.owner.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
+    if (listing.business?.owner?.toString() !== req.user._id.toString() && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized to delete this listing' });
     }
 
     await listing.deleteOne();
 
     // Update business stats
-    const business = await Business.findById(listing.business._id);
-    if (business.stats.totalListings > 0) {
+    const business = listing.business ? await Business.findById(listing.business._id) : null;
+    if (business && business.stats.totalListings > 0) {
       business.stats.totalListings -= 1;
       await business.save();
     }
@@ -414,7 +443,7 @@ const uploadPhotos = async (req, res) => {
 const getListingsByBusiness = async (req, res) => {
   try {
     const { status } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const skip = (page - 1) * limit;
 

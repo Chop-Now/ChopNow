@@ -31,6 +31,20 @@ const TERMINAL_ORDER_STATUSES = ['completed', 'cancelled'];
 // Statuses a vendor/admin may set through the generic status endpoint.
 // 'paid' is owned by the payment flow, 'cancelled' by cancelOrder, and
 // 'pending_payment' is only ever the initial state.
+// The steps a vendor may move an order through (admins may set any settable status to fix
+// mistakes). A pickup order is completed only by checking the customer's pickup code
+// (verify-pickup), never by setting 'completed' directly.
+const VENDOR_NEXT_STATUSES = {
+  // a cash order stays 'pending_payment' until handover (unpaid mobile money is refused below)
+  pending_payment: ['confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'],
+  paid: ['confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'],
+  confirmed: ['preparing', 'ready_for_pickup', 'out_for_delivery'],
+  preparing: ['ready_for_pickup', 'out_for_delivery'],
+  ready_for_pickup: ['out_for_delivery'],
+  out_for_delivery: ['completed'],
+};
+const DELIVERY_ONLY_STATUSES = ['out_for_delivery', 'completed'];
+
 const VENDOR_SETTABLE_STATUSES = [
   'confirmed',
   'preparing',
@@ -386,7 +400,7 @@ const sendNewOrderNotifications = async (orderId) => {
 const getOrders = async (req, res) => {
   try {
     const { status, fulfillmentType } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 10, 500);
     const skip = (page - 1) * limit;
 
@@ -475,10 +489,17 @@ const getOrderById = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Check authorization
-    const isCustomer = order.customer._id.toString() === req.user._id.toString();
-    const isBusinessOwner = req.user.role === 'business_owner';
-    const isAdmin = req.user.role === 'admin';
+    // Check authorization: the customer, the owner of *this* order's shop, or an admin
+    const userId = req.user._id.toString();
+    const isCustomer = order.customer?._id?.toString() === userId;
+    const isAdmin = isAdminUser(req.user);
+    let isBusinessOwner = false;
+    if (!isCustomer && !isAdmin && order.business) {
+      const shop = await Business.findById(order.business._id || order.business)
+        .select('owner')
+        .lean();
+      isBusinessOwner = shop?.owner?.toString() === userId;
+    }
 
     if (!isCustomer && !isBusinessOwner && !isAdmin) {
       return res.status(403).json({ message: 'Not authorized to view this order' });
@@ -512,8 +533,9 @@ const updateOrderStatus = async (req, res) => {
     }
 
     // Check authorization
-    const businessDoc = await Business.findById(order.business._id);
-    if (businessDoc.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    const isAdmin = isAdminUser(req.user);
+    const businessDoc = order.business ? await Business.findById(order.business._id) : null;
+    if (!businessDoc || (businessDoc.owner.toString() !== req.user._id.toString() && !isAdmin)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -524,6 +546,21 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({
         message: `Order is already '${order.status}' and cannot be updated`,
       });
+    }
+    if (!isAdmin) {
+      if (DELIVERY_ONLY_STATUSES.includes(status) && order.fulfillmentType !== 'delivery') {
+        return res.status(400).json({
+          message:
+            status === 'completed'
+              ? "Complete a pickup order by checking the customer's pickup code"
+              : 'Only delivery orders can be sent out for delivery',
+        });
+      }
+      if (!(VENDOR_NEXT_STATUSES[order.status] || []).includes(status)) {
+        return res.status(400).json({
+          message: `An order that is '${order.status}' can't be moved to '${status}'`,
+        });
+      }
     }
     if (!isPaymentSettled(order)) {
       return res.status(400).json({ message: 'This order has not been paid yet' });
@@ -1053,7 +1090,7 @@ const verifyPickupCodeDirect = async (req, res) => {
     const query = {
       fulfillmentType: 'pickup',
       'pickupDetails.pickupCode': pickupCode,
-      status: { $in: ['paid', 'confirmed', 'ready_for_pickup'] },
+      status: { $in: ['paid', 'confirmed', 'preparing', 'ready_for_pickup'] },
     };
 
     if (req.user.role === 'business_owner') {
@@ -1122,7 +1159,7 @@ const verifyPickupCodeDirect = async (req, res) => {
 const getAdminOrders = async (req, res) => {
   try {
     const { status, fulfillmentType, business, customer } = req.query;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 10, 500);
     const skip = (page - 1) * limit;
 

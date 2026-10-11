@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { userService } from '../services';
 import { clearAccessToken } from '../services/api';
+import useContainerWidth from '../utils/useContainerWidth';
 
 const AdminLogin = () => {
   const { login, googleAuth, user, isAuthenticated } = useAppContext();
@@ -117,6 +118,9 @@ const AdminLogin = () => {
     }
   };
 
+  // Google renders a fixed-width button; size it to the card so it isn't clipped on phones
+  const [googleRef, googleWidth] = useContainerWidth(200, 400);
+
   return (
     <div className="min-h-screen w-full flex bg-gradient-to-br from-moringa-dark via-moringa to-moringa-dark">
       {/* Left Side - Branding Panel */}
@@ -176,15 +180,15 @@ const AdminLogin = () => {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <img src={assets.logomarkgreen} alt="ChopNow" className="w-10 h-10" />
+            <img src={assets.logomarkyellow} alt="ChopNow" className="w-10 h-10" />
             <span className="text-2xl font-bold text-white">ChopNow</span>
           </div>
 
           {/* Admin Badge */}
           <div className="flex items-center justify-center lg:justify-start gap-2 mb-6">
-            <div className="flex items-center gap-2 px-4 py-2 bg-solid/20 rounded-full border border-solid/30">
-              <ShieldCheck className="w-4 h-4 text-solid" />
-              <span className="text-sm font-semibold text-solid">Admin Portal</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-yellow/15 rounded-full border border-yellow/40">
+              <ShieldCheck className="w-4 h-4 text-yellow" />
+              <span className="text-sm font-semibold text-yellow">Admin Portal</span>
             </div>
           </div>
 
@@ -197,7 +201,10 @@ const AdminLogin = () => {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Google Login Button */}
-            <div className="relative w-full h-14 flex justify-center [&>div]:w-full [&_iframe]:!w-full">
+            <div
+              ref={googleRef}
+              className="relative w-full h-14 flex justify-center [&>div]:w-full [&_iframe]:!w-full"
+            >
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
@@ -206,7 +213,7 @@ const AdminLogin = () => {
                 text="continue_with"
                 shape="rectangular"
                 locale="en"
-                width="384"
+                width={String(googleWidth)}
               />
               {(isGoogleLoading || isLoading) && (
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white rounded-xl">
@@ -246,7 +253,7 @@ const AdminLogin = () => {
                 <label className="block text-sm font-medium text-slate-300">Password</label>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-solid hover:text-tertiary transition-colors"
+                  className="text-sm text-yellow hover:text-yellow-dark transition-colors"
                 >
                   Forgot password?
                 </Link>

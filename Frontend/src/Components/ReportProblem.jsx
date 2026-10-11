@@ -142,7 +142,7 @@ const ReportProblem = ({ orderId, dispute, onReported }) => {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
+          className="rounded-md bg-moringa px-4 py-2 text-sm font-medium text-white hover:bg-moringa-dark disabled:opacity-50"
         >
           {submitting ? 'Sending…' : 'Send report'}
         </button>

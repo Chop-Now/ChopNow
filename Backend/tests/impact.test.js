@@ -27,15 +27,12 @@ const {
   createBusinessOwnerWithBusiness,
   createListing,
   placePaidOrder,
+  completeOrder,
 } = require('./fixtures');
 
 const MEALS = CATEGORY_FACTORS.meals;
 
-const complete = (vendorToken, order) =>
-  request(app)
-    .put(`/api/v1/orders/${order._id}/status`)
-    .set('Authorization', `Bearer ${vendorToken}`)
-    .send({ status: 'completed' });
+const complete = (vendorToken, order) => completeOrder(order._id, vendorToken);
 
 /** A paid, completed order of `quantity` x a 'meals' listing. */
 async function completedOrder({ quantity = 2, listingOverrides = {} } = {}) {

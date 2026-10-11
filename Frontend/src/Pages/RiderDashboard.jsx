@@ -214,7 +214,7 @@ const RiderDashboard = () => {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
                   isOnline
                     ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-green-700 hover:bg-green-800 text-white'
+                    : 'bg-moringa hover:bg-moringa-dark text-white'
                 }`}
               >
                 {isToggling ? 'Syncing...' : isOnline ? 'Go Offline' : 'Go Online'}

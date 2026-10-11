@@ -37,7 +37,13 @@ async function createOrderForDispute({ paid = true } = {}) {
     });
 
   // Only an order that was paid for can be reported (a new order starts unpaid).
-  if (paid) await Order.findByIdAndUpdate(orderRes.body._id, { status: 'paid' });
+  // What a settled pawaPay deposit leaves on the order (see paymentController)
+  if (paid) {
+    await Order.findByIdAndUpdate(orderRes.body._id, {
+      status: 'paid',
+      'payment.paymentStatus': 'completed',
+    });
+  }
 
   return { order: orderRes.body, consumerToken, consumer, business, owner };
 }

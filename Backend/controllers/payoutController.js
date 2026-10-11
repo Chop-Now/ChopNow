@@ -240,7 +240,7 @@ const requestPayout = async (req, res) => {
  */
 const getMyPayouts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
     const { minimumWithdrawal, holdDays, intervalDays } = await payoutRules();
@@ -314,7 +314,7 @@ const getMyPayouts = async (req, res) => {
 const getLedger = async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const isAdmin = req.user.roles?.includes('admin');
 
     let owner;
@@ -365,7 +365,7 @@ const getAdminPayouts = async (req, res) => {
       query.status = status;
     }
 
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 

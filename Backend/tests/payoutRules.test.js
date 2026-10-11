@@ -24,6 +24,7 @@ const {
   placePaidOrder,
   setPayoutRules,
   eventually,
+  completeOrder,
 } = require('./fixtures');
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -51,10 +52,7 @@ async function vendorWithCompletedOrder() {
   });
   const { token: buyer, user: buyerUser } = await createConsumer();
   const { order } = await placePaidOrder(buyer, listing);
-  const done = await request(app)
-    .put(`/api/v1/orders/${order._id}/status`)
-    .set('Authorization', `Bearer ${vendor.token}`)
-    .send({ status: 'completed' });
+  const done = await completeOrder(order._id, vendor.token);
   expect(done.status).toBe(200);
   return { ...vendor, order, buyerUser };
 }

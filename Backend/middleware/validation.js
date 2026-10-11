@@ -107,7 +107,7 @@ const validateLogin = [
     .isEmail()
     .withMessage('Please provide a valid email address')
     .normalizeEmail(),
-  body('password').notEmpty().withMessage('Password is required'),
+  body('password').isString().notEmpty().withMessage('Password is required'),
   handleValidationErrors,
 ];
 
@@ -120,7 +120,7 @@ const validateCreateBusiness = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Business name must be between 2 and 100 characters'),
   body('type')
-    .isIn(['farmer', 'restaurant', 'bakery', 'supermarket', 'grocery', 'cafe', 'other'])
+    .isIn(['farmer', 'restaurant', 'bakery', 'supermarket', 'cafe', 'other'])
     .withMessage('Invalid business type'),
   body('contact.email')
     .isEmail()
@@ -153,8 +153,8 @@ const validateCreateListing = [
     .trim()
     .notEmpty()
     .withMessage('Description is required')
-    .isLength({ min: 10 })
-    .withMessage('Description must be at least 10 characters'),
+    .isLength({ min: 10, max: 2000 })
+    .withMessage('Description must be between 10 and 2000 characters'),
   body('business').isMongoId().withMessage('Valid business ID is required'),
   body('category')
     .isIn(['fruit-veg', 'baked-goods', 'meals', 'dairy', 'meat', 'beverages', 'pantry', 'other'])
@@ -231,8 +231,8 @@ const validateCreateReview = [
   body('comment')
     .optional()
     .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Comment cannot exceed 1000 characters'),
+    .isLength({ max: 500 })
+    .withMessage('Comment cannot exceed 500 characters'),
   handleValidationErrors,
 ];
 

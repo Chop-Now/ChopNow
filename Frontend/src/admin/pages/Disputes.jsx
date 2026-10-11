@@ -188,7 +188,7 @@ const ResolveDisputeDialog = ({ issue, submitting, onCancel, onSubmit }) => {
           <button
             onClick={submit}
             disabled={submitting}
-            className="px-4 py-2 text-sm rounded-lg bg-green-700 hover:bg-green-800 text-white font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 text-sm rounded-lg bg-moringa hover:bg-moringa-dark text-white font-medium disabled:opacity-50 flex items-center gap-2"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             Resolve
@@ -329,7 +329,7 @@ export const RefundRequests = () => {
                   <button
                     onClick={() => settle(refund, 'completed')}
                     disabled={busyId === refund._id}
-                    className="px-3 py-2 text-sm rounded-lg bg-green-700 hover:bg-green-800 text-white font-medium disabled:opacity-50"
+                    className="px-3 py-2 text-sm rounded-lg bg-moringa hover:bg-moringa-dark text-white font-medium disabled:opacity-50"
                   >
                     Mark refunded
                   </button>
@@ -711,7 +711,7 @@ export const CustomerComplaints = () => {
             onClick={() => handleResolve(issue.id)}
             aria-label="Resolve issue"
             title="Resolve issue"
-            className="flex items-center gap-1 px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-2 bg-moringa hover:bg-moringa-dark text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Check className="w-4 h-4" />
           </button>
@@ -1350,7 +1350,7 @@ export const CustomerComplaints = () => {
                     <BadgeDollarSign className="w-4 h-4" />
                     Issue Refund
                   </button>
-                  <button className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+                  <button className="flex items-center justify-center gap-2 px-4 py-3 bg-moringa hover:bg-moringa-dark text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
                     <TruckIcon className="w-4 h-4" />
                     Track Order
                   </button>
@@ -1363,7 +1363,7 @@ export const CustomerComplaints = () => {
                   handleResolve(selectedIssue.id);
                   setSelectedIssue(null);
                 }}
-                className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-3 px-4 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-moringa hover:bg-moringa-dark text-white font-semibold py-3 px-4 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
                 Mark as Resolved
