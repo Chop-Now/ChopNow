@@ -18,6 +18,8 @@ export const PlatformSettingsProvider = ({ children }) => {
     platformTagline: 'Save Food, Save Money, Save the Planet',
     supportEmail: 'chopnow.app@gmail.com',
     supportPhone: '+250 794 758 542',
+    // The delivery courier's dispatch line, shown once a rider is booked.
+    courierHelpPhone: '+250 781 727 394',
     allowNewRegistrations: true,
     requireEmailVerification: true,
     allowGuestCheckout: false,

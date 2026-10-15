@@ -24,7 +24,7 @@ const { recordOrderImpact } = require('../services/impactService');
 const socketManager = require('../socket');
 const { CheckoutError, buildQuote, placeCheckout } = require('../services/checkoutService');
 const courier = require('../services/movingManService');
-const { forVendor } = require('../utils/orderViews');
+const { forVendor, forCustomer } = require('../utils/orderViews');
 const { recordEntry, holdUntil } = require('../services/ledgerService');
 const PlatformSettings = require('../models/PlatformSettings');
 
@@ -196,7 +196,7 @@ const afterOrdersPlaced = async (orders) => {
         socketManager
           .getIO()
           .to(`user_${order.customer.toString()}`)
-          .emit('order_status_updated', order);
+          .emit('order_status_updated', forCustomer(order));
       } catch (socketErr) {
         logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
       }
@@ -467,7 +467,11 @@ const getOrders = async (req, res) => {
     const vendorOnly = filterRole === 'business_owner' && !isAdminUser(req.user);
 
     res.json({
-      orders: vendorOnly ? orders.map(forVendor) : orders,
+      orders: vendorOnly
+        ? orders.map(forVendor)
+        : filterRole === 'admin'
+          ? orders
+          : orders.map(forCustomer),
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
@@ -515,7 +519,7 @@ const getOrderById = async (req, res) => {
     }
 
     // The shop's owner sees the items and what they earn, not the delivery money.
-    res.json(isBusinessOwner ? forVendor(order) : order);
+    res.json(isBusinessOwner ? forVendor(order) : isCustomer ? forCustomer(order) : order);
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -636,11 +640,16 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: 'This order has not been paid yet' });
     }
 
-    // C7/H6 fix: 'completed' goes through the shared idempotent helper (funds
-    // the business payout balance, guards against replay) instead of a plain
-    // save. Every other status is also a compare-and-swap on "not terminal":
-    // a plain save racing a completion could otherwise flip a completed order
-    // back to e.g. 'confirmed', letting it be completed (and credited) twice.
+    // ChopNow confirms a courier delivery, not the shop: the money is released on that word, and the
+    // shop can't see the doorstep. An admin completes it once the rider has handed the food over.
+    if (status === 'completed' && order.courier?.bookingReference && !isAdmin) {
+      return res.status(403).json({
+        message:
+          'ChopNow confirms deliveries carried by our courier. We will complete this order as soon as the rider has delivered it.',
+        code: 'ADMIN_CONFIRMS_DELIVERY',
+      });
+    }
+
     // Sending a delivery order out books the courier first. If the courier can't take it, the
     // order stays where it was and the vendor is told why, so nobody is promised a rider that
     // does not exist.
@@ -668,6 +677,11 @@ const updateOrderStatus = async (req, res) => {
       }
     }
 
+    // C7/H6 fix: 'completed' goes through the shared idempotent helper (funds
+    // the business payout balance, guards against replay) instead of a plain
+    // save. Every other status is also a compare-and-swap on "not terminal":
+    // a plain save racing a completion could otherwise flip a completed order
+    // back to e.g. 'confirmed', letting it be completed (and credited) twice.
     let updated;
     if (status === 'completed') {
       updated = await completeOrderAtomically(order._id);
@@ -793,7 +807,7 @@ const updateOrderStatus = async (req, res) => {
     try {
       const io = socketManager.getIO();
       // Inform customer
-      io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
+      io.to(`user_${order.customer.toString()}`).emit('order_status_updated', forCustomer(order));
       // Inform vendor
       io.to(`business_${order.business._id.toString()}`).emit(
         'order_status_updated',

@@ -20,6 +20,20 @@ const vendorPricing = (pricing = {}) => ({
   total: pricing.subtotal,
 });
 
+/**
+ * An order as its customer sees it. The delivery fee is theirs (they paid it); what the courier
+ * actually charged ChopNow is not.
+ */
+const forCustomer = (order) => {
+  if (!order) return order;
+  const view = plain(order);
+  if (view.courier) {
+    const { quotedRwf: _quoted, bookedRwf: _booked, ...visible } = view.courier;
+    view.courier = visible;
+  }
+  return view;
+};
+
 /** An order as its vendor sees it. Returns a plain object; the original is not changed. */
 const forVendor = (order) => {
   if (!order) return order;
@@ -41,4 +55,4 @@ const forVendor = (order) => {
   return view;
 };
 
-module.exports = { forVendor, vendorPricing };
+module.exports = { forVendor, forCustomer, vendorPricing };

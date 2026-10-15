@@ -15,6 +15,11 @@ const platformSettingsSchema = new mongoose.Schema(
       type: String,
       default: 'chopnow.app@gmail.com',
     },
+    // Moving Man's dispatch line: shown on a delivery order once the rider is booked.
+    courierHelpPhone: {
+      type: String,
+      default: '+250 781 727 394',
+    },
     supportPhone: {
       type: String,
       default: '+250 794 758 542',
@@ -163,6 +168,7 @@ platformSettingsSchema.statics.updateSettings = async function (updates, adminId
     'platformTagline',
     'supportEmail',
     'supportPhone',
+    'courierHelpPhone',
     'platformFeePercent',
     'minimumWithdrawal',
     'payoutHoldDays',

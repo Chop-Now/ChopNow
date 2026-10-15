@@ -28,9 +28,12 @@ import { orderService } from '../../services';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/confirm';
 import { useAdminMode } from '../context/AdminModeContext';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const OrdersTable = ({ title, statusFilter }) => {
   const { adminMode, isAdmin } = useAdminMode();
+  const { settings } = usePlatformSettings();
+  const helpLine = settings.courierHelpPhone || '+250 781 727 394';
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -579,15 +582,17 @@ const OrdersTable = ({ title, statusFilter }) => {
                       )}
 
                       {/* State-specific Complete Delivery Action */}
-                      {order.status === 'In Transit' && order.type === 'Delivery' && (
-                        <button
-                          onClick={() => handleUpdateStatus(order.orderId, 'completed')}
-                          disabled={updatingStatus}
-                          className="px-2 py-1 bg-moringa hover:bg-moringa-dark text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          Deliver
-                        </button>
-                      )}
+                      {order.status === 'In Transit' &&
+                        order.type === 'Delivery' &&
+                        (isAdmin || !order.courierBooked) && (
+                          <button
+                            onClick={() => handleUpdateStatus(order.orderId, 'completed')}
+                            disabled={updatingStatus}
+                            className="px-2 py-1 bg-moringa hover:bg-moringa-dark text-white rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            Deliver
+                          </button>
+                        )}
 
                       {/* State-specific Verify Code Action */}
                       {order.status === 'Ready' && order.type === 'Pickup' && (
@@ -906,9 +911,27 @@ const OrdersTable = ({ title, statusFilter }) => {
                         </p>
                         <p className="text-slate-600 dark:text-slate-400">
                           {selectedOrder.courier.bookingReference
-                            ? `Booked - reference ${selectedOrder.courier.bookingReference}. Quote their dispatch (WhatsApp +250 781 727 394) this reference for any question.`
+                            ? `Booked - reference ${selectedOrder.courier.bookingReference}. `
                             : 'Not booked yet - it is booked when the order is sent out.'}
+                          {selectedOrder.courier.bookingReference && (
+                            <>
+                              Delivery help line:{' '}
+                              <a
+                                href={`tel:${helpLine.replace(/\s+/g, '')}`}
+                                className="font-semibold text-solid hover:underline"
+                              >
+                                {helpLine}
+                              </a>{' '}
+                              (quote the reference).
+                            </>
+                          )}
                         </p>
+                        {!isAdmin && selectedOrder.courier.bookingReference && (
+                          <p className="text-slate-600 dark:text-slate-400">
+                            ChopNow marks this order delivered once the rider has handed the food
+                            over.
+                          </p>
+                        )}
                         {/* The money is between ChopNow and the courier: vendors never see it */}
                         {isAdmin && (
                           <p className="text-slate-600 dark:text-slate-400">
@@ -1076,7 +1099,8 @@ const OrdersTable = ({ title, statusFilter }) => {
 
                   {/* Mark Delivered & Complete */}
                   {selectedOrder.fulfillmentType === 'delivery' &&
-                    selectedOrder.status === 'out_for_delivery' && (
+                    selectedOrder.status === 'out_for_delivery' &&
+                    (isAdmin || !selectedOrder.courier?.bookingReference) && (
                       <button
                         onClick={() =>
                           handleUpdateStatus(

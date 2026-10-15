@@ -22,6 +22,7 @@ import { orderService, reviewService, disputeService } from '../services';
 import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentModal';
 import ReportProblem from '../Components/ReportProblem';
 import { formatAddress } from '../utils/address';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 // Mirrors Order.canBeCancelled() on the backend, which is what actually
 // enforces this - the button is just hidden for other states.
@@ -115,6 +116,8 @@ const ChangeMapBounds = ({ pickup, dropoff, rider }) => {
 
 const MyOrders = () => {
   const navigate = useNavigate();
+  const { settings } = usePlatformSettings();
+  const helpLine = settings.courierHelpPhone || '+250 781 727 394';
   const [myOrders, setMyOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1360,6 +1363,15 @@ const MyOrders = () => {
                                 <span className="font-semibold text-gray-700">
                                   {orderDetails.courier.bookingReference}
                                 </span>
+                                <br />
+                                Delivery help:{' '}
+                                <a
+                                  href={`tel:${helpLine.replace(/\s+/g, '')}`}
+                                  className="font-semibold text-green-700 hover:underline"
+                                >
+                                  {helpLine}
+                                </a>{' '}
+                                (quote the reference)
                               </p>
                             )}
                           </div>

@@ -209,3 +209,56 @@ describe('an order with a courier booking', () => {
     expect((await Order.findById(order._id)).status).toBe('cancelled');
   });
 });
+
+describe('who confirms a courier delivery', () => {
+  const complete = (token, id) =>
+    request(app)
+      .put(`/api/v1/orders/${id}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'completed' });
+
+  it('is ChopNow: the shop cannot complete an order a courier rider is carrying', async () => {
+    const { vendor, order } = await deliveryOrder();
+    const res = await complete(vendor.token, order._id);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_CONFIRMS_DELIVERY');
+    expect((await Order.findById(order._id)).status).toBe('out_for_delivery');
+  });
+
+  it('lets an admin complete it, and credits the vendor their share', async () => {
+    const { vendor, admin, order } = await deliveryOrder();
+    const res = await complete(admin.token, order._id);
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('completed');
+    const Business = require('../models/Business');
+    const shop = await Business.findById(vendor.business._id).lean();
+    expect(shop.stats.balance).toBe(2700);
+  });
+
+  it('still lets a shop complete its own delivery when no courier is involved', async () => {
+    const { vendor, order } = await deliveryOrder({ booked: false });
+    await Order.updateOne({ _id: order._id }, { $set: { status: 'out_for_delivery' } });
+    const res = await complete(vendor.token, order._id);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('the courier details a customer sees', () => {
+  it('include the booking reference but not what ChopNow pays the courier', async () => {
+    const { customer, order } = await deliveryOrder();
+    const res = await get(`/api/v1/orders/${order._id}`, customer.token);
+    expect(res.body.courier.bookingReference).toBe('MM-1010-A01');
+    expect(res.body.courier.bookedRwf).toBeUndefined();
+    expect(res.body.courier.quotedRwf).toBeUndefined();
+    const list = await get('/api/v1/orders', customer.token);
+    const row = list.body.orders.find((o) => o._id === order._id);
+    expect(row.courier.bookingReference).toBe('MM-1010-A01');
+    expect(row.courier.bookedRwf).toBeUndefined();
+  });
+
+  it('can find the delivery help line in the public settings', async () => {
+    const res = await request(app).get('/api/v1/settings/public');
+    expect(res.status).toBe(200);
+    expect(res.body.courierHelpPhone).toBe('+250 781 727 394');
+  });
+});

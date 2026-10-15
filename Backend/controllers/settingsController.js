@@ -26,6 +26,7 @@ const getPublicSettings = async (req, res) => {
       platformTagline: settings.platformTagline,
       supportEmail: settings.supportEmail,
       supportPhone: settings.supportPhone,
+      courierHelpPhone: settings.courierHelpPhone,
       allowNewRegistrations: settings.allowNewRegistrations,
       requireEmailVerification: settings.requireEmailVerification,
       allowGuestCheckout: settings.allowGuestCheckout,
