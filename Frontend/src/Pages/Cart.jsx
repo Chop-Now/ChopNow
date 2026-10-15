@@ -2,6 +2,7 @@ import { useAppContext } from '../context/AppContext';
 import PageNavbar from '../Components/PageNavbar';
 import Footer from '../Components/Footer';
 import LocationPicker from '../Components/maps/LocationPicker';
+import { useGeolocation } from '../Components/maps/useGeolocation';
 import MobileMoneyPaymentModal from '../Components/payments/MobileMoneyPaymentModal';
 import {
   MoveLeft,
@@ -12,6 +13,7 @@ import {
   Trash2,
   AlertTriangle,
   Store,
+  LocateFixed,
 } from 'lucide-react';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -139,6 +141,25 @@ const Cart = () => {
   const vendors = quote?.vendors || [];
   const totals = quote?.totals;
   const taxLabel = quote?.options?.taxLabel || 'Tax';
+
+  // One tap: use where the phone is. If it cannot tell (permission refused, no signal), open
+  // the map so the customer can still choose the spot by hand.
+  const { getCurrentLocation } = useGeolocation();
+  const [locating, setLocating] = useState(false);
+  const locateMe = () => {
+    setLocating(true);
+    getCurrentLocation(
+      (coords) => {
+        setLocating(false);
+        handleLocationSelect(coords);
+      },
+      () => {
+        setLocating(false);
+        setShowMapEdit(true);
+        toast.error("We couldn't find you. Allow location access, or pick your spot on the map.");
+      }
+    );
+  };
 
   const handleLocationSelect = async (location) => {
     setDeliveryLocation(location);
@@ -490,6 +511,16 @@ const Cart = () => {
                       <p className="text-xs mb-2" style={{ color: 'var(--color-moringa-muted)' }}>
                         {deliveryAddress || 'No delivery address set'}
                       </p>
+                      <button
+                        type="button"
+                        onClick={locateMe}
+                        disabled={locating || lookingUpAddress}
+                        className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition hover:bg-gray-50 disabled:opacity-60 cursor-pointer"
+                        style={{ borderColor: 'var(--color-solid)', color: 'var(--color-solid)' }}
+                      >
+                        <LocateFixed className="h-4 w-4" />
+                        {locating ? 'Finding you…' : 'Use my current location'}
+                      </button>
                       <button
                         onClick={() => setShowMapEdit(!showMapEdit)}
                         className="text-xs font-medium hover:opacity-70 transition cursor-pointer"
