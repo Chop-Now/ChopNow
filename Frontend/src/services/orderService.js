@@ -45,7 +45,8 @@ const orderService = {
   // Update order status (for business owner/admin)
   updateOrderStatus: async (id, status) => {
     try {
-      const response = await api.put(`/api/orders/${id}/status`, { status });
+      // Sending a delivery order out books the courier, which can take about ten seconds.
+      const response = await api.put(`/api/orders/${id}/status`, { status }, { timeout: 90000 });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

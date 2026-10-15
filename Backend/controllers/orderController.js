@@ -23,6 +23,7 @@ const {
 const { recordOrderImpact } = require('../services/impactService');
 const socketManager = require('../socket');
 const { CheckoutError, buildQuote, placeCheckout } = require('../services/checkoutService');
+const courier = require('../services/movingManService');
 const { recordEntry, holdUntil } = require('../services/ledgerService');
 const PlatformSettings = require('../models/PlatformSettings');
 
@@ -250,11 +251,12 @@ const createOrder = async (req, res) => {
  */
 const quoteCheckout = async (req, res) => {
   try {
-    const { items, fulfillmentType, payment } = req.body;
+    const { items, fulfillmentType, payment, deliveryDetails } = req.body;
     const quote = await buildQuote({
       items,
       fulfillmentType,
       paymentMethod: payment?.paymentMethod,
+      deliveryDetails,
     });
     res.json(quote);
   } catch (error) {
@@ -514,6 +516,66 @@ const getOrderById = async (req, res) => {
 };
 
 /**
+ * Books the courier rider for a delivery order that is being sent out. Moving Man never books the
+ * same order number twice, so asking again (a double click, a retry after a timeout) is safe.
+ * @returns {Promise<object>} the fields to store under order.courier
+ */
+const bookCourierForOrder = async (order, businessDoc) => {
+  const customer = await User.findById(order.customer).select('firstName lastName phone');
+  const dd = order.deliveryDetails || {};
+
+  // Same fallbacks as delivery records: the recipient, the customer's profile phone, and finally
+  // the mobile money number that paid for the order.
+  let recipientPhone = dd.recipientPhone || customer?.phone || '';
+  if (!recipientPhone) {
+    const payment = await Payment.findOne({
+      $or: [{ order: order._id }, { orders: order._id }],
+      status: 'completed',
+    })
+      .select('payerPhoneNumber')
+      .lean();
+    recipientPhone = payment?.payerPhoneNumber
+      ? `+${payment.payerPhoneNumber.replace(/^\+/, '')}`
+      : '';
+  }
+  if (!recipientPhone) {
+    throw new courier.CourierError(
+      'RECIPIENT_PHONE_MISSING',
+      "There is no phone number for this customer, so the courier can't reach them. Ask the customer to add one to their profile.",
+      { status: 422 }
+    );
+  }
+
+  const booking = await courier.bookDelivery({
+    orderNumber: order.orderNumber,
+    shopName: businessDoc.name,
+    shopAddress: businessDoc.address,
+    shopCoordinates: businessDoc.location?.coordinates,
+    shopPhone: businessDoc.contact?.phone || businessDoc.phone,
+    recipientName:
+      dd.recipientName || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim(),
+    recipientPhone,
+    dropoffAddress: dd.address,
+    dropoffCoordinates: dd.address?.location?.coordinates,
+    notes: [`ChopNow order ${order.orderNumber}`, dd.instructions].filter(Boolean).join('. '),
+  });
+  logger.info(
+    {
+      orderId: order._id,
+      bookingReference: booking.bookingReference,
+      bookedRwf: booking.bookedRwf,
+    },
+    'Courier booked'
+  );
+  return {
+    provider: 'moving_man',
+    bookingReference: booking.bookingReference,
+    bookedRwf: booking.bookedRwf,
+    bookedAt: new Date(),
+  };
+};
+
+/**
  * @desc    Update order status
  * @route   PUT /api/orders/:id/status
  * @access  Private (business owner, admin)
@@ -571,6 +633,33 @@ const updateOrderStatus = async (req, res) => {
     // save. Every other status is also a compare-and-swap on "not terminal":
     // a plain save racing a completion could otherwise flip a completed order
     // back to e.g. 'confirmed', letting it be completed (and credited) twice.
+    // Sending a delivery order out books the courier first. If the courier can't take it, the
+    // order stays where it was and the vendor is told why, so nobody is promised a rider that
+    // does not exist.
+    let courierFields = {};
+    if (
+      status === 'out_for_delivery' &&
+      order.fulfillmentType === 'delivery' &&
+      courier.isConfigured() &&
+      !order.courier?.bookingReference
+    ) {
+      try {
+        const booked = await bookCourierForOrder(order, businessDoc);
+        courierFields = Object.fromEntries(
+          Object.entries(booked).map(([key, value]) => [`courier.${key}`, value])
+        );
+      } catch (err) {
+        if (err instanceof courier.CourierError) {
+          logger.warn({ orderId: order._id, code: err.code }, 'Courier booking failed');
+          return res.status(err.status === 503 ? 503 : 422).json({
+            message: err.userMessage,
+            code: 'COURIER_BOOKING_FAILED',
+          });
+        }
+        throw err;
+      }
+    }
+
     let updated;
     if (status === 'completed') {
       updated = await completeOrderAtomically(order._id);
@@ -585,6 +674,7 @@ const updateOrderStatus = async (req, res) => {
           $set: {
             status,
             ...(timestampField ? { [`statusTimestamps.${timestampField}`]: new Date() } : {}),
+            ...courierFields,
           },
         },
         { new: true }
@@ -595,7 +685,11 @@ const updateOrderStatus = async (req, res) => {
     }
     // The atomic update wrote to the DB directly; sync this (populated)
     // in-memory copy so the response and socket broadcast below aren't stale.
-    order.set({ status: updated.status, statusTimestamps: updated.statusTimestamps });
+    order.set({
+      status: updated.status,
+      statusTimestamps: updated.statusTimestamps,
+      courier: updated.courier,
+    });
 
     // Get related data for rich notifications
     const listing = await Listing.findById(order.listing);

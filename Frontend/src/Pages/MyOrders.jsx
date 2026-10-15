@@ -1329,11 +1329,21 @@ const MyOrders = () => {
                             </span>
                           </div>
                         ) : selectedOrder.rawStatus === 'out_for_delivery' ? (
-                          <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Your order is on its way</span>
-                            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full">
-                              On the way
-                            </span>
+                          <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Your order is on its way</span>
+                              <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full">
+                                On the way
+                              </span>
+                            </div>
+                            {orderDetails.courier?.bookingReference && (
+                              <p className="mt-2 text-xs text-gray-500">
+                                A courier rider has been booked. Delivery reference:{' '}
+                                <span className="font-semibold text-gray-700">
+                                  {orderDetails.courier.bookingReference}
+                                </span>
+                              </p>
+                            )}
                           </div>
                         ) : selectedOrder.rawStatus === 'cancelled' ? null : (
                           <div className="bg-fufu-dim border border-gray-100 p-4 rounded-xl flex items-center justify-between text-sm">

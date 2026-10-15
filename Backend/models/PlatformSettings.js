@@ -61,10 +61,11 @@ const platformSettingsSchema = new mongoose.Schema(
       default: 1000,
       min: 0,
     },
-    // Platform's share of each delivery fee; the rider earns the rest.
+    // Platform's share of each delivery fee; the rider earns the rest. ChopNow takes no commission
+    // on delivery: the customer pays the courier's price and all of it goes to the courier.
     deliveryCommissionPercent: {
       type: Number,
-      default: 10,
+      default: 0,
       min: 0,
       max: 100,
     },

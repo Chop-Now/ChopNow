@@ -6,6 +6,7 @@ const Business = require('../models/Business');
 const User = require('../models/User');
 const PlatformSettings = require('../models/PlatformSettings');
 const { impactForItems } = require('../config/impactFactors');
+const courier = require('./movingManService');
 
 /**
  * Multi-vendor checkout.
@@ -95,7 +96,10 @@ const normalizeLines = (items) => {
  *
  * @returns {Promise<{vendors: Array, totals: object, options: object}>}
  */
-const buildQuote = async ({ items, fulfillmentType, paymentMethod }, settings) => {
+const buildQuote = async (
+  { items, fulfillmentType, paymentMethod, deliveryDetails, requireDeliveryLocation = false },
+  settings
+) => {
   if (!['pickup', 'delivery'].includes(fulfillmentType)) {
     throw new CheckoutError('Fulfillment type must be pickup or delivery');
   }
@@ -167,10 +171,50 @@ const buildQuote = async ({ items, fulfillmentType, paymentMethod }, settings) =
   const taxPercent = settings.taxPercent || 0;
   const deliveryCommissionPercent = settings.deliveryCommissionPercent ?? 10;
 
+  // With the outside courier set up, a delivery costs what the courier charges for that shop and
+  // that spot, and the customer pays exactly that. Without it, the flat platform fee applies.
+  const useCourier = fulfillmentType === 'delivery' && courier.isConfigured();
+  const dropoff = useCourier ? normalizeDeliveryDetails(deliveryDetails)?.address : undefined;
+  const dropoffCoordinates = dropoff?.location?.coordinates;
+  const deliveryNeedsLocation = useCourier && !courier.pinFromCoordinates(dropoffCoordinates);
+  if (deliveryNeedsLocation && requireDeliveryLocation) {
+    throw new CheckoutError('Please set your delivery location on the map');
+  }
+  const courierQuotes = new Map();
+  if (useCourier && !deliveryNeedsLocation) {
+    const entries = [...vendorsById.entries()];
+    try {
+      const quotes = await Promise.all(
+        entries.map(([, { business }]) =>
+          courier.quoteDelivery(
+            {
+              name: business.name,
+              address: business.address,
+              coordinates: business.location?.coordinates,
+            },
+            { address: dropoff, coordinates: dropoffCoordinates }
+          )
+        )
+      );
+      entries.forEach(([businessId], i) => courierQuotes.set(businessId, quotes[i]));
+    } catch (err) {
+      if (err instanceof courier.CourierError) {
+        throw new CheckoutError(err.userMessage, { status: err.status === 503 ? 503 : 422 });
+      }
+      throw err;
+    }
+  }
+
   const vendors = [...vendorsById.values()].map(({ business, items: vendorItems }) => {
     const currency = vendorItems[0].currency;
     const subtotal = vendorItems.reduce((sum, i) => sum + i.subtotal, 0);
-    const deliveryFee = fulfillmentType === 'delivery' ? settings.deliveryFee || 0 : 0;
+    const courierQuote = courierQuotes.get(String(business._id));
+    const deliveryFee =
+      fulfillmentType !== 'delivery'
+        ? 0
+        : useCourier
+          ? courierQuote?.amountRwf || 0
+          : settings.deliveryFee || 0;
     const deliveryCommission = percentOf(deliveryFee, deliveryCommissionPercent);
     const platformFee = percentOf(subtotal, platformFeePercent);
     const tax = percentOf(subtotal + deliveryFee, taxPercent);
@@ -195,6 +239,15 @@ const buildQuote = async ({ items, fulfillmentType, paymentMethod }, settings) =
         total: subtotal + deliveryFee + tax,
         currency,
       },
+      // What the courier quoted, kept on the order so what it later bills can be compared.
+      courier: courierQuote
+        ? {
+            provider: 'moving_man',
+            quotedRwf: courierQuote.amountRwf,
+            distanceKm: courierQuote.distanceKm,
+            estMinutes: courierQuote.estMinutes,
+          }
+        : undefined,
     };
   });
 
@@ -221,6 +274,10 @@ const buildQuote = async ({ items, fulfillmentType, paymentMethod }, settings) =
     options: {
       cashPaymentsEnabled: !!settings.cashPaymentsEnabled,
       deliveryFeePerVendor: settings.deliveryFee || 0,
+      // True when delivery is priced by the courier per address, so the cart knows to ask for
+      // the delivery location before it can show a delivery price.
+      courierDelivery: useCourier,
+      deliveryNeedsLocation,
       taxPercent,
       taxLabel: settings.taxLabel || 'VAT',
     },
@@ -254,7 +311,13 @@ const placeCheckout = async ({
     }
   }
 
-  const quote = await buildQuote({ items, fulfillmentType, paymentMethod });
+  const quote = await buildQuote({
+    items,
+    fulfillmentType,
+    paymentMethod,
+    deliveryDetails,
+    requireDeliveryLocation: true,
+  });
   const normalizedDelivery =
     fulfillmentType === 'delivery' ? normalizeDeliveryDetails(deliveryDetails) : undefined;
   const checkoutGroup = new mongoose.Types.ObjectId();
@@ -301,6 +364,7 @@ const placeCheckout = async ({
               pricing: vendor.pricing,
               fulfillmentType,
               deliveryDetails: normalizedDelivery,
+              ...(vendor.courier ? { courier: vendor.courier } : {}),
               pickupDetails:
                 fulfillmentType === 'pickup'
                   ? {

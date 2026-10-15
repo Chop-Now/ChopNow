@@ -77,10 +77,19 @@ const Cart = () => {
     setQuoteLoading(true);
     const timer = setTimeout(async () => {
       try {
+        // A delivery is priced by the courier for this exact spot, so the chosen location goes
+        // along. The courier can take up to ~10 s per shop to answer, hence the longer timeout.
         const { data } = await api.post(
           '/api/orders/quote',
-          { items: cartLines, fulfillmentType },
-          { silent: true }
+          {
+            items: cartLines,
+            fulfillmentType,
+            deliveryDetails:
+              fulfillmentType === 'delivery' && deliveryLocation
+                ? { address: deliveryAddress, location: deliveryLocation }
+                : undefined,
+          },
+          { silent: true, timeout: 90000 }
         );
         if (cancelled) return;
         setQuote(data);
@@ -97,9 +106,10 @@ const Cart = () => {
       cancelled = true;
       clearTimeout(timer);
     };
-    // cartKey captures cartLines' contents
+    // cartKey captures cartLines' contents. The address label (reverse-geocoded text) can change
+    // without the spot changing, so only the coordinates re-price a delivery.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartKey, fulfillmentType]);
+  }, [cartKey, fulfillmentType, deliveryLocation?.lat, deliveryLocation?.lng]);
 
   const cashEnabled = !!quote?.options?.cashPaymentsEnabled;
 
@@ -668,7 +678,11 @@ const Cart = () => {
                             : ''}
                         </span>
                         <span style={{ color: 'var(--color-textColor)' }}>
-                          {totals.deliveryFee === 0 ? 'Free' : formatRwf(totals.deliveryFee)}
+                          {quote?.options?.deliveryNeedsLocation
+                            ? 'Set your location'
+                            : totals.deliveryFee === 0
+                              ? 'Free'
+                              : formatRwf(totals.deliveryFee)}
                         </span>
                       </div>
                       {totals.tax > 0 && (

@@ -20,6 +20,10 @@ process.env.FIELD_ENCRYPTION_KEY =
 // unsigned pawaPay webhook - tests deliberately post to /payments/webhook
 // without real RFC-9421 signatures, so it must be on here.
 process.env.PAWAPAY_ALLOW_UNSIGNED_WEBHOOKS = 'true';
+// The courier is off in tests unless a suite switches it on with a fake fetch: a developer's local
+// .env may hold the real key, and no test may ever reach the real courier.
+process.env.MOVING_MAN_API_KEY = '';
+process.env.MOVING_MAN_COMPANY = '';
 
 // ── Mock the logger so tests produce no pino output ──
 jest.mock('../utils/logger', () => {

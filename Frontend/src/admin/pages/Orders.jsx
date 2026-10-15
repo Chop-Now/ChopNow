@@ -872,6 +872,29 @@ const OrdersTable = ({ title, statusFilter }) => {
                       </div>
                     </div>
 
+                    {(selectedOrder.courier?.quotedRwf != null ||
+                      selectedOrder.courier?.bookingReference) && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
+                        <p className="font-semibold text-slate-900 dark:text-white">
+                          Courier (Moving Man)
+                        </p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {selectedOrder.courier.bookingReference
+                            ? `Booked - reference ${selectedOrder.courier.bookingReference}. Quote their dispatch (WhatsApp +250 781 727 394) this reference for any question.`
+                            : 'Not booked yet - it is booked when the order is sent out.'}
+                        </p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          Customer paid for delivery: RWF{' '}
+                          {(selectedOrder.pricing?.deliveryFee || 0).toLocaleString()}
+                          {selectedOrder.courier.bookedRwf != null
+                            ? ` · Courier charged: RWF ${selectedOrder.courier.bookedRwf.toLocaleString()}`
+                            : selectedOrder.courier.quotedRwf != null
+                              ? ` · Quoted: RWF ${selectedOrder.courier.quotedRwf.toLocaleString()}`
+                              : ''}
+                        </p>
+                      </div>
+                    )}
+
                     {selectedOrder.delivery && (
                       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center">
                         <div>

@@ -224,6 +224,18 @@ const orderSchema = new Schema(
       ref: 'Delivery',
     },
 
+    // The outside courier carrying a delivery order (Moving Man): what it quoted the customer,
+    // and, once the vendor sends the order out, the booking made and what it actually cost.
+    courier: {
+      provider: { type: String },
+      quotedRwf: { type: Number },
+      distanceKm: { type: Number },
+      estMinutes: { type: Number },
+      bookingReference: { type: String },
+      bookedRwf: { type: Number },
+      bookedAt: { type: Date },
+    },
+
     // Status
     status: {
       type: String,

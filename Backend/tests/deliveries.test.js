@@ -23,6 +23,15 @@ const {
 // Some tests place cash orders; cash is off by default.
 beforeEach(enableCashPayments);
 
+// These tests exercise a platform that keeps 10% of each delivery fee (the live platform keeps
+// none; that is just the setting, so the rider-share arithmetic is pinned here).
+beforeEach(async () => {
+  const PlatformSettings = require('../models/PlatformSettings');
+  const settings = await PlatformSettings.getSettings();
+  settings.deliveryCommissionPercent = 10;
+  await settings.save();
+});
+
 /**
  * Creates an order (delivery fulfillment) and a matching Delivery document
  * already in 'in_transit' with the given rider assigned, ready for a single
