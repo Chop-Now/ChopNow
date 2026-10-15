@@ -53,6 +53,8 @@ const Cart = () => {
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState('');
   const [quoteLoading, setQuoteLoading] = useState(false);
+  // Bumped by "Try again" to price the cart once more (the courier's price can time out).
+  const [quoteRetry, setQuoteRetry] = useState(0);
 
   const [placing, setPlacing] = useState(false);
   // What the payment modal is paying for: one checkout (all vendors) at once.
@@ -121,7 +123,7 @@ const Cart = () => {
     // cartKey captures cartLines' contents. The address label (reverse-geocoded text) can change
     // without the spot changing, so only the coordinates re-price a delivery.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartKey, fulfillmentType, deliveryLocation?.lat, deliveryLocation?.lng]);
+  }, [cartKey, fulfillmentType, deliveryLocation?.lat, deliveryLocation?.lng, quoteRetry]);
 
   const cashEnabled = !!quote?.options?.cashPaymentsEnabled;
 
@@ -689,11 +691,22 @@ const Cart = () => {
                 {quoteError ? (
                   <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-semibold flex items-start gap-2 mb-4">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{quoteError}</span>
+                    <span className="flex-1">{quoteError}</span>
+                    {fulfillmentMethod === 'Delivery' && (
+                      <button
+                        type="button"
+                        onClick={() => setQuoteRetry((n) => n + 1)}
+                        className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-red-700 hover:bg-red-100 cursor-pointer"
+                      >
+                        Try again
+                      </button>
+                    )}
                   </div>
                 ) : !quote ? (
                   <p className="text-xs mb-4" style={{ color: 'var(--color-moringa-muted)' }}>
-                    Calculating your total…
+                    {fulfillmentMethod === 'Delivery' && deliveryLocation
+                      ? 'Getting your delivery price from our courier. This can take up to a minute…'
+                      : 'Calculating your total…'}
                   </p>
                 ) : (
                   <>

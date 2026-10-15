@@ -769,7 +769,7 @@ const getBusinessStats = async (req, res) => {
       // Calculate total revenue using aggregation instead of loading all orders
       Order.aggregate([
         { $match: { business: business._id, status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+        { $group: { _id: null, total: { $sum: '$pricing.subtotal' } } },
       ]),
       // Calculate impact (meals saved)
       Order.countDocuments({

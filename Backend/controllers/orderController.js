@@ -24,6 +24,7 @@ const { recordOrderImpact } = require('../services/impactService');
 const socketManager = require('../socket');
 const { CheckoutError, buildQuote, placeCheckout } = require('../services/checkoutService');
 const courier = require('../services/movingManService');
+const { forVendor } = require('../utils/orderViews');
 const { recordEntry, holdUntil } = require('../services/ledgerService');
 const PlatformSettings = require('../models/PlatformSettings');
 
@@ -348,7 +349,8 @@ const sendNewOrderNotifications = async (orderId) => {
         link: '/dashboard',
         metadata: {
           orderNumber: order.orderNumber,
-          orderTotal: order.pricing.total,
+          // the vendor's own figure: the items, never the delivery fee
+          orderTotal: order.pricing.subtotal,
           currency: order.pricing.currency,
           fulfillmentType: order.fulfillmentType,
           deliveryAddress: deliveryAddr,
@@ -374,9 +376,11 @@ const sendNewOrderNotifications = async (orderId) => {
         .select('email preferences')
         .lean();
       if (vendorUser && vendorUser.preferences?.notifications?.email !== false) {
-        sendVendorOrderNotification(vendorUser.email, businessForNotif.name, order).catch((err) =>
-          logger.error({ err }, 'Failed to send vendor order notification email')
-        );
+        sendVendorOrderNotification(
+          vendorUser.email,
+          businessForNotif.name,
+          forVendor(order)
+        ).catch((err) => logger.error({ err }, 'Failed to send vendor order notification email'));
       }
     }
 
@@ -384,7 +388,7 @@ const sendNewOrderNotifications = async (orderId) => {
     try {
       const io = socketManager.getIO();
       if (businessForNotif) {
-        io.to(`business_${businessForNotif._id.toString()}`).emit('new_order', order);
+        io.to(`business_${businessForNotif._id.toString()}`).emit('new_order', forVendor(order));
       }
     } catch (socketErr) {
       logger.error({ err: socketErr }, 'Failed to emit socket new_order event');
@@ -459,8 +463,11 @@ const getOrders = async (req, res) => {
 
     const total = await Order.countDocuments(query);
 
+    // A vendor sees their items and earnings, never the delivery fee (that is ChopNow's with the courier).
+    const vendorOnly = filterRole === 'business_owner' && !isAdminUser(req.user);
+
     res.json({
-      orders,
+      orders: vendorOnly ? orders.map(forVendor) : orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
@@ -507,7 +514,8 @@ const getOrderById = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this order' });
     }
 
-    res.json(order);
+    // The shop's owner sees the items and what they earn, not the delivery money.
+    res.json(isBusinessOwner ? forVendor(order) : order);
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -787,12 +795,16 @@ const updateOrderStatus = async (req, res) => {
       // Inform customer
       io.to(`user_${order.customer.toString()}`).emit('order_status_updated', order);
       // Inform vendor
-      io.to(`business_${order.business._id.toString()}`).emit('order_status_updated', order);
+      io.to(`business_${order.business._id.toString()}`).emit(
+        'order_status_updated',
+        forVendor(order)
+      );
     } catch (socketErr) {
       logger.error({ err: socketErr }, 'Failed to emit socket order_status_updated event');
     }
 
-    res.json(order);
+    // A shop owner gets the order without the delivery money; an admin sees all of it.
+    res.json(isAdmin ? order : forVendor(order));
   } catch (error) {
     res.status(500).json({
       message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
@@ -844,7 +856,12 @@ const cancelOrderAndRestoreInventory = async (
     cancelled = null;
     const now = new Date();
     const claimed = await Order.findOneAndUpdate(
-      { _id: order._id, status: { $in: fromStatuses } },
+      // A booked rider can't be called back, so a booked order is never cancelled, whoever asks.
+      {
+        _id: order._id,
+        status: { $in: fromStatuses },
+        'courier.bookingReference': { $exists: false },
+      },
       { $set: { status: 'cancelled', 'statusTimestamps.cancelledAt': now } },
       { new: true, session }
     );
@@ -963,6 +980,14 @@ const cancelOrder = async (req, res) => {
     // Check authorization
     if (!isCustomer && !isVendor && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (order.courier?.bookingReference) {
+      return res.status(409).json({
+        message:
+          'A delivery rider has already been booked for this order, so it can no longer be cancelled. If something is wrong, contact support.',
+        code: 'COURIER_BOOKED',
+      });
     }
 
     // Someone cancelling on the customer's behalf (the vendor, or an admin) says why

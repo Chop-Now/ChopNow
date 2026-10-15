@@ -11,6 +11,8 @@ const {
   getImpactMethodology,
   getUserActivity,
   getAdminStats,
+  getAdminDeliveries,
+  exportAdminDeliveries,
   getTestDataAudit,
   previewTestDataPurge,
   runTestDataPurge,
@@ -22,6 +24,8 @@ router.get('/platform/activity', protect, authorize('admin'), getRecentActivity)
 router.get('/user-activity', protect, authorize('admin'), getUserActivity);
 router.get('/admin/stats', protect, authorize('admin'), getAdminStats);
 router.get('/admin/data-audit', protect, authorize('admin'), getTestDataAudit);
+router.get('/admin/deliveries', protect, authorize('admin'), getAdminDeliveries);
+router.get('/admin/deliveries.csv', protect, authorize('admin'), exportAdminDeliveries);
 router.get('/admin/data-purge', protect, authorize('admin'), previewTestDataPurge);
 router.post('/admin/data-purge', protect, authorize('admin'), runTestDataPurge);
 router.get(

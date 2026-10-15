@@ -209,26 +209,33 @@ async function quoteDelivery(pickup, dropoff) {
   if (inFlight.has(key)) return inFlight.get(key);
 
   const promise = (async () => {
-    if (!takeLiveCall()) {
-      throw new CourierError(
-        'BUSY',
-        'Delivery prices are busy right now. Please try again in a moment.',
-        {
-          status: 503,
-        }
-      );
+    const body = {
+      restaurant_name: clip(pickup.name || 'ChopNow vendor', 60).padEnd(2, ' '),
+      restaurant_address: addressText(pickup.address),
+      restaurant_pin: pickupPin,
+      receiver_address: addressText(dropoff.address),
+      receiver_pin: dropoffPin,
+    };
+    // Their quote service answers in 4-30 seconds and now and then times out (504). A quote is free
+    // and books nothing, so one automatic second try is safe and saves most customers a retry.
+    let json;
+    for (let attempt = 1; ; attempt++) {
+      if (!takeLiveCall()) {
+        throw new CourierError(
+          'BUSY',
+          'Delivery prices are busy right now. Please try again in a moment.',
+          { status: 503 }
+        );
+      }
+      try {
+        json = await call('/api/quote', body, QUOTE_TIMEOUT_MS);
+        break;
+      } catch (err) {
+        const transient = ['UNREACHABLE', 'UPSTREAM_UNAVAILABLE'].includes(err.code);
+        if (!(err instanceof CourierError) || !transient || attempt >= 2) throw err;
+        logger.warn({ code: err.code }, 'Moving Man quote failed, trying once more');
+      }
     }
-    const json = await call(
-      '/api/quote',
-      {
-        restaurant_name: clip(pickup.name || 'ChopNow vendor', 60).padEnd(2, ' '),
-        restaurant_address: addressText(pickup.address),
-        restaurant_pin: pickupPin,
-        receiver_address: addressText(dropoff.address),
-        receiver_pin: dropoffPin,
-      },
-      QUOTE_TIMEOUT_MS
-    );
     const value = {
       amountRwf: Math.round(json.price.amount_rwf),
       distanceKm: json.price.distance_km,

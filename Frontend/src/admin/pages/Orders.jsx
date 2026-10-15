@@ -1,6 +1,7 @@
 import CollapsibleFilters from '../components/CollapsibleFilters';
 import PickupScanner from '../components/PickupScanner';
 import CancelOrderDialog from '../components/CancelOrderDialog';
+import DeliveryMoney from '../components/DeliveryMoney';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
@@ -29,7 +30,7 @@ import { confirmAction } from '../../utils/confirm';
 import { useAdminMode } from '../context/AdminModeContext';
 
 const OrdersTable = ({ title, statusFilter }) => {
-  const { adminMode } = useAdminMode();
+  const { adminMode, isAdmin } = useAdminMode();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -135,6 +136,7 @@ const OrdersTable = ({ title, statusFilter }) => {
         vendor: order.business?.name || 'Unknown Vendor',
         status: formatStatus(order.status),
         rawStatus: order.status,
+        courierBooked: Boolean(order.courier?.bookingReference),
         total: order.pricing?.total || 0,
         pickupWindow: order.pickupDetails?.pickupTime || 'N/A',
         createdAt: order.createdAt,
@@ -524,23 +526,24 @@ const OrdersTable = ({ title, statusFilter }) => {
                         <Eye className="w-4 h-4" />
                       </button>
 
-                      {['Pending', 'Paid', 'Accepted', 'Preparing', 'Ready'].includes(
-                        order.status
-                      ) && (
-                        <button
-                          onClick={() =>
-                            setCancelTarget({
-                              id: order.orderId,
-                              number: order._id,
-                              status: order.status,
-                            })
-                          }
-                          disabled={updatingStatus}
-                          className="px-2 py-1 border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30 rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          {['Pending', 'Paid'].includes(order.status) ? 'Decline' : 'Cancel'}
-                        </button>
-                      )}
+                      {!order.courierBooked &&
+                        ['Pending', 'Paid', 'Accepted', 'Preparing', 'Ready'].includes(
+                          order.status
+                        ) && (
+                          <button
+                            onClick={() =>
+                              setCancelTarget({
+                                id: order.orderId,
+                                number: order._id,
+                                status: order.status,
+                              })
+                            }
+                            disabled={updatingStatus}
+                            className="px-2 py-1 border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30 rounded text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            {['Pending', 'Paid'].includes(order.status) ? 'Decline' : 'Cancel'}
+                          </button>
+                        )}
 
                       {/* State-specific Acceptance Action */}
                       {['Pending', 'Paid'].includes(order.status) && (
@@ -822,17 +825,19 @@ const OrdersTable = ({ title, statusFilter }) => {
                           </td>
                         </tr>
                       ))}
-                      <tr className="bg-slate-50/50 dark:bg-slate-900/30">
-                        <td
-                          colSpan="3"
-                          className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400"
-                        >
-                          Delivery Fee:
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-800 dark:text-white">
-                          RWF {selectedOrder.pricing?.deliveryFee?.toLocaleString() || 0}
-                        </td>
-                      </tr>
+                      {isAdmin && (
+                        <tr className="bg-slate-50/50 dark:bg-slate-900/30">
+                          <td
+                            colSpan="3"
+                            className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400"
+                          >
+                            Delivery Fee:
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-slate-800 dark:text-white">
+                            RWF {selectedOrder.pricing?.deliveryFee?.toLocaleString() || 0}
+                          </td>
+                        </tr>
+                      )}
                       <tr className="bg-slate-50 dark:bg-slate-900">
                         <td
                           colSpan="3"
@@ -904,15 +909,18 @@ const OrdersTable = ({ title, statusFilter }) => {
                             ? `Booked - reference ${selectedOrder.courier.bookingReference}. Quote their dispatch (WhatsApp +250 781 727 394) this reference for any question.`
                             : 'Not booked yet - it is booked when the order is sent out.'}
                         </p>
-                        <p className="text-slate-600 dark:text-slate-400">
-                          Customer paid for delivery: RWF{' '}
-                          {(selectedOrder.pricing?.deliveryFee || 0).toLocaleString()}
-                          {selectedOrder.courier.bookedRwf != null
-                            ? ` · Courier charged: RWF ${selectedOrder.courier.bookedRwf.toLocaleString()}`
-                            : selectedOrder.courier.quotedRwf != null
-                              ? ` · Quoted: RWF ${selectedOrder.courier.quotedRwf.toLocaleString()}`
-                              : ''}
-                        </p>
+                        {/* The money is between ChopNow and the courier: vendors never see it */}
+                        {isAdmin && (
+                          <p className="text-slate-600 dark:text-slate-400">
+                            Customer paid for delivery: RWF{' '}
+                            {(selectedOrder.pricing?.deliveryFee || 0).toLocaleString()}
+                            {selectedOrder.courier.bookedRwf != null
+                              ? ` · Courier charged: RWF ${selectedOrder.courier.bookedRwf.toLocaleString()}`
+                              : selectedOrder.courier.quotedRwf != null
+                                ? ` · Quoted: RWF ${selectedOrder.courier.quotedRwf.toLocaleString()}`
+                                : ''}
+                          </p>
+                        )}
                       </div>
                     )}
 
@@ -1283,6 +1291,13 @@ export const PendingOrders = () => <OrdersTable title="Pending Orders" statusFil
 export const CompletedOrders = () => (
   <OrdersTable title="Completed/Delivered Orders" statusFilter="completed" />
 );
-export const Deliveries = () => (
-  <OrdersTable title="Deliveries Management" statusFilter="deliveries" />
-);
+export const Deliveries = () => {
+  const { adminMode } = useAdminMode();
+  return (
+    <>
+      {/* ChopNow's own view of delivery money: what customers paid and what the courier charged */}
+      {adminMode === 'website' && <DeliveryMoney />}
+      <OrdersTable title="Deliveries Management" statusFilter="deliveries" />
+    </>
+  );
+};

@@ -358,7 +358,7 @@ const sendVendorOrderNotification = async (email, businessName, order) => {
     <p>You have received a new order. Please review and confirm it.</p>
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
-      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.subtotal ?? order.pricing?.total ?? 0).toLocaleString()}</p>
       <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
     </div>
     <p style="color: #6b7280; font-size: 14px;">Log in to your vendor dashboard to manage this order.</p>
@@ -380,7 +380,7 @@ const sendVendorOrderReminderEmail = async (email, businessName, order, hoursLef
     <p>A customer has paid for an order that is still waiting for you to accept it.</p>
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
-      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.subtotal ?? order.pricing?.total ?? 0).toLocaleString()}</p>
     </div>
     <p>Please accept it (or cancel it if you cannot fulfil it) in your vendor dashboard. If it is not accepted within about ${hoursLeft} hours it will be cancelled automatically and the customer refunded.</p>
   `;
@@ -554,7 +554,7 @@ const sendVendorOrderCancelledEmail = async (email, businessName, order, custome
     <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 5px 0;"><strong>Order Number:</strong> ${order.orderNumber}</p>
       <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerName}</p>
-      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.total || 0).toLocaleString()}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> ${order.pricing?.currency || 'RWF'} ${(order.pricing?.subtotal ?? order.pricing?.total ?? 0).toLocaleString()}</p>
     </div>
     <p style="color: #6b7280; font-size: 14px;">Please update your inventory accordingly.</p>
   `;

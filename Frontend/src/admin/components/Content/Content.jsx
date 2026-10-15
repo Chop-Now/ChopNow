@@ -5,6 +5,7 @@ import TableSection from './TableSection';
 import DisputesTable from './DisputesTable';
 import ActivityFeed from './ActivityFeed';
 import DataAuditCard from './DataAuditCard';
+import MoneyBreakdown from './MoneyBreakdown';
 import { useAdminMode } from '../../context/AdminModeContext';
 
 const Content = ({ onNavigate }) => {
@@ -14,6 +15,7 @@ const Content = ({ onNavigate }) => {
   return (
     <div className="space-y-6">
       {isAdmin && <DataAuditCard />}
+      {isAdmin && <MoneyBreakdown />}
 
       {/* Stats Grid*/}
       <StatsGrid />

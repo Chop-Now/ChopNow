@@ -69,6 +69,39 @@ const analyticsService = {
     }
   },
 
+  // Admin: every delivery with what the customer paid and what the courier charged
+  getAdminDeliveries: async ({ from, to, limit = 50, page = 1 } = {}) => {
+    try {
+      const response = await api.get('/api/analytics/admin/deliveries', {
+        params: { from: from || undefined, to: to || undefined, limit, page },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Admin: download the deliveries as a CSV (the courier's copy leaves out what customers paid)
+  downloadAdminDeliveriesCsv: async ({ forCourier = false, from, to } = {}) => {
+    try {
+      const response = await api.get('/api/analytics/admin/deliveries.csv', {
+        params: {
+          for: forCourier ? 'courier' : undefined,
+          from: from || undefined,
+          to: to || undefined,
+        },
+        responseType: 'blob',
+      });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(response.data);
+      link.download = `chopnow-deliveries-${forCourier ? 'courier-' : ''}${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // How impact is estimated: factor table and sources (public)
   getImpactMethodology: async () => {
     try {

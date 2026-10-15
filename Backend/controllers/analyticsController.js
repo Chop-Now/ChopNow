@@ -19,6 +19,61 @@ const net = (field) => ({ $multiply: [{ $ifNull: [field, 0] }, NET] });
 const round1 = (n) => Math.round((n || 0) * 10) / 10;
 const round0 = (n) => Math.round(n || 0);
 
+// ── Money, kept apart ────────────────────────────────────────────────────
+// A delivery order's customer total is: the items + the delivery fee (collected for the courier and
+// passed on) + tax. ChopNow's revenue is its platform fee on the items. The delivery fee is not
+// revenue; it is tracked on its own so it can be matched against what the courier bills.
+const DELIVERY_PAID = {
+  fulfillmentType: 'delivery',
+  status: { $nin: ['pending_payment', 'cancelled'] },
+  'payment.paymentStatus': { $in: ['completed', 'refund_pending', 'refunded'] },
+};
+
+/** Delivery money for the orders matching `extra`: what customers paid, what the courier charged. */
+const deliveryMoneySummary = async (extra = {}) => {
+  const isBooked = { $cond: [{ $ifNull: ['$courier.bookingReference', false] }, 1, 0] };
+  const [r] = await Order.aggregate([
+    { $match: { ...DELIVERY_PAID, ...extra } },
+    {
+      $group: {
+        _id: null,
+        orders: { $sum: 1 },
+        collected: { $sum: { $ifNull: ['$pricing.deliveryFee', 0] } },
+        bookedOrders: { $sum: isBooked },
+        bookedCollected: {
+          $sum: {
+            $cond: [
+              { $ifNull: ['$courier.bookingReference', false] },
+              { $ifNull: ['$pricing.deliveryFee', 0] },
+              0,
+            ],
+          },
+        },
+        courierCharged: { $sum: { $ifNull: ['$courier.bookedRwf', 0] } },
+      },
+    },
+  ]);
+  const x = r || {};
+  const collected = x.collected || 0;
+  const bookedCollected = x.bookedCollected || 0;
+  const courierCharged = x.courierCharged || 0;
+  return {
+    orders: x.orders || 0,
+    collected,
+    booked: {
+      orders: x.bookedOrders || 0,
+      collected: bookedCollected,
+      courierCharged,
+      // positive: customers paid more than the courier charged; negative: ChopNow covered the gap
+      difference: bookedCollected - courierCharged,
+    },
+    awaitingBooking: {
+      orders: (x.orders || 0) - (x.bookedOrders || 0),
+      collected: collected - bookedCollected,
+    },
+  };
+};
+
 /**
  * @desc    Get Platform Overview Stats (Admin)
  * @route   GET /api/analytics/platform/overview
@@ -48,7 +103,7 @@ const getPlatformOverview = async (req, res) => {
       // status enum at all, so this always matched zero documents before.
       Order.aggregate([
         { $match: { status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+        { $group: { _id: null, total: { $sum: '$pricing.subtotal' } } },
       ]),
       Business.aggregate([
         {
@@ -171,7 +226,7 @@ const getBusinessOverview = async (req, res) => {
         {
           $group: {
             _id: { $week: '$createdAt' },
-            sales: { $sum: '$pricing.total' },
+            sales: { $sum: '$pricing.subtotal' },
             orders: { $sum: 1 },
           },
         },
@@ -211,7 +266,7 @@ const getBusinessOverview = async (req, res) => {
       ]),
       Order.aggregate([
         { $match: { business: business._id, status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$pricing.total' }, count: { $sum: 1 } } },
+        { $group: { _id: null, total: { $sum: '$pricing.subtotal' }, count: { $sum: 1 } } },
       ]),
       calculateMonthlyRevenue(business._id),
       calculateCategoryBreakdown(business._id),
@@ -626,7 +681,7 @@ const calculateMonthlyRevenue = async (businessId) => {
           year: { $year: '$createdAt' },
           month: { $month: '$createdAt' },
         },
-        revenue: { $sum: '$pricing.total' },
+        revenue: { $sum: '$pricing.subtotal' },
         profit: { $sum: businessId ? '$pricing.vendorAmount' : '$pricing.platformFee' },
         orders: { $sum: 1 },
       },
@@ -1154,14 +1209,14 @@ const getAdminStats = async (req, res) => {
         { $match: { status: 'completed' } },
         {
           $facet: {
-            total: [{ $group: { _id: null, total: { $sum: '$pricing.total' } } }],
+            total: [{ $group: { _id: null, total: { $sum: '$pricing.subtotal' } } }],
             thisMonth: [
               { $match: { createdAt: { $gte: thisMonthStart } } },
-              { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+              { $group: { _id: null, total: { $sum: '$pricing.subtotal' } } },
             ],
             lastMonth: [
               { $match: { createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } } },
-              { $group: { _id: null, total: { $sum: '$pricing.total' } } },
+              { $group: { _id: null, total: { $sum: '$pricing.subtotal' } } },
             ],
           },
         },
@@ -1298,6 +1353,12 @@ const getAdminStats = async (req, res) => {
           ? 100
           : 0;
 
+    const [platformFeeAgg] = await Order.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$pricing.platformFee', 0] } } } },
+    ]);
+    const delivery = await deliveryMoneySummary();
+
     // Extract revenue stats
     const totalRevenue = revenueStats[0]?.total[0]?.total || 0;
     const revenueThisMonth = revenueStats[0]?.thisMonth[0]?.total || 0;
@@ -1369,13 +1430,17 @@ const getAdminStats = async (req, res) => {
         percentChange: parseFloat(ordersPercentChange),
         trend: parseFloat(ordersPercentChange) >= 0 ? 'up' : 'down',
       },
+      // Item sales (what customers paid for the food). ChopNow's own income is platformFees; the
+      // delivery fee is separate (see delivery below) because it is passed on to the courier.
       revenue: {
+        platformFees: platformFeeAgg?.total || 0,
         total: totalRevenue,
         thisMonth: revenueThisMonth,
         lastMonth: revenueLastMonth,
         percentChange: parseFloat(revenuePercentChange),
         trend: parseFloat(revenuePercentChange) >= 0 ? 'up' : 'down',
       },
+      delivery,
       impact: {
         mealsRescued: totalMealsRescued,
         co2Saved: round1(totalCo2Saved),
@@ -1408,6 +1473,144 @@ const getAdminStats = async (req, res) => {
  * @route   GET /api/analytics/admin/data-audit
  * @access  Private (Admin)
  */
+// Orders for the Deliveries table: every paid delivery order, with the courier's booking if any.
+const deliveryFilter = (query) => {
+  const match = {};
+  const from = query.from ? new Date(query.from) : null;
+  const to = query.to ? new Date(query.to) : null;
+  if (from && !Number.isNaN(from.getTime())) match.createdAt = { $gte: from };
+  if (to && !Number.isNaN(to.getTime())) {
+    to.setHours(23, 59, 59, 999);
+    match.createdAt = { ...(match.createdAt || {}), $lte: to };
+  }
+  return match;
+};
+
+const deliveryRow = (o) => {
+  const paid = o.pricing?.deliveryFee || 0;
+  const booked = !!o.courier?.bookingReference;
+  const address = o.deliveryDetails?.address;
+  return {
+    orderId: o._id,
+    orderNumber: o.orderNumber,
+    date: o.createdAt,
+    bookedAt: o.courier?.bookedAt || null,
+    shop: o.business?.name || '',
+    dropoff: typeof address === 'string' ? address : address?.street || '',
+    status: o.status,
+    courierReference: o.courier?.bookingReference || '',
+    customerPaid: paid,
+    courierQuoted: o.courier?.quotedRwf ?? null,
+    courierCharged: booked ? (o.courier?.bookedRwf ?? 0) : null,
+    difference: booked ? paid - (o.courier?.bookedRwf ?? 0) : null,
+  };
+};
+
+/**
+ * @desc    Every delivery with what the customer paid and what the courier charged (Admin)
+ * @route   GET /api/analytics/admin/deliveries
+ * @access  Private (Admin)
+ */
+const getAdminDeliveries = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 25, 1), 200);
+    const range = deliveryFilter(req.query);
+    const match = { ...DELIVERY_PAID, ...range };
+    const [orders, total, summary] = await Promise.all([
+      Order.find(match)
+        .populate('business', 'name')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Order.countDocuments(match),
+      deliveryMoneySummary(range),
+    ]);
+    res.json({
+      deliveries: orders.map(deliveryRow),
+      summary,
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Admin deliveries error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
+// Excel needs a byte-order mark to open a UTF-8 CSV with the right characters.
+const BOM = String.fromCharCode(0xfeff);
+
+const csvCell = (value) => {
+  const text = value === null || value === undefined ? '' : String(value);
+  // Spreadsheets run text that starts with = + - @ as a formula; keep it as plain text.
+  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+};
+
+/**
+ * @desc    Deliveries as a CSV. ?for=courier leaves out what customers paid (the courier's copy),
+ *          anything else is the full admin copy (Admin)
+ * @route   GET /api/analytics/admin/deliveries.csv
+ * @access  Private (Admin)
+ */
+const exportAdminDeliveries = async (req, res) => {
+  try {
+    const forCourier = req.query.for === 'courier';
+    const match = {
+      ...DELIVERY_PAID,
+      ...deliveryFilter(req.query),
+      'courier.bookingReference': { $exists: true },
+    };
+    const orders = await Order.find(match)
+      .populate('business', 'name')
+      .sort({ createdAt: 1 })
+      .limit(5000)
+      .lean();
+    const rows = orders.map(deliveryRow);
+    const when = (r) => (r.bookedAt ? new Date(r.bookedAt).toISOString() : '');
+    const columns = forCourier
+      ? [
+          ['Booked', when],
+          ['ChopNow order', (r) => r.orderNumber],
+          ['Courier reference', (r) => r.courierReference],
+          ['Pickup (shop)', (r) => r.shop],
+          ['Drop-off', (r) => r.dropoff],
+          ['Amount charged (RWF)', (r) => r.courierCharged],
+        ]
+      : [
+          ['Booked', when],
+          ['ChopNow order', (r) => r.orderNumber],
+          ['Courier reference', (r) => r.courierReference],
+          ['Pickup (shop)', (r) => r.shop],
+          ['Drop-off', (r) => r.dropoff],
+          ['Order status', (r) => r.status],
+          ['Customer paid for delivery (RWF)', (r) => r.customerPaid],
+          ['Courier quoted (RWF)', (r) => r.courierQuoted],
+          ['Courier charged (RWF)', (r) => r.courierCharged],
+          ['Difference (RWF)', (r) => r.difference],
+        ];
+    const lines = [columns.map(([name]) => csvCell(name)).join(',')];
+    rows.forEach((r) => lines.push(columns.map(([, get]) => csvCell(get(r))).join(',')));
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="chopnow-deliveries-${forCourier ? 'courier-' : ''}${stamp}.csv"`
+    );
+    res.send(`${BOM}${lines.join('\r\n')}\r\n`);
+  } catch (error) {
+    logger.error({ err: error }, 'Admin deliveries export error');
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    });
+  }
+};
+
 const getTestDataAudit = async (req, res) => {
   try {
     res.json(await auditTestData());
@@ -1458,6 +1661,8 @@ const runTestDataPurge = async (req, res) => {
 };
 
 module.exports = {
+  getAdminDeliveries,
+  exportAdminDeliveries,
   getTestDataAudit,
   previewTestDataPurge,
   runTestDataPurge,

@@ -160,6 +160,42 @@ describe('delivery price from the courier', () => {
     expect(res.body.message).toMatch(/temporarily unavailable/);
   });
 
+  it('tries a quote once more when the courier times out, and gives up after the second try', async () => {
+    const { listing } = await shop();
+    const timeout = json(504, {
+      ok: false,
+      error: { code: 'UPSTREAM_UNAVAILABLE', message: 'x' },
+    });
+    const good = json(200, {
+      ok: true,
+      price: { amount_rwf: 1370, currency: 'RWF', distance_km: 3.85, est_minutes: 8 },
+    });
+
+    global.fetch = jest.fn().mockResolvedValueOnce(timeout).mockResolvedValueOnce(good);
+    const recovered = await request(app).post('/api/v1/orders/quote').send(quoteBody(listing));
+    expect(recovered.status).toBe(200);
+    expect(recovered.body.totals.deliveryFee).toBe(1370);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    courier.resetForTests();
+    global.fetch = jest.fn().mockResolvedValue(timeout);
+    const failed = await request(app).post('/api/v1/orders/quote').send(quoteBody(listing));
+    expect(failed.status).toBe(503);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not repeat an answer that would not change', async () => {
+    fakeCourier({
+      quoteResponse: json(422, {
+        ok: false,
+        error: { code: 'OUTSIDE_SERVICE_AREA', message: 'x' },
+      }),
+    });
+    const { listing } = await shop();
+    await request(app).post('/api/v1/orders/quote').send(quoteBody(listing));
+    expect(calls).toHaveLength(1);
+  });
+
   it('falls back to the flat fee when the courier is not set up', async () => {
     process.env.MOVING_MAN_API_KEY = '';
     const { listing } = await shop();

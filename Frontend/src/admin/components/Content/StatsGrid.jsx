@@ -65,7 +65,7 @@ const StatsGrid = () => {
   const shopAdminStats = stats
     ? [
         {
-          title: 'Total Revenue',
+          title: 'Food Sales',
           value: formatCurrency(stats.revenue || 0),
           change: NO_HISTORY.value,
           trend: NO_HISTORY.trend,
@@ -143,7 +143,7 @@ const StatsGrid = () => {
   const websiteAdminStats = stats
     ? [
         {
-          title: 'Total Revenue',
+          title: 'Food Sales',
           value: formatCurrency(stats.revenue?.total || 0),
           change:
             stats.revenue?.percentChange !== undefined
