@@ -24,6 +24,8 @@ const {
 const logger = require('../utils/logger');
 const { isAdminUser } = require('../utils/roles');
 const { friendlyDbError } = require('../utils/dbErrors');
+const { missingForApproval } = require('../utils/businessReadiness');
+const { normalizeRwandaMobile } = require('../utils/phone');
 
 // Fields that must never reach the public business endpoints (payout details, KYC
 // documents, reviewer notes). `.lean()` skips the model's toJSON masking, so they are
@@ -584,6 +586,34 @@ const uploadKYC = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // What the vendor sent now, or what is already on file. A shop going for review needs a
+    // document, its real location and a number to call: checked BEFORE anything is uploaded, so a
+    // missing detail never costs a wasted upload.
+    let sentLocation;
+    if (req.body.location) {
+      try {
+        const data =
+          typeof req.body.location === 'string' ? JSON.parse(req.body.location) : req.body.location;
+        const lat = Number(data?.lat);
+        const lng = Number(data?.lng);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          sentLocation = { type: 'Point', coordinates: [lng, lat] };
+        }
+      } catch (e) {
+        logger.error({ err: e }, 'Error parsing location');
+      }
+    }
+    const alreadyApprovedShop = ['approved', 'verified'].includes(business.verification?.status);
+    if (!alreadyApprovedShop) {
+      const missing = missingForApproval(
+        { phone: req.body.phone || business.phone, location: sentLocation || business.location },
+        (business.verification?.documents?.length || 0) + req.files.length
+      );
+      if (missing.length) {
+        return res.status(400).json({ message: missing[0], missing });
+      }
+    }
+
     // Upload all files to Cloudinary
     const uploadedDocuments = [];
 
@@ -602,7 +632,15 @@ const uploadKYC = async (req, res) => {
     }
 
     // UPDATE BUSINESS DETAILS (Phone, Address, Location)
-    if (req.body.phone) business.phone = req.body.phone;
+    const canonicalPhone = normalizeRwandaMobile(req.body.phone);
+    if (canonicalPhone) {
+      // Customers' order screens read contact.phone; the rest of the app reads phone.
+      business.phone = `+${canonicalPhone}`;
+      business.contact = {
+        ...(business.contact?.toObject?.() || business.contact || {}),
+        phone: business.phone,
+      };
+    }
 
     if (req.body.address) {
       // If address is just a string, update the text part
@@ -613,23 +651,12 @@ const uploadKYC = async (req, res) => {
       }
     }
 
-    if (req.body.location) {
-      try {
-        const locationData = JSON.parse(req.body.location);
-        if (locationData.lat && locationData.lng) {
-          business.location = {
-            type: 'Point',
-            coordinates: [locationData.lng, locationData.lat],
-          };
-
-          // Also update address object if it exists
-          if (business.address && typeof business.address === 'object') {
-            business.address.lat = locationData.lat;
-            business.address.lng = locationData.lng;
-          }
-        }
-      } catch (e) {
-        logger.error({ err: e }, 'Error parsing location');
+    if (sentLocation) {
+      business.location = sentLocation;
+      // Also update address object if it exists
+      if (business.address && typeof business.address === 'object') {
+        business.address.lat = sentLocation.coordinates[1];
+        business.address.lng = sentLocation.coordinates[0];
       }
     }
 
@@ -820,6 +847,20 @@ const approveBusiness = async (req, res) => {
 
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // No shop goes live without a document, a real location and a phone number to call - the
+    // signup screens ask for all three, and this keeps an approval click from skipping them.
+    const alreadyLive =
+      business.status === 'active' &&
+      ['approved', 'verified'].includes(business.verification?.status);
+    if (!alreadyLive) {
+      const missing = missingForApproval(business, business.verification?.documents?.length || 0);
+      if (missing.length) {
+        return res
+          .status(400)
+          .json({ message: `Cannot approve yet. ${missing.join(' ')}`, missing });
+      }
     }
 
     business.status = 'active';

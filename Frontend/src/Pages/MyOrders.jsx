@@ -1147,9 +1147,10 @@ const MyOrders = () => {
                               <h5 className="font-semibold text-gray-800 text-sm">
                                 Store Info & Directions
                               </h5>
-                              {orderDetails.business?.contact?.phone && (
+                              {(orderDetails.business?.phone ||
+                                orderDetails.business?.contact?.phone) && (
                                 <a
-                                  href={`tel:${orderDetails.business.contact.phone}`}
+                                  href={`tel:${orderDetails.business.phone || orderDetails.business.contact?.phone}`}
                                   className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-300 shadow-sm"
                                 >
                                   <Phone className="w-3.5 h-3.5" />
@@ -1289,6 +1290,23 @@ const MyOrders = () => {
                       </div>
                     ) : orderDetails ? (
                       <div className="space-y-4">
+                        {/* The shop's number, so a late or confusing delivery is one tap from a call */}
+                        {(orderDetails.business?.phone ||
+                          orderDetails.business?.contact?.phone) && (
+                          <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-3 text-sm">
+                            <span className="text-gray-600">
+                              {orderDetails.business?.name || 'The shop'}
+                            </span>
+                            <a
+                              href={`tel:${orderDetails.business.phone || orderDetails.business.contact.phone}`}
+                              className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 border border-green-100 hover:bg-green-100 px-3 py-1.5 rounded-full"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              Call shop
+                            </a>
+                          </div>
+                        )}
+
                         {/* Rider details card if assigned */}
                         {orderDetails.delivery?.rider ? (
                           <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">

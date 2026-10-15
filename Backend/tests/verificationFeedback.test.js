@@ -11,7 +11,13 @@ const { createAdmin, createBusinessOwnerWithBusiness } = require('./fixtures');
 const pendingBusiness = () =>
   createBusinessOwnerWithBusiness({
     status: 'inactive',
-    verification: { status: 'pending', submittedAt: new Date() },
+    phone: '+250788123456',
+    location: { type: 'Point', coordinates: [30.0935, -1.9515] },
+    verification: {
+      status: 'pending',
+      submittedAt: new Date(),
+      documents: [{ url: 'https://res.cloudinary.com/x/permit.jpg' }],
+    },
   });
 
 describe('verification feedback reaches the vendor', () => {

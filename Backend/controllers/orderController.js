@@ -449,7 +449,7 @@ const getOrders = async (req, res) => {
 
     const orders = await Order.find(query)
       .populate('customer', 'firstName lastName email phone')
-      .populate('business', 'name type address contact')
+      .populate('business', 'name type address contact phone')
       .populate('listing', 'title category photos')
       .populate({ path: 'items.listing', select: 'title category photos pricing' })
       .skip(skip)
@@ -481,7 +481,7 @@ const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('customer', 'firstName lastName email phone')
-      .populate('business', 'name type address contact media location')
+      .populate('business', 'name type address contact phone media location')
       .populate('listing', 'title category photos pricing')
       .populate({ path: 'items.listing', select: 'title category photos pricing' })
       .populate('delivery')
@@ -1276,7 +1276,7 @@ const getAdminOrders = async (req, res) => {
 
     const orders = await Order.find(query)
       .populate('customer', 'firstName lastName email phone')
-      .populate('business', 'name type address contact')
+      .populate('business', 'name type address contact phone')
       .populate('listing', 'title category photos')
       .skip(skip)
       .limit(limit)

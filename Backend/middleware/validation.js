@@ -134,7 +134,10 @@ const validateCreateBusiness = [
     .withMessage('Please provide a valid phone number'),
   body('address.street').trim().notEmpty().withMessage('Street address is required'),
   body('address.city').trim().notEmpty().withMessage('City is required'),
+  // Optional here: the shop's real location is required when it is submitted for review
+  // (businessReadiness), and signing up must not invent a pin just to get past this check.
   body('address.location.coordinates')
+    .optional()
     .isArray({ min: 2, max: 2 })
     .withMessage('Location coordinates must be an array of [longitude, latitude]'),
   body('address.location.coordinates.*').isFloat().withMessage('Coordinates must be valid numbers'),

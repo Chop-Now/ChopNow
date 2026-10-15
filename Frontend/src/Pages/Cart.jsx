@@ -21,6 +21,7 @@ import { reverseGeocode } from '../services/geocoding';
 import { toast } from 'react-hot-toast';
 import { formatImpactKg } from '../utils/impact';
 import { formatAddress } from '../utils/address';
+import PhoneField from '../Components/ui/PhoneField';
 
 const formatRwf = (amount) => `RWF ${Math.round(amount || 0).toLocaleString()}`;
 
@@ -35,6 +36,15 @@ const Cart = () => {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [lookingUpAddress, setLookingUpAddress] = useState(false);
   const [showMapEdit, setShowMapEdit] = useState(false);
+  // The number the rider calls when they arrive. Starts as the profile number, so most people
+  // never have to type it.
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const RWANDAN_MOBILE = /^(250)?7[2389]\d{7}$/;
+  const phoneOk = RWANDAN_MOBILE.test(String(recipientPhone).replace(/\D/g, ''));
+  useEffect(() => {
+    const profile = String(user?.phone || '').replace(/\D/g, '');
+    if (profile) setRecipientPhone((current) => current || profile);
+  }, [user?.phone]);
   const [paymentMethod, setPaymentMethod] = useState('momo'); // 'momo', 'airtel', 'cash'
 
   // Server-computed prices for the whole cart, grouped per vendor.
@@ -172,6 +182,10 @@ const Cart = () => {
         toast.error('Still looking up your address - one moment');
         return;
       }
+      if (!phoneOk) {
+        toast.error('Please enter a Rwandan mobile number the rider can call');
+        return;
+      }
     }
 
     setPlacing(true);
@@ -183,7 +197,11 @@ const Cart = () => {
           fulfillmentType,
           deliveryDetails:
             fulfillmentMethod === 'Delivery'
-              ? { address: deliveryAddress, location: deliveryLocation }
+              ? {
+                  address: deliveryAddress,
+                  location: deliveryLocation,
+                  recipientPhone: `+${String(recipientPhone).replace(/\D/g, '')}`,
+                }
               : undefined,
           payment: { paymentMethod: paymentMethod === 'cash' ? 'cash' : 'mobile_money' },
         },
@@ -492,6 +510,30 @@ const Cart = () => {
                         />
                       </div>
                     )}
+                    <div className="mt-4">
+                      <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--color-textColor)' }}
+                        htmlFor="rider-phone"
+                      >
+                        Phone the rider can call
+                        {!phoneOk && recipientPhone.length > 3 && (
+                          <span className="text-red-500 font-normal">
+                            {' '}
+                            - enter a Rwandan mobile
+                          </span>
+                        )}
+                      </label>
+                      <PhoneField
+                        country="rw"
+                        value={recipientPhone}
+                        onChange={setRecipientPhone}
+                        inputProps={{ id: 'rider-phone', name: 'rider-phone' }}
+                        containerClass="w-full"
+                        inputClass={`!w-full !h-10 !rounded-lg !text-sm !bg-transparent ${!phoneOk && recipientPhone.length > 3 ? '!border-red-500' : '!border-gray-300'}`}
+                        buttonClass="!rounded-l-lg !bg-transparent !h-10"
+                      />
+                    </div>
                   </>
                 ) : vendors.length === 0 ? (
                   <p className="text-xs" style={{ color: 'var(--color-moringa-muted)' }}>

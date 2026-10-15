@@ -872,6 +872,27 @@ const OrdersTable = ({ title, statusFilter }) => {
                       </div>
                     </div>
 
+                    {selectedOrder.deliveryDetails?.recipientPhone && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                        <p className="font-semibold text-slate-900 dark:text-white">
+                          Who receives it
+                        </p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {selectedOrder.deliveryDetails.recipientName ||
+                            selectedOrder.customer?.firstName ||
+                            'Customer'}{' '}
+                          ·{' '}
+                          <a
+                            href={`tel:${selectedOrder.deliveryDetails.recipientPhone}`}
+                            className="font-semibold text-solid hover:underline inline-flex items-center gap-1"
+                          >
+                            <Phone className="w-3 h-3" />
+                            {selectedOrder.deliveryDetails.recipientPhone}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+
                     {(selectedOrder.courier?.quotedRwf != null ||
                       selectedOrder.courier?.bookingReference) && (
                       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-1">

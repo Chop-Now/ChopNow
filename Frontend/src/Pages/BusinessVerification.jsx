@@ -12,7 +12,7 @@ import {
   Croissant,
   UtensilsCrossed,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhoneField from '../Components/ui/PhoneField';
 import LocationPicker from '../Components/maps/LocationPicker';
@@ -94,6 +94,12 @@ const BusinessVerification = () => {
           setBusinessId(businesses[0]._id);
           setBusinessType(businesses[0].type);
           setReview(businesses[0].verification || null);
+          // They already gave a number when signing up: start from it.
+          const known = String(businesses[0].phone || businesses[0].contact?.phone || '').replace(
+            /\D/g,
+            ''
+          );
+          if (known) setPhone((current) => current || known);
         } else {
           // User has no business - show helpful message
           toast.error('Please create a business profile first before verification.');
@@ -132,12 +138,46 @@ const BusinessVerification = () => {
     };
   }, [user, navigate]);
 
+  // Finds the shop's real position from the device. Used by the button, and once on its own when
+  // the page opens so most vendors only have to confirm. `quiet` hides the error when it is the
+  // automatic try (the vendor can still tap the button or use the map).
+  const detectLocation = ({ quiet = false } = {}) => {
+    setIsLoadingLocation(true);
+    getCurrentLocation(
+      async (coords) => {
+        setLocation(coords);
+        setErrors((prev) => ({ ...prev, location: false }));
+        try {
+          const result = await reverseGeocode(coords.lat, coords.lng);
+          setAddress(result.display_name || 'Location detected');
+        } catch {
+          setAddress(`${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+        }
+        if (!quiet) toast.success('Location detected - drag the pin if it is not exactly right');
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        if (!quiet) toast.error(error);
+        setIsLoadingLocation(false);
+      }
+    );
+  };
+
+  const triedAutoLocation = useRef(false);
+  useEffect(() => {
+    if (!businessId || location || triedAutoLocation.current) return;
+    triedAutoLocation.current = true;
+    detectLocation({ quiet: true });
+    // runs once when the shop has loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate all fields
     const newErrors = {
-      phone: !phone || phone.length < 10,
+      phone: !/^(250)?7[2389]\d{7}$/.test(String(phone || '').replace(/\D/g, '')),
       location: !location || !address,
       files: uploadedFiles.length === 0,
     };
@@ -146,7 +186,10 @@ const BusinessVerification = () => {
 
     // Check if there are any errors
     if (Object.values(newErrors).some((error) => error)) {
-      if (newErrors.phone) toast.error('Please enter a valid business phone number');
+      if (newErrors.phone)
+        toast.error(
+          'Please enter a Rwandan mobile number (for example 0788 123 456) so customers and riders can call you'
+        );
       if (newErrors.location) toast.error('Please select your business location');
       if (newErrors.files) toast.error('Please upload at least one certificate document');
       return;
@@ -318,27 +361,7 @@ const BusinessVerification = () => {
               {/* Use Current Location Button */}
               <button
                 type="button"
-                onClick={async () => {
-                  setIsLoadingLocation(true);
-                  getCurrentLocation(
-                    async (coords) => {
-                      setLocation(coords);
-                      try {
-                        const result = await reverseGeocode(coords.lat, coords.lng);
-                        setAddress(result.display_name || 'Location detected');
-                        setErrors((prev) => ({ ...prev, location: false }));
-                        toast.success('Location detected successfully!');
-                      } catch {
-                        toast.error('Could not fetch address');
-                      }
-                      setIsLoadingLocation(false);
-                    },
-                    (error) => {
-                      toast.error(error);
-                      setIsLoadingLocation(false);
-                    }
-                  );
-                }}
+                onClick={() => detectLocation()}
                 disabled={isLoadingLocation}
                 className={`w-full flex items-center justify-center gap-2 h-12 rounded-lg border hover:bg-gray-50 transition-colors disabled:opacity-50 mb-3 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
               >

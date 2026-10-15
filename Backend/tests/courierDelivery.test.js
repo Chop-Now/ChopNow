@@ -17,7 +17,11 @@ const {
   placePaidOrder,
 } = require('./fixtures');
 
-const DROP = { address: 'KG 108 Street, Remera', location: { lat: -1.958722, lng: 30.119739 } };
+const DROP = {
+  address: 'KG 108 Street, Remera',
+  location: { lat: -1.958722, lng: 30.119739 },
+  recipientPhone: '0788 123 456',
+};
 const quoteBody = (listing, deliveryDetails = DROP) => ({
   items: [{ listing: listing._id.toString(), quantity: 1 }],
   fulfillmentType: 'delivery',
@@ -165,6 +169,32 @@ describe('delivery price from the courier', () => {
     expect(calls).toHaveLength(0);
   });
 
+  it('refuses a delivery with no number the rider can call, or one that is not a Rwandan mobile', async () => {
+    const { listing } = await shop();
+    const customer = await createConsumer();
+    const place = (recipientPhone) =>
+      request(app)
+        .post('/api/v1/orders')
+        .set('Authorization', `Bearer ${customer.token}`)
+        .send({
+          listing: listing._id.toString(),
+          items: [{ listing: listing._id.toString(), quantity: 1 }],
+          fulfillmentType: 'delivery',
+          deliveryDetails: { ...DROP, recipientPhone },
+          payment: { paymentMethod: 'mobile_money' },
+        });
+    const none = await place(undefined);
+    expect(none.status).toBe(400);
+    expect(none.body.message).toMatch(/phone number the rider can call/);
+    const bad = await place('12345');
+    expect(bad.status).toBe(400);
+    expect(bad.body.message).toMatch(/Rwandan mobile/);
+    const good = await place('+250 788 123 456');
+    expect(good.status).toBe(201);
+    const stored = await Order.findById(good.body._id).lean();
+    expect(stored.deliveryDetails.recipientPhone).toBe('+250788123456');
+  });
+
   it('keeps the courier quote on the placed order, and refuses a delivery with no location', async () => {
     const { listing } = await shop();
     const customer = await createConsumer();
@@ -234,7 +264,7 @@ describe('booking the courier when the vendor sends the order out', () => {
       pay_method: 'account',
       pickup_time: 'now',
       receiver_address: 'KG 108 Street, Remera',
-      receiver_phone: '+250780000000',
+      receiver_phone: '+250788123456',
       restaurant_pin: '-1.951500,30.093500',
       receiver_pin: '-1.958722,30.119739',
     });
@@ -289,6 +319,8 @@ describe('booking the courier when the vendor sends the order out', () => {
     await Payment.updateMany({}, { $unset: { payerPhoneNumber: '' } });
     const User = require('../models/User');
     await User.updateOne({ _id: order.customer }, { $unset: { phone: '' } });
+    // an order placed before riders needed a number
+    await Order.updateOne({ _id: order._id }, { $unset: { 'deliveryDetails.recipientPhone': '' } });
     const res = await send(vendor, order);
     expect(res.status).toBe(422);
     expect(res.body.message).toMatch(/phone number/);

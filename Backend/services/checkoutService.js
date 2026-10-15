@@ -7,6 +7,7 @@ const User = require('../models/User');
 const PlatformSettings = require('../models/PlatformSettings');
 const { impactForItems } = require('../config/impactFactors');
 const courier = require('./movingManService');
+const { normalizeRwandaMobile } = require('../utils/phone');
 
 /**
  * Multi-vendor checkout.
@@ -320,6 +321,29 @@ const placeCheckout = async ({
   });
   const normalizedDelivery =
     fulfillmentType === 'delivery' ? normalizeDeliveryDetails(deliveryDetails) : undefined;
+
+  // The rider has to be able to call the person receiving the food: the number typed at checkout,
+  // else the one on their profile. A number that is there but is not a Rwandan mobile is refused
+  // so the mistake is fixed now, not by a rider who can't get through. With the courier on, a
+  // delivery with no number at all is refused too.
+  if (normalizedDelivery) {
+    const customer = await User.findById(customerId).select('firstName lastName phone');
+    const given = deliveryDetails?.recipientPhone || customer?.phone;
+    const canonical = normalizeRwandaMobile(given);
+    if (given && !canonical) {
+      throw new CheckoutError(
+        'Please enter a Rwandan mobile number the rider can call, for example 0788 123 456'
+      );
+    }
+    if (!given && courier.isConfigured()) {
+      throw new CheckoutError('Please add a phone number the rider can call');
+    }
+    if (canonical) normalizedDelivery.recipientPhone = `+${canonical}`;
+    if (!normalizedDelivery.recipientName) {
+      normalizedDelivery.recipientName =
+        `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim() || undefined;
+    }
+  }
   const checkoutGroup = new mongoose.Types.ObjectId();
 
   let orders = [];

@@ -243,13 +243,12 @@ const SignUp = () => {
             email: email,
             phone: formattedPhone,
           },
+          // No invented coordinates: a made-up pin in central Kigali sent riders to the wrong
+          // place. The real location is taken on the next screen (Business Verification), where
+          // it is required before the shop can be reviewed.
           address: {
             street: 'To be updated',
-            city: 'To be updated',
-            location: {
-              type: 'Point',
-              coordinates: [30.0619, -1.9403], // Default Kigali coordinates
-            },
+            city: 'Kigali',
           },
         };
 
@@ -856,8 +855,9 @@ const SignUp = () => {
                               ?.requiredDocs || 'Valid business documents'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            You'll need to upload verification documents after registration before
-                            you can start selling.
+                            Next you'll confirm your shop's location and upload one document. It
+                            takes about two minutes, and you can't start selling until it's
+                            approved.
                           </p>
                         </div>
                       )}
