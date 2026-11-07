@@ -20,6 +20,8 @@ export const PlatformSettingsProvider = ({ children }) => {
     supportPhone: '+250 794 758 542',
     // The delivery courier's dispatch line, shown once a rider is booked.
     courierHelpPhone: '+250 781 727 394',
+    // ChopNow's share of the food price (the server value replaces this once loaded).
+    platformFeePercent: 10,
     allowNewRegistrations: true,
     requireEmailVerification: true,
     allowGuestCheckout: false,

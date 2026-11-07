@@ -9,6 +9,7 @@ const INDEXABLE = [
   /^\/$/,
   /^\/shop(\/[^/]+){0,2}$/,
   /^\/faq$/,
+  /^\/vendors$/,
   /^\/contact-us$/,
   /^\/terms-of-service$/,
   /^\/privacy-policy$/,

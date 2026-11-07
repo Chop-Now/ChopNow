@@ -788,8 +788,43 @@ const sendContactMessage = async (inbox, { name, email, message }) => {
   );
 };
 
+/**
+ * A vendor's "I'd like to sell on ChopNow" form from the public /vendors page.
+ * Replying to the email answers the vendor directly.
+ */
+const sendVendorInterest = async (
+  inbox,
+  { businessName, contactName, phone, email, location, foodType, message }
+) => {
+  const row = (label, value) =>
+    `<tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top;">${label}</td><td style="padding: 6px 0; color: #111827;">${escapeHtml(value) || '-'}</td></tr>`;
+  const content = `
+    <table style="border-collapse: collapse; font-size: 15px;">
+      ${row('Business', businessName)}
+      ${row('Contact person', contactName)}
+      ${row('Phone', phone)}
+      ${row('Email', email)}
+      ${row('Location', location)}
+      ${row('Type of food', foodType)}
+    </table>
+    ${
+      message
+        ? `<div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; white-space: pre-wrap;">${escapeHtml(message)}</div>`
+        : ''
+    }
+    <p style="color: #6b7280; font-size: 14px;">Sent from the ChopNow vendor sign-up form. Reply to this email to answer them.</p>
+  `;
+  return sendEmail(
+    inbox,
+    `New vendor interest: ${String(businessName).slice(0, 60)}`,
+    emailTemplate('A vendor wants to join ChopNow', content),
+    { replyTo: email }
+  );
+};
+
 module.exports = {
   sendRefundCompletedEmail,
+  sendVendorInterest,
   sendVendorOrderReminderEmail,
   sendContactMessage,
   sendVerificationEmail,

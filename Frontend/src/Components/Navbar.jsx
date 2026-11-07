@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 
+const linkClass =
+  'px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap text-moringa hover:bg-moringa/5';
+
 const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
   const [activeSection, setActiveSection] = useState('');
+  const { pathname } = useLocation();
+  const onHome = pathname === '/';
 
-  const navLinks = [
-    { path: '#howItWorks', title: 'How It Works' },
-    // { path: '#testimonials', title: 'Testimonials' },
-    // { path: '#advisors', title: 'Advisors' },
-    { path: '#Milestones', title: 'Milestones' },
-    { path: '#AboutUs', title: 'About Us' },
-  ];
+  // The section links scroll the home page, so they only make sense there.
+  const navLinks = onHome
+    ? [
+        { path: '#howItWorks', title: 'How It Works' },
+        // { path: '#testimonials', title: 'Testimonials' },
+        // { path: '#advisors', title: 'Advisors' },
+        { path: '#Milestones', title: 'Milestones' },
+        { path: '#AboutUs', title: 'About Us' },
+      ]
+    : [];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,7 +44,8 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
     window.addEventListener('scroll', handleScroll);
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onHome]);
 
   const handleClick = (path) => {
     setMenuOpened(false);
@@ -65,6 +74,19 @@ const Navbar = ({ containerStyles, setMenuOpened, menuOpened }) => {
           {link.title}
         </motion.a>
       ))}
+      {!onHome && (
+        <Link to="/" onClick={() => setMenuOpened(false)} className={linkClass}>
+          Home
+        </Link>
+      )}
+      <Link
+        to="/vendors"
+        onClick={() => setMenuOpened(false)}
+        aria-current={pathname === '/vendors' ? 'page' : undefined}
+        className={`${linkClass} ${pathname === '/vendors' ? 'bg-moringa/10' : ''}`}
+      >
+        For Vendors
+      </Link>
       {menuOpened && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}

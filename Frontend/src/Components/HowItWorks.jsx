@@ -77,13 +77,13 @@ const stepsForConsumers = [
 const features = [
   {
     icon: <Truck />,
-    title: 'Fastest Delivery',
-    description: 'Groceries delivered in under 30 minutes.',
+    title: 'Pickup or Delivery',
+    description: 'Collect from the shop, or have it delivered by courier in Kigali.',
   },
   {
     icon: <Sprout />,
-    title: 'Freshness Guaranteed',
-    description: 'Fresh produce straight from local farms.',
+    title: 'Good Food, Not Waste',
+    description: 'Every order keeps good surplus food on a plate instead of in the bin.',
   },
   {
     icon: <Coins />,
@@ -92,8 +92,8 @@ const features = [
   },
   {
     icon: <MessageCircleHeart />,
-    title: 'Trusted by Thousands',
-    description: 'Join a community of satisfied users.',
+    title: 'Pay with Mobile Money',
+    description: 'Pay securely with MTN Mobile Money or Airtel Money.',
   },
 ];
 
@@ -183,6 +183,20 @@ const HowItWorks = () => {
           ))}
         </div>
       </div>
+      <p className="mx-auto mt-8 max-w-2xl px-6 text-center text-sm text-moringa-muted">
+        Coming next: we are planning AI-powered meal recommendations and surplus forecasting.{' '}
+        <a
+          href="#innovation"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById('innovation')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="font-semibold text-moringa underline"
+        >
+          Read about our plans
+        </a>
+        .
+      </p>
       {/* Why We Are The Best Banner */}
       <motion.div
         className="mt-12 md:mt-24 max-w-6xl mx-auto px-4 md:px-6"

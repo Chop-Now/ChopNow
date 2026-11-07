@@ -34,6 +34,7 @@ const RiderDashboard = lazyWithRetry(() => import('./Pages/RiderDashboard'));
 const PendingReview = lazyWithRetry(() => import('./Pages/PendingReview'));
 const FAQ = lazyWithRetry(() => import('./Pages/FAQ'));
 const ContactUs = lazyWithRetry(() => import('./Pages/ContactUs'));
+const Vendors = lazyWithRetry(() => import('./Pages/Vendors'));
 const TermsOfService = lazyWithRetry(() => import('./Pages/TermsOfService'));
 const PrivacyPolicy = lazyWithRetry(() => import('./Pages/PrivacyPolicy'));
 const ImpactMethodology = lazyWithRetry(() => import('./Pages/ImpactMethodology'));
@@ -131,6 +132,7 @@ const App = () => {
             <Route path="/shop/:category/:id" element={<ProductDetails />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/vendors" element={<Vendors />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/how-we-calculate-impact" element={<ImpactMethodology />} />

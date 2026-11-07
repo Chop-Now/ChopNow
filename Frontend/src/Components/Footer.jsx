@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { Instagram, Linkedin, Twitter } from 'lucide-react';
 import { useIsAppMode } from '../utils/appMode';
+import { company } from '../config/company';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 
@@ -26,7 +27,7 @@ const Footer = () => {
   const linkSections = [
     {
       title: 'Quick Links',
-      links: ['Contact Us', 'FAQs', 'Privacy Policy'],
+      links: ['For Vendors', 'Contact Us', 'FAQs', 'Privacy Policy'],
     },
     {
       // 'Delivery Information' and 'Return & Refund Policy' used to be listed
@@ -68,7 +69,14 @@ const Footer = () => {
               <ul className="text-sm space-y-1">
                 {section.links.map((link, i) => (
                   <li key={i}>
-                    {link === 'FAQs' ? (
+                    {link === 'For Vendors' ? (
+                      <Link
+                        to="/vendors"
+                        className="inline-flex min-h-11 items-center hover:underline transition"
+                      >
+                        {link}
+                      </Link>
+                    ) : link === 'FAQs' ? (
                       <Link
                         to="/faq"
                         className="inline-flex min-h-11 items-center hover:underline transition"
@@ -124,14 +132,15 @@ const Footer = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <h3 className="font-semibold text-base text-moringa md:mb-5 mb-2">Get in touch</h3>
-            <p className="text-sm mb-4">
-              Questions, feedback or want to partner with us? We read every message.
-            </p>
+            <address className="text-sm mb-4 not-italic space-y-1">
+              <p className="font-semibold text-moringa">{company.legalName}</p>
+              <p>{company.address}</p>
+            </address>
             <a
-              href="mailto:chopnow.app@gmail.com"
+              href={`mailto:${company.email}`}
               className="inline-flex min-h-11 items-center rounded-full bg-moringa px-6 text-xs font-semibold text-fufu transition-all hover:bg-moringa-dark active:scale-95"
             >
-              chopnow.app@gmail.com
+              {company.email}
             </a>
           </motion.div>
         </div>
@@ -181,9 +190,9 @@ const Footer = () => {
         >
           Copyright 2026 ©{' '}
           <Link to="/" className="hover:underline">
-            ChopNow
-          </Link>{' '}
-          All rights reserved.
+            {company.legalName}
+          </Link>
+          , {company.country}. All rights reserved.
         </motion.p>
         <motion.div
           className="flex items-center gap-4"

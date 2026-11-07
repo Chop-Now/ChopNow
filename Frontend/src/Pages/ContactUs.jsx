@@ -3,8 +3,10 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
-import { ArrowLeft, MapPin, Mail, User } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, Mail, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../Components/Footer';
+import { company } from '../config/company';
 
 const ContactUs = () => {
   const navigate = useNavigate();
@@ -93,19 +95,54 @@ const ContactUs = () => {
 
           {/* Contact Info */}
           <motion.div
-            className="flex flex-col md:flex-row items-center gap-6 mt-8 mb-10"
+            className="mt-8 mb-10 w-full max-w-xl rounded-2xl border border-gray-200 p-5 text-left"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <MapPin size={18} style={{ color: 'var(--color-solid)' }} />
-              <span>Kigali, Rwanda</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <Mail size={18} style={{ color: 'var(--color-solid)' }} />
-              <span>chopnow.app@gmail.com</span>
-            </div>
+            <ul className="space-y-4 text-sm text-slate-600">
+              <li className="flex items-start gap-3">
+                <Building2
+                  size={18}
+                  className="mt-0.5 shrink-0"
+                  style={{ color: 'var(--color-solid)' }}
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="block font-semibold text-slate-800">Company</span>
+                  {company.legalName}
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <MapPin
+                  size={18}
+                  className="mt-0.5 shrink-0"
+                  style={{ color: 'var(--color-solid)' }}
+                  aria-hidden="true"
+                />
+                <address className="not-italic">
+                  <span className="block font-semibold text-slate-800">Address</span>
+                  {company.address}
+                </address>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail
+                  size={18}
+                  className="mt-0.5 shrink-0"
+                  style={{ color: 'var(--color-solid)' }}
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="block font-semibold text-slate-800">Email</span>
+                  <a
+                    href={`mailto:${company.email}`}
+                    className="break-all underline underline-offset-2 hover:text-slate-900"
+                  >
+                    {company.email}
+                  </a>
+                </span>
+              </li>
+            </ul>
           </motion.div>
         </motion.div>
 
@@ -202,6 +239,7 @@ const ContactUs = () => {
           </motion.button>
         </motion.form>
       </div>
+      <Footer />
     </>
   );
 };

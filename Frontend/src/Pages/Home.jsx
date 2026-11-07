@@ -6,6 +6,9 @@ import Apps from '../Components/Apps';
 import Milestones from '../Components/Milestones';
 import AboutUs from '../Components/AboutUs';
 import HowItWorks from '../Components/HowItWorks';
+import AppShowcase from '../Components/AppShowcase';
+import VendorSection from '../Components/VendorSection';
+import Innovation from '../Components/Innovation';
 import Header from '../Components/Header';
 import Footer from '../Components/Footer';
 import SEO from '../Components/SEO';
@@ -23,6 +26,9 @@ const Home = () => {
       <Header />
       <Hero />
       <HowItWorks />
+      <AppShowcase />
+      <VendorSection />
+      <Innovation />
       {/* <Testimonials /> */}
       {/* <Advisors /> */}
       <Milestones />

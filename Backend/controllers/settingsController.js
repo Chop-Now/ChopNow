@@ -27,6 +27,8 @@ const getPublicSettings = async (req, res) => {
       supportEmail: settings.supportEmail,
       supportPhone: settings.supportPhone,
       courierHelpPhone: settings.courierHelpPhone,
+      // ChopNow's share of the food price, shown to vendors on the /vendors page
+      platformFeePercent: settings.platformFeePercent,
       allowNewRegistrations: settings.allowNewRegistrations,
       requireEmailVerification: settings.requireEmailVerification,
       allowGuestCheckout: settings.allowGuestCheckout,
