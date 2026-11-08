@@ -248,7 +248,9 @@ const Vendors = () => {
           <ol className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {vendorSteps.map((step) => (
               <li key={step.id} className="rounded-2xl bg-surface p-6 shadow-md md:p-7">
-                <p className="text-4xl font-extrabold text-moringa/15">{step.id}</p>
+                <p aria-hidden="true" className="text-4xl font-extrabold text-moringa/60">
+                  {step.id}
+                </p>
                 <h3 className="mt-2 text-lg font-bold text-moringa">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-moringa-muted">
                   {step.description}

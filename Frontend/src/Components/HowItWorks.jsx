@@ -166,7 +166,10 @@ const HowItWorks = () => {
               whileHover={{ scale: 1.03 }}
             >
               {/* Step number */}
-              <p className="text-4xl md:text-5xl font-extrabold text-moringa/15 md:mb-6 shrink-0">
+              <p
+                aria-hidden="true"
+                className="text-4xl md:text-5xl font-extrabold text-moringa/60 md:mb-6 shrink-0"
+              >
                 {step.id}
               </p>
 

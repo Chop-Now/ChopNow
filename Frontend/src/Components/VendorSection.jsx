@@ -33,7 +33,9 @@ const VendorSection = () => (
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <p className="text-3xl font-extrabold text-moringa/15">{step.id}</p>
+            <p aria-hidden="true" className="text-3xl font-extrabold text-moringa/60">
+              {step.id}
+            </p>
             <h3 className="mt-1 text-lg font-bold text-moringa">{step.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-moringa-muted">{step.description}</p>
           </motion.li>
