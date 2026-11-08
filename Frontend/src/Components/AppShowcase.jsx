@@ -1,5 +1,4 @@
 import React from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 import browse from '../assets/screens/screen-browse.webp';
 import listing from '../assets/screens/screen-listing.webp';
